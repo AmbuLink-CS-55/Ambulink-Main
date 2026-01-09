@@ -13,9 +13,10 @@ type LatLng = {
 type Props = {
   userLocation: LatLng;
   driverLocations?: LatLng[];
+  children?: React.ReactNode;
 };
 
-export default function UserMap({ userLocation, driverLocations = [] }: Props) {
+export default function UserMap({ userLocation, driverLocations = [], children }: Props) {
   const region: Region = {
     latitude: userLocation.latitude,
     longitude: userLocation.longitude,
@@ -24,26 +25,29 @@ export default function UserMap({ userLocation, driverLocations = [] }: Props) {
   };
 
   return (
-    <MapView
-      style={StyleSheet.absoluteFillObject}
-      initialRegion={region}
-      provider={PROVIDER_GOOGLE}
-      showsUserLocation
-      showsMyLocationButton
-      customMapStyle={mapStyle}
-      showsPointsOfInterest={false}
-    >
-      {driverLocations.map((d) => (
-        <Marker
-          key={`${d.latitude}-${d.longitude}`}
-          coordinate={d}
-          anchor={{ x: 0.5, y: 1 }}
-          tracksViewChanges={false}
-        >
-          {/*<Image source={driverIcon} style={styles.markerIcon} />*/}
-        </Marker>
-      ))}
-    </MapView >
+    <View style={StyleSheet.absoluteFillObject}>
+      <MapView
+        style={StyleSheet.absoluteFillObject}
+        initialRegion={region}
+        provider={PROVIDER_GOOGLE}
+        showsUserLocation
+        showsMyLocationButton
+        customMapStyle={mapStyle}
+        showsPointsOfInterest={false}
+      >
+        {driverLocations.map((d) => (
+          <Marker
+            key={`${d.latitude}-${d.longitude}`}
+            coordinate={d}
+            anchor={{ x: 0.5, y: 1 }}
+            tracksViewChanges={false}
+          >
+            {/*<Image source={driverIcon} style={styles.markerIcon} />*/}
+          </Marker>
+        ))}
+      </MapView >
+      <View style={styles.buttonContainer}>{children}</View>
+    </View>
   );
 }
 
@@ -52,6 +56,15 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     resizeMode: "contain",
+  },
+  buttonContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    backgroundColor: "transparent",
   },
 });
 
