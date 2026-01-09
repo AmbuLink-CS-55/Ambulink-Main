@@ -8,8 +8,9 @@ export const rideRoutes = new Hono();
 const clientConnections = new Map<string, Ride>();
 const rideWebSockets = new Map<string, WSContext>();
 
-
 rideRoutes.get('/ride/ws', upgradeWebSocket((c) => {
+
+  console.log("reached route")
 
   let patientId = c.req.query("id");
   if (!patientId) patientId = crypto.randomUUID();
@@ -17,16 +18,17 @@ rideRoutes.get('/ride/ws', upgradeWebSocket((c) => {
   const lat = parseFloat(c.req.query("lat") || "0");
   const lng = parseFloat(c.req.query("lng") || "0");
 
-  if (!lat || !lng) {
-    throw Error("missing lat/lng")
-  }
 
   const rideId = crypto.randomUUID();
 
 
   return {
     onOpen(event, ws) {
+      console.log(`${rideId} upgraded to websocket`)
 
+      if (!lat || !lng) {
+        throw Error("missing lat/lng")
+      }
       const ride: Ride = {
         id: rideId,
         patientId: patientId,
@@ -49,16 +51,6 @@ rideRoutes.get('/ride/ws', upgradeWebSocket((c) => {
     onMessage(event, ws) {
       const message = JSON.parse(event.data as string);
 
-      if (message.type === "DRIVER_ASSIGNED") {
-        const ride = clientConnections.get(rideId);
-        if (ride) {
-          ride.status = "DRIVER_ASSIGNED";
-          clientConnections.set(rideId, ride);
-          ws.send(
-            JSON.stringify({ status: "DRIVER_ASSIGNED", driverId: message.driverId })
-          );
-        }
-      }
     },
 
     onClose(event, ws) {
@@ -124,5 +116,5 @@ function getNearbyDrivers(ride: Ride, limit: number = 10): Driver[] {
     .map(({ driver }) => driver);
 }
 
-// function sendOffer(found: Driver[], ride: Ride): Driver {
-// }
+function sendOffer(found: Driver[], ride: Ride): Driver | any {
+}

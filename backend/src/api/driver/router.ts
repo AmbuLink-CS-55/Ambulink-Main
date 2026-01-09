@@ -33,7 +33,26 @@ driverRoutes.get("/driver/ws", upgradeWebSocket((c) => {
       ws.send("Connected")
     },
 
-    onClose(evt, ws) {
+    onMessage(event, ws) {
+      // ws.send(JSON.stringify({ rideId: rideId, status: "SEARCHING" }));
+      // TODO: type this
+      const message = JSON.parse(event.data as string);
+
+      let driver = DriverConnections.get(driverId)
+
+      if (!driver) {
+        throw Error(`driver id:${driverId} does not exhist`)
+      }
+
+      if (message.type === "LOCATION") {
+        driver.location.lat = message.location.lat;
+        driver.location.lng = message.location.lng;
+      }
+
+      DriverConnections.set(driverId, driver);
+    },
+
+    onClose(event, ws) {
       DriverConnections.delete(driverId);
     },
   }
