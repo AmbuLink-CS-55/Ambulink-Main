@@ -20,7 +20,6 @@ interface AllergiesModalProps {
   setAllergiesSearch: (search: string) => void;
 }
 
-
 export default function AllergiesModal({
   visible,
   onClose,
