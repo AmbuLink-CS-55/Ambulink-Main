@@ -1,124 +1,126 @@
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import { Ionicons, FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Home() {
   return (
-    <ScrollView style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-      <View style={styles.searchContainer}>
-        <Text style={styles.searchText}>Search</Text>
-        <View style={{ flex: 1 }} />
-        <Link href="/(patient)/settings">
-          <Ionicons name="settings-outline" size={22} color="#333" />
-        </Link>
-      </View>
+        <View style={styles.searchContainer}>
+          <Text style={styles.searchText}>Search</Text>
+          <View style={{ flex: 1 }} />
+          <Link href="/(patient)/settings">
+            <Ionicons name="settings-outline" size={22} color="#333" />
+          </Link>
+        </View>
 
-      <Text style={styles.sectionTitle}>Quick Action</Text>
+        <Text style={styles.sectionTitle}>Quick Action</Text>
 
-      <View style={styles.quickActionContainer}>
-        <View style={styles.leftColumn}>
-          <View style={styles.bookCard}>
-            <View style={styles.bookHeader}>
-              {/*<Ionicons name="bed-outline" size={18} color="#666" />*/}
-              <Text style={styles.bookTitle}>Bookings</Text>
-            </View>
-            <View style={styles.bookContent}>
-              <View style={styles.heartBadge}>
-                <Ionicons name="heart" size={28} color="white" />
+        <View style={styles.quickActionContainer}>
+          <View style={styles.leftColumn}>
+            <View style={styles.bookCard}>
+              <View style={styles.bookHeader}>
+                <Text style={styles.cardTitle}>Bookings</Text>
               </View>
-              <View style={styles.bookInfo}>
-                <Text style={styles.keepCalm}>Keep Calm</Text>
-                <Text style={styles.timeAway}>10 min</Text>
-                <Text style={styles.awayText}>Away</Text>
+              <View style={styles.bookContent}>
+                <View style={styles.heartBadge}>
+                  <Ionicons name="heart" size={28} color="white" />
+                </View>
+                <View style={styles.bookInfo}>
+                  <Text style={styles.keepCalm}>Keep Calm</Text>
+                  <Text style={styles.timeAway}>10 min</Text>
+                  <Text style={styles.awayText}>Away</Text>
+                </View>
               </View>
+
+              <View style={styles.badgeRow}>
+                <View style={styles.badge}>
+                  <MaterialCommunityIcons name="water" size={14} color="#666" />
+                  <Text style={styles.badgeText}>Blood</Text>
+                </View>
+                <View style={styles.badge}>
+                  <Ionicons name="restaurant-outline" size={14} color="#666" />
+                  <Text style={styles.badgeText}>Food</Text>
+                </View>
+              </View>
+
+              <View style={styles.badgeRow}>
+                <Text style={styles.subBadgeText}>Type: O+</Text>
+                <Text style={styles.subBadgeText}>Alleges</Text>
+              </View>
+
+            </View>
+          </View>
+
+          {/* Right Column */}
+          <View style={styles.rightColumn}>
+            {/* First-Aid Card */}
+            <View style={styles.smallCard}>
+              <View>
+                <Text style={styles.cardTitle}>First-Aid Guides</Text>
+                <Text style={styles.cardSubtitle}>Critical</Text>
+                <Text style={styles.cardSubtitle}>Steps</Text>
+              </View>
+              <Text style={styles.bandaidEmoji}>🩹</Text>
             </View>
 
-            <View style={styles.badgeRow}>
-              <View style={styles.badge}>
-                <MaterialCommunityIcons name="water" size={14} color="#666" />
-                <Text style={styles.badgeText}>Blood</Text>
+            {/* Hospital Card */}
+            <View style={styles.smallCard}>
+              <View>
+                <Text style={styles.cardTitle}>Nearest Hospital</Text>
+                <Text style={styles.cardSubtitle}>2 km</Text>
+                <Text style={styles.cardSubtitle}>20 min.</Text>
               </View>
-              <View style={styles.badge}>
-                <Ionicons name="restaurant-outline" size={14} color="#666" />
-                <Text style={styles.badgeText}>Food</Text>
-              </View>
+              <Text style={styles.hospitalEmoji}>🏥</Text>
             </View>
-
-            <View style={styles.badgeRow}>
-              <Text style={styles.subBadgeText}>Type: O+</Text>
-              <Text style={styles.subBadgeText}>Alleges</Text>
-            </View>
-
           </View>
         </View>
 
-        {/* Right Column */}
-        <View style={styles.rightColumn}>
-          {/* First-Aid Card */}
-          <View style={styles.smallCard}>
-            <View>
-              <Text style={styles.cardTitle}>First-Aid</Text>
-              <Text style={styles.cardSubtitle}>Critical</Text>
-              <Text style={styles.cardSubtitle}>Steps</Text>
-            </View>
-            <Text style={styles.bandaidEmoji}>🩹</Text>
+
+        <View style={styles.infoCard}>
+          <Text style={styles.infoTitle}>About</Text>
+          <View style={styles.divider} />
+
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Birthdate</Text>
+            <Text style={styles.infoValue}>2nd Apr 1999</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Height.</Text>
+            <Text style={styles.infoValue}>181cm</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Weight</Text>
+            <Text style={styles.infoValue}>72 kg</Text>
           </View>
 
-          {/* Hospital Card */}
-          <View style={styles.smallCard}>
-            <View>
-              <Text style={styles.cardTitle}>Hospital</Text>
-              <Text style={styles.cardSubtitle}>2 km</Text>
-              <Text style={styles.cardSubtitle}>20 min.</Text>
-            </View>
-            <Text style={styles.hospitalEmoji}>🏥</Text>
+          <Text style={[styles.infoTitle, { marginTop: 16 }]}>Contact</Text>
+          <View style={styles.divider} />
+
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Mobile</Text>
+            <Text style={styles.infoLink}>0718844688</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Lan</Text>
+            <Text style={styles.infoLink}>011 256 7718</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Email</Text>
+            <Text style={styles.infoLink}>sutharakaf@gmail.com</Text>
           </View>
         </View>
-      </View>
 
+        <TouchableOpacity style={styles.medicalButton} onPress={() => router.push("/(patient)/map")}>
+          <Text style={styles.medicalButtonText}>Book</Text>
+          <Ionicons name="chevron-forward" size={20} color="white" />
+        </TouchableOpacity>
 
-      <View style={styles.infoCard}>
-        <Text style={styles.infoTitle}>About</Text>
-        <View style={styles.divider} />
-
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Birthdate</Text>
-          <Text style={styles.infoValue}>2nd Apr 1999</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Height.</Text>
-          <Text style={styles.infoValue}>181cm</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Weight</Text>
-          <Text style={styles.infoValue}>72 kg</Text>
-        </View>
-
-        <Text style={[styles.infoTitle, { marginTop: 16 }]}>Contact</Text>
-        <View style={styles.divider} />
-
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Mobile</Text>
-          <Text style={styles.infoLink}>0718844688</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Lan</Text>
-          <Text style={styles.infoLink}>011 256 7718</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Email</Text>
-          <Text style={styles.infoLink}>sutharakaf@gmail.com</Text>
-        </View>
-      </View>
-
-      <TouchableOpacity style={styles.medicalButton} onPress={() => router.push("/(patient)/map")}>
-        <Text style={styles.medicalButtonText}>Book</Text>
-        <Ionicons name="chevron-forward" size={20} color="white" />
-      </TouchableOpacity>
-
-      <View style={{ height: 100 }} />
-    </ScrollView>
+        <View style={{ height: 100 }} />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -126,6 +128,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#E8F4F8",
+  },
+  scrollContent: {
     padding: 16,
   },
   searchContainer: {
@@ -244,10 +248,10 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   bandaidEmoji: {
-    fontSize: 36,
+    fontSize: 30,
   },
   hospitalEmoji: {
-    fontSize: 36,
+    fontSize: 30,
   },
   infoCard: {
     backgroundColor: "white",

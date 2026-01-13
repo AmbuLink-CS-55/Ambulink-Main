@@ -15,7 +15,6 @@ import { useState } from "react";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 
-
 const BLOOD_TYPES = ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"];
 const ALLERGIES_LIST = [
   "Peanuts",
@@ -33,16 +32,24 @@ const ALLERGIES_LIST = [
   "Ibuprofen",
   "Latex",
 ];
+const LANGUAGES = [
+  { id: "en", label: "English", flag: "🇬🇧" },
+  { id: "si", label: "Sinhala", flag: "🇱🇰" },
+  { id: "ta", label: "Tamil", flag: "🇮🇳" },
+];
 
 export default function Settings() {
   const [profileName, setProfileName] = useState("Sutharaka F");
-  const [profileImage, setProfileImage] = useState(null);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [bloodType, setBloodType] = useState("O+");
-  const [selectedAllergies, setSelectedAllergies] = useState([]);
+  const [selectedAllergies, setSelectedAllergies] = useState<string[] | null>([]);
   const [emergencyContacts, setEmergencyContacts] = useState([
     { id: 1, number: "119", name: "Bro" },
   ]);
   const [contactName, setContactName] = useState("");
+  const [language, setLanguage] = useState("en");
+  const [notifications, setNotifications] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
 
   const [bloodTypeModal, setBloodTypeModal] = useState(false);
   const [allergiesModal, setAllergiesModal] = useState(false);
@@ -50,6 +57,7 @@ export default function Settings() {
   const [emergencyContactModal, setEmergencyContactModal] = useState(false);
   const [emergencyContactNumber, setEmergencyContactNumber] = useState("");
   const [editingContactId, setEditingContactId] = useState(null);
+  const [languageModal, setLanguageModal] = useState(false);
 
   const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -105,11 +113,11 @@ export default function Settings() {
     setEmergencyContactModal(false);
   };
 
-  const handleDeleteEmergencyContact = (id) => {
+  const handleDeleteEmergencyContact = (id: number) => {
     setEmergencyContacts(emergencyContacts.filter((c) => c.id !== id));
   };
 
-  const handleEditEmergencyContact = (contact) => {
+  const handleEditEmergencyContact = (contact: any) => {
     setEmergencyContactNumber(contact.number);
     setContactName(contact.name);
     setEditingContactId(contact.id);
@@ -120,19 +128,20 @@ export default function Settings() {
     allergy.toLowerCase().includes(allergiesSearch.toLowerCase())
   );
 
+  const getLanguageLabel = () => {
+    return LANGUAGES.find((lang) => lang.id === language)?.label || "English";
+  };
+
   return (
     <ScrollView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Settings</Text>
       </View>
 
-      {/* Personal Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Personal</Text>
 
         <View style={styles.card}>
-          {/* Profile Picture */}
           <Pressable style={styles.profilePicContainer} onPress={handlePickImage}>
             {profileImage ? (
               <Image source={{ uri: profileImage }} style={styles.profilePic} />
@@ -150,7 +159,6 @@ export default function Settings() {
             </View>
           </Pressable>
 
-          {/* Profile Name */}
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Name</Text>
             <TextInput
@@ -161,7 +169,6 @@ export default function Settings() {
             />
           </View>
 
-          {/* Contact Details */}
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Mobile</Text>
             <View style={styles.staticInput}>
@@ -178,12 +185,10 @@ export default function Settings() {
         </View>
       </View>
 
-      {/* Medical Information Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Medical Information</Text>
 
         <View style={styles.card}>
-          {/* Blood Type */}
           <Pressable
             style={styles.selectRow}
             onPress={() => setBloodTypeModal(true)}
@@ -197,7 +202,6 @@ export default function Settings() {
 
           <View style={styles.divider} />
 
-          {/* Allergies */}
           <Pressable
             style={styles.selectRow}
             onPress={() => setAllergiesModal(true)}
@@ -227,7 +231,6 @@ export default function Settings() {
 
           <View style={styles.divider} />
 
-          {/* Medical Documents */}
           <Pressable style={styles.selectRow}>
             <View>
               <Text style={styles.inputLabel}>Medical Documents</Text>
@@ -238,7 +241,6 @@ export default function Settings() {
         </View>
       </View>
 
-      {/* Emergency Contacts Section */}
       <View style={styles.section}>
         <View style={styles.emergencyHeader}>
           <Text style={styles.sectionTitle}>Emergency Contacts</Text>
@@ -276,22 +278,83 @@ export default function Settings() {
                   <Ionicons name="trash" size={18} color="#E74C3C" />
                 </Pressable>
               </View>
-              {emergencyContacts.indexOf(contact) !== emergencyContacts.length - 1 && (
-                <View style={styles.divider} />
-              )}
+              {emergencyContacts.indexOf(contact) !==
+                emergencyContacts.length - 1 && <View style={styles.divider} />}
             </View>
           ))}
         </View>
       </View>
 
-      {/* Save Button */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>App Settings</Text>
+
+        <View style={styles.card}>
+          <Pressable
+            style={styles.selectRow}
+            onPress={() => setLanguageModal(true)}
+          >
+            <View>
+              <Text style={styles.inputLabel}>Language</Text>
+              <Text style={styles.selectedValue}>{getLanguageLabel()}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#26A69A" />
+          </Pressable>
+
+          <View style={styles.divider} />
+
+          <View style={styles.selectRow}>
+            <View>
+              <Text style={styles.inputLabel}>Notifications</Text>
+              <Text style={styles.placeholderText}>
+                {notifications ? "Enabled" : "Disabled"}
+              </Text>
+            </View>
+            <Pressable
+              style={[
+                styles.toggle,
+                notifications && styles.toggleActive,
+              ]}
+              onPress={() => setNotifications(!notifications)}
+            >
+              <View
+                style={[
+                  styles.toggleThumb,
+                  notifications && styles.toggleThumbActive,
+                ]}
+              />
+            </Pressable>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.selectRow}>
+            <View>
+              <Text style={styles.inputLabel}>Dark Mode</Text>
+              <Text style={styles.placeholderText}>
+                {darkMode ? "Enabled" : "Disabled"}
+              </Text>
+            </View>
+            <Pressable
+              style={[styles.toggle, darkMode && styles.toggleActive]}
+              onPress={() => setDarkMode(!darkMode)}
+            >
+              <View
+                style={[
+                  styles.toggleThumb,
+                  darkMode && styles.toggleThumbActive,
+                ]}
+              />
+            </Pressable>
+          </View>
+        </View>
+      </View>
+
       <Pressable style={styles.saveButton}>
         <Text style={styles.saveButtonText}>Save Changes</Text>
       </Pressable>
 
       <View style={{ height: 40 }} />
 
-      {/* Blood Type Modal */}
       <Modal
         visible={bloodTypeModal}
         transparent
@@ -340,7 +403,6 @@ export default function Settings() {
         </View>
       </Modal>
 
-      {/* Allergies Modal */}
       <Modal
         visible={allergiesModal}
         transparent
@@ -396,7 +458,6 @@ export default function Settings() {
         </View>
       </Modal>
 
-      {/* Emergency Contact Modal */}
       <Modal
         visible={emergencyContactModal}
         transparent
@@ -443,6 +504,57 @@ export default function Settings() {
                 {editingContactId ? "Update" : "Add"}
               </Text>
             </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={languageModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setLanguageModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Language</Text>
+              <Pressable onPress={() => setLanguageModal(false)}>
+                <Ionicons name="close" size={24} color="#333" />
+              </Pressable>
+            </View>
+
+            <FlatList
+              data={LANGUAGES}
+              renderItem={({ item }) => (
+                <Pressable
+                  style={[
+                    styles.modalOption,
+                    language === item.id && styles.modalOptionSelected,
+                  ]}
+                  onPress={() => {
+                    setLanguage(item.id);
+                    setLanguageModal(false);
+                  }}
+                >
+                  <View style={styles.languageOption}>
+                    <Text style={styles.languageFlag}>{item.flag}</Text>
+                    <Text
+                      style={[
+                        styles.modalOptionText,
+                        language === item.id && styles.modalOptionTextSelected,
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                  </View>
+                  {language === item.id && (
+                    <Ionicons name="checkmark" size={20} color="#26A69A" />
+                  )}
+                </Pressable>
+              )}
+              keyExtractor={(item) => item.id}
+              scrollEnabled={false}
+            />
           </View>
         </View>
       </Modal>
@@ -618,6 +730,27 @@ const styles = StyleSheet.create({
   iconButton: {
     padding: 8,
   },
+  toggle: {
+    width: 50,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#E0E0E0",
+    justifyContent: "center",
+    paddingHorizontal: 2,
+  },
+  toggleActive: {
+    backgroundColor: "#26A69A",
+  },
+  toggleThumb: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "white",
+    alignSelf: "flex-start",
+  },
+  toggleThumbActive: {
+    alignSelf: "flex-end",
+  },
   saveButton: {
     backgroundColor: "#26A69A",
     borderRadius: 30,
@@ -674,6 +807,14 @@ const styles = StyleSheet.create({
   modalOptionTextSelected: {
     color: "#26A69A",
     fontWeight: "600",
+  },
+  languageOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  languageFlag: {
+    fontSize: 24,
   },
   searchInput: {
     borderWidth: 1,
