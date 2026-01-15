@@ -3,7 +3,6 @@ import { StyleSheet, TouchableOpacity, View, Text } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from "react-native-maps";
 import { Image } from "react-native";
 
-const driverIcon = require("../../assets/images/icon.png");
 
 type LatLng = {
   latitude: number;

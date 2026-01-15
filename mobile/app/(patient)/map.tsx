@@ -1,4 +1,4 @@
-import UserMap from "@/src/components/UserMap";
+import UserMap from "@/components/UserMap";
 import * as Location from "expo-location";
 import { useEffect, useState, useRef } from "react";
 import { StyleSheet, Text, TouchableOpacity } from "react-native";
