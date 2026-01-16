@@ -81,8 +81,9 @@ export const ambulance = pgTable(
   ]
 );
 
-export const ambulanceRequest = pgTable(
-  "ambulance_request",
+// for done rides
+export const ambulanceride = pgTable(
+  "ambulance_ride",
   {
     id: serial("id").primaryKey(),
     userId: integer("user_id").notNull(),

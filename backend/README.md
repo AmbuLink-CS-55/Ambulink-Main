@@ -1,6 +1,8 @@
 # Plans and Notes
 - will add auth after completing basics, it should be easy to just plug. https://docs.nestjs.com/security/authentication
 
+ `ifconfig | grep "inet " | grep -v 127.0.0.1`
+
 # Setup
 ## db 
 ```sh

@@ -2,30 +2,31 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
 import { DbService } from "../../db/db.service";
 import { ambulance } from "../../db/schema";
-import { CreateAmbulanceDto } from "./dto/create-ambulance.dto";
-import { UpdateAmbulanceDto } from "./dto/update-ambulance.dto";
-import { AmbulanceResponseDto } from "./dto/ambulance-response.dto";
+import type {
+  InsertAmbulanceDto,
+  SelectAmbulanceDto,
+} from "../../db/schemas/ambulance.schema";
 
 @Injectable()
 export class AmbulanceService {
   constructor(private db: DbService) {}
 
   async create(
-    createAmbulanceDto: CreateAmbulanceDto
-  ): Promise<AmbulanceResponseDto> {
+    createAmbulanceDto: InsertAmbulanceDto
+  ): Promise<SelectAmbulanceDto> {
     const result = await this.db
       .getDb()
       .insert(ambulance)
-      .values(createAmbulanceDto as any)
+      .values(createAmbulanceDto)
       .returning();
     return result[0];
   }
 
-  async findAll(): Promise<AmbulanceResponseDto[]> {
+  async findAll(): Promise<SelectAmbulanceDto[]> {
     return this.db.getDb().select().from(ambulance);
   }
 
-  async findOne(id: number): Promise<AmbulanceResponseDto> {
+  async findOne(id: number): Promise<SelectAmbulanceDto> {
     const result = await this.db
       .getDb()
       .select()
@@ -39,12 +40,12 @@ export class AmbulanceService {
 
   async update(
     id: number,
-    updateAmbulanceDto: UpdateAmbulanceDto
-  ): Promise<AmbulanceResponseDto> {
+    updateAmbulanceDto: Partial<InsertAmbulanceDto>
+  ): Promise<SelectAmbulanceDto> {
     const result = await this.db
       .getDb()
       .update(ambulance)
-      .set(updateAmbulanceDto as any)
+      .set(updateAmbulanceDto)
       .where(eq(ambulance.id, id))
       .returning();
     if (result.length === 0) {

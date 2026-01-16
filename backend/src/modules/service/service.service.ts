@@ -2,17 +2,16 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
 import { DbService } from "../../db/db.service";
 import { service } from "../../db/schema";
-import { CreateServiceDto } from "./dto/create-service.dto";
-import { UpdateServiceDto } from "./dto/update-service.dto";
-import { ServiceResponseDto } from "./dto/service-response.dto";
+import type {
+  InsertServiceDto,
+  SelectServiceDto,
+} from "../../db/schemas/service.schema";
 
 @Injectable()
 export class ServiceService {
   constructor(private db: DbService) {}
 
-  async create(
-    createServiceDto: CreateServiceDto
-  ): Promise<ServiceResponseDto> {
+  async create(createServiceDto: InsertServiceDto): Promise<SelectServiceDto> {
     const result = await this.db
       .getDb()
       .insert(service)
@@ -21,11 +20,11 @@ export class ServiceService {
     return result[0];
   }
 
-  async findAll(): Promise<ServiceResponseDto[]> {
+  async findAll(): Promise<SelectServiceDto[]> {
     return this.db.getDb().select().from(service);
   }
 
-  async findOne(id: number): Promise<ServiceResponseDto> {
+  async findOne(id: number): Promise<SelectServiceDto> {
     const result = await this.db
       .getDb()
       .select()
@@ -39,8 +38,8 @@ export class ServiceService {
 
   async update(
     id: number,
-    updateServiceDto: UpdateServiceDto
-  ): Promise<ServiceResponseDto> {
+    updateServiceDto: Partial<InsertServiceDto>
+  ): Promise<SelectServiceDto> {
     const result = await this.db
       .getDb()
       .update(service)

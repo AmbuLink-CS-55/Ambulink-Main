@@ -2,15 +2,13 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
 import { DbService } from "../../db/db.service";
 import { emt } from "../../db/schema";
-import { CreateEmtDto } from "./dto/create-emt.dto";
-import { UpdateEmtDto } from "./dto/update-emt.dto";
-import { EmtResponseDto } from "./dto/emt-response.dto";
+import type { InsertEmtDto, SelectEmtDto } from "../../db/schemas/emt.schema";
 
 @Injectable()
 export class EmtService {
   constructor(private db: DbService) {}
 
-  async create(createEmtDto: CreateEmtDto): Promise<EmtResponseDto> {
+  async create(createEmtDto: InsertEmtDto): Promise<SelectEmtDto> {
     const result = await this.db
       .getDb()
       .insert(emt)
@@ -19,11 +17,11 @@ export class EmtService {
     return result[0];
   }
 
-  async findAll(): Promise<EmtResponseDto[]> {
+  async findAll(): Promise<SelectEmtDto[]> {
     return this.db.getDb().select().from(emt);
   }
 
-  async findOne(id: number): Promise<EmtResponseDto> {
+  async findOne(id: number): Promise<SelectEmtDto> {
     const result = await this.db
       .getDb()
       .select()
@@ -37,8 +35,8 @@ export class EmtService {
 
   async update(
     id: number,
-    updateEmtDto: UpdateEmtDto
-  ): Promise<EmtResponseDto> {
+    updateEmtDto: Partial<InsertEmtDto>
+  ): Promise<SelectEmtDto> {
     const result = await this.db
       .getDb()
       .update(emt)

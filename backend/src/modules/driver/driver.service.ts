@@ -2,15 +2,16 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
 import { DbService } from "../../db/db.service";
 import { driver } from "../../db/schema";
-import { CreateDriverDto } from "./dto/create-driver.dto";
-import { UpdateDriverDto } from "./dto/update-driver.dto";
-import { DriverResponseDto } from "./dto/driver-response.dto";
+import type {
+  InsertDriverDto,
+  SelectDriverDto,
+} from "../../db/schemas/driver.schema";
 
 @Injectable()
 export class DriverService {
   constructor(private db: DbService) {}
 
-  async create(createDriverDto: CreateDriverDto): Promise<DriverResponseDto> {
+  async create(createDriverDto: InsertDriverDto): Promise<SelectDriverDto> {
     const result = await this.db
       .getDb()
       .insert(driver)
@@ -19,11 +20,11 @@ export class DriverService {
     return result[0];
   }
 
-  async findAll(): Promise<DriverResponseDto[]> {
+  async findAll(): Promise<SelectDriverDto[]> {
     return this.db.getDb().select().from(driver);
   }
 
-  async findOne(id: number): Promise<DriverResponseDto> {
+  async findOne(id: number): Promise<SelectDriverDto> {
     const result = await this.db
       .getDb()
       .select()
@@ -37,8 +38,8 @@ export class DriverService {
 
   async update(
     id: number,
-    updateDriverDto: UpdateDriverDto
-  ): Promise<DriverResponseDto> {
+    updateDriverDto: Partial<InsertDriverDto>
+  ): Promise<SelectDriverDto> {
     const result = await this.db
       .getDb()
       .update(driver)

@@ -8,16 +8,22 @@ import {
   Delete,
 } from "@nestjs/common";
 import { EmtService } from "./emt.service";
-import { CreateEmtDto } from "./dto/create-emt.dto";
-import { UpdateEmtDto } from "./dto/update-emt.dto";
+import {
+  insertEmtSchema,
+  type InsertEmtDto,
+} from "../../db/schemas/emt.schema";
+import { Validate } from "../../common/pipes/zod-validation.pipe";
 
-@Controller("emts")
+@Controller("api/emts")
 export class EmtController {
   constructor(private readonly emtService: EmtService) {}
 
   @Post()
-  create(@Body() createEmtDto: CreateEmtDto) {
-    return this.emtService.create(createEmtDto);
+  create(
+    @Body(Validate(insertEmtSchema))
+    body: InsertEmtDto
+  ) {
+    return this.emtService.create(body);
   }
 
   @Get()
@@ -31,8 +37,12 @@ export class EmtController {
   }
 
   @Patch(":id")
-  update(@Param("id") id: string, @Body() updateEmtDto: UpdateEmtDto) {
-    return this.emtService.update(+id, updateEmtDto);
+  update(
+    @Param("id") id: string,
+    @Body(Validate(insertEmtSchema.partial()))
+    body: Partial<InsertEmtDto>
+  ) {
+    return this.emtService.update(+id, body);
   }
 
   @Delete(":id")

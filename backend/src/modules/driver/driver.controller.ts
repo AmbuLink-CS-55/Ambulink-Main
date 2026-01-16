@@ -8,16 +8,22 @@ import {
   Delete,
 } from "@nestjs/common";
 import { DriverService } from "./driver.service";
-import { CreateDriverDto } from "./dto/create-driver.dto";
-import { UpdateDriverDto } from "./dto/update-driver.dto";
+import {
+  insertDriverSchema,
+  type InsertDriverDto,
+} from "../../db/schemas/driver.schema";
+import { Validate } from "../../common/pipes/zod-validation.pipe";
 
-@Controller("drivers")
+@Controller("api/drivers")
 export class DriverController {
   constructor(private readonly driverService: DriverService) {}
 
   @Post()
-  create(@Body() createDriverDto: CreateDriverDto) {
-    return this.driverService.create(createDriverDto);
+  create(
+    @Body(Validate(insertDriverSchema))
+    body: InsertDriverDto
+  ) {
+    return this.driverService.create(body);
   }
 
   @Get()
@@ -31,8 +37,12 @@ export class DriverController {
   }
 
   @Patch(":id")
-  update(@Param("id") id: string, @Body() updateDriverDto: UpdateDriverDto) {
-    return this.driverService.update(+id, updateDriverDto);
+  update(
+    @Param("id") id: string,
+    @Body(Validate(insertDriverSchema.partial()))
+    body: Partial<InsertDriverDto>
+  ) {
+    return this.driverService.update(+id, body);
   }
 
   @Delete(":id")

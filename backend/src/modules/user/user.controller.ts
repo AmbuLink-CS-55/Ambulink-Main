@@ -8,16 +8,22 @@ import {
   Delete,
 } from "@nestjs/common";
 import { UserService } from "./user.service";
-import { CreateUserDto } from "./dto/create-user.dto";
-import { UpdateUserDto } from "./dto/update-user.dto";
+import {
+  insertUserSchema,
+  type InsertUserDto,
+} from "../../db/schemas/user.schema";
+import { Validate } from "../../common/pipes/zod-validation.pipe";
 
-@Controller("users")
+@Controller("api/users")
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+  create(
+    @Body(Validate(insertUserSchema))
+    body: InsertUserDto
+  ) {
+    return this.userService.create(body);
   }
 
   @Get()
@@ -31,8 +37,12 @@ export class UserController {
   }
 
   @Patch(":id")
-  update(@Param("id") id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
+  update(
+    @Param("id") id: string,
+    @Body(Validate(insertUserSchema.partial()))
+    body: Partial<InsertUserDto>
+  ) {
+    return this.userService.update(+id, body);
   }
 
   @Delete(":id")

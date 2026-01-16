@@ -2,15 +2,16 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
 import { DbService } from "../../db/db.service";
 import { user } from "../../db/schema";
-import { CreateUserDto } from "./dto/create-user.dto";
-import { UpdateUserDto } from "./dto/update-user.dto";
-import { UserResponseDto } from "./dto/user-response.dto";
+import type {
+  InsertUserDto,
+  SelectUserDto,
+} from "../../db/schemas/user.schema";
 
 @Injectable()
 export class UserService {
   constructor(private db: DbService) {}
 
-  async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
+  async create(createUserDto: InsertUserDto): Promise<SelectUserDto> {
     const result = await this.db
       .getDb()
       .insert(user)
@@ -19,11 +20,11 @@ export class UserService {
     return result[0];
   }
 
-  async findAll(): Promise<UserResponseDto[]> {
+  async findAll(): Promise<SelectUserDto[]> {
     return this.db.getDb().select().from(user);
   }
 
-  async findOne(id: number): Promise<UserResponseDto> {
+  async findOne(id: number): Promise<SelectUserDto> {
     const result = await this.db
       .getDb()
       .select()
@@ -37,8 +38,8 @@ export class UserService {
 
   async update(
     id: number,
-    updateUserDto: UpdateUserDto
-  ): Promise<UserResponseDto> {
+    updateUserDto: Partial<InsertUserDto>
+  ): Promise<SelectUserDto> {
     const result = await this.db
       .getDb()
       .update(user)

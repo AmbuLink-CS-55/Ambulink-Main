@@ -8,16 +8,22 @@ import {
   Delete,
 } from "@nestjs/common";
 import { AmbulanceService } from "./ambulance.service";
-import { CreateAmbulanceDto } from "./dto/create-ambulance.dto";
-import { UpdateAmbulanceDto } from "./dto/update-ambulance.dto";
+import {
+  insertAmbulanceSchema,
+  type InsertAmbulanceDto,
+} from "../../db/schemas/ambulance.schema";
+import { Validate } from "../../common/pipes/zod-validation.pipe";
 
-@Controller("ambulances")
+@Controller("api/ambulances")
 export class AmbulanceController {
   constructor(private readonly ambulanceService: AmbulanceService) {}
 
   @Post()
-  create(@Body() createAmbulanceDto: CreateAmbulanceDto) {
-    return this.ambulanceService.create(createAmbulanceDto);
+  create(
+    @Body(Validate(insertAmbulanceSchema))
+    body: InsertAmbulanceDto
+  ) {
+    return this.ambulanceService.create(body);
   }
 
   @Get()
@@ -33,9 +39,10 @@ export class AmbulanceController {
   @Patch(":id")
   update(
     @Param("id") id: string,
-    @Body() updateAmbulanceDto: UpdateAmbulanceDto
+    @Body(Validate(insertAmbulanceSchema.partial()))
+    body: Partial<InsertAmbulanceDto>
   ) {
-    return this.ambulanceService.update(+id, updateAmbulanceDto);
+    return this.ambulanceService.update(+id, body);
   }
 
   @Delete(":id")

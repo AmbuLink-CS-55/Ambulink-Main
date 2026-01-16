@@ -9,6 +9,7 @@ import { UserModule } from "./modules/user/user.module";
 import { DriverModule } from "./modules/driver/driver.module";
 import { EmtModule } from "./modules/emt/emt.module";
 import { AmbulanceModule } from "./modules/ambulance/ambulance.module";
+import { WsModule } from "./modules/ws/ws.module";
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AmbulanceModule } from "./modules/ambulance/ambulance.module";
         isGlobal: true,
       }),
     }),
+    WsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
