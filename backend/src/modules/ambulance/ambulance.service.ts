@@ -8,7 +8,7 @@ import { AmbulanceResponseDto } from "./dto/ambulance-response.dto";
 
 @Injectable()
 export class AmbulanceService {
-  constructor(private db: DbService) { }
+  constructor(private db: DbService) {}
 
   async create(
     createAmbulanceDto: CreateAmbulanceDto

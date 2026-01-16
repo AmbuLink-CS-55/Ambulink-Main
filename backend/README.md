@@ -1,4 +1,5 @@
-
+# Plans and Notes
+- will add auth after completing basics, it should be easy to just plug. https://docs.nestjs.com/security/authentication
 
 # Setup
 ## db 
