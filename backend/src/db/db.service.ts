@@ -20,13 +20,3 @@ export class DbService {
     return this.db;
   }
 }
-
-// To Use
-// @Injectable()
-// export class UsersService {
-//   constructor(private db: DbService) {}
-
-//   async findAll() {
-//     return this.db.getDb().select().from(users);
-//   }
-}

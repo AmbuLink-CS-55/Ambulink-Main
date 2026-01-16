@@ -4,10 +4,20 @@ import { RedisClientOptions } from "redis";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { DbModule } from "./db/db.module";
+import { ServiceModule } from "./modules/service/service.module";
+import { UserModule } from "./modules/user/user.module";
+import { DriverModule } from "./modules/driver/driver.module";
+import { EmtModule } from "./modules/emt/emt.module";
+import { AmbulanceModule } from "./modules/ambulance/ambulance.module";
 
 @Module({
   imports: [
     DbModule,
+    ServiceModule,
+    UserModule,
+    DriverModule,
+    EmtModule,
+    AmbulanceModule,
     CacheModule.registerAsync<RedisClientOptions>({
       useFactory: () => ({
         host: process.env.REDIS_HOST || "localhost",
@@ -20,4 +30,4 @@ import { DbModule } from "./db/db.module";
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}
