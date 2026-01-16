@@ -1,6 +1,7 @@
 import { View, Text, Pressable, TextInput, Image, StyleSheet } from
   "react-native";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
+import i18n from "@/languages/i18n";
 
 interface PersonalSectionProps {
   profileName: string;
@@ -18,7 +19,7 @@ export default function PersonalSection({
 }: PersonalSectionProps) {
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Personal</Text>
+      <Text style={styles.sectionTitle}>{i18n.t("settings.personal.title")}</Text>
 
       <View style={styles.card}>
         <Pressable
@@ -45,24 +46,24 @@ export default function PersonalSection({
         </Pressable>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Name</Text>
+          <Text style={styles.inputLabel}>{i18n.t("settings.personal.name")}</Text>
           <TextInput
             style={styles.input}
             value={profileName}
             onChangeText={setProfileName}
-            placeholder="Enter name"
+            placeholder={i18n.t("settings.personal.enterName")}
           />
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Mobile</Text>
+          <Text style={styles.inputLabel}>{i18n.t("home.mobile")}</Text>
           <View style={styles.staticInput}>
             <Text style={styles.staticInputText}>0718844688</Text>
           </View>
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Email</Text>
+          <Text style={styles.inputLabel}>{i18n.t("home.email")}</Text>
           <View style={styles.staticInput}>
             <Text style={styles.staticInputText}>sutharakaf@gmail.com</Text>
           </View>

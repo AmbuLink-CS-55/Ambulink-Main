@@ -2,6 +2,7 @@ import { View, Button } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthStore } from "@/src/auth/AuthContext";
+import i18n from "@/languages/i18n";
 
 export default function Login() {
 
@@ -10,21 +11,21 @@ export default function Login() {
   return (
     <SafeAreaView style={{ padding: 24, gap: 12 }}>
       <Button
-        title="Login as Patient"
+        title={i18n.t("login.loginAsPatient")}
         onPress={() => {
           signInAs("patient");
           router.replace("/");
         }}
       />
       <Button
-        title="Login as Driver"
+        title={i18n.t("login.loginAsDriver")}
         onPress={() => {
           signInAs("driver");
           router.replace("/");
         }}
       />
       <Button
-        title="Login as EMT"
+        title={i18n.t("login.loginAsEMT")}
         onPress={() => {
           signInAs("emt");
           router.replace("/");

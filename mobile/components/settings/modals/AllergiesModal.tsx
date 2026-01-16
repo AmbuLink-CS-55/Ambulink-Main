@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import i18n from "@/languages/i18n";
 
 interface AllergiesModalProps {
   visible: boolean;
@@ -44,7 +45,7 @@ export default function AllergiesModal({
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Allergies</Text>
+            <Text style={styles.modalTitle}>{i18n.t("settings.medical.selectAllergies")}</Text>
             <Pressable onPress={onClose}>
               <Ionicons name="close" size={24} color="#333" />
             </Pressable>
@@ -52,7 +53,7 @@ export default function AllergiesModal({
 
           <TextInput
             style={styles.searchInput}
-            placeholder="Search allergies..."
+            placeholder={i18n.t("settings.medical.searchAllergies")}
             value={allergiesSearch}
             onChangeText={setAllergiesSearch}
           />
@@ -88,7 +89,7 @@ export default function AllergiesModal({
             style={styles.modalConfirmButton}
             onPress={onClose}
           >
-            <Text style={styles.modalConfirmButtonText}>Done</Text>
+            <Text style={styles.modalConfirmButtonText}>{i18n.t("common.done")}</Text>
           </Pressable>
         </View>
       </View>

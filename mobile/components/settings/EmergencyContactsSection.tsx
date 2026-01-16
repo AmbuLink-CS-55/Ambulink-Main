@@ -1,5 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import i18n from "@/languages/i18n";
 
 interface Contact {
   id: number;
@@ -26,7 +27,7 @@ export default function EmergencyContactsSection({
   return (
     <View style={styles.section}>
       <View style={styles.emergencyHeader}>
-        <Text style={styles.sectionTitle}>Emergency Contacts</Text>
+        <Text style={styles.sectionTitle}>{i18n.t("settings.emergency.title")}</Text>
         <Pressable
           style={styles.addButton}
           onPress={() => {

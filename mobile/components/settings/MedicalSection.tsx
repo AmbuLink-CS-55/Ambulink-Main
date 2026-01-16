@@ -1,5 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import i18n from "@/languages/i18n";
 
 interface MedicalSectionProps {
   bloodType: string;
@@ -17,7 +18,7 @@ export default function MedicalSection({
 }: MedicalSectionProps) {
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Medical Information</Text>
+      <Text style={styles.sectionTitle}>{i18n.t("settings.medical.title")}</Text>
 
       <View style={styles.card}>
         <Pressable
@@ -25,7 +26,7 @@ export default function MedicalSection({
           onPress={() => setBloodTypeModal(true)}
         >
           <View>
-            <Text style={styles.inputLabel}>Blood Type</Text>
+            <Text style={styles.inputLabel}>{i18n.t("settings.medical.bloodType")}</Text>
             <Text style={styles.selectedValue}>{bloodType}</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#26A69A" />
@@ -38,7 +39,7 @@ export default function MedicalSection({
           onPress={() => setAllergiesModal(true)}
         >
           <View style={{ flex: 1 }}>
-            <Text style={styles.inputLabel}>Allergies</Text>
+            <Text style={styles.inputLabel}>{i18n.t("settings.medical.allergies")}</Text>
             {selectedAllergies.length > 0 ? (
               <View style={styles.allergyTags}>
                 {selectedAllergies.map((allergy) => (
@@ -48,7 +49,7 @@ export default function MedicalSection({
                 ))}
               </View>
             ) : (
-              <Text style={styles.placeholderText}>Add allergies</Text>
+              <Text style={styles.placeholderText}>{i18n.t("settings.medical.addAllergies")}</Text>
             )}
           </View>
           <Ionicons name="chevron-forward" size={20} color="#26A69A" />
@@ -58,8 +59,8 @@ export default function MedicalSection({
 
         <Pressable style={styles.selectRow}>
           <View>
-            <Text style={styles.inputLabel}>Medical Documents</Text>
-            <Text style={styles.placeholderText}>Upload documents</Text>
+            <Text style={styles.inputLabel}>{i18n.t("settings.medical.medicalDocuments")}</Text>
+            <Text style={styles.placeholderText}>{i18n.t("settings.medical.uploadDocuments")}</Text>
           </View>
           <Ionicons
             name="document-attach-outline"

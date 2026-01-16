@@ -1,5 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import i18n from "@/languages/i18n";
 
 interface AppSettingsSectionProps {
   language: string;
@@ -11,9 +12,9 @@ interface AppSettingsSectionProps {
 }
 
 const LANGUAGES = [
-  { id: "en", label: "English", flag: "🇬🇧" },
-  { id: "si", label: "Sinhala", flag: "🇱🇰" },
-  { id: "ta", label: "Tamil", flag: "🇮🇳" },
+  { id: "en", label: i18n.t("languages.english"), flag: "🇬🇧" },
+  { id: "si", label: i18n.t("languages.sinhala"), flag: "🇱🇰" },
+  { id: "ta", label: i18n.t("languages.tamil"), flag: "🇮🇳" },
 ];
 
 const styles = StyleSheet.create({
@@ -91,12 +92,12 @@ export default function AppSettingsSection({
 }: AppSettingsSectionProps) {
   const getLanguageLabel = () => {
     return LANGUAGES.find((lang) => lang.id === language)?.label ||
-      "English";
+      i18n.t("languages.english");
   };
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>App Settings</Text>
+      <Text style={styles.sectionTitle}>{i18n.t("settings.appSettings.title")}</Text>
 
       <View style={styles.card}>
         <Pressable
@@ -104,7 +105,7 @@ export default function AppSettingsSection({
           onPress={() => setLanguageModal(true)}
         >
           <View>
-            <Text style={styles.inputLabel}>Language</Text>
+            <Text style={styles.inputLabel}>{i18n.t("settings.appSettings.language")}</Text>
             <Text style={styles.selectedValue}>
               {getLanguageLabel()}
             </Text>
@@ -116,9 +117,9 @@ export default function AppSettingsSection({
 
         <View style={styles.selectRow}>
           <View>
-            <Text style={styles.inputLabel}>Notifications</Text>
+            <Text style={styles.inputLabel}>{i18n.t("settings.appSettings.notifications")}</Text>
             <Text style={styles.placeholderText}>
-              {notifications ? "Enabled" : "Disabled"}
+              {notifications ? i18n.t("common.enabled") : i18n.t("common.disabled")}
             </Text>
           </View>
           <Pressable
@@ -141,9 +142,9 @@ export default function AppSettingsSection({
 
         <View style={styles.selectRow}>
           <View>
-            <Text style={styles.inputLabel}>Dark Mode</Text>
+            <Text style={styles.inputLabel}>{i18n.t("settings.appSettings.darkMode")}</Text>
             <Text style={styles.placeholderText}>
-              {darkMode ? "Enabled" : "Disabled"}
+              {darkMode ? i18n.t("common.enabled") : i18n.t("common.disabled")}
             </Text>
           </View>
           <Pressable

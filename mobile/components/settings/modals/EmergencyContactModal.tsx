@@ -7,6 +7,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import i18n from "@/languages/i18n";
 
 interface EmergencyContactModalProps {
   visible: boolean;
@@ -41,7 +42,7 @@ export default function EmergencyContactModal({
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>
-              {isEditing ? "Edit Contact" : "Add Emergency Contact"}
+              {isEditing ? i18n.t("common.edit") + " " + i18n.t("settings.emergency.title") : i18n.t("settings.emergency.addEmergencyContact")}
             </Text>
             <Pressable onPress={onClose}>
               <Ionicons name="close" size={24} color="#333" />
@@ -49,20 +50,20 @@ export default function EmergencyContactModal({
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Contact Name</Text>
+            <Text style={styles.inputLabel}>{i18n.t("settings.emergency.contactName")}</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g., Mom, Dad, Brother"
+              placeholder={i18n.t("settings.emergency.exampleName")}
               value={contactName}
               onChangeText={setContactName}
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Phone Number</Text>
+            <Text style={styles.inputLabel}>{i18n.t("settings.emergency.phoneNumber")}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter phone number"
+              placeholder={i18n.t("settings.emergency.enterPhoneNumber")}
               value={emergencyContactNumber}
               onChangeText={setEmergencyContactNumber}
               keyboardType="phone-pad"
@@ -74,7 +75,7 @@ export default function EmergencyContactModal({
             onPress={onSubmit}
           >
             <Text style={styles.modalConfirmButtonText}>
-              {isEditing ? "Update" : "Add"}
+              {isEditing ? i18n.t("common.update") : i18n.t("common.add")}
             </Text>
           </Pressable>
         </View>

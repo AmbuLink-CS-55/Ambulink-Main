@@ -1,11 +1,11 @@
 import { Modal, View, Text, Pressable, FlatList, StyleSheet } from
   "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import i18n from "@/languages/i18n";
 
 interface Language {
   id: string;
   label: string;
-  flag: string;
 }
 
 interface LanguageModalProps {
@@ -34,7 +34,7 @@ export default function LanguageModal({
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Language</Text>
+            <Text style={styles.modalTitle}>{i18n.t("settings.appSettings.selectLanguage")}</Text>
             <Pressable onPress={onClose}>
               <Ionicons name="close" size={24} color="#333" />
             </Pressable>
@@ -55,7 +55,6 @@ export default function LanguageModal({
                 }}
               >
                 <View style={styles.languageOption}>
-                  <Text style={styles.languageFlag}>{item.flag}</Text>
                   <Text
                     style={[
                       styles.modalOptionText,

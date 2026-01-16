@@ -1,0 +1,91 @@
+{
+  "common": {
+    "save": "Save Changes",
+    "done": "Done",
+    "cancel": "Cancel",
+    "error": "Error",
+    "add": "Add",
+    "update": "Update",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "back": "Back",
+    "close": "Close",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "pleaseEnterContactNumber": "Please enter a contact number"
+  },
+  "home": {
+    "quickAction": "Quick Action",
+    "bookings": "Bookings",
+    "keepCalm": "Keep Calm",
+    "away": "Away",
+    "firstAidGuides": "First-Aid Guides",
+    "critical": "Critical",
+    "steps": "Steps",
+    "nearestHospital": "Nearest Hospital",
+    "about": "About",
+    "birthdate": "Birthdate",
+    "height": "Height",
+    "weight": "Weight",
+    "contact": "Contact",
+    "mobile": "Mobile",
+    "landline": "Landline",
+    "email": "Email",
+    "book": "Book",
+    "blood": "Blood",
+    "food": "Food",
+    "type": "Type",
+    "allergies": "Allergies"
+  },
+  "login": {
+    "loginAsPatient": "Login as Patient",
+    "loginAsDriver": "Login as Driver",
+    "loginAsEMT": "Login as EMT"
+  },
+  "settings": {
+    "title": "Settings",
+    "personal": {
+      "title": "Personal",
+      "name": "Name",
+      "enterName": "Enter name"
+    },
+    "medical": {
+      "title": "Medical Information",
+      "bloodType": "Blood Type",
+      "allergies": "Allergies",
+      "addAllergies": "Add allergies",
+      "medicalDocuments": "Medical Documents",
+      "uploadDocuments": "Upload documents",
+      "selectAllergies": "Select Allergies",
+      "searchAllergies": "Search allergies...",
+      "selectBloodType": "Select Blood Type"
+    },
+    "emergency": {
+      "title": "Emergency Contacts",
+      "addEmergencyContact": "Add Emergency Contact",
+      "editContact": "Edit Contact",
+      "contactName": "Contact Name",
+      "phoneNumber": "Phone Number",
+      "enterPhoneNumber": "Enter phone number",
+      "exampleName": "e.g., Mom, Dad, Brother"
+    },
+    "appSettings": {
+      "title": "App Settings",
+      "language": "Language",
+      "notifications": "Notifications",
+      "darkMode": "Dark Mode",
+      "selectLanguage": "Select Language"
+    }
+  },
+  "map": {
+    "callAmbulance": "Call Ambulance",
+    "cancelAmbulance": "Cancel Ambulance",
+    "rideId": "Ride ID"
+  },
+  "languages": {
+    "english": "English",
+    "sinhala": "Sinhala",
+    "tamil": "Tamil"
+  }
+}

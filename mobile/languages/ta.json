@@ -1,0 +1,91 @@
+{
+  "common": {
+    "save": "மாற்றங்களை சேமி",
+    "done": "முடிந்தது",
+    "cancel": "ரத்து செய்",
+    "error": "பிழை",
+    "add": "சேர்க்க",
+    "update": "புதுப்பிக்க",
+    "delete": "அழி",
+    "edit": "திருத்து",
+    "search": "தேடு",
+    "back": "பின்",
+    "close": "மூடு",
+    "enabled": "இயக்கப்பட்டது",
+    "disabled": "நிறுத்தப்பட்டது",
+    "pleaseEnterContactNumber": "தயவுசெய்து தொடர்பு எண்ணை உள்ளிடவும்"
+  },
+  "home": {
+    "quickAction": "துரித செயல்",
+    "bookings": "முன்பதிவுகள்",
+    "keepCalm": "அமைதியாக இரு",
+    "away": "தொலை",
+    "firstAidGuides": "முதலுதவி வழிகாட்டி",
+    "critical": "முக்கியம்",
+    "steps": "படி",
+    "nearestHospital": "அருகிலுள்ள மருத்துவமனை",
+    "about": "பற்றி",
+    "birthdate": "பிறந்த தேதி",
+    "height": "உயரம்",
+    "weight": "எடை",
+    "contact": "தொடர்பு",
+    "mobile": "மொபைல்",
+    "landline": "நிலைத்தொலைபேசி",
+    "email": "மின்னஞ்சல்",
+    "book": "புத்தகம்",
+    "blood": "இரத்தம்",
+    "food": "உணவு",
+    "type": "வகை",
+    "allergies": "அலர்ஜி"
+  },
+  "login": {
+    "loginAsPatient": "நோயாளியாக உள்நுழை",
+    "loginAsDriver": "இயக்குனராக உள்நுழை",
+    "loginAsEMT": "EMT ஆக உள்நுழை"
+  },
+  "settings": {
+    "title": "அமைப்புகள்",
+    "personal": {
+      "title": "தனிப்பட்ட",
+      "name": "பெயர்",
+      "enterName": "பெயரை உள்ளிடவும்"
+    },
+    "medical": {
+      "title": "மருத்துவ தகவல்",
+      "bloodType": "இரத்த வகை",
+      "allergies": "அலர்ஜி",
+      "addAllergies": "அலர்ஜி சேர்க்க",
+      "medicalDocuments": "மருத்துவ ஆவணங்கள்",
+      "uploadDocuments": "ஆவணங்களை பதிவேற்றவும்",
+      "selectAllergies": "அலர்ஜி தேர்வு செய்யவும்",
+      "searchAllergies": "அலர்ஜி தேடவும்...",
+      "selectBloodType": "இரத்த வகை தேர்வு செய்யவும்"
+    },
+    "emergency": {
+      "title": "அவசர தொடர்புகள்",
+      "addEmergencyContact": "அவசர தொடர்பை சேர்க்க",
+      "editContact": "தொடர்பை திருத்து",
+      "contactName": "தொடர்பு பெயர்",
+      "phoneNumber": "தொலைபேசி எண்",
+      "enterPhoneNumber": "தொலைபேசி எண்ணை உள்ளிடவும்",
+      "exampleName": "எ.கா., அம்மா, அப்பா, சகோதரன்"
+    },
+    "appSettings": {
+      "title": "அப் அமைப்புகள்",
+      "language": "மொழி",
+      "notifications": "அறிவிப்புகள்",
+      "darkMode": "இருண்ட முறை",
+      "selectLanguage": "மொழியை தேர்வு செய்யவும்"
+    }
+  },
+  "map": {
+    "callAmbulance": "அம்புலன்ஸ் அழை",
+    "cancelAmbulance": "அம்புலன்ஸ் ரத்து செய்",
+    "rideId": "சவாரி ஐடி"
+  },
+  "languages": {
+    "english": "English",
+    "sinhala": "සිංහල",
+    "tamil": "தமிழ்"
+  }
+}

@@ -1,6 +1,7 @@
 import { Modal, View, Text, Pressable, FlatList, StyleSheet } from
   "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import i18n from "@/languages/i18n";
 
 interface BloodTypeModalProps {
   visible: boolean;
@@ -28,7 +29,7 @@ export default function BloodTypeModal({
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Blood Type</Text>
+            <Text style={styles.modalTitle}>{i18n.t("settings.medical.selectBloodType")}</Text>
             <Pressable onPress={onClose}>
               <Ionicons name="close" size={24} color="#333" />
             </Pressable>

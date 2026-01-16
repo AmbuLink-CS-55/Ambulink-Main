@@ -3,6 +3,7 @@ import * as Location from "expo-location";
 import { useEffect, useState, useRef } from "react";
 import { StyleSheet, Text, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import i18n from "@/languages/i18n";
 
 type LatLng = {
   latitude: number;
@@ -153,7 +154,7 @@ export default function Map() {
           disabled={booking}
         >
           <Text style={styles.buttonText}>
-            {booking ? `Ride ID: ${rideId}` : "Call Ambulance"}
+            {booking ? `${i18n.t("map.rideId")}: ${rideId}` : i18n.t("map.callAmbulance")}
           </Text>
           <Text style={styles.statusText}>{status}</Text>
         </TouchableOpacity>

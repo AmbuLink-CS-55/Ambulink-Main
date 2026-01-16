@@ -1,0 +1,91 @@
+{
+  "common": {
+    "save": "වෙනස්කම් සුරකින්න",
+    "done": "අවසන්",
+    "cancel": "අවලංගු කරන්න",
+    "error": "දෝෂය",
+    "add": "එකතු කරන්න",
+    "update": "යාවත්කාලීන කරන්න",
+    "delete": "මකා දමන්න",
+    "edit": "සංස්කරණය",
+    "search": "සෙවීම",
+    "back": "ආපසු",
+    "close": "වසන්න",
+    "enabled": "සක්රිය",
+    "disabled": "අක්රිය",
+    "pleaseEnterContactNumber": "කරුණාකර දුරකථන අංකයක් ඇතුළත් කරන්න"
+  },
+  "home": {
+    "quickAction": "ඉක්මන් ක්රියා",
+    "bookings": "වෙන්කම්",
+    "keepCalm": "සුසුමෙන් සිටින්න",
+    "away": "දුර",
+    "firstAidGuides": "පළමු උදව් මාර්ගෝපදේශ",
+    "critical": "අත්යවශ්ය",
+    "steps": "පියවර",
+    "nearestHospital": "ආසන්නතේ රෝහල",
+    "about": "ගැන",
+    "birthdate": "උපන් දිනය",
+    "height": "උස",
+    "weight": "බර",
+    "contact": "සම්බන්ධතා",
+    "mobile": "ජංගම",
+    "landline": "නිදහස් දුරකථන",
+    "email": "ඊමේල්",
+    "book": "පිටුව",
+    "blood": "රක්ත",
+    "food": "ආහාර",
+    "type": "වර්ගය",
+    "allergies": "ඇලර්ජි"
+  },
+  "login": {
+    "loginAsPatient": "රෝගියා ලෙස පිවිසෙන්න",
+    "loginAsDriver": "රියැදුරු ලෙස පිවිසෙන්න",
+    "loginAsEMT": "EMT ලෙස පිවිසෙන්න"
+  },
+  "settings": {
+    "title": "සැකසුම්",
+    "personal": {
+      "title": "පෞද්ගලික",
+      "name": "නම",
+      "enterName": "නම ඇතුළත් කරන්න"
+    },
+    "medical": {
+      "title": "වෛද්ය තොරතුරු",
+      "bloodType": "රක්ත වර්ගය",
+      "allergies": "ඇලර්ජි",
+      "addAllergies": "ඇලර්ජි එකතු කරන්න",
+      "medicalDocuments": "වෛද්ය ලේඛන",
+      "uploadDocuments": "ලේඛන උඩුගත කරන්න",
+      "selectAllergies": "ඇලර්ජි තෝරන්න",
+      "searchAllergies": "ඇලර්ජි සොයන්න...",
+      "selectBloodType": "රක්ත වර්ගය තෝරන්න"
+    },
+    "emergency": {
+      "title": "හදිසි සම්බන්ධතා",
+      "addEmergencyContact": "හදිසි සම්බන්ධතා එකතු කරන්න",
+      "editContact": "සම්බන්ධතා සංස්කරණය",
+      "contactName": "සම්බන්ධතා නාමය",
+      "phoneNumber": "දුරකථන අංකය",
+      "enterPhoneNumber": "දුරකථන අංකය ඇතුළත් කරන්න",
+      "exampleName": "උදා: අම්මා, පියා, සහෝදරයා"
+    },
+    "appSettings": {
+      "title": "යෙදුම් සැකසුම්",
+      "language": "භාෂාව",
+      "notifications": "දැනුම්දීම",
+      "darkMode": "අඳුරු මාදිළ",
+      "selectLanguage": "භාෂාව තෝරන්න"
+    }
+  },
+  "map": {
+    "callAmbulance": "ආබාධක රථය ඇමතුම",
+    "cancelAmbulance": "ආබාධක රථය අවලංගු කරන්න",
+    "rideId": "රථ අංකය"
+  },
+  "languages": {
+    "english": "English",
+    "sinhala": "සිංහල",
+    "tamil": "தமிழ்"
+  }
+}
