@@ -8,6 +8,7 @@ async function bootstrap() {
 
   app.useWebSocketAdapter(new IoAdapter(app));
 
+  // API Docs setup
   const config = new DocumentBuilder()
     .setTitle("AmbuLink API")
     .setDescription("AmbuLink API docs")
