@@ -2,7 +2,7 @@ import { View, Button } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthStore } from "@/src/auth/AuthContext";
-import i18n from "@/languages/i18n";
+import i18n from "@/src/languages/i18n";;
 
 export default function Login() {
 

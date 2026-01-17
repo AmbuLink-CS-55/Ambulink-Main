@@ -11,7 +11,7 @@ import EmergencyContactModal from "@/components/settings/modals/EmergencyContact
 import LanguageModal from "@/components/settings/modals/LanguageModal";
 import PersonalSection from "@/components/settings/PersonalSection";
 import { SafeAreaView } from "react-native-safe-area-context";
-import i18n from "@/languages/i18n";
+import i18n from "@/src/languages/i18n";;
 import {
   loadSettings,
   saveSettings,

@@ -1,7 +1,7 @@
 import { View, Text, Pressable, TextInput, Image, StyleSheet } from
   "react-native";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
-import i18n from "@/languages/i18n";
+import i18n from "@/src/languages/i18n";;
 
 interface PersonalSectionProps {
   profileName: string;

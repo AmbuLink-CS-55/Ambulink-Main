@@ -2,7 +2,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView } from "react-nativ
 import { Ionicons, FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import i18n from "@/languages/i18n";
+import i18n from "@/src/languages/i18n";;
 
 export default function Home() {
   return (

@@ -1,7 +1,7 @@
 import { Modal, View, Text, Pressable, FlatList, StyleSheet } from
   "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import i18n from "@/languages/i18n";
+import i18n from "@/src/languages/i18n";;
 
 interface BloodTypeModalProps {
   visible: boolean;
