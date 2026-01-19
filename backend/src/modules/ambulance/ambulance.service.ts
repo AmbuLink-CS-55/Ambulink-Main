@@ -5,11 +5,11 @@ import { ambulance } from "../../db/schema";
 import type {
   InsertAmbulanceDto,
   SelectAmbulanceDto,
-} from "../../db/schemas/ambulance.schema";
+} from "../../db/dto/ambulance.schema";
 
 @Injectable()
 export class AmbulanceService {
-  constructor(private db: DbService) {}
+  constructor(private db: DbService) { }
 
   async create(
     createAmbulanceDto: InsertAmbulanceDto

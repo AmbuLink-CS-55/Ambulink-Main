@@ -11,12 +11,12 @@ import { AmbulanceService } from "./ambulance.service";
 import {
   insertAmbulanceSchema,
   type InsertAmbulanceDto,
-} from "../../db/schemas/ambulance.schema";
+} from "../../db/dto/ambulance.schema";
 import { Validate } from "../../common/pipes/zod-validation.pipe";
 
 @Controller("api/ambulances")
 export class AmbulanceController {
-  constructor(private readonly ambulanceService: AmbulanceService) {}
+  constructor(private readonly ambulanceService: AmbulanceService) { }
 
   @Post()
   create(

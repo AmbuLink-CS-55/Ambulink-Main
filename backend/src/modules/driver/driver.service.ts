@@ -5,11 +5,11 @@ import { driver } from "../../db/schema";
 import type {
   InsertDriverDto,
   SelectDriverDto,
-} from "../../db/schemas/driver.schema";
+} from "../../db/dto/driver.schema";
 
 @Injectable()
 export class DriverService {
-  constructor(private db: DbService) {}
+  constructor(private db: DbService) { }
 
   async create(createDriverDto: InsertDriverDto): Promise<SelectDriverDto> {
     const result = await this.db

@@ -5,6 +5,7 @@ import { StyleSheet, Text, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import i18n from "@/src/languages/i18n";
 import { useLocation } from "@/src/hooks/useLocation";
+import socket from "@/src/socket";
 
 type LatLng = {
   latitude: number;
@@ -17,6 +18,16 @@ export default function Map() {
     { latitude: 6.895353174577009, longitude: 79.85387845284518 },
     { latitude: 6.893795771439718, longitude: 79.85671259848431 },
   ];
+
+  async function sendLocation() {
+    // const { location, error, loading } = await useLocation();
+    socket.emit("patient-location")
+  }
+
+  useEffect(() => {
+    socket.on("connect", () => { console.log("ws Connected") })
+    socket.on("message", (msg) => { console.log(msg) })
+  }, [])
 
   const { location, error, loading } = useLocation();
 
@@ -36,7 +47,7 @@ export default function Map() {
             styles.callButton,
           ]}
           activeOpacity={0.8}
-        // onPress={}
+          onPress={() => socket.emit("help", { location })}
         // disabled={}
         >
           <Text style={styles.buttonText}>

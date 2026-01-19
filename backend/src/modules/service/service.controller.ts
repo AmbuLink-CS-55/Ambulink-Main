@@ -11,12 +11,12 @@ import { ServiceService } from "./service.service";
 import {
   insertServiceSchema,
   type InsertServiceDto,
-} from "../../db/schemas/service.schema";
+} from "../../db/dto/service.schema";
 import { Validate } from "../../common/pipes/zod-validation.pipe";
 
 @Controller("api/services")
 export class ServiceController {
-  constructor(private readonly serviceService: ServiceService) {}
+  constructor(private readonly serviceService: ServiceService) { }
 
   @Post()
   create(

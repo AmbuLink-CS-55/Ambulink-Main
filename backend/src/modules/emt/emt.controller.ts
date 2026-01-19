@@ -8,15 +8,12 @@ import {
   Delete,
 } from "@nestjs/common";
 import { EmtService } from "./emt.service";
-import {
-  insertEmtSchema,
-  type InsertEmtDto,
-} from "../../db/schemas/emt.schema";
+import { insertEmtSchema, type InsertEmtDto } from "../../db/dto/emt.schema";
 import { Validate } from "../../common/pipes/zod-validation.pipe";
 
 @Controller("api/emts")
 export class EmtController {
-  constructor(private readonly emtService: EmtService) {}
+  constructor(private readonly emtService: EmtService) { }
 
   @Post()
   create(

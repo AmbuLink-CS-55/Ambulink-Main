@@ -5,11 +5,11 @@ import { user } from "../../db/schema";
 import type {
   InsertUserDto,
   SelectUserDto,
-} from "../../db/schemas/user.schema";
+} from "../../db/dto/user.schema";
 
 @Injectable()
 export class UserService {
-  constructor(private db: DbService) {}
+  constructor(private db: DbService) { }
 
   async create(createUserDto: InsertUserDto): Promise<SelectUserDto> {
     const result = await this.db

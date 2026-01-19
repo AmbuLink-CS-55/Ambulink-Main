@@ -11,12 +11,12 @@ import { DriverService } from "./driver.service";
 import {
   insertDriverSchema,
   type InsertDriverDto,
-} from "../../db/schemas/driver.schema";
+} from "../../db/dto/driver.schema";
 import { Validate } from "../../common/pipes/zod-validation.pipe";
 
 @Controller("api/drivers")
 export class DriverController {
-  constructor(private readonly driverService: DriverService) {}
+  constructor(private readonly driverService: DriverService) { }
 
   @Post()
   create(

@@ -1,4 +1,5 @@
 import { View, ScrollView, Pressable, Text, Alert } from "react-native";
+import { loadSettings, saveSettings, type SettingsData } from "@/src/storage/settingsStorage";
 import { useEffect, useMemo, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { styles } from "@/components/styles";
@@ -12,11 +13,6 @@ import LanguageModal from "@/components/settings/modals/LanguageModal";
 import PersonalSection from "@/components/settings/PersonalSection";
 import { SafeAreaView } from "react-native-safe-area-context";
 import i18n from "@/src/languages/i18n";;
-import {
-  loadSettings,
-  saveSettings,
-  type SettingsData,
-} from "@/src/storage/settingsStorage";
 
 const BLOOD_TYPES = ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"];
 const ALLERGIES_LIST = [
