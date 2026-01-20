@@ -1,0 +1,109 @@
+erDiagram
+  USERS {
+    BIGINT user_id PK
+    VARCHAR full_name
+    VARCHAR phone_number UK
+    VARCHAR email UK
+    VARCHAR password_hash
+    DATETIME created_at
+    DATETIME updated_at
+    BOOLEAN is_active
+    DATETIME last_login_at
+  }
+
+  Dispatcher {
+    user_id
+    BIGINT provider_id FK
+  }
+
+  Patient {
+    user_id
+    BIGINT provider_id FK
+  }
+
+  DRIVERS {
+    BIGINT user_id PK,FK
+    BIGINT provider_id FK
+    VARCHAR license_number UK
+    DATETIME license_expiry
+  }
+
+  AMBULANCE_PROVIDERS {
+    BIGINT provider_id PK
+    VARCHAR name
+    VARCHAR provider_type  "PUBLIC|PRIVATE"
+    VARCHAR hotline_number
+    VARCHAR address
+    BOOLEAN is_active
+    DATETIME created_at
+    DATETIME updated_at
+  }
+
+
+  AMBULANCES {
+    BIGINT ambulance_id PK
+    BIGINT provider_id FK
+    VARCHAR vehicle_number
+    VARCHAR equipment_level
+    VARCHAR status  "AVAILABLE|BUSY|OFFLINE"
+    DATETIME created_at
+    DATETIME updated_at
+    DATETIME last_update_time
+    DECIMAL current_latitude
+    DECIMAL current_longitude
+  }
+
+  // radis
+  AMBULANCE_LOCATIONS {
+    BIGINT ambulance_id FK
+    DECIMAL latitude
+    DECIMAL longitude
+    DATETIME recorded_at
+  }
+
+  HOSPITALS {
+    BIGINT hospital_id PK
+    VARCHAR name
+    VARCHAR hospital_type  "PUBLIC|PRIVATE"
+    VARCHAR address
+    VARCHAR phone_number
+    DECIMAL latitude
+    DECIMAL longitude
+    BOOLEAN is_active
+  }
+
+  HELPLINES {
+    BIGINT helpline_id PK
+    VARCHAR name
+    VARCHAR phone_number
+    VARCHAR description
+    BOOLEAN is_active
+  }
+
+  BOOKING_STATUSES {
+    "REQUESTED|ASSIGNED|PICKEDUP|COMPLETED|CANCELLED"
+  }
+
+  BOOKINGS {
+    BIGINT booking_id PK
+    BIGINT patient_id FK
+    BIGINT provider_id FK
+    BIGINT ambulance_id FK
+    BIGINT driver_id FK
+    status
+    VARCHAR emergency_type
+    DATETIME requested_at
+    DATETIME assigned_at
+    DATETIME pickedup_at
+    DATETIME arrived_at
+    DATETIME completed_at
+    VARCHAR pickup_address
+    DECIMAL pickup_latitude
+    DECIMAL pickup_longitude
+    VARCHAR drop_address
+    DECIMAL drop_latitude
+    DECIMAL drop_longitude
+    DECIMAL fare_estimate
+    DECIMAL fare_final
+    VARCHAR cancellation_reason
+  }
