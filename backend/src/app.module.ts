@@ -4,20 +4,18 @@ import { RedisClientOptions } from "redis";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { DbModule } from "./db/db.module";
-import { ServiceModule } from "./modules/service/service.module";
-import { UserModule } from "./modules/user/user.module";
-import { DriverModule } from "./modules/driver/driver.module";
-import { EmtModule } from "./modules/emt/emt.module";
+import { AmbulanceProviderModule } from "./modules/ambulance_providers/ambulance-provider.module";
+import { PatientModule } from "./modules/patients/patient.module";
+import { DriverModule } from "./modules/drivers/driver.module";
 import { AmbulanceModule } from "./modules/ambulance/ambulance.module";
 import { WsModule } from "./modules/ws/ws.module";
 
 @Module({
   imports: [
     DbModule,
-    ServiceModule,
-    UserModule,
+    AmbulanceProviderModule,
+    PatientModule,
     DriverModule,
-    EmtModule,
     AmbulanceModule,
     CacheModule.registerAsync<RedisClientOptions>({
       useFactory: () => ({

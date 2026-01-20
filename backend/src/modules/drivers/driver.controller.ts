@@ -6,13 +6,12 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from "@nestjs/common";
 import { DriverService } from "./driver.service";
-import {
-  insertDriverSchema,
-  type InsertDriverDto,
-} from "../../db/dto/driver.schema";
+import { insertDriverSchema } from "../../db/dto/driver.schema";
 import { Validate } from "../../common/pipes/zod-validation.pipe";
+import type { InsertDriverDto } from "../../db/dto/driver.schema";
 
 @Controller("api/drivers")
 export class DriverController {
@@ -27,13 +26,18 @@ export class DriverController {
   }
 
   @Get()
-  findAll() {
-    return this.driverService.findAll();
+  findAll(
+    @Query("providerId") providerId?: string,
+    @Query("isActive") isActive?: string
+  ) {
+    const isActiveBool =
+      isActive !== undefined ? isActive === "true" : undefined;
+    return this.driverService.findAll(providerId, isActiveBool);
   }
 
   @Get(":id")
   findOne(@Param("id") id: string) {
-    return this.driverService.findOne(+id);
+    return this.driverService.findOne(id);
   }
 
   @Patch(":id")
@@ -42,11 +46,11 @@ export class DriverController {
     @Body(Validate(insertDriverSchema.partial()))
     body: Partial<InsertDriverDto>
   ) {
-    return this.driverService.update(+id, body);
+    return this.driverService.update(id, body);
   }
 
   @Delete(":id")
   remove(@Param("id") id: string) {
-    return this.driverService.remove(+id);
+    return this.driverService.remove(id);
   }
 }

@@ -1,12 +1,12 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
-import { user } from "../schema";
+import { users } from "../schema";
 
-export const insertUserSchema = createInsertSchema(user).omit({
+export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
 });
 
-export const selectUserSchema = createSelectSchema(user);
+export const selectUserSchema = createSelectSchema(users);
 
 export type InsertUserDto = z.infer<typeof insertUserSchema>;
 export type SelectUserDto = z.infer<typeof selectUserSchema>;

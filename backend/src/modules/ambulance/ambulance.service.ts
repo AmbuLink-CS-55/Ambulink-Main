@@ -9,7 +9,7 @@ import type {
 
 @Injectable()
 export class AmbulanceService {
-  constructor(private db: DbService) { }
+  constructor(private db: DbService) {}
 
   async create(
     createAmbulanceDto: InsertAmbulanceDto
@@ -26,7 +26,7 @@ export class AmbulanceService {
     return this.db.getDb().select().from(ambulance);
   }
 
-  async findOne(id: number): Promise<SelectAmbulanceDto> {
+  async findOne(id: string): Promise<SelectAmbulanceDto> {
     const result = await this.db
       .getDb()
       .select()
@@ -39,7 +39,7 @@ export class AmbulanceService {
   }
 
   async update(
-    id: number,
+    id: string,
     updateAmbulanceDto: Partial<InsertAmbulanceDto>
   ): Promise<SelectAmbulanceDto> {
     const result = await this.db
@@ -54,7 +54,7 @@ export class AmbulanceService {
     return result[0];
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: string): Promise<void> {
     await this.findOne(id); // Check if exists
     await this.db.getDb().delete(ambulance).where(eq(ambulance.id, id));
   }

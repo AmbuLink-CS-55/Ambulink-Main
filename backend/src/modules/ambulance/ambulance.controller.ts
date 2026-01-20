@@ -16,7 +16,7 @@ import { Validate } from "../../common/pipes/zod-validation.pipe";
 
 @Controller("api/ambulances")
 export class AmbulanceController {
-  constructor(private readonly ambulanceService: AmbulanceService) { }
+  constructor(private readonly ambulanceService: AmbulanceService) {}
 
   @Post()
   create(
@@ -33,7 +33,7 @@ export class AmbulanceController {
 
   @Get(":id")
   findOne(@Param("id") id: string) {
-    return this.ambulanceService.findOne(+id);
+    return this.ambulanceService.findOne(id);
   }
 
   @Patch(":id")
@@ -42,11 +42,11 @@ export class AmbulanceController {
     @Body(Validate(insertAmbulanceSchema.partial()))
     body: Partial<InsertAmbulanceDto>
   ) {
-    return this.ambulanceService.update(+id, body);
+    return this.ambulanceService.update(id, body);
   }
 
   @Delete(":id")
   remove(@Param("id") id: string) {
-    return this.ambulanceService.remove(+id);
+    return this.ambulanceService.remove(id);
   }
 }

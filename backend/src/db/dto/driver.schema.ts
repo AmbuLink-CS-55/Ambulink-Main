@@ -1,13 +1,22 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
-import { driver } from "../schema";
+import { users, ambulanceProviders } from "../schema";
+import { uuid } from "drizzle-orm/pg-core";
 
-export const insertDriverSchema = createInsertSchema(driver).omit({
-  id: true,
-  createdAt: true,
-});
+export const insertDriverSchema = createInsertSchema(users)
+  .omit({
+    id: true,
+    role: true,
+  })
+  .extend({
+    role: z.literal("DRIVER"),
+    providerId: uuid("provider_id").references(() => ambulanceProviders.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
+  });
 
-export const selectDriverSchema = createSelectSchema(driver);
+export const selectDriverSchema = createSelectSchema(users);
 
 export type InsertDriverDto = z.infer<typeof insertDriverSchema>;
 export type SelectDriverDto = z.infer<typeof selectDriverSchema>;
