@@ -42,12 +42,12 @@ npm run studio
 - `npm run start` should work with every project.
 
 # Useful Docs
-expo: https://docs.expo.dev/
-nestjs: https://docs.nestjs.com/ 
-uniwind: https://uniwind.dev/
-tailwind: https://tailwindcss.com/docs/
-drizzle: https://orm.drizzle.team/docs/overview
-socketio: https://socket.io/
-postgis: https://postgis.net/docs/manual-3.6/
-postgis with drizzle: https://orm.drizzle.team/docs/extensions/pg#postgis, https://orm.drizzle.team/docs/guides/postgis-geometry-point
-ioredis: https://ioredis.com/
+- expo: https://docs.expo.dev/
+- nestjs: https://docs.nestjs.com/ 
+- uniwind: https://uniwind.dev/
+- tailwind: https://tailwindcss.com/docs/
+- drizzle: https://orm.drizzle.team/docs/overview
+- socketio: https://socket.io/
+- postgis: https://postgis.net/docs/manual-3.6/
+- postgis with drizzle: https://orm.drizzle.team/docs/extensions/pg#postgis, https://orm.drizzle.team/docs/guides-/postgis-geometry-point
+- ioredis: https://ioredis.com/
