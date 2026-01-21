@@ -30,13 +30,21 @@ export default function Map() {
   }, [])
 
   const { location, error, loading } = useLocation();
+  console.log("user location:",location)
+
+  // comment this out this if map takes long to load, but the map will use the hard coded values.
+  // getting user location on cold start is slow, for a bunch of reasons, we should find a better way after mvp
+  // if (loading) return <Text>Loading location...</Text>;
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <UserMap
         driverLocations={drivers}
         userLocation={
-          location || {
+          location ? {
+            latitude: location.latitude,
+            longitude: location.longitude,
+          } : {
             latitude: 6.898527830579406,
             longitude: 79.85385178316076,
           }

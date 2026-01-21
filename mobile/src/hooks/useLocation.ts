@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import * as Location from 'expo-location';
+import { LatLng } from 'react-native-maps';
 
-interface LocationData {
-  latitude: number;
-  longitude: number;
+type LocationData = LatLng & {
   accuracy: number | null;
 }
 
@@ -22,7 +21,12 @@ export const useLocation = () => {
           return;
         }
 
-        const currentLocation = await Location.getCurrentPositionAsync({});
+        const currentLocation = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+          timeInterval: 5000,
+          mayShowUserSettingsDialog: false,
+        });
+
         setLocation({
           latitude: currentLocation.coords.latitude,
           longitude: currentLocation.coords.longitude,
