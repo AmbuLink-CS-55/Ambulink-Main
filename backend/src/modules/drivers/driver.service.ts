@@ -1,15 +1,15 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq, and } from "drizzle-orm";
-import { DbService } from "../../db/db.service";
-import { users } from "../../db/schema";
+import { DbService } from "@/database/db.service";
+import { users } from "@/database/schema";
 import type {
   InsertDriverDto,
   SelectDriverDto,
-} from "../../db/dto/driver.schema";
+} from "@/database/dto/driver.schema";
 
 @Injectable()
 export class DriverService {
-  constructor(private db: DbService) { }
+  constructor(private db: DbService) {}
 
   async create(createDriverDto: InsertDriverDto): Promise<SelectDriverDto> {
     const result = await this.db

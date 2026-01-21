@@ -1,15 +1,15 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq, and } from "drizzle-orm";
-import { DbService } from "../../db/db.service";
-import { users } from "../../db/schema";
+import { DbService } from "@/database/db.service";
+import { users } from "@/database/schema";
 import type {
   InsertPatientDto,
   SelectPatientDto,
-} from "../../db/dto/patient.schema";
+} from "@/database/dto/patient.schema";
 
 @Injectable()
 export class PatientService {
-  constructor(private db: DbService) { }
+  constructor(private db: DbService) {}
 
   async create(createPatientDto: InsertPatientDto): Promise<SelectPatientDto> {
     const patientData = {

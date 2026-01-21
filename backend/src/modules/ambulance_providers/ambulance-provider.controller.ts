@@ -11,8 +11,8 @@ import { AmbulanceProviderService } from "./ambulance-provider.service";
 import {
   insertAmbulanceProviderSchema,
   type InsertAmbulanceProviderDto,
-} from "../../db/dto/ambulance-provider.schema";
-import { Validate } from "../../common/pipes/zod-validation.pipe";
+} from "@/database/dto/ambulance-provider.schema";
+import { Validate } from "@/common/pipes/zod-validation.pipe";
 
 @Controller("api/ambulance-providers")
 export class AmbulanceProviderController {

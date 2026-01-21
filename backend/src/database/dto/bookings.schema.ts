@@ -1,6 +1,6 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
-import { bookings } from "../schema";
+import { bookings } from "@/database/schema";
 
 export const insertBookingSchema = createInsertSchema(bookings).omit({
   id: true,

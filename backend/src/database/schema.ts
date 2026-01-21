@@ -8,6 +8,7 @@ import {
   uniqueIndex,
   index,
   pgEnum,
+  geometry,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -103,11 +104,12 @@ export const ambulance = pgTable(
       .notNull()
       .defaultNow(),
     lastUpdateTime: timestamp("last_update_time", { withTimezone: true }),
-    currentLatitude: decimal("current_latitude", { precision: 10, scale: 7 }),
-    currentLongitude: decimal("current_longitude", {
-      precision: 10,
-      scale: 7,
-    }),
+    currentLocation: geometry("current_location", { mode: "xy", srid: 4326 }),
+    // currentLatitude: decimal("current_latitude", { precision: 10, scale: 7 }),
+    // currentLongitude: decimal("current_longitude", {
+    //   precision: 10,
+    //   scale: 7,
+    // }),
   },
   (t) => ({
     vehicleNumberUnique: uniqueIndex("vehicle_number_unique").on(
@@ -123,8 +125,9 @@ export const hospitals = pgTable("hospitals", {
   hospitalType: varchar("hospital_type", { length: 20 }).notNull(), // or enum
   address: varchar("address", { length: 500 }),
   phoneNumber: varchar("phone_number", { length: 50 }),
-  latitude: decimal("latitude", { precision: 10, scale: 7 }),
-  longitude: decimal("longitude", { precision: 10, scale: 7 }),
+  location: geometry("location", { mode: "xy", srid: 4326 }),
+  // latitude: decimal("latitude", { precision: 10, scale: 7 }),
+  // longitude: decimal("longitude", { precision: 10, scale: 7 }),
   isActive: boolean("is_active").notNull().default(true),
 });
 
@@ -149,8 +152,9 @@ export const bookings = pgTable(
       }),
 
     pickupAddress: varchar("pickup_address", { length: 500 }).notNull(),
-    pickupLatitude: decimal("pickup_latitude", { precision: 10, scale: 7 }),
-    pickupLongitude: decimal("pickup_longitude", { precision: 10, scale: 7 }),
+    pickupLocation: geometry("pickup_location", { mode: "xy", srid: 4326 }),
+    // pickupLatitude: decimal("pickup_latitude", { precision: 10, scale: 7 }),
+    // pickupLongitude: decimal("pickup_longitude", { precision: 10, scale: 7 }),
 
     status: bookingStatusEnum("status").notNull().default("REQUESTED"),
 

@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
-import { DbService } from "../../db/db.service";
-import { ambulanceProviders } from "../../db/schema";
+import { DbService } from "@/database/db.service";
+import { ambulanceProviders } from "@/database/schema";
 import type {
   InsertAmbulanceProviderDto,
   SelectAmbulanceProviderDto,
-} from "../../db/dto/ambulance-provider.schema";
+} from "@/database/dto/ambulance-provider.schema";
 
 @Injectable()
 export class AmbulanceProviderService {

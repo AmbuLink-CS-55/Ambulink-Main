@@ -9,13 +9,13 @@ import {
   Query,
 } from "@nestjs/common";
 import { DriverService } from "./driver.service";
-import { insertDriverSchema } from "../../db/dto/driver.schema";
-import { Validate } from "../../common/pipes/zod-validation.pipe";
-import type { InsertDriverDto } from "../../db/dto/driver.schema";
+import { insertDriverSchema } from "@/database/dto/driver.schema";
+import { Validate } from "@/common/pipes/zod-validation.pipe";
+import type { InsertDriverDto } from "@/database/dto/driver.schema";
 
 @Controller("api/drivers")
 export class DriverController {
-  constructor(private readonly driverService: DriverService) { }
+  constructor(private readonly driverService: DriverService) {}
 
   @Post()
   create(

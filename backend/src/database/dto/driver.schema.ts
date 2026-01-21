@@ -1,6 +1,6 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
-import { users, ambulanceProviders } from "../schema";
+import { users, ambulanceProviders } from "@/database/schema";
 import { uuid } from "drizzle-orm/pg-core";
 
 export const insertDriverSchema = createInsertSchema(users)

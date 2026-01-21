@@ -9,13 +9,13 @@ import {
   Query,
 } from "@nestjs/common";
 import { PatientService } from "./patient.service";
-import { insertPatientSchema } from "../../db/dto/patient.schema";
-import { Validate } from "../../common/pipes/zod-validation.pipe";
-import type { InsertPatientDto } from "../../db/dto/patient.schema";
+import { insertPatientSchema } from "@/database/dto/patient.schema";
+import { Validate } from "@/common/pipes/zod-validation.pipe";
+import type { InsertPatientDto } from "@/database/dto/patient.schema";
 
 @Controller("api/patients")
 export class PatientController {
-  constructor(private readonly patientService: PatientService) { }
+  constructor(private readonly patientService: PatientService) {}
 
   @Post()
   create(

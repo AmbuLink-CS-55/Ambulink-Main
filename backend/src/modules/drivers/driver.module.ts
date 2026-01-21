@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { DbModule } from "../../db/db.module";
+import { DbModule } from "@/database/db.module";
 import { DriverController } from "./driver.controller";
 import { DriverService } from "./driver.service";
 
