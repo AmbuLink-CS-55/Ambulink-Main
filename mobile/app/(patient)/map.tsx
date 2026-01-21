@@ -5,7 +5,7 @@ import { StyleSheet, Text, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import i18n from "@/src/languages/i18n";
 import { useLocation } from "@/src/hooks/useLocation";
-import socket from "@/src/socket";
+import { socket } from "@/src/socket";
 
 type LatLng = {
   latitude: number;
@@ -26,7 +26,7 @@ export default function Map() {
 
   useEffect(() => {
     socket.on("connect", () => { console.log("ws Connected") })
-    socket.on("message", (msg) => { console.log(msg) })
+    socket.on("message", (msg: string) => { console.log(msg) })
   }, [])
 
   const { location, error, loading } = useLocation();

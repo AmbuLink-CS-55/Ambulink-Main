@@ -1,21 +1,8 @@
-import { View, Text, Button } from "react-native";
-import { Link, useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Home() {
-  const router = useRouter();
 
-  return (
-    <View style={{ padding: 24 }}>
-      <Text>Home</Text>
-
-      <Button
-        title="Go to Details (imperative)"
-        onPress={() => router.push("/details")}
-      />
-
-      <Link href="/guid" style={{ marginTop: 16 }}>
-        Go to Details (Link)
-      </Link>
-    </View>
-  );
+return (
+  <SafeAreaView></SafeAreaView>
+)
 }

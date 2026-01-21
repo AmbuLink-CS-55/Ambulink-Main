@@ -1,6 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// NOTE: should move types somewhere else
 export type EmergencyContact = {
   id: number;
   number: string;
@@ -18,11 +17,22 @@ export type SettingsData = {
   darkMode: boolean;
 };
 
+export const defaultSettings: SettingsData = {
+  profileName: "",
+  profileImage: null,
+  bloodType: "",
+  selectedAllergies: [],
+  emergencyContacts: [{ id: 1, number: "119", name: "Police" }],
+  language: "en",
+  notifications: true,
+  darkMode: false,
+};
+
 const KEY = "ambulink:settings:v1";
 
-export async function loadSettings(): Promise<SettingsData | null> {
+export async function loadSettings(): Promise<SettingsData> {
   const raw = await AsyncStorage.getItem(KEY);
-  return raw ? (JSON.parse(raw) as SettingsData) : null;
+  return raw ? { ...defaultSettings, ...JSON.parse(raw) } : defaultSettings;
 }
 
 export async function saveSettings(data: SettingsData): Promise<void> {
