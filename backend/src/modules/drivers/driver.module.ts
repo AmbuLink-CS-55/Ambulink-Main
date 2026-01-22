@@ -1,11 +1,10 @@
 import { Module } from "@nestjs/common";
-import { DbModule } from "@/database/db.module";
 import { DriverController } from "./driver.controller";
 import { DriverService } from "./driver.service";
+import { DbService } from "@/database/db.service";
 
 @Module({
-  imports: [DbModule],
   controllers: [DriverController],
-  providers: [DriverService],
+  providers: [DriverService, DbService],
 })
 export class DriverModule {}

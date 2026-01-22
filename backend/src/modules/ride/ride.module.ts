@@ -2,8 +2,9 @@ import { Module } from "@nestjs/common";
 import { RideGateway } from "./ride.gateway";
 import { DbService } from "@/database/db.service";
 import { RedisService } from "@/database/redis.service";
+import { AmbulanceService } from "../ambulance/ambulance.service";
 
 @Module({
-  providers: [RedisService, RideGateway, DbService],
+  providers: [RedisService, RideGateway, DbService, AmbulanceService],
 })
-export class WsModule {}
+export class RideModule{}

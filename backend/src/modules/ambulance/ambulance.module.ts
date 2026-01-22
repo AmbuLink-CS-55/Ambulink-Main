@@ -1,11 +1,11 @@
 import { Module } from "@nestjs/common";
-import { DbModule } from "@/database/db.module";
 import { AmbulanceController } from "./ambulance.controller";
 import { AmbulanceService } from "./ambulance.service";
+import { RedisService } from "@/database/redis.service";
+import { DbService } from "@/database/db.service";
 
 @Module({
-  imports: [DbModule],
   controllers: [AmbulanceController],
-  providers: [AmbulanceService],
+  providers: [AmbulanceService, DbService, RedisService],
 })
 export class AmbulanceModule {}

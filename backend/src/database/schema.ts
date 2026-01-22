@@ -30,6 +30,7 @@ export const ambulanceStatusEnum = pgEnum("ambulance_status", [
 export const bookingStatusEnum = pgEnum("booking_status", [
   "REQUESTED",
   "ASSIGNED",
+  "ARRIVED",
   "PICKEDUP",
   "COMPLETED",
   "CANCELLED",
@@ -145,7 +146,6 @@ export const bookings = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
 
     patientId: uuid("patient_id")
-      .notNull()
       .references(() => users.id, {
         onDelete: "restrict",
         onUpdate: "cascade",
