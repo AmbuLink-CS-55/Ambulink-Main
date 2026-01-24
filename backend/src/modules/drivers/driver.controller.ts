@@ -9,9 +9,9 @@ import {
   Query,
 } from "@nestjs/common";
 import { DriverService } from "./driver.service";
-import { insertDriverSchema } from "@/database/dto/driver.schema";
+import { insertDriverSchema } from "@/common/dto/driver.schema";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
-import type { InsertDriverDto } from "@/database/dto/driver.schema";
+import type { InsertDriverDto } from "@/common/dto/driver.schema";
 
 @Controller("api/drivers")
 export class DriverController {

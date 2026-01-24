@@ -5,7 +5,7 @@ import { ambulanceProviders } from "@/database/schema";
 import type {
   InsertAmbulanceProviderDto,
   SelectAmbulanceProviderDto,
-} from "@/database/dto/ambulance-provider.schema";
+} from "@/common/dto/ambulance-provider.schema";
 
 @Injectable()
 export class AmbulanceProviderService {

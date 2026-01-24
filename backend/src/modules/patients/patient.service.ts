@@ -5,7 +5,7 @@ import { users } from "@/database/schema";
 import type {
   InsertPatientDto,
   SelectPatientDto,
-} from "@/database/dto/patient.schema";
+} from "@/common/dto/patient.schema";
 
 @Injectable()
 export class PatientService {

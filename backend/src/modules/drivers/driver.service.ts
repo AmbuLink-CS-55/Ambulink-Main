@@ -5,7 +5,7 @@ import { users } from "@/database/schema";
 import type {
   InsertDriverDto,
   SelectDriverDto,
-} from "@/database/dto/driver.schema";
+} from "@/common/dto/driver.schema";
 
 @Injectable()
 export class DriverService {

@@ -5,7 +5,7 @@ import { ambulance } from "@/database/schema";
 import type {
   InsertAmbulanceDto,
   SelectAmbulanceDto,
-} from "@/database/dto/ambulance.schema";
+} from "@/common/dto/ambulance.schema";
 import Redis from "ioredis";
 import { RedisService } from "@/database/redis.service";
 

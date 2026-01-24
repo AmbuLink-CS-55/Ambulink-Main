@@ -9,9 +9,9 @@ import {
   Query,
 } from "@nestjs/common";
 import { PatientService } from "./patient.service";
-import { insertPatientSchema } from "@/database/dto/patient.schema";
+import { insertPatientSchema } from "@/common/dto/patient.schema";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
-import type { InsertPatientDto } from "@/database/dto/patient.schema";
+import type { InsertPatientDto } from "@/common/dto/patient.schema";
 
 @Controller("api/patients")
 export class PatientController {
