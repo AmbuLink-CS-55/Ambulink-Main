@@ -1,7 +1,7 @@
 import { SocketClientCreator } from "@/src/socket";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Alert, Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Socket } from "socket.io-client";
@@ -11,7 +11,8 @@ import { useLocation } from "@/src/hooks/useLocation";
 type Patient = {
   name: string;
   lat: number;
-  lng: number
+  lng: number;
+  phone?: string;
   // address: string;
 }
 type Hospital = {
@@ -37,6 +38,14 @@ export default function Home() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [currentRide, setCurrentRide] = useState<CurrentRide | null>(null);
 
+  const handleCall = (phoneNumber?: string) => {
+    if (!phoneNumber) {
+      Alert.alert("Error", "No phone number available for this patient");
+      return;
+    }
+    Linking.openURL(`tel:${phoneNumber}`);
+  };
+
   useEffect(() => {
     const initSocket = async () => {
       try {
@@ -59,6 +68,10 @@ export default function Home() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+      >
       <View className="p-4">
         <Text className="text-2xl font-bold text-gray-800 mb-4">Current Activity</Text>
 
@@ -118,22 +131,30 @@ export default function Home() {
           </View>
         </View>
 
-        <View className="mt-6">
-            <TouchableOpacity
-              onPress={() => socket?.emit("driver:arrived", { driverId: "1" })}
-              className="p-4 bg-blue-500 rounded-xl items-center"
-            >
-              <Text className="text-white font-bold">Arrived</Text>
-            </TouchableOpacity>
+        <View className="mt-3">
+          <TouchableOpacity
+            onPress={() => socket?.emit("driver:arrived", { driverId: "1" })}
+            className="p-4 mt-3 bg-white rounded-xl items-center"
+          >
+            <Text className="text-black font-bold">📞 Call Patient</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => socket?.emit("driver:completed", { driverId: "1" })}
-              className="p-4 mt-3 bg-gray-800 rounded-xl items-center"
-            >
-              <Text className="text-white font-bold">Complete Ride</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => socket?.emit("driver:arrived", { driverId: "1" })}
+            className="p-4 mt-3 bg-white rounded-xl items-center"
+          >
+            <Text className="text-black font-bold">Arrived</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => socket?.emit("driver:completed", { driverId: "1" })}
+            className="p-4 mt-3 bg-white rounded-xl items-center"
+          >
+            <Text className="text-black font-bold">Complete Ride</Text>
+          </TouchableOpacity>
           </View>
       </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
