@@ -8,16 +8,15 @@ import {
 } from "@/src/storage/settingsStorage";
 import { useEffect, useState, useCallback, useRef } from "react";
 import * as ImagePicker from "expo-image-picker";
-import { documentDirectory, deleteAsync, File } from "expo-file-system";
 import { styles } from "@/components/styles";
-import AppSettingsSection from "@/components/settings/AppSettingsSection";
-import EmergencyContactsSection from "@/components/settings/EmergencyContactsSection";
-import MedicalSection from "@/components/settings/MedicalSection";
-import AllergiesModal from "@/components/settings/modals/AllergiesModal";
-import BloodTypeModal from "@/components/settings/modals/BloodTypeModal";
-import EmergencyContactModal from "@/components/settings/modals/EmergencyContactModal";
-import LanguageModal from "@/components/settings/modals/LanguageModal";
-import PersonalSection from "@/components/settings/PersonalSection";
+import AppSettingsSection from "@/components/patient/settings/AppSettingsSection";
+import EmergencyContactsSection from "@/components/patient/settings/EmergencyContactsSection";
+import MedicalSection from "@/components/patient/settings/MedicalSection";
+import AllergiesModal from "@/components/patient/settings/modals/AllergiesModal";
+import BloodTypeModal from "@/components/patient/settings/modals/BloodTypeModal";
+import EmergencyContactModal from "@/components/patient/settings/modals/EmergencyContactModal";
+import LanguageModal from "@/components/patient/settings/modals/LanguageModal";
+import PersonalSection from "@/components/patient/settings/PersonalSection";
 import { SafeAreaView } from "react-native-safe-area-context";
 import i18n from "@/src/languages/i18n";
 
@@ -46,20 +45,21 @@ const LANGUAGES = [
 
 export default function Settings() {
   const [loaded, setLoaded] = useState(false);
-  const [settings, setSettings] = useState<SettingsData>(defaultSettings);
 
+  // Modals
   const [bloodTypeModal, setBloodTypeModal] = useState(false);
   const [allergiesModal, setAllergiesModal] = useState(false);
   const [allergiesSearch, setAllergiesSearch] = useState("");
   const [emergencyContactModal, setEmergencyContactModal] = useState(false);
   const [languageModal, setLanguageModal] = useState(false);
 
+  // Data
+  const [settings, setSettings] = useState<SettingsData>(defaultSettings);
   const [contactName, setContactName] = useState("");
   const [emergencyContactNumber, setEmergencyContactNumber] = useState("");
   const [editingContactId, setEditingContactId] = useState<number | null>(null);
 
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
+  // prevents rerender
   const updateSetting = useCallback(
     <K extends keyof SettingsData>(key: K, value: SettingsData[K]) => {
       setSettings((prev) => ({ ...prev, [key]: value }));
@@ -82,57 +82,6 @@ export default function Settings() {
       }
     })();
   }, []);
-
-  useEffect(() => {
-    if (!loaded) return;
-
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-
-    saveTimeoutRef.current = setTimeout(async () => {
-      try {
-        await saveSettings(settings);
-      } catch {
-        Alert.alert(i18n.t("common.error"), "Failed to save settings");
-      }
-    }, 500);
-
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
-  }, [settings, loaded]);
-
-  const handlePickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: [ImagePicker.MediaType.IMAGE],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled) {
-      try {
-        const uri = result.assets[0].uri;
-        const filename = `profile-${Date.now()}.jpg`;
-        const dest = `${documentDirectory}${filename}`;
-
-        if (settings.profileImage) {
-          await deleteAsync(settings.profileImage, { idempotent: true });
-        }
-
-        const sourceFile = new File(uri);
-        const destFile = new File(dest);
-        await sourceFile.copyAsync(destFile);
-
-        updateSetting("profileImage", dest);
-      } catch {
-        Alert.alert(i18n.t("common.error"), "Failed to save image");
-      }
-    }
-  };
 
   const handleAddAllergy = (allergy: string) => {
     if (!settings.selectedAllergies.includes(allergy)) {
@@ -211,8 +160,8 @@ export default function Settings() {
   if (!loaded) {
     return (
       <SafeAreaView className="flex-1">
-        <View className="flex-1 items-center justify-center">
-          <Text>Loading...</Text>
+        <View className="flex-1 items-center justify-center align-middle h-screen w-screen">
+          <Text className="font-bold">Loading...</Text>
         </View>
       </SafeAreaView>
     );
@@ -221,15 +170,15 @@ export default function Settings() {
   return (
     <SafeAreaView className="flex-1">
       <ScrollView className="px-4 py-7">
-        <View style={styles.header}>
+        <View style={styles.header} className="mb-24">
           <Text style={styles.headerTitle}>{i18n.t("settings.title")}</Text>
         </View>
 
         <PersonalSection
           profileName={settings.profileName}
           setProfileName={(v) => updateSetting("profileName", v)}
-          profileImage={settings.profileImage}
-          onPickImage={handlePickImage}
+          profileMobile={settings.profileMobile}
+          setProfileMobile={(v) => updateSetting("profileMobile", v)}
         />
 
         <MedicalSection

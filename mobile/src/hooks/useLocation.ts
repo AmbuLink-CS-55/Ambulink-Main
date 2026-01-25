@@ -20,6 +20,12 @@ export const useLocation = () => {
           setLoading(false);
           return;
         }
+        const cached = await Location.getLastKnownPositionAsync();
+        if (cached) setLocation({
+          latitude: cached.coords.latitude,
+          longitude: cached.coords.longitude,
+          accuracy: cached.coords.accuracy,
+        });
 
         const currentLocation = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,

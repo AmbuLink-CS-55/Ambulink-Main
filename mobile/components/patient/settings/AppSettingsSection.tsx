@@ -12,9 +12,9 @@ interface AppSettingsSectionProps {
 }
 
 const LANGUAGES = [
-  { id: "en", label: i18n.t("languages.english"), flag: "🇬🇧" },
-  { id: "si", label: i18n.t("languages.sinhala"), flag: "🇱🇰" },
-  { id: "ta", label: i18n.t("languages.tamil"), flag: "🇮🇳" },
+  { id: "en", label: i18n.t("languages.english")},
+  { id: "si", label: i18n.t("languages.sinhala")},
+  { id: "ta", label: i18n.t("languages.tamil")},
 ];
 
 const styles = StyleSheet.create({

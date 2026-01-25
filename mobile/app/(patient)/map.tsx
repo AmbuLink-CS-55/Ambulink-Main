@@ -6,6 +6,7 @@ import i18n from "@/src/languages/i18n";
 import { useLocation } from "@/src/hooks/useLocation";
 import { SocketClientCreator } from "@/src/socket";
 import MapOptions from "../../components/patient/MapOptions";
+import { Text } from "react-native";
 
 type LatLng = {
   lat: number;
@@ -38,7 +39,7 @@ export default function Map() {
     { lat: 6.893795771439718, lng: 79.85671259848431 },
   ];
 
-  const [locationState, setLocationState] = useState(useLocation())
+  const locationState = useLocation();
   const [bookingState, setBookingState] = useState<BookingState>({
     ambulance: {
           providerName: "",
@@ -64,11 +65,16 @@ export default function Map() {
   }, [])
 
   const handleHelpRequest = () => {
+    if (!locationState) {
+      console.log("could not get user location")
+      return
+    }
     const pickupRequest: PickupRequest = {
       patientId: "1",
-      lat: locationState?.location?.latitude || 6.898527830579406,
-      lng: locationState?.location?.longitude || 79.85385178316076,
+      lat: locationState!.location!.latitude,
+      lng: locationState!.location!.longitude,
     };
+    console.log("patient:help", pickupRequest)
     socket.emit("patient:help", pickupRequest);
   }
 
@@ -100,19 +106,20 @@ export default function Map() {
   // getting user location on cold start is slow, for a bunch of reasons, we should find a better way after mvp
   // if (loading) return <Text>Loading location...</Text>;
 
+  if (!locationState?.location?.latitude){
+    return (
+      <Text>Loading</Text>
+    )
+  }
+
   return (
     <>
       <UserMap
         driverLocations={drivers}
-        userLocation={
-          locationState.location ? {
+        userLocation={{
             lat: locationState.location!.latitude,
             lng: locationState.location!.longitude,
-          } : {
-            lat: 6.898527830579406,
-            lng: 79.85385178316076,
-          }
-        }
+          }}
       >
         <MapOptions
           ambulanceFound={onRide}

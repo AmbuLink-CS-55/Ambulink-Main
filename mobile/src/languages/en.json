@@ -48,7 +48,8 @@
     "personal": {
       "title": "Personal",
       "name": "Name",
-      "enterName": "Enter name"
+      "enterName": "Enter name",
+      "enterMobile": "Enter mobile"
     },
     "medical": {
       "title": "Medical Information",
