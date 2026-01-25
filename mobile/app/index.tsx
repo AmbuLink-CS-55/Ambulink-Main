@@ -8,7 +8,7 @@ export default function Index() {
 
   if (role === "patient") return <Redirect href="/(patient)" />;
   if (role === "driver") return <Redirect href="/(driver)" />;
-  if (role === "emt") return <Redirect href="/(emt)" />;
+  if (role === "emt") return <Redirect href="/(emt)/medical" />;
 
   return <Redirect href="/(patient)" />;
 }
