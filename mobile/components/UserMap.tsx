@@ -1,12 +1,11 @@
 import React from "react";
-import { StyleSheet, TouchableOpacity, View, Text } from "react-native";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from "react-native-maps";
-import { Image } from "react-native";
-
+import { Ionicons } from "@expo/vector-icons";
 
 type LatLng = {
-  latitude: number;
-  longitude: number;
+  lat: number;
+  lng: number;
 };
 
 type Props = {
@@ -15,57 +14,54 @@ type Props = {
   children?: React.ReactNode;
 };
 
-export default function UserMap({ userLocation, driverLocations = [], children }: Props) {
+export default function UserMap({ userLocation, driverLocations = [], children}: Props) {
+  const mapRef = React.useRef<MapView>(null);
+
   const region: Region = {
-    latitude: userLocation.latitude,
-    longitude: userLocation.longitude,
+    latitude: userLocation.lat,
+    longitude: userLocation.lng,
     latitudeDelta: 0.01,
     longitudeDelta: 0.01,
   };
 
+  const handleLocate = () => {
+    mapRef.current?.animateToRegion(region, 1000);
+  };
+
   return (
-    <View style={StyleSheet.absoluteFillObject}>
+    <View className="flex-1">
       <MapView
+        ref={mapRef}
         style={StyleSheet.absoluteFillObject}
         initialRegion={region}
         provider={PROVIDER_GOOGLE}
         showsUserLocation
-        showsMyLocationButton
+        showsMyLocationButton={false}
         customMapStyle={mapStyle}
         showsPointsOfInterest={false}
       >
         {driverLocations.map((d) => (
           <Marker
-            key={`${d.latitude}-${d.longitude}`}
-            coordinate={d}
+            key={`${d.lat}-${d.lng}`}
+            coordinate={{latitude: d.lat, longitude: d.lng}}
             anchor={{ x: 0.5, y: 1 }}
             tracksViewChanges={false}
-          >
-            {/*<Image source={driverIcon} style={styles.markerIcon} />*/}
-          </Marker>
+          />
         ))}
-      </MapView >
-      <View style={styles.buttonContainer}>{children}</View>
+      </MapView>
+      <View className="items-center flex-1 justify-end m-10">
+          <TouchableOpacity
+            className="bg-white p-1 rounded-md self-end mr-0 m-3 shadow-lg"
+            onPress={handleLocate}
+          >
+            <Ionicons name="locate" size={24} color="#000000" />
+          </TouchableOpacity>
+
+        {children}
+      </ View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  markerIcon: {
-    width: 36,
-    height: 36,
-    resizeMode: "contain",
-  },
-  buttonContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    backgroundColor: "transparent",
-  },
-});
 
 const mapStyle = [
   {

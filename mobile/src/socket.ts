@@ -1,10 +1,28 @@
 import { io, Socket } from "socket.io-client";
 
-// change the url according to your IP
-export const socket = io("http://192.168.1.3:3000/ride", {
-  reconnection: true,
-  reconnectionAttempts: Infinity,
-  reconnectionDelay: 1000,
-  reconnectionDelayMax: 5000,
-  autoConnect: true,
-});
+
+export class SocketClientCreator {
+  // change the url according to your IP
+  static patientSocketUrl = "http://192.168.1.3:3000/patient"
+  static driverSocketUrl = "http://192.168.1.3:3000/driver"
+
+  static createSocket(type: "PATIENT" | "DRIVER") {
+    let url: string
+    if (type === "PATIENT") {
+      url = this.patientSocketUrl
+    }else if (type === "DRIVER") {
+      url = this.driverSocketUrl
+    }else {
+      throw Error("Socket type not defined")
+    }
+    const socket = io(url, {
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      autoConnect: true,
+    });
+
+    return socket;
+  }
+}

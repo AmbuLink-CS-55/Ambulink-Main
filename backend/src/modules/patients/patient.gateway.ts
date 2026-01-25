@@ -17,7 +17,6 @@ type PickupRequest = {
   patientId: string;
   lat: number;
   lng: number;
-  emergencyType?: string;
 };
 
 @WebSocketGateway({ cors: { origin: "*" }, namespace: "/patient" })
@@ -25,8 +24,6 @@ export class PatientGateway {
   @WebSocketServer() server: Server;
 
   constructor(
-    private db: DbService,
-    private redis: RedisService,
     private patientService: PatientService,
     private driverService: DriverService,
     private bookingService: BookingService
@@ -52,7 +49,7 @@ export class PatientGateway {
   @SubscribeMessage("patient:help")
   async findAmbulance(client: Socket, data: PickupRequest) {
     console.log("help request:", data);
-    const patientId = client.handshake.auth.patientId as string;
+    const patientId = data.patientId;
     const bookingID = this.bookingService.createBooking(patientId);
     this.bookingService.setPatientWS(bookingID, client);
     // find ambulances

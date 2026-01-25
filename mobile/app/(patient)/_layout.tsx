@@ -11,29 +11,11 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="map"
         options={{
           title: "Map",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="map" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="firstaid"
-        options={{
-          title: "First Aid",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="medkit" size={size} color={color} />
           ),
         }}
       />
