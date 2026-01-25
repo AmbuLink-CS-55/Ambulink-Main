@@ -57,8 +57,10 @@ export default function Map() {
   useEffect(() => {
     socket.on("connect", () => { console.log("ws Connected") })
     socket.on("message", (msg: string) => { console.log(msg) })
+    socket.on("driver:nearby_drivers", (data: any) => {
+      // setNearByDrivers(data.drivers)
+    })
     socket.on("driver:assigned", (data: BookingState) => {
-
       updateBookingSatus(data)
     })
     socket.on("driver:location", (data: LatLng) => { updateDriverLocation(data) })

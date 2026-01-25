@@ -49,7 +49,7 @@ export default function UserMap({ userLocation, driverLocations = [], children}:
           />
         ))}
       </MapView>
-      <View className="items-center flex-1 justify-end m-10">
+      <View className="items-center flex-1 justify-end my-5 mx-10">
           <TouchableOpacity
             className="bg-white p-1 rounded-md self-end mr-0 m-3 shadow-lg"
             onPress={handleLocate}
