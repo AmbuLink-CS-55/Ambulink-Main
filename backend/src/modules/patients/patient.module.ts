@@ -5,6 +5,7 @@ import { DbService } from "@/database/db.service";
 import { RedisService } from "@/database/redis.service";
 import { DriverService } from "../drivers/driver.service";
 import { PatientGateway } from "./patient.gateway";
+import { BookingService } from "../booking/booking.service";
 
 @Module({
   controllers: [PatientController],
@@ -14,6 +15,7 @@ import { PatientGateway } from "./patient.gateway";
     RedisService,
     DriverService,
     PatientGateway,
+    BookingService
   ],
 })
 export class PatientModule {}
