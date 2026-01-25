@@ -145,11 +145,10 @@ export const bookings = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
 
-    patientId: uuid("patient_id")
-      .references(() => users.id, {
-        onDelete: "restrict",
-        onUpdate: "cascade",
-      }),
+    patientId: uuid("patient_id").references(() => users.id, {
+      onDelete: "restrict",
+      onUpdate: "cascade",
+    }),
 
     pickupAddress: varchar("pickup_address", { length: 500 }).notNull(),
     pickupLocation: geometry("pickup_location", { mode: "xy", srid: 4326 }),

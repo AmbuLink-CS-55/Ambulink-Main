@@ -6,10 +6,25 @@ import type {
   InsertDriverDto,
   SelectDriverDto,
 } from "@/common/dto/driver.schema";
+import { RedisService } from "@/database/redis.service";
+import Redis from "ioredis";
+
+type DriverStatus = "AVAILABLE" | "BUSY" | "OFFLINE";
 
 @Injectable()
 export class DriverService {
-  constructor(private db: DbService) {}
+  static onlineDrivers = new Map<string, string>();
+  // patientID : socketID
+  driverIdSocketMap = new Map<string, string>();
+
+  private redisClient: Redis;
+
+  constructor(
+    private db: DbService,
+    private redis: RedisService
+  ) {
+    this.redisClient = redis.getClient();
+  }
 
   async create(createDriverDto: InsertDriverDto): Promise<SelectDriverDto> {
     const result = await this.db
@@ -102,5 +117,43 @@ export class DriverService {
       .update(users)
       .set({ isActive: false, updatedAt: new Date() })
       .where(eq(users.id, id));
+  }
+
+  setStatus(driverId: string, status: "AVAILABLE" | "BUSY" | "OFFLINE") {
+    return this.redisClient.hset(`driver:${driverId}`, "status", status);
+  }
+  async isAvailable(driverId: string) {
+    const status = await this.redisClient.hget(`drivers:${driverId}`, "status");
+    return status === "AVAILABLE";
+  }
+  async removeStatus(driverId: string) {
+    await this.redisClient.hdel("drivers:status", driverId);
+  }
+
+  async setDriverLocation(driverId: string, lat: number, lng: number) {
+    await this.redisClient.geoadd("driver:locations", lng, lat, driverId);
+    await this.redisClient.expire("driver:locations", 300);
+  }
+
+  async findDriverByLocation(lat: number, lng: number) {
+    const results = (await this.redisClient.georadius(
+      "driver:locations",
+      lng,
+      lat,
+      500000,
+      "km",
+      "WITHDIST",
+      "COUNT",
+      5,
+      "ASC"
+    )) as Array<[string, string]>;
+
+    const available = results.filter(([driverId, distKm]) => {
+      const driverStatus =
+        DriverService.onlineDrivers.get(driverId) ?? "OFFLINE";
+      return driverStatus === "AVAILABLE";
+    });
+
+    return available;
   }
 }

@@ -9,6 +9,9 @@ import type {
 
 @Injectable()
 export class PatientService {
+  // patientID : socketID
+  patientIdSocketMap = new Map<string, string>();
+
   constructor(private db: DbService) {}
 
   async create(createPatientDto: InsertPatientDto): Promise<SelectPatientDto> {

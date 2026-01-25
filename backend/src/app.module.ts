@@ -5,7 +5,7 @@ import { AmbulanceProviderModule } from "@/modules/ambulance_providers/ambulance
 import { PatientModule } from "@/modules/patients/patient.module";
 import { DriverModule } from "@/modules/drivers/driver.module";
 import { AmbulanceModule } from "@/modules/ambulance/ambulance.module";
-import { RideModule } from "@/modules/ride/ride.module";
+import { BookingModule } from "./modules/booking/booking.module";
 
 @Module({
   imports: [
@@ -13,6 +13,7 @@ import { RideModule } from "@/modules/ride/ride.module";
     PatientModule,
     DriverModule,
     AmbulanceModule,
+    BookingModule,
     // CacheModule.registerAsync<RedisClientOptions>({
     //   isGlobal: true,
     //   useFactory: () => ({
@@ -21,7 +22,6 @@ import { RideModule } from "@/modules/ride/ride.module";
     //     ttl: 5 * 60 * 1000,
     //   }),
     // }),
-    RideModule,
   ],
 })
 export class AppModule {}

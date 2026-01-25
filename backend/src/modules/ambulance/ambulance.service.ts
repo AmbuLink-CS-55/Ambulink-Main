@@ -13,7 +13,10 @@ import { RedisService } from "@/database/redis.service";
 export class AmbulanceService {
   private redisClient: Redis;
 
-  constructor(private db: DbService, private redis: RedisService) {
+  constructor(
+    private db: DbService,
+    private redis: RedisService
+  ) {
     this.redisClient = redis.getClient();
   }
 
@@ -67,15 +70,10 @@ export class AmbulanceService {
 
   updateAmbulanceLocation(ambulanceId: string, lat: number, lng: number) {
     // https://redis.io/docs/latest/commands/geoadd/
-    this.redisClient.geoadd(
-      "ambulances:locations",
-      lng,
-      lat,
-      ambulanceId
-    );
+    this.redisClient.geoadd("ambulances:locations", lng, lat, ambulanceId);
   }
 
-  async findAmbulance(patientId: string, lat: number, lng: number){
+  async findAmbulance(patientId: string, lat: number, lng: number) {
     // https://redis.io/docs/latest/commands/georadius/
     const ambulances = await this.redisClient.georadius(
       "ambulances:locations",
@@ -88,7 +86,6 @@ export class AmbulanceService {
       5,
       "ASC"
     );
-    return ambulances
+    return ambulances;
   }
-
 }

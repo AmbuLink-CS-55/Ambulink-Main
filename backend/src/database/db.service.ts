@@ -10,10 +10,13 @@ export class DbService {
   constructor() {
     // Use this for transaction mode (Supabase pooler)
     // change to false for superbase
-    console.log("connecting to:", process.env.DATABASE_URL)
-    const client = postgres("postgresql://postgres:123@localhost:5432/postgres", {
-      prepare: false,
-    });
+    console.log("connecting to:", process.env.DATABASE_URL);
+    const client = postgres(
+      "postgresql://postgres:123@localhost:5432/postgres",
+      {
+        prepare: false,
+      }
+    );
     this.db = drizzle(client, { schema });
   }
 
