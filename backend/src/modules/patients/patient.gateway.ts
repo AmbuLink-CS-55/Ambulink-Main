@@ -31,20 +31,13 @@ export class PatientGateway {
   ) {}
 
   handleConnection(client: Socket) {
+    // console.log("ws:connect", client)
     const patientId = client.handshake.auth.patientId as string;
     if (!patientId) return client.disconnect(true);
-    this.patientService.patientIdSocketMap.set(patientId, client.id);
+    this.patientService.setWS(patientId, client.id);
   }
 
   handleDisconnect(client: Socket) {
-    for (const [
-      patientId,
-      pClient,
-    ] of this.patientService.patientIdSocketMap.entries()) {
-      if (client.id == pClient) {
-        this.patientService.patientIdSocketMap.delete(patientId);
-      }
-    }
   }
 
   @SubscribeMessage("patient:help")
@@ -66,7 +59,9 @@ export class PatientGateway {
     }
 
     const pickedDriver = drivers[0];
-    console.log("patient:help:pickeddriver", pickedDriver)
+    const pickedDriverData = this.driverService.findOne(pickedDriver[0])
+    console.log("patient:help:pickeddriver", pickedDriverData)
+    this.driverService.getWS(pickedDriver[0])
     this.driverService.setStatus(pickedDriver[0], "BUSY");
 
     // later get from db

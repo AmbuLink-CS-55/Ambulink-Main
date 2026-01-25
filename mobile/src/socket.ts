@@ -10,11 +10,10 @@ export class SocketClientCreator {
     let url: string;
     let authPayload: Record<string, string> = {};
     const userId = await getData("userId")
-
     switch (type) {
       case "PATIENT":
         url = this.patientSocketUrl;
-        authPayload = { patientId: userId };
+        authPayload = { patientId: "1" };
         break;
       case "DRIVER":
         url = this.driverSocketUrl;
@@ -27,6 +26,7 @@ export class SocketClientCreator {
       default:
         throw Error("Socket type not defined");
     }
+    console.log("socket connecting", authPayload)
 
     return io(url, {
       transports: ['websocket'],

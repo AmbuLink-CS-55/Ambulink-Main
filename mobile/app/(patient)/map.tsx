@@ -59,8 +59,7 @@ export default function Map() {
   useEffect(() => {
     const initSocket = async () => {
       try {
-        console.log("creating socket")
-        const socketInstance = await SocketClientCreator.createSocket("DRIVER");
+        const socketInstance = await SocketClientCreator.createSocket("PATIENT");
 
         socketInstance.on("connect", () => { console.log("ws Connected") })
         socketInstance.on("message", (msg: string) => { console.log(msg) })
@@ -72,6 +71,7 @@ export default function Map() {
         })
         socketInstance.on("driver:location", (data: LatLng) => { updateDriverLocation(data) })
 
+        console.log("creating socket")
         setSocket(socketInstance);
       } catch (error) {
         console.error("Failed to initialize socket:", error);
@@ -79,12 +79,20 @@ export default function Map() {
     };
 
     initSocket();
+
+    return () => {
+        socket?.disconnect();
+      };
   }, [])
 
   const handleHelpRequest = () => {
     if (!locationState) {
       console.log("could not get user location")
       return
+    }
+    if (!socket || !socket.connected) {
+      console.log("Socket not connected yet");
+      return;
     }
     const pickupRequest: PickupRequest = {
       patientId: "1",

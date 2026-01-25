@@ -119,8 +119,19 @@ export class DriverService {
       .where(eq(users.id, id));
   }
 
-  setStatus(driverId: string, status: "AVAILABLE" | "BUSY" | "OFFLINE") {
+  setStatus(driverId: string, status: "AVAILABLE" | "BUSY" | "OFFLINE" | "UNKNOWN") {
+    if (status === "UNKNOWN") {
+      // const driverData = this.redisClient.hgetall(`driver:${driverId}`)
+      // NOTE: handle possible reconnection for every new connection later
+      status = "AVAILABLE"
+    }
     return this.redisClient.hset(`driver:${driverId}`, "status", status);
+  }
+  setWS(driverId: string, socketId: string) {
+    this.redisClient.hset(`driver:${driverId}`, 'socketId', socketId);
+  }
+  getWS(driverId: string) {
+    return this.redisClient.hget(`driver:${driverId}`, 'socketId')
   }
   async isAvailable(driverId: string) {
     const status = await this.redisClient.hget(`drivers:${driverId}`, "status");
@@ -132,10 +143,11 @@ export class DriverService {
 
   async setDriverLocation(driverId: string, lat: number, lng: number) {
     await this.redisClient.geoadd("driver:locations", lng, lat, driverId);
-    await this.redisClient.expire("driver:locations", 300);
+    // await this.redisClient.expire("driver:locations", 300);
   }
 
   async findDriverByLocation(lat: number, lng: number) {
+    // driverID, distance
     const results = (await this.redisClient.georadius(
       "driver:locations",
       lng,
@@ -156,4 +168,5 @@ export class DriverService {
 
     return available;
   }
+
 }

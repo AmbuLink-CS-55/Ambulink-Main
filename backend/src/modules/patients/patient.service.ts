@@ -6,13 +6,20 @@ import type {
   InsertPatientDto,
   SelectPatientDto,
 } from "@/common/dto/patient.schema";
+import { RedisService } from "@/database/redis.service";
+import Redis from "ioredis";
 
 @Injectable()
 export class PatientService {
   // patientID : socketID
-  patientIdSocketMap = new Map<string, string>();
+  private redisClient: Redis;
 
-  constructor(private db: DbService) {}
+  constructor(
+    private db: DbService,
+    private redis: RedisService
+  ) {
+    this.redisClient = redis.getClient();
+  }
 
   async create(createPatientDto: InsertPatientDto): Promise<SelectPatientDto> {
     const patientData = {
@@ -84,5 +91,12 @@ export class PatientService {
       .update(users)
       .set({ isActive: false, updatedAt: new Date() })
       .where(eq(users.id, id));
+  }
+
+  setWS(patientId: string, socketId: string) {
+    this.redisClient.hset(`patient:${patientId}`, 'socketId', socketId);
+  }
+  async getWS(patientId: string) {
+    return await this.redisClient.hget(`patient:${patientId}`, 'socketId')
   }
 }
