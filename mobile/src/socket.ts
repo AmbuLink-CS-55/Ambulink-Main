@@ -17,7 +17,7 @@ export class SocketClientCreator {
         break;
       case "DRIVER":
         url = this.driverSocketUrl;
-        authPayload = { driverId: userId };
+        authPayload = { driverId: "1" };
         break;
       case "EMT":
         url = this.emtSocketUrl;

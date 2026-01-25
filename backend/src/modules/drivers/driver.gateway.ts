@@ -39,6 +39,12 @@ export class driverGateway {
 
     this.driverService.setStatus(driverId, "UNKNOWN")
     this.driverService.setWS(driverId, client.id)
+    console.log("driver:connected", driverId)
+  }
+
+  @SubscribeMessage("ping")
+  ping(client: Socket) {
+    console.log("ping")
   }
 
   @SubscribeMessage("driver:update")

@@ -8,8 +8,9 @@ export default function TabLayout() {
   if (user.role !== "driver") return <Redirect href="/login" />;
 
   return (
-    <Tabs>
+    <Tabs screenOptions={{ headerShown: false }}>
       <Tabs.Screen name="index" options={{ title: "Home" }} />
+      <Tabs.Screen name="log" options={{ title: "Log" }} />
       <Tabs.Screen name="settings" options={{ title: "Settings" }} />
     </Tabs>
   );
