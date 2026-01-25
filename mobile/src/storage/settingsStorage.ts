@@ -40,3 +40,21 @@ export async function loadSettings(): Promise<SettingsData> {
 export async function saveSettings(data: SettingsData): Promise<void> {
   await AsyncStorage.setItem(KEY, JSON.stringify(data));
 }
+
+export const storeData = async (key: string, value: any) => {
+  try {
+    const jsonValue = JSON.stringify(value);
+    await AsyncStorage.setItem(key, jsonValue);
+  } catch (e) {
+    console.error("Error saving data", e);
+  }
+};
+
+export const getData = async (key: string) => {
+  try {
+    const jsonValue = await AsyncStorage.getItem(key);
+    return jsonValue != null ? JSON.parse(jsonValue) : null;
+  } catch (e) {
+    console.error("Error reading data", e);
+  }
+};

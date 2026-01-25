@@ -1,32 +1,41 @@
 import { io, Socket } from "socket.io-client";
-
+import { getData } from "./storage/settingsStorage";
 
 export class SocketClientCreator {
-  // change the url according to your IP
-  static patientSocketUrl = "ws://192.168.1.5:3000/patient"
-  static driverSocketUrl = "ws://192.168.1.5:3000/driver"
+  static patientSocketUrl = "ws://192.168.1.5:3000/patient";
+  static driverSocketUrl = "ws://192.168.1.5:3000/driver";
+  static emtSocketUrl = "ws://192.168.1.5:3000/emt";
 
-  static createSocket(type: "PATIENT" | "DRIVER") {
-    let url: string
-    if (type === "PATIENT") {
-      url = this.patientSocketUrl
-    }else if (type === "DRIVER") {
-      url = this.driverSocketUrl
-    }else {
-      throw Error("Socket type not defined")
+  static async createSocket(type: "PATIENT" | "DRIVER" | "EMT") {
+    let url: string;
+    let authPayload: Record<string, string> = {};
+    const userId = await getData("userId")
+
+    switch (type) {
+      case "PATIENT":
+        url = this.patientSocketUrl;
+        authPayload = { patientId: userId };
+        break;
+      case "DRIVER":
+        url = this.driverSocketUrl;
+        authPayload = { driverId: userId };
+        break;
+      case "EMT":
+        url = this.emtSocketUrl;
+        authPayload = { emtId: userId };
+        break;
+      default:
+        throw Error("Socket type not defined");
     }
-    const socket = io(url, {
+
+    return io(url, {
       transports: ['websocket'],
-      auth: {
-        patientId: "1"
-      },
+      auth: authPayload,
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       autoConnect: true,
     });
-
-    return socket;
   }
 }

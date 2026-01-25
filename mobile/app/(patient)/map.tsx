@@ -7,6 +7,7 @@ import { useLocation } from "@/src/hooks/useLocation";
 import { SocketClientCreator } from "@/src/socket";
 import MapOptions from "../../components/patient/MapOptions";
 import { Text } from "react-native";
+import { Socket } from "socket.io-client";
 
 type LatLng = {
   lat: number;
@@ -40,6 +41,7 @@ export default function Map() {
   ];
 
   const locationState = useLocation();
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [bookingState, setBookingState] = useState<BookingState>({
     ambulance: {
           providerName: "",
@@ -55,15 +57,28 @@ export default function Map() {
   console.log("user location:",locationState.location)
 
   useEffect(() => {
-    socket.on("connect", () => { console.log("ws Connected") })
-    socket.on("message", (msg: string) => { console.log(msg) })
-    socket.on("driver:nearby_drivers", (data: any) => {
-      // setNearByDrivers(data.drivers)
-    })
-    socket.on("driver:assigned", (data: BookingState) => {
-      updateBookingSatus(data)
-    })
-    socket.on("driver:location", (data: LatLng) => { updateDriverLocation(data) })
+    const initSocket = async () => {
+      try {
+        console.log("creating socket")
+        const socketInstance = await SocketClientCreator.createSocket("DRIVER");
+
+        socketInstance.on("connect", () => { console.log("ws Connected") })
+        socketInstance.on("message", (msg: string) => { console.log(msg) })
+        socketInstance.on("driver:nearby_drivers", (data: any) => {
+          // setNearByDrivers(data.drivers)
+        })
+        socketInstance.on("driver:assigned", (data: BookingState) => {
+          updateBookingSatus(data)
+        })
+        socketInstance.on("driver:location", (data: LatLng) => { updateDriverLocation(data) })
+
+        setSocket(socketInstance);
+      } catch (error) {
+        console.error("Failed to initialize socket:", error);
+      }
+    };
+
+    initSocket();
   }, [])
 
   const handleHelpRequest = () => {
@@ -77,7 +92,7 @@ export default function Map() {
       lng: locationState!.location!.longitude,
     };
     console.log("patient:help", pickupRequest)
-    socket.emit("patient:help", pickupRequest);
+    socket!.emit("patient:help", pickupRequest);
   }
 
   const updateBookingSatus = (data: BookingState) => {
