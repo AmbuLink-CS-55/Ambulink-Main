@@ -7,6 +7,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Socket } from "socket.io-client";
 import MapViewDirections from 'react-native-maps-directions';
 import { useLocation } from "@/src/hooks/useLocation";
+import { useDriverTracking } from "@/src/hooks/useDriverTracking";
+import { useSocket } from "@/src/context/SocketContext";
 
 type Patient = {
   name: string;
@@ -35,7 +37,8 @@ const GOOGLE_MAPS_APIKEY = "API_KEY";
 
 export default function Home() {
   const locationState = useLocation();
-  const [socket, setSocket] = useState<Socket | null>(null);
+  useDriverTracking(true)
+  const socket = useSocket()
   const [currentRide, setCurrentRide] = useState<CurrentRide | null>(null);
 
   const handleCall = (phoneNumber?: string) => {
@@ -47,23 +50,14 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const initSocket = async () => {
-      try {
-        const socketInstance = await SocketClientCreator.createSocket("DRIVER");
-        socketInstance.on("connect", () => { console.log("ws Connected") })
-        socketInstance.on("message", (msg: string) => { console.log(msg) })
-        console.log("creating socket")
-        setSocket(socketInstance);
-      } catch (error) {
-        console.error("Failed to initialize socket:", error);
-      }
-    };
-
-    initSocket();
+    if (!socket) return;
+    socket.on("connect", () => { console.log("ws Connected") })
+    socket.on("message", (msg: string) => { console.log(msg) })
+    console.log("creating socket")
 
     return () => {
-        socket?.disconnect();
-      };
+      socket?.disconnect();
+    };
   }, [])
 
   return (

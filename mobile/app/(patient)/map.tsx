@@ -8,6 +8,7 @@ import { SocketClientCreator } from "@/src/socket";
 import MapOptions from "../../components/patient/MapOptions";
 import { Text } from "react-native";
 import { Socket } from "socket.io-client";
+import { useSocket } from "@/src/context/SocketContext";
 
 type LatLng = {
   lat: number;
@@ -31,8 +32,6 @@ type BookingState = {
   }
 }
 
-const socket = SocketClientCreator.createSocket("PATIENT")
-
 export default function Map() {
   const drivers: LatLng[] = [
     { lat: 6.898356108714619, lng: 79.85389578706928 },
@@ -41,7 +40,7 @@ export default function Map() {
   ];
 
   const locationState = useLocation();
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const socket = useSocket();
   const [bookingState, setBookingState] = useState<BookingState>({
     ambulance: {
           providerName: "",
@@ -57,32 +56,21 @@ export default function Map() {
   console.log("user location:",locationState.location)
 
   useEffect(() => {
-    const initSocket = async () => {
-      try {
-        const socketInstance = await SocketClientCreator.createSocket("PATIENT");
+      if (!socket) return;
+      socket.on("connect", () => { console.log("ws Connected") })
+      socket.on("message", (msg: string) => { console.log(msg) })
+      socket.on("driver:nearby_drivers", (data: any) => {
+        // setNearByDrivers(data.drivers)
+      })
+      socket.on("driver:assigned", (data: BookingState) => {
+        updateBookingSatus(data)
+      })
+      socket.on("driver:location", (data: LatLng) => { updateDriverLocation(data) })
 
-        socketInstance.on("connect", () => { console.log("ws Connected") })
-        socketInstance.on("message", (msg: string) => { console.log(msg) })
-        socketInstance.on("driver:nearby_drivers", (data: any) => {
-          // setNearByDrivers(data.drivers)
-        })
-        socketInstance.on("driver:assigned", (data: BookingState) => {
-          updateBookingSatus(data)
-        })
-        socketInstance.on("driver:location", (data: LatLng) => { updateDriverLocation(data) })
-
-        console.log("creating socket")
-        setSocket(socketInstance);
-      } catch (error) {
-        console.error("Failed to initialize socket:", error);
-      }
-    };
-
-    initSocket();
-
-    return () => {
-        socket?.disconnect();
-      };
+      // return () => {
+    //     socket.off("ride_request", handleRide);
+    //      socket.removeAllListeners()
+      //   };
   }, [])
 
   const handleHelpRequest = () => {

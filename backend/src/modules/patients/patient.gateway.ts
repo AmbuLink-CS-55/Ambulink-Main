@@ -61,12 +61,18 @@ export class PatientGateway {
     const pickedDriver = drivers[0];
     const pickedDriverData = this.driverService.findOne(pickedDriver[0])
     console.log("patient:help:pickeddriver", pickedDriverData)
-    this.driverService.getWS(pickedDriver[0])
+    pickedDriver[0] = "1" // NOTE: remove
+    const dirverWSID = await this.driverService.getWS(pickedDriver[0])
+    if ( dirverWSID === null ) {
+      console.log("driver socket not found")
+      return
+    }
     this.driverService.setStatus(pickedDriver[0], "BUSY");
 
     // later get from db
     const bookingData = { driverName: "me", pridiverName: "me" };
 
+    this.server.to(dirverWSID).emit("booking:assigned", {bookingData});
     client.emit("booking:assigned", bookingData);
   }
 }
