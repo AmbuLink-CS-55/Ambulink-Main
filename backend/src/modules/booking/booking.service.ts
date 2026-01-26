@@ -1,64 +1,74 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { DbService } from "@/database/db.service";
-import { users } from "@/database/schema";
+import { bookings, users } from "@/database/schema";
 import type {
   InsertDriverDto,
   SelectDriverDto,
 } from "@/common/dto/driver.schema";
-import { RedisService } from "@/database/redis.service";
-import Redis from "ioredis";
-import { Socket } from "socket.io";
-
-type BookingWSs = { driverWS: Socket | null; patientWS: Socket | null };
 
 @Injectable()
 export class BookingService {
-  bookingWSMap = new Map<string, BookingWSs>();
-  userBookingMap = new Map<string, string>();
 
-  createBooking(patientID: string) {
-    // created on patient help
-    const bookingID = crypto.randomUUID();
-    this.bookingWSMap.set(bookingID, { driverWS: null, patientWS: null });
-    return bookingID;
-  }
+  constructor(
+    private db: DbService,
+  ){}
 
-  setDriverWS(bookingId: string, driverWS: Socket) {
-    const existing = this.bookingWSMap.get(bookingId);
-    this.bookingWSMap.set(bookingId, {
-      driverWS,
-      patientWS: existing?.patientWS ?? null,
-    });
-  }
+  async createBooking(
+    patient: any,
+    patientLat: number,
+    patientLng: number,
+    pickupAddr: string | null,
+    hospital: any,
+    pickedDriver: any,
+    emergencyType: string | null
+  ) {
+    const [newBooking] = await this.db.getDb()
+      .insert(bookings)
+      .values({
+        patientId: patient.id,
+        pickupAddress: pickupAddr,
+        pickupLocation: sql`ST_SetSRID(ST_MakePoint(${pickedDriver.lng}, ${pickedDriver.lat}), 4326)`,
 
-  setPatientWS(bookingId: string, patientWS: Socket) {
-    const existing = this.bookingWSMap.get(bookingId);
-    this.bookingWSMap.set(bookingId, {
-      driverWS: existing?.driverWS ?? null,
-      patientWS,
-    });
-  }
+        status: "ASSIGNED",
 
-  getWSByUserID(userID: string): BookingWSs | null {
-    const bookingId = this.userBookingMap.get(userID);
-    if (bookingId === undefined) {
-      return null;
-    }
-    const bookingWS = this.bookingWSMap.get(bookingId);
-    if (bookingWS === undefined) {
-      console.log("Error: bookingWS entry not set");
-      return null;
-    }
-    // const {driverWS, patientWS} = bookingWS
-    return bookingWS;
-  }
+        providerId: pickedDriver.ambulance_provider.id,
+        driverId: pickedDriver.id,
+        hospitalId: hospital.id,
 
-  removeBookingWS(bookingId: string) {
-    this.bookingWSMap.delete(bookingId);
-  }
+        emergencyType: emergencyType,
+        fareEstimate: pickedDriver.distance.toString(),
 
-  etBookingId(userId: string): string | undefined {
-    return this.userBookingMap.get(userId);
+        assignedAt: new Date(),
+      })
+      .returning();
+
+    return {
+        id: newBooking.id,
+        patient: {
+          id: patient.id,
+          phone_number: patient.phoneNumber ?? "",
+          name: patient.fullName ?? "",
+          lat: patientLat,
+          lng: patientLng,
+        },
+        driver: {
+          id: pickedDriver.id,
+          phone_number: pickedDriver.phoneNumber ?? "",
+          lat: pickedDriver.lat,
+          lng: pickedDriver.lng,
+          ambulance_provider: {
+            id: pickedDriver.ambulance_provider.id,
+            name: pickedDriver.ambulance_provider.name,
+          },
+        },
+        hospital: {
+          id: hospital.id,
+          name: hospital.name,
+          phone_number: hospital.phoneNumber ?? "",
+          lat: hospital.location?.y ?? 0,
+          lng: hospital.location?.x ?? 0,
+        },
+      };
   }
 }

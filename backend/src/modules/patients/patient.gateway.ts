@@ -7,12 +7,16 @@ import {
   ConnectedSocket,
 } from "@nestjs/websockets";
 import { DbService } from "@/database/db.service";
-import { RedisService } from "@/database/redis.service";
+
 import { AmbulanceService } from "../ambulance/ambulance.service";
 import { DriverService } from "../drivers/driver.service";
 import { PatientService } from "./patient.service";
 import { BookingService } from "../booking/booking.service";
-import { pick } from "node_modules/zod/v4/core/util";
+import * as Q from "@/database/queries/booking.queries";
+import { bookings } from "@/database/schema";
+import { sql } from "drizzle-orm";
+import { WebsocketSessionService } from "@/services/websocket-session.service";
+import { HospitalService } from "../hospital/hospital.service";
 
 type PickupRequest = {
   patientId: string;
@@ -27,14 +31,16 @@ export class PatientGateway {
   constructor(
     private patientService: PatientService,
     private driverService: DriverService,
-    private bookingService: BookingService
+    private bookingService: BookingService,
+    private db: DbService,
+    private websocketSessionService: WebsocketSessionService,
+    private hospitalService: HospitalService
   ) {}
 
   handleConnection(client: Socket) {
     // console.log("ws:connect", client)
     const patientId = client.handshake.auth.patientId as string;
     if (!patientId) return client.disconnect(true);
-    this.patientService.setWS(patientId, client.id);
   }
 
   handleDisconnect(client: Socket) {
@@ -42,37 +48,34 @@ export class PatientGateway {
 
   @SubscribeMessage("patient:help")
   async findAmbulance(client: Socket, data: PickupRequest) {
-    console.log("patient:help:recieved", data);
-    const patientId = data.patientId;
-    const bookingID = this.bookingService.createBooking(patientId);
-    console.log("patient:help:bookingID", bookingID)
-    this.bookingService.setPatientWS(bookingID, client);
-    // find ambulances
-    const drivers = await this.driverService.findDriverByLocation(
-      data.lat,
-      data.lng
-    );
-    console.log("patient:help:drivers", drivers)
-    if (drivers.length === 0) {
-      client.emit("error", { message: "No ambulances available" });
-      return;
-    }
+    const { patientId, lat, lng } = data;
+    console.log("patient:help:", data)
 
-    const pickedDriver = drivers[0];
-    const pickedDriverData = this.driverService.findOne(pickedDriver[0])
-    console.log("patient:help:pickeddriver", pickedDriverData)
-    pickedDriver[0] = "1" // NOTE: remove
-    const dirverWSID = await this.driverService.getWS(pickedDriver[0])
-    if ( dirverWSID === null ) {
-      console.log("driver socket not found")
+    const nearestDrivers = await this.driverService.findDriverByLocation(lat, lng)
+    if (nearestDrivers.length == 0) {
+      console.log("No drivers found")
       return
     }
-    this.driverService.setStatus(pickedDriver[0], "BUSY");
+    console.log("near by drivers: ", nearestDrivers)
+    const hospital = await this.hospitalService.findTheNearestHospital(lat, lng)
+    console.log("near by hospital: ", hospital)
+    const patient = await this.patientService.findOne(patientId)
+    console.log("patient", patient)
+    const pickedDriver = nearestDrivers[0];
 
-    // later get from db
-    const bookingData = { driverName: "me", pridiverName: "me" };
+    const booking = await this.bookingService.createBooking(
+      patient, lat, lng,
+      null, hospital, pickedDriver, null)
 
-    this.server.to(dirverWSID).emit("booking:assigned", {bookingData});
-    client.emit("booking:assigned", bookingData);
+    const driverClient = this.websocketSessionService.getDriverSocket(pickedDriver.id)
+    if (!driverClient) {
+      console.log("No driver WS found")
+      return
+    }
+
+    console.log(driverClient)
+    console.log("sending:booking:assigned", booking)
+    driverClient!.emit("booking:assigned", booking)
+    client.emit("booking:assigned", booking)
   }
 }

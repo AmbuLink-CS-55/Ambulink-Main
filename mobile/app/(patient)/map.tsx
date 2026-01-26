@@ -41,7 +41,7 @@ export default function Map() {
 
   const locationState = useLocation();
   const socket = useSocket();
-  const [bookingState, setBookingState] = useState<BookingState>({
+  const [booking, setBooking] = useState<BookingState>({
     ambulance: {
           providerName: "",
         },
@@ -62,8 +62,9 @@ export default function Map() {
       socket.on("driver:nearby_drivers", (data: any) => {
         // setNearByDrivers(data.drivers)
       })
-      socket.on("driver:assigned", (data: BookingState) => {
-        updateBookingSatus(data)
+      socket.on("booking:assigned", (bookingData: BookingState) => {
+        console.log("booking:assigned")
+        setBooking(bookingData)
       })
       socket.on("driver:location", (data: LatLng) => { updateDriverLocation(data) })
 
@@ -71,7 +72,7 @@ export default function Map() {
     //     socket.off("ride_request", handleRide);
     //      socket.removeAllListeners()
       //   };
-  }, [])
+  }, [socket])
 
   const handleHelpRequest = () => {
     if (!locationState) {
@@ -83,7 +84,7 @@ export default function Map() {
       return;
     }
     const pickupRequest: PickupRequest = {
-      patientId: "1",
+      patientId: "02fbf1ed-c2ea-4140-94b7-c8c78325097f",
       lat: locationState!.location!.latitude,
       lng: locationState!.location!.longitude,
     };
@@ -91,21 +92,8 @@ export default function Map() {
     socket!.emit("patient:help", pickupRequest);
   }
 
-  const updateBookingSatus = (data: BookingState) => {
-    setBookingState((prev) => ({
-      ambulance: {
-        providerName: data.ambulance.providerName
-      },
-      driver: {
-        name: data.driver.name,
-        lat: data.driver.lat,
-        lng: data.driver.lng,
-      }
-    }))
-  }
-
   const updateDriverLocation = (data: LatLng) => {
-    setBookingState((prev) => ({
+    setBooking((prev) => ({
       ...prev,
       driver: {
         ...prev.driver,

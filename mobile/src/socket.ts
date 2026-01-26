@@ -15,16 +15,16 @@ export class SocketClientCreator {
 
     let url: string;
     let authPayload: Record<string, string> = {};
-    const userId = await getData("userId");
+    const userId = await getData("cduserId");
 
     switch (type) {
       case "PATIENT":
         url = this.patientSocketUrl;
-        authPayload = { patientId: userId || "1" };
+        authPayload = { patientId: "84821041-9f8a-4358-a390-a50f1a712a49" };
         break;
       case "DRIVER":
         url = this.driverSocketUrl;
-        authPayload = { driverId: userId || "1" };
+        authPayload = { driverId: "97433a7e-59f4-47df-bf13-43d695ada71e" };
         break;
       case "EMT":
         url = this.emtSocketUrl;

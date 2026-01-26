@@ -6,19 +6,14 @@ import type {
   InsertPatientDto,
   SelectPatientDto,
 } from "@/common/dto/patient.schema";
-import { RedisService } from "@/database/redis.service";
-import Redis from "ioredis";
 
 @Injectable()
 export class PatientService {
   // patientID : socketID
-  private redisClient: Redis;
 
   constructor(
     private db: DbService,
-    private redis: RedisService
   ) {
-    this.redisClient = redis.getClient();
   }
 
   async create(createPatientDto: InsertPatientDto): Promise<SelectPatientDto> {
@@ -50,14 +45,13 @@ export class PatientService {
   }
 
   async findOne(id: string): Promise<SelectPatientDto> {
-    const result = await this.db
-      .getDb()
+    const result = await this.db.getDb()
       .select()
       .from(users)
-      .where(and(eq(users.id, id), eq(users.role, "PATIENT" as const)));
+      .where(and(eq(users.id, id), eq(users.role, "PATIENT")));
 
     if (result.length === 0) {
-      throw new NotFoundException(`Patient with id ${id} not found`);
+      throw new Error(`Patient with id ${id} not found`);
     }
     return result[0];
   }
@@ -91,12 +85,5 @@ export class PatientService {
       .update(users)
       .set({ isActive: false, updatedAt: new Date() })
       .where(eq(users.id, id));
-  }
-
-  setWS(patientId: string, socketId: string) {
-    this.redisClient.hset(`patient:${patientId}`, 'socketId', socketId);
-  }
-  async getWS(patientId: string) {
-    return await this.redisClient.hget(`patient:${patientId}`, 'socketId')
   }
 }

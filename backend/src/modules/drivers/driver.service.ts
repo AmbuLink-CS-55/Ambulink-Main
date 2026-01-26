@@ -1,30 +1,24 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql, isNotNull, asc } from "drizzle-orm";
 import { DbService } from "@/database/db.service";
-import { users } from "@/database/schema";
+import { ambulanceProviders, users } from "@/database/schema";
 import type {
   InsertDriverDto,
   SelectDriverDto,
 } from "@/common/dto/driver.schema";
-import { RedisService } from "@/database/redis.service";
+import { WebsocketSessionService } from "@/services/websocket-session.service";
 import Redis from "ioredis";
+import { Socket } from "socket.io";
 
 type DriverStatus = "AVAILABLE" | "BUSY" | "OFFLINE";
 
 @Injectable()
 export class DriverService {
-  static onlineDrivers = new Map<string, string>();
-  // patientID : socketID
-  driverIdSocketMap = new Map<string, string>();
-
-  private redisClient: Redis;
 
   constructor(
     private db: DbService,
-    private redis: RedisService
-  ) {
-    this.redisClient = redis.getClient();
-  }
+    private websocketSessionService: WebsocketSessionService
+  ) {}
 
   async create(createDriverDto: InsertDriverDto): Promise<SelectDriverDto> {
     const result = await this.db
@@ -119,54 +113,90 @@ export class DriverService {
       .where(eq(users.id, id));
   }
 
-  setStatus(driverId: string, status: "AVAILABLE" | "BUSY" | "OFFLINE" | "UNKNOWN") {
-    if (status === "UNKNOWN") {
-      // const driverData = this.redisClient.hgetall(`driver:${driverId}`)
-      // NOTE: handle possible reconnection for every new connection later
-      status = "AVAILABLE"
-    }
-    return this.redisClient.hset(`driver:${driverId}`, "status", status);
+  async setStatus(driverId: string, status: "AVAILABLE" | "BUSY" | "OFFLINE") {
+    await this.db.getDb()
+        .update(users)
+        .set({
+          status: status,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, driverId));
+    console.log(driverId, "to", status)
   }
-  setWS(driverId: string, socketId: string) {
-    this.redisClient.hset(`driver:${driverId}`, 'socketId', socketId);
+  setWS(driverId: string, socket: Socket) {
+    this.websocketSessionService.setDriverSocket(driverId, socket);
   }
-  getWS(driverId: string) {
-    return this.redisClient.hget(`driver:${driverId}`, 'socketId')
+
+  async getWS(driverId: string) {
+    const socket = this.websocketSessionService.getDriverSocket(driverId);
+    if (socket) return socket;
   }
+
   async isAvailable(driverId: string) {
-    const status = await this.redisClient.hget(`drivers:${driverId}`, "status");
-    return status === "AVAILABLE";
+    const result = await this.db
+      .getDb()
+      .select({ status: users.status })
+      .from(users)
+      .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")));
+
+    if (result.length === 0) return false;
+    return result[0].status === "AVAILABLE";
   }
+
   async removeStatus(driverId: string) {
-    await this.redisClient.hdel("drivers:status", driverId);
+    await this.db
+      .getDb()
+      .update(users)
+      .set({
+        status: null,
+        updatedAt: new Date()
+      })
+      .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")));
   }
 
   async setDriverLocation(driverId: string, lat: number, lng: number) {
-    await this.redisClient.geoadd("driver:locations", lng, lat, driverId);
-    // await this.redisClient.expire("driver:locations", 300);
+    await this.db
+      .getDb()
+      .update(users)
+      .set({
+        currentLocation: sql`ST_GeomFromText('POINT(${lng} ${lat})', 4326)`,
+        lastLocationUpdate: new Date(),
+        updatedAt: new Date()
+      })
+      .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")));
   }
 
   async findDriverByLocation(lat: number, lng: number) {
-    // driverID, distance
-    const results = (await this.redisClient.georadius(
-      "driver:locations",
-      lng,
-      lat,
-      500000,
-      "km",
-      "WITHDIST",
-      "COUNT",
-      5,
-      "ASC"
-    )) as Array<[string, string]>;
+    const distanceExpr = sql<number>`ST_Distance(
+      ${users.currentLocation}::geography,
+      ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography
+    )`;
 
-    const available = results.filter(([driverId, distKm]) => {
-      const driverStatus =
-        DriverService.onlineDrivers.get(driverId) ?? "OFFLINE";
-      return driverStatus === "AVAILABLE";
-    });
-
-    return available;
+    const nearbyDrivers = await this.db.getDb()
+      .select({
+        id: users.id,
+        phoneNumber: users.phoneNumber,
+        lat: sql<number>`ST_Y(${users.currentLocation})`,
+        lng: sql<number>`ST_X(${users.currentLocation})`,
+        ambulance_provider: {
+          id: ambulanceProviders.id,
+          name: ambulanceProviders.name,
+        },
+        distance: distanceExpr,
+      })
+      .from(users)
+      .innerJoin(ambulanceProviders, eq(users.providerId, ambulanceProviders.id))
+      .where(
+        and(
+          eq(users.role, "DRIVER"),
+          eq(users.isActive, true),
+          eq(users.status, "AVAILABLE"),
+          isNotNull(users.currentLocation)
+        )
+      )
+      .orderBy(asc(distanceExpr))
+      .limit(3);
+    return nearbyDrivers;
   }
 
 }

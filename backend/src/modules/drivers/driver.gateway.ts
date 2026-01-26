@@ -5,41 +5,46 @@ import {
   WebSocketServer,
 } from "@nestjs/websockets";
 import { DbService } from "@/database/db.service";
-import { RedisService } from "@/database/redis.service";
 import { AmbulanceService } from "../ambulance/ambulance.service";
 import { DriverService } from "../drivers/driver.service";
 import { BookingService } from "../booking/booking.service";
 import Redis from "ioredis";
+import { WebsocketSessionService } from "@/services/websocket-session.service";
 
 type DriverLocation = {
   id: string;
   lat: number;
   lng: number;
 };
-type bookingWSs = { driverWS: Socket | null; patientWS: Socket | null };
 
 @WebSocketGateway({ cors: { origin: "*" }, namespace: "/driver" })
-export class driverGateway {
+export class DriverGateway {
   @WebSocketServer()
   server: Server;
-  private redisClient: Redis;
 
   constructor(
     private db: DbService,
-    private redis: RedisService,
     private driverService: DriverService,
+    private websocketSessionService: WebsocketSessionService,
     private bookingService: BookingService
   ) {
-    this.redisClient = redis.getClient();
   }
 
   handleConnection(client: Socket) {
     const driverId = client.handshake.auth.driverId as string;
     if (!driverId) return client.disconnect(true);
+    client.data.driverId = driverId;
 
-    this.driverService.setStatus(driverId, "UNKNOWN")
-    this.driverService.setWS(driverId, client.id)
+    this.driverService.setStatus(driverId, "AVAILABLE")
+    this.websocketSessionService.setDriverSocket(driverId, client)
+
+    this.websocketSessionService.getDriverSocket(driverId)?.emit("message", "works")
     console.log("driver:connected", driverId)
+  }
+
+  handleDisconnect(client: Socket) {
+    this.driverService.setStatus(client.data.driverId, "OFFLINE")
+    console.log(`Client disconnected: ${client.id}`);
   }
 
   @SubscribeMessage("ping")
@@ -54,14 +59,11 @@ export class driverGateway {
 
   @SubscribeMessage("driver:arrived")
   async driverArrived(client: Socket, data: { driverId: string }) {
-    const bookingWS = this.bookingService.getWSByUserID(data.driverId);
-    bookingWS?.patientWS?.emit("booking:arrived");
+
   }
 
   @SubscribeMessage("driver:completed")
   async driverCompleted(client: Socket, data: { driverId: string }) {
-    const bookingWS = this.bookingService.getWSByUserID(data.driverId);
-    this.driverService.setStatus(data.driverId, "AVAILABLE")
-    bookingWS?.patientWS?.emit("booking:completed");
+
   }
 }

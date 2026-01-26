@@ -7,17 +7,13 @@ import type {
   SelectAmbulanceDto,
 } from "@/common/dto/ambulance.schema";
 import Redis from "ioredis";
-import { RedisService } from "@/database/redis.service";
 
 @Injectable()
 export class AmbulanceService {
-  private redisClient: Redis;
 
   constructor(
     private db: DbService,
-    private redis: RedisService
   ) {
-    this.redisClient = redis.getClient();
   }
 
   async create(
@@ -66,26 +62,5 @@ export class AmbulanceService {
   async remove(id: string): Promise<void> {
     await this.findOne(id); // Check if exists
     await this.db.getDb().delete(ambulance).where(eq(ambulance.id, id));
-  }
-
-  updateAmbulanceLocation(ambulanceId: string, lat: number, lng: number) {
-    // https://redis.io/docs/latest/commands/geoadd/
-    this.redisClient.geoadd("ambulances:locations", lng, lat, ambulanceId);
-  }
-
-  async findAmbulance(patientId: string, lat: number, lng: number) {
-    // https://redis.io/docs/latest/commands/georadius/
-    const ambulances = await this.redisClient.georadius(
-      "ambulances:locations",
-      lng,
-      lat,
-      500000,
-      "km",
-      "WITHDIST",
-      "COUNT",
-      5,
-      "ASC"
-    );
-    return ambulances;
   }
 }

@@ -36,8 +36,7 @@ const SRI_LANKA_REGION = {
 const GOOGLE_MAPS_APIKEY = "API_KEY";
 
 export default function Home() {
-  const locationState = useLocation();
-  useDriverTracking(true)
+  // useDriverTracking(true)
   const socket = useSocket()
   const [currentRide, setCurrentRide] = useState<CurrentRide | null>(null);
 
@@ -53,12 +52,14 @@ export default function Home() {
     if (!socket) return;
     socket.on("connect", () => { console.log("ws Connected") })
     socket.on("message", (msg: string) => { console.log(msg) })
-    console.log("creating socket")
+    console.log("driver connected")
+    socket.on("booking:assigned", (bookingData) => { console.log("driver:booking:assigned", bookingData);  setCurrentRide(bookingData)})
+    console.log("ddkmckmdriver connected")
 
-    return () => {
-      socket?.disconnect();
-    };
-  }, [])
+    // return () => {
+    //   socket?.disconnect();
+    // };
+  }, [socket])
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
