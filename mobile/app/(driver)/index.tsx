@@ -52,9 +52,7 @@ export default function Home() {
     if (!socket) return;
     socket.on("connect", () => { console.log("ws Connected") })
     socket.on("message", (msg: string) => { console.log(msg) })
-    console.log("driver connected")
-    socket.on("booking:assigned", (bookingData) => { console.log("driver:booking:assigned", bookingData);  setCurrentRide(bookingData)})
-    console.log("ddkmckmdriver connected")
+    socket.on("booking:assigned", (bookingData) => { console.log("booking:assigned:driver", bookingData);  setCurrentRide(bookingData)})
 
     // return () => {
     //   socket?.disconnect();

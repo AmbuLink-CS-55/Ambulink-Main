@@ -8,6 +8,7 @@ import { PatientGateway } from "./patient.gateway";
 import { BookingService } from "../booking/booking.service";
 import { WebsocketSessionService } from "@/services/websocket-session.service";
 import { HospitalService } from "../hospital/hospital.service";
+import { DriverGateway } from "../drivers/driver.gateway";
 
 @Module({
   controllers: [PatientController],
@@ -18,7 +19,8 @@ import { HospitalService } from "../hospital/hospital.service";
     PatientGateway,
     BookingService,
     WebsocketSessionService,
-    HospitalService
+    HospitalService,
+    DriverGateway
   ],
 })
 export class PatientModule {}

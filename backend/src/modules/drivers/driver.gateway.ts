@@ -35,9 +35,9 @@ export class DriverGateway {
     if (!driverId) return client.disconnect(true);
     client.data.driverId = driverId;
 
-    this.driverService.setStatus(driverId, "AVAILABLE")
-    this.websocketSessionService.setDriverSocket(driverId, client)
+    client.join(`driver:${driverId}`);
 
+    this.driverService.setStatus(driverId, "AVAILABLE")
     this.websocketSessionService.getDriverSocket(driverId)?.emit("message", "works")
     console.log("driver:connected", driverId)
   }

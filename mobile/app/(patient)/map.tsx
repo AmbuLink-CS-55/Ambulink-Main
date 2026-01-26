@@ -63,7 +63,7 @@ export default function Map() {
         // setNearByDrivers(data.drivers)
       })
       socket.on("booking:assigned", (bookingData: BookingState) => {
-        console.log("booking:assigned")
+        console.log("booking:assigned:patient:", bookingData)
         setBooking(bookingData)
       })
       socket.on("driver:location", (data: LatLng) => { updateDriverLocation(data) })

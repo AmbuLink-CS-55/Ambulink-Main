@@ -17,6 +17,7 @@ import { bookings } from "@/database/schema";
 import { sql } from "drizzle-orm";
 import { WebsocketSessionService } from "@/services/websocket-session.service";
 import { HospitalService } from "../hospital/hospital.service";
+import { DriverGateway } from "../drivers/driver.gateway";
 
 type PickupRequest = {
   patientId: string;
@@ -34,13 +35,16 @@ export class PatientGateway {
     private bookingService: BookingService,
     private db: DbService,
     private websocketSessionService: WebsocketSessionService,
-    private hospitalService: HospitalService
+    private hospitalService: HospitalService,
+    private driverGateway: DriverGateway
   ) {}
 
   handleConnection(client: Socket) {
     // console.log("ws:connect", client)
     const patientId = client.handshake.auth.patientId as string;
     if (!patientId) return client.disconnect(true);
+
+    client.join(`patient:${patientId}`);
   }
 
   handleDisconnect(client: Socket) {
@@ -63,19 +67,10 @@ export class PatientGateway {
     console.log("patient", patient)
     const pickedDriver = nearestDrivers[0];
 
-    const booking = await this.bookingService.createBooking(
-      patient, lat, lng,
-      null, hospital, pickedDriver, null)
+    const booking = await this.bookingService.createBooking( patient, lat, lng, null, hospital, pickedDriver, null)
 
-    const driverClient = this.websocketSessionService.getDriverSocket(pickedDriver.id)
-    if (!driverClient) {
-      console.log("No driver WS found")
-      return
-    }
-
-    console.log(driverClient)
     console.log("sending:booking:assigned", booking)
-    driverClient!.emit("booking:assigned", booking)
+    this.driverGateway.server.to(`driver:${pickedDriver.id}`).emit("booking:assigned", booking);
     client.emit("booking:assigned", booking)
   }
 }
