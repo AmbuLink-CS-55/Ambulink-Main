@@ -11,7 +11,6 @@ export const useDriverTracking = (isDriver: boolean) => {
       const { status: bg } = await Location.requestBackgroundPermissionsAsync();
 
       if (fg === 'granted' && bg === 'granted') {
-        console.log("tracking location")
         await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
           accuracy: Location.Accuracy.Balanced,
           timeInterval: 10000, // 10 seconds

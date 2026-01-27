@@ -1,10 +1,11 @@
 import { Tabs, Redirect } from "expo-router";
 import { useAuthStore } from "../../src/auth/AuthContext";
 import { SocketProvider } from "@/src/context/SocketContext";
+import { useDriverTracking } from "@/src/hooks/useDriverTracking";
 
 export default function TabLayout() {
   const { user } = useAuthStore();
-
+  useDriverTracking(true)
   if (!user) return <Redirect href="/(public)/login" />;
   if (user.role !== "driver") return <Redirect href="/login" />;
 

@@ -20,11 +20,11 @@ export class SocketClientCreator {
     switch (type) {
       case "PATIENT":
         url = this.patientSocketUrl;
-        authPayload = { patientId: "84821041-9f8a-4358-a390-a50f1a712a49" };
+        authPayload = { patientId: "5108f0b5-07fc-46b1-8392-ee97a52b7c42" };
         break;
       case "DRIVER":
         url = this.driverSocketUrl;
-        authPayload = { driverId: "97433a7e-59f4-47df-bf13-43d695ada71e" };
+        authPayload = { driverId: "2eb33daf-ae6d-48c4-8110-3459b5f50f31" };
         break;
       case "EMT":
         url = this.emtSocketUrl;

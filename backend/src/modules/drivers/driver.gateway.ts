@@ -53,11 +53,6 @@ export class DriverGateway {
     console.log(`Client disconnected: ${client.id}`);
   }
 
-  @SubscribeMessage("ping")
-  ping(client: Socket) {
-    console.log("ping")
-  }
-
   @SubscribeMessage("driver:update")
   async updateDriverLocation(client: Socket, data: DriverLocation) {
     const driverId = client.data.driverId
@@ -69,8 +64,9 @@ export class DriverGateway {
     const driverId = client.data.driverId;
     const bookingData = await this.driverService.getDriverBooking(driverId)
     this.bookingService.setArrived(bookingData.id);
-    const {id, patientId} = bookingData
+    const { id, patientId } = bookingData
     this.patientGateway.server.to(`patient:${patientId}`).emit("booking:arrived", { bookingId: id })
+    console.log("patient:arrived", patientId)
   }
 
   @SubscribeMessage("driver:completed")
@@ -78,7 +74,8 @@ export class DriverGateway {
     const driverId = client.data.driverId;
     const bookingData = await this.driverService.getDriverBooking(driverId)
     this.bookingService.setCompleted(bookingData.id);
-    const {id, patientId} = bookingData
-    this.patientGateway.server.to(`patient:${patientId}`).emit("booking:completed", {bookingId: id})
+    const { id, patientId } = bookingData
+    this.patientGateway.server.to(`patient:${patientId}`).emit("booking:completed", { bookingId: id })
+    console.log("patient:arrived", patientId)
   }
 }

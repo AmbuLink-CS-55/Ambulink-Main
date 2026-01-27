@@ -19,6 +19,7 @@ import { WebsocketSessionService } from "@/services/websocket-session.service";
 import { HospitalService } from "../hospital/hospital.service";
 import { DriverGateway } from "../drivers/driver.gateway";
 import { Inject, forwardRef } from "@nestjs/common";
+import { Assert } from "assert";
 
 type PickupRequest = {
   patientId: string;
@@ -39,37 +40,36 @@ export class PatientGateway {
     private hospitalService: HospitalService,
     @Inject(forwardRef(() => DriverGateway))
     private driverGateway: DriverGateway
-  ) {}
+  ) { }
 
   handleConnection(client: Socket) {
     // console.log("ws:connect", client)
-    const patientId = client.handshake.auth.patientId as string;
+    const patientId = client.handshake.auth.patientId;
     if (!patientId) return client.disconnect(true);
-
+    client.data.patientId = patientId;
+    console.log("patient:connected", patientId)
     client.join(`patient:${patientId}`);
-  }
-
-  handleDisconnect(client: Socket) {
   }
 
   @SubscribeMessage("patient:help")
   async findAmbulance(client: Socket, data: PickupRequest) {
-    const { patientId, lat, lng } = data;
-    console.log("patient:help:", data)
+    const { lat, lng } = data;
+    const patientId = client.data.patientId;
+    console.log("patient:help", patientId)
 
     const nearestDrivers = await this.driverService.findDriverByLocation(lat, lng)
     if (nearestDrivers.length == 0) {
       console.log("No drivers found")
       return
     }
-    console.log("near by drivers: ", nearestDrivers)
+    // console.log("near by drivers: ", nearestDrivers)
     const hospital = await this.hospitalService.findTheNearestHospital(lat, lng)
-    console.log("near by hospital: ", hospital)
+    // console.log("near by hospital: ", hospital)
     const patient = await this.patientService.findOne(patientId)
-    console.log("patient", patient)
+    // console.log("patient", patient)
     const pickedDriver = nearestDrivers[0];
 
-    const booking = await this.bookingService.createBooking( patient, lat, lng, null, hospital, pickedDriver, null)
+    const booking = await this.bookingService.createBooking(patient, lat, lng, null, hospital, pickedDriver, null)
 
     console.log("sending:booking:assigned", booking)
     this.driverGateway.server.to(`driver:${pickedDriver.id}`).emit("booking:assigned", booking);

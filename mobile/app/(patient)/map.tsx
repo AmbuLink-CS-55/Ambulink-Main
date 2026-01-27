@@ -1,133 +1,121 @@
 import UserMap from "@/components/UserMap";
-import * as Location from "expo-location";
-import { useEffect, useState, useRef } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import i18n from "@/src/languages/i18n";
-import { useLocation } from "@/src/hooks/useLocation";
-import { SocketClientCreator } from "@/src/socket";
-import MapOptions from "../../components/patient/MapOptions";
+import { useEffect, useState } from "react";
 import { Text } from "react-native";
-import { Socket } from "socket.io-client";
+import { useLocation } from "@/src/hooks/useLocation";
+import MapOptions from "../../components/patient/MapOptions";
 import { useSocket } from "@/src/context/SocketContext";
 
-type LatLng = {
-  lat: number;
-  lng: number;
-};
+type LatLng = { lat: number; lng: number };
 
-type PickupRequest = {
-  patientId: string;
-  lat: number;
-  lng: number;
-};
-
-type BookingState = {
-  ambulance: {
-    providerName: string
-  }
+type BookingResponse = {
+  id: number;
+  patient: {
+    id: string;
+    phone_number: string;
+    name: string | null;
+    lat: number;
+    lng: number;
+  };
   driver: {
-    name: string
-    lat: number
-    lng: number
-  }
-}
+    id: string;
+    phone_number: string;
+    lat: number;
+    lng: number;
+    ambulance_provider: {
+      id: string;
+      name: string;
+    };
+  };
+  hospital: {
+    id: string;
+    name: string;
+    phone_number: string;
+    lat: number;
+    lng: number;
+  };
+};
+
+type BookingStatus = "idle" | "assigned" | "arrived" | "completed";
 
 export default function Map() {
-  const drivers: LatLng[] = [
-    { lat: 6.898356108714619, lng: 79.85389578706928 },
-    { lat: 6.895353174577009, lng: 79.85387845284518 },
-    { lat: 6.893795771439718, lng: 79.85671259848431 },
-  ];
-
   const locationState = useLocation();
   const socket = useSocket();
-  const [booking, setBooking] = useState<BookingState>({
-    ambulance: {
-          providerName: "",
-        },
-    driver: {
-      name: "",
-      lat: 0,
-      lng: 0,
-    },
-  });
-  const [onRide, setOnRide] = useState<boolean>(false)
-
-  console.log("user location:",locationState.location)
+  const [booking, setBooking] = useState<BookingResponse | null>(null);
+  const [status, setStatus] = useState<BookingStatus>("idle");
 
   useEffect(() => {
-      if (!socket) return;
-      socket.on("connect", () => { console.log("ws Connected") })
-      socket.on("message", (msg: string) => { console.log(msg) })
-      socket.on("driver:nearby_drivers", (data: any) => {
-        // setNearByDrivers(data.drivers)
-      })
-      socket.on("booking:assigned", (bookingData: BookingState) => {
-        console.log("booking:assigned:patient:", bookingData)
-        setBooking(bookingData)
-      })
-      socket.on("driver:location", (data: LatLng) => { updateDriverLocation(data) })
+    if (!socket) return;
 
-      // return () => {
-    //     socket.off("ride_request", handleRide);
-    //      socket.removeAllListeners()
-      //   };
-  }, [socket])
+    socket.on("connect", () => console.log("ws Connected"));
+
+    socket.on("booking:assigned", (data: BookingResponse) => {
+      console.log("booking:assigned", data);
+      setBooking(data);
+      setStatus("assigned");
+    });
+
+    socket.on("driver:location", (data: LatLng) => {
+      setBooking((prev) => {
+        if (!prev) return null;
+
+        return {
+          ...prev,
+          driver: {
+            ...prev.driver,
+            lat: data.lat,
+            lng: data.lng,
+          },
+        };
+      });
+    });
+
+    socket.on("booking:arrived", () => {
+      console.log("booking:arrived");
+      setStatus("arrived");
+    });
+
+    socket.on("booking:completed", () => {
+      console.log("booking:completed");
+      setStatus("completed");
+    });
+
+  }, [socket]);
 
   const handleHelpRequest = () => {
-    if (!locationState) {
-      console.log("could not get user location")
-      return
-    }
-    if (!socket || !socket.connected) {
-      console.log("Socket not connected yet");
+    if (!locationState?.location || !socket?.connected) {
+      console.log("Location or socket not ready");
       return;
     }
-    const pickupRequest: PickupRequest = {
-      patientId: "02fbf1ed-c2ea-4140-94b7-c8c78325097f",
-      lat: locationState!.location!.latitude,
-      lng: locationState!.location!.longitude,
-    };
-    console.log("patient:help", pickupRequest)
-    socket!.emit("patient:help", pickupRequest);
-  }
+    socket.emit("patient:help", {
+      lat: locationState.location.latitude,
+      lng: locationState.location.longitude,
+    });
+  };
 
-  const updateDriverLocation = (data: LatLng) => {
-    setBooking((prev) => ({
-      ...prev,
-      driver: {
-        ...prev.driver,
-        lat: data.lat,
-        lng: data.lng
-      }
-    }))
-  }
+  const handleCancel = () => {
+    setBooking(null);
+    setStatus("idle");
+  };
 
-  // comment this out this if map takes long to load, but the map will use the hard coded values.
-  // getting user location on cold start is slow, for a bunch of reasons, we should find a better way after mvp
-  // if (loading) return <Text>Loading location...</Text>;
-
-  if (!locationState?.location?.latitude){
-    return (
-      <Text>Loading</Text>
-    )
+  if (!locationState?.location?.latitude) {
+    return <Text>Loading</Text>;
   }
 
   return (
-    <>
-      <UserMap
-        driverLocations={drivers}
-        userLocation={{
-            lat: locationState.location!.latitude,
-            lng: locationState.location!.longitude,
-          }}
-      >
-        <MapOptions
-          ambulanceFound={onRide}
-          onHelpRequest={handleHelpRequest}
-          cancelRequest={() => {}}
-        />
-      </UserMap>
-    </>
+    <UserMap
+      driverLocations={booking ? [{ lat: booking.driver.lat, lng: booking.driver.lng }] : []}
+      userLocation={{
+        lat: locationState.location.latitude,
+        lng: locationState.location.longitude,
+      }}
+    >
+      <MapOptions
+        bookingAssigned={status !== "idle"}
+        status={status}
+        booking={booking}
+        onHelpRequest={handleHelpRequest}
+        cancelRequest={handleCancel}
+      />
+    </UserMap>
   );
 }
