@@ -10,11 +10,15 @@ import { DriverService } from "../drivers/driver.service";
 import { BookingService } from "../booking/booking.service";
 import Redis from "ioredis";
 import { WebsocketSessionService } from "@/services/websocket-session.service";
+import { bookings } from "@/database/schema";
+import { eq } from "drizzle-orm";
+import { PatientGateway } from "../patients/patient.gateway";
+import { Inject, forwardRef } from "@nestjs/common";
 
 type DriverLocation = {
   id: string;
-  lat: number;
-  lng: number;
+  latitude: number;
+  longitude: number;
 };
 
 @WebSocketGateway({ cors: { origin: "*" }, namespace: "/driver" })
@@ -26,6 +30,8 @@ export class DriverGateway {
     private db: DbService,
     private driverService: DriverService,
     private websocketSessionService: WebsocketSessionService,
+    @Inject(forwardRef(() => PatientGateway))
+    private patientGateway: PatientGateway,
     private bookingService: BookingService
   ) {
   }
@@ -54,16 +60,25 @@ export class DriverGateway {
 
   @SubscribeMessage("driver:update")
   async updateDriverLocation(client: Socket, data: DriverLocation) {
-    this.driverService.setDriverLocation(data.id, data.lat, data.lng);
+    const driverId = client.data.driverId
+    this.driverService.setDriverLocation(driverId, data.latitude, data.latitude);
   }
 
   @SubscribeMessage("driver:arrived")
-  async driverArrived(client: Socket, data: { driverId: string }) {
-
+  async driverArrived(client: Socket) {
+    const driverId = client.data.driverId;
+    const bookingData = await this.driverService.getDriverBooking(driverId)
+    this.bookingService.setArrived(bookingData.id);
+    const {id, patientId} = bookingData
+    this.patientGateway.server.to(`patient:${patientId}`).emit("booking:arrived", { bookingId: id })
   }
 
   @SubscribeMessage("driver:completed")
   async driverCompleted(client: Socket, data: { driverId: string }) {
-
+    const driverId = client.data.driverId;
+    const bookingData = await this.driverService.getDriverBooking(driverId)
+    this.bookingService.setCompleted(bookingData.id);
+    const {id, patientId} = bookingData
+    this.patientGateway.server.to(`patient:${patientId}`).emit("booking:completed", {bookingId: id})
   }
 }

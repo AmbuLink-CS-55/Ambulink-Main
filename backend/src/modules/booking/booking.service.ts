@@ -71,4 +71,24 @@ export class BookingService {
         },
       };
   }
+
+  setArrived(bookingId: string) {
+    this.db.getDb().
+      update(bookings)
+      .set({
+        status: "ARRIVED",
+        arrivedAt: new Date(),
+      })
+      .where(eq(bookings.id, bookingId));
+  }
+
+  setCompleted(bookingId: string) {
+    this.db.getDb().
+      update(bookings)
+      .set({
+        status: "COMPLETED",
+        arrivedAt: new Date(),
+      })
+      .where(eq(bookings.id, bookingId));
+  }
 }

@@ -18,6 +18,7 @@ import { sql } from "drizzle-orm";
 import { WebsocketSessionService } from "@/services/websocket-session.service";
 import { HospitalService } from "../hospital/hospital.service";
 import { DriverGateway } from "../drivers/driver.gateway";
+import { Inject, forwardRef } from "@nestjs/common";
 
 type PickupRequest = {
   patientId: string;
@@ -36,6 +37,7 @@ export class PatientGateway {
     private db: DbService,
     private websocketSessionService: WebsocketSessionService,
     private hospitalService: HospitalService,
+    @Inject(forwardRef(() => DriverGateway))
     private driverGateway: DriverGateway
   ) {}
 
