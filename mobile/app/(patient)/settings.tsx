@@ -168,8 +168,14 @@ export default function Settings() {
   }
 
   return (
-    <SafeAreaView className="flex-1">
-      <ScrollView className="px-4 py-7">
+    <SafeAreaView
+      className="flex-1"
+      edges={['top', 'left', 'right']}
+    >
+      <ScrollView
+        className="p-4"
+        contentContainerStyle={{ paddingBottom: 4, paddingTop: 7 }}
+      >
         <View style={styles.header} className="mb-24">
           <Text style={styles.headerTitle}>{i18n.t("settings.title")}</Text>
         </View>

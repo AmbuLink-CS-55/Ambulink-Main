@@ -76,9 +76,12 @@ export default function Home() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView
+      edges={['top', 'left', 'right']}
+      className="flex-1 bg-gray-50"
+    >
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{}}
         showsVerticalScrollIndicator={false}
       >
         <View className="p-4">
@@ -134,7 +137,7 @@ export default function Home() {
 
           <View className="mt-6 p-5 bg-white rounded-2xl shadow-sm border border-gray-100">
             <Text className="text-xs font-bold text-gray-400 uppercase mb-3">Ride Details</Text>
-            <DetailItem label="Patient Name" value={currentRide?.patient.name ?? "Waiting..."} />
+            <DetailItem label="Patient Name" value={currentRide?.patient.name ?? "None"} />
             <DetailItem label="Hospital" value={currentRide?.hospital.name ?? "None"} />
             <DetailItem label="Status" value={rideStatus} />
           </View>
