@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq, and } from "drizzle-orm";
-import { DbService } from "@/database/db.service";
+import { DbService } from "@/services/db.service";
 import { users } from "@/database/schema";
 import type {
   InsertPatientDto,
@@ -11,10 +11,7 @@ import type {
 export class PatientService {
   // patientID : socketID
 
-  constructor(
-    private db: DbService,
-  ) {
-  }
+  constructor(private db: DbService) {}
 
   async create(createPatientDto: InsertPatientDto): Promise<SelectPatientDto> {
     const patientData = {
@@ -45,7 +42,8 @@ export class PatientService {
   }
 
   async findOne(id: string): Promise<SelectPatientDto> {
-    const result = await this.db.getDb()
+    const result = await this.db
+      .getDb()
       .select()
       .from(users)
       .where(and(eq(users.id, id), eq(users.role, "PATIENT")));

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq, and, sql, isNotNull, asc } from "drizzle-orm";
-import { DbService } from "@/database/db.service";
+import { DbService } from "@/services/db.service";
 import { ambulanceProviders, bookings, users } from "@/database/schema";
 import type {
   InsertDriverDto,
@@ -14,7 +14,6 @@ type DriverStatus = "AVAILABLE" | "BUSY" | "OFFLINE";
 
 @Injectable()
 export class DriverService {
-
   constructor(
     private db: DbService,
     private websocketSessionService: WebsocketSessionService
@@ -114,14 +113,15 @@ export class DriverService {
   }
 
   async setStatus(driverId: string, status: "AVAILABLE" | "BUSY" | "OFFLINE") {
-    await this.db.getDb()
-        .update(users)
-        .set({
-          status: status,
-          updatedAt: new Date()
-        })
-        .where(eq(users.id, driverId));
-    console.log(driverId, "to", status)
+    await this.db
+      .getDb()
+      .update(users)
+      .set({
+        status: status,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, driverId));
+    console.log(driverId, "to", status);
   }
   setWS(driverId: string, socket: Socket) {
     this.websocketSessionService.setDriverSocket(driverId, socket);
@@ -149,7 +149,7 @@ export class DriverService {
       .update(users)
       .set({
         status: null,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")));
   }
@@ -165,7 +165,7 @@ export class DriverService {
       .set({
         currentLocation: sql`ST_GeomFromText(${pointWkt}, 4326)`,
         lastLocationUpdate: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")));
     console.log("location set", lat, lng);
@@ -177,7 +177,8 @@ export class DriverService {
       ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography
     )`;
 
-    const nearbyDrivers = await this.db.getDb()
+    const nearbyDrivers = await this.db
+      .getDb()
       .select({
         id: users.id,
         phoneNumber: users.phoneNumber,
@@ -190,7 +191,10 @@ export class DriverService {
         distance: distanceExpr,
       })
       .from(users)
-      .innerJoin(ambulanceProviders, eq(users.providerId, ambulanceProviders.id))
+      .innerJoin(
+        ambulanceProviders,
+        eq(users.providerId, ambulanceProviders.id)
+      )
       .where(
         and(
           eq(users.role, "DRIVER"),
@@ -205,14 +209,13 @@ export class DriverService {
   }
 
   async getDriverBooking(driverId: string) {
-    const [data] = await this.db.getDb()
-        .select()
-        .from(bookings)
-        .where(and(
-          eq(bookings.driverId, driverId),
-          eq(bookings.status, "ASSIGNED")
-        ))
+    const [data] = await this.db
+      .getDb()
+      .select()
+      .from(bookings)
+      .where(
+        and(eq(bookings.driverId, driverId), eq(bookings.status, "ASSIGNED"))
+      );
     return data;
   }
-
 }

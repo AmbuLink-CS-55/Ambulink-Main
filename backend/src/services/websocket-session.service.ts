@@ -1,5 +1,5 @@
-import { Global, Injectable } from '@nestjs/common';
-import { Socket } from 'socket.io';
+import { Global, Injectable } from "@nestjs/common";
+import { Socket } from "socket.io";
 
 @Global()
 @Injectable()
@@ -19,10 +19,6 @@ export class WebsocketSessionService {
     return this.driverSockets.delete(driverId);
   }
 
-  getAllDriverSockets(): Map<string, Socket> {
-    return new Map(this.driverSockets);
-  }
-
   setPatientSocket(patientId: string, socket: Socket): void {
     this.patientSockets.set(patientId, socket);
   }
@@ -33,10 +29,6 @@ export class WebsocketSessionService {
 
   removePatientSocket(patientId: string): boolean {
     return this.patientSockets.delete(patientId);
-  }
-
-  getAllPatientSockets(): Map<string, Socket> {
-    return new Map(this.patientSockets);
   }
 
   clear(): void {

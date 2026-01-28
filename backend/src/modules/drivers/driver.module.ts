@@ -1,7 +1,7 @@
 import { forwardRef, Module } from "@nestjs/common";
 import { DriverController } from "./driver.controller";
 import { DriverService } from "./driver.service";
-import { DbService } from "@/database/db.service";
+import { DbService } from "@/services/db.service";
 import { BookingService } from "../booking/booking.service";
 import { DriverGateway } from "./driver.gateway";
 import { WebsocketSessionService } from "@/services/websocket-session.service";
@@ -15,7 +15,7 @@ import { PatientModule } from "../patients/patient.module";
     DbService,
     BookingService,
     DriverGateway,
-    WebsocketSessionService
+    WebsocketSessionService,
   ],
   imports: [forwardRef(() => PatientModule)],
   exports: [DriverService, DriverGateway],

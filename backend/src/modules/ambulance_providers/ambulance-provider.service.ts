@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
-import { DbService } from "@/database/db.service";
+import { DbService } from "@/services/db.service";
 import { ambulanceProviders } from "@/database/schema";
 import type {
   InsertAmbulanceProviderDto,

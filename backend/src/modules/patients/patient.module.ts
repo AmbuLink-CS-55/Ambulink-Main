@@ -1,7 +1,7 @@
 import { forwardRef, Module } from "@nestjs/common";
 import { PatientController } from "./patient.controller";
 import { PatientService } from "./patient.service";
-import { DbService } from "@/database/db.service";
+import { DbService } from "@/services/db.service";
 
 import { DriverService } from "../drivers/driver.service";
 import { PatientGateway } from "./patient.gateway";

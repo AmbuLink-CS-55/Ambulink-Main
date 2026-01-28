@@ -85,7 +85,9 @@ export const users = pgTable(
 
     // Location tracking for drivers
     currentLocation: geometry("current_location", { mode: "xy", srid: 4326 }),
-    lastLocationUpdate: timestamp("last_location_update", { withTimezone: true }),
+    lastLocationUpdate: timestamp("last_location_update", {
+      withTimezone: true,
+    }),
 
     // Status tracking for drivers
     status: userStatusEnum("status"),
@@ -95,7 +97,12 @@ export const users = pgTable(
     emailUnique: uniqueIndex("email_unique").on(t.email),
     providerIdx: index("provider_idx").on(t.providerId),
     roleIdx: index("role_idx").on(t.role),
-    driverStatusLocationIdx: index("driver_status_location_idx").on(t.role, t.isActive, t.status, t.currentLocation),
+    driverStatusLocationIdx: index("driver_status_location_idx").on(
+      t.role,
+      t.isActive,
+      t.status,
+      t.currentLocation
+    ),
   })
 );
 
@@ -131,7 +138,10 @@ export const ambulance = pgTable(
       t.vehicleNumber
     ),
     providerIdx: index("provider_idx_ambulances").on(t.providerId),
-    statusLocationIdx: index("ambulance_status_location_idx").on(t.status, t.currentLocation),
+    statusLocationIdx: index("ambulance_status_location_idx").on(
+      t.status,
+      t.currentLocation
+    ),
   })
 );
 

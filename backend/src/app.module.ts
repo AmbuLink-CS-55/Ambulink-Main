@@ -15,7 +15,7 @@ import { WebsocketModule } from "./services/websocket-session.module";
     DriverModule,
     AmbulanceModule,
     BookingModule,
-    WebsocketModule
+    WebsocketModule,
     // CacheModule.registerAsync<RedisClientOptions>({
     //   isGlobal: true,
     //   useFactory: () => ({

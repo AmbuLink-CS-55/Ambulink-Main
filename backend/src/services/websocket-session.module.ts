@@ -1,5 +1,5 @@
-import { Global, Module } from '@nestjs/common';
-import { WebsocketSessionService } from './websocket-session.service';
+import { Global, Module } from "@nestjs/common";
+import { WebsocketSessionService } from "./websocket-session.service";
 
 @Global()
 @Module({

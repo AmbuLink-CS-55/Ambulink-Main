@@ -4,7 +4,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from "@nestjs/websockets";
-import { DbService } from "@/database/db.service";
+import { DbService } from "@/services/db.service";
 import { AmbulanceService } from "../ambulance/ambulance.service";
 import { DriverService } from "../drivers/driver.service";
 import { BookingService } from "../booking/booking.service";
@@ -33,8 +33,7 @@ export class DriverGateway {
     @Inject(forwardRef(() => PatientGateway))
     private patientGateway: PatientGateway,
     private bookingService: BookingService
-  ) {
-  }
+  ) {}
 
   handleConnection(client: Socket) {
     const driverId = client.handshake.auth.driverId as string;
@@ -43,39 +42,49 @@ export class DriverGateway {
 
     client.join(`driver:${driverId}`);
 
-    this.driverService.setStatus(driverId, "AVAILABLE")
-    this.websocketSessionService.getDriverSocket(driverId)?.emit("message", "works")
-    console.log("driver:connected", driverId)
+    this.driverService.setStatus(driverId, "AVAILABLE");
+    this.websocketSessionService
+      .getDriverSocket(driverId)
+      ?.emit("message", "works");
+    console.log("driver:connected", driverId);
   }
 
   handleDisconnect(client: Socket) {
-    this.driverService.setStatus(client.data.driverId, "OFFLINE")
+    this.driverService.setStatus(client.data.driverId, "OFFLINE");
     console.log(`Client disconnected: ${client.id}`);
   }
 
   @SubscribeMessage("driver:update")
   async updateDriverLocation(client: Socket, data: DriverLocation) {
-    const driverId = client.data.driverId
-    this.driverService.setDriverLocation(driverId, data.latitude, data.latitude);
+    const driverId = client.data.driverId;
+    this.driverService.setDriverLocation(
+      driverId,
+      data.latitude,
+      data.latitude
+    );
   }
 
   @SubscribeMessage("driver:arrived")
   async driverArrived(client: Socket) {
     const driverId = client.data.driverId;
-    const bookingData = await this.driverService.getDriverBooking(driverId)
+    const bookingData = await this.driverService.getDriverBooking(driverId);
     this.bookingService.setArrived(bookingData.id);
-    const { id, patientId } = bookingData
-    this.patientGateway.server.to(`patient:${patientId}`).emit("booking:arrived", { bookingId: id })
-    console.log("patient:arrived", patientId)
+    const { id, patientId } = bookingData;
+    this.patientGateway.server
+      .to(`patient:${patientId}`)
+      .emit("booking:arrived", { bookingId: id });
+    console.log("patient:arrived", patientId);
   }
 
   @SubscribeMessage("driver:completed")
   async driverCompleted(client: Socket, data: { driverId: string }) {
     const driverId = client.data.driverId;
-    const bookingData = await this.driverService.getDriverBooking(driverId)
+    const bookingData = await this.driverService.getDriverBooking(driverId);
     this.bookingService.setCompleted(bookingData.id);
-    const { id, patientId } = bookingData
-    this.patientGateway.server.to(`patient:${patientId}`).emit("booking:completed", { bookingId: id })
-    console.log("patient:arrived", patientId)
+    const { id, patientId } = bookingData;
+    this.patientGateway.server
+      .to(`patient:${patientId}`)
+      .emit("booking:completed", { bookingId: id });
+    console.log("patient:arrived", patientId);
   }
 }

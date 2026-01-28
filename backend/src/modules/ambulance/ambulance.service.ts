@@ -1,20 +1,15 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
-import { DbService } from "@/database/db.service";
+import { DbService } from "@/services/db.service";
 import { ambulance } from "@/database/schema";
 import type {
   InsertAmbulanceDto,
   SelectAmbulanceDto,
 } from "@/common/dto/ambulance.schema";
-import Redis from "ioredis";
 
 @Injectable()
 export class AmbulanceService {
-
-  constructor(
-    private db: DbService,
-  ) {
-  }
+  constructor(private db: DbService) { }
 
   async create(
     createAmbulanceDto: InsertAmbulanceDto
