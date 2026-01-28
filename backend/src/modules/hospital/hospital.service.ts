@@ -14,7 +14,8 @@ export class HospitalService {
       .select()
       .from(hospitals)
       .orderBy(
-        sql`${hospitals.location} <-> st_setsrid(st_makepoint(${lng}, ${lat}), 4326)`
+        sql`${hospitals.location} <-> ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)`
+        // sql`${hospitals.location} <-> st_setsrid(st_makepoint(${lng}, ${lat}), 4326)`
       )
       .limit(1);
 

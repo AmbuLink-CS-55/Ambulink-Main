@@ -1,34 +1,36 @@
 import { io, Socket } from "socket.io-client";
 import { getData } from "./storage/settingsStorage";
+import env from "@/env";
 
 export class SocketClientCreator {
-  static patientSocketUrl = "ws://192.168.1.5:3000/patient";
-  static driverSocketUrl = "ws://192.168.1.5:3000/driver";
-  static emtSocketUrl = "ws://192.168.1.5:3000/emt";
+  static patientSocketUrl = `${env.EXPO_PUBLIC_WS_SERVER_URL}/patient`;
+  static driverSocketUrl = `${env.EXPO_PUBLIC_WS_SERVER_URL}/driver`;
+  static emtSocketUrl = `${env.EXPO_PUBLIC_WS_SERVER_URL}/emt`;
 
   private static instance: Socket | null = null;
 
   static async getSocket(type: "PATIENT" | "DRIVER" | "EMT"): Promise<Socket> {
+    console.log(this.patientSocketUrl, this.driverSocketUrl)
     if (this.instance?.connected) {
       return this.instance;
     }
 
     let url: string;
     let authPayload: Record<string, string> = {};
-    const userId = await getData("cduserId");
+    // const userId = await getData("userId");
 
     switch (type) {
       case "PATIENT":
         url = this.patientSocketUrl;
-        authPayload = { patientId: "5108f0b5-07fc-46b1-8392-ee97a52b7c42" };
+        authPayload = { patientId: env.EXPO_PUBLIC_PATIENT_ID };
         break;
       case "DRIVER":
         url = this.driverSocketUrl;
-        authPayload = { driverId: "2eb33daf-ae6d-48c4-8110-3459b5f50f31" };
+        authPayload = { driverId: env.EXPO_PUBLIC_DRIVER_ID };
         break;
       case "EMT":
         url = this.emtSocketUrl;
-        authPayload = { emtId: userId || "1" };
+        authPayload = { emtId: env.EXPO_PUBLIC_EMT_ID };
         break;
       default:
         throw Error("Socket type not defined");

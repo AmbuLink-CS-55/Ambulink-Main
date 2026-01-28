@@ -47,6 +47,7 @@
     "socket.io-client": "^4.8.3",
     "tailwindcss": "^4.1.18",
     "uniwind": "^1.2.4",
+    "zod": "^4.3.6",
     "zustand": "^5.0.9"
   },
   "devDependencies": {

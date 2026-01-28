@@ -55,7 +55,7 @@ export class PatientGateway {
       console.log("No drivers found");
       return;
     }
-    // console.log("near by drivers: ", nearestDrivers)
+    console.log("near by drivers: ", nearestDrivers)
     const hospital = await this.hospitalService.findTheNearestHospital(
       lat,
       lng
@@ -64,7 +64,6 @@ export class PatientGateway {
     const patient = await this.patientService.findOne(patientId);
     // console.log("patient", patient)
     const pickedDriver = nearestDrivers[0];
-
     const booking = await this.bookingService.createBooking(
       patient,
       lat,
