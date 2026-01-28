@@ -51,6 +51,10 @@ export default function Home() {
       setCurrentRide(data);
       setRideStatus("assigned");
     });
+    socket.on("booking:cancelled", () => {
+      setCurrentRide(null)
+      setRideStatus("idle")
+    })
 
     // return () => {
     //   socket?.disconnect();

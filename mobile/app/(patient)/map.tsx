@@ -93,6 +93,11 @@ export default function Map() {
   };
 
   const handleCancel = () => {
+    if (!socket?.connected) {
+      console.log("socket not ready");
+      return;
+    }
+    socket.emit("patient:cancelled")
     setBooking(null);
     setStatus("idle");
   };

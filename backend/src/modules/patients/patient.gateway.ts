@@ -80,4 +80,14 @@ export class PatientGateway {
       .emit("booking:assigned", booking);
     client.emit("booking:assigned", booking);
   }
+
+  @SubscribeMessage("patient:cancelled")
+  async patientCancel(client: Socket, data: PickupRequest) {
+    const patientId = client.data.patientId;
+    const booking = await this.bookingService.cancelByPatient(patientId, "cancelled by patient");
+    const driverId = booking.driverId;
+    this.driverGateway.server
+      .to(`driver:${driverId}`)
+      .emit("booking:cancelled", booking);
+  }
 }

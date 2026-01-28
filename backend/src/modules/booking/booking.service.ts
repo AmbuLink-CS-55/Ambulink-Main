@@ -1,9 +1,10 @@
 import { Injectable } from "@nestjs/common";
-import { eq, sql } from "drizzle-orm";
+import { eq, ne, sql } from "drizzle-orm";
 import { DbService } from "@/services/db.service";
 import { bookings } from "@/database/schema";
 import { SelectPatientDto } from "@/common/dto/patient.schema";
 import { SelectDriverDto } from "@/common/dto/driver.schema";
+import { and } from "drizzle-orm";
 
 @Injectable()
 export class BookingService {
@@ -88,5 +89,20 @@ export class BookingService {
         arrivedAt: new Date(),
       })
       .where(eq(bookings.id, bookingId));
+  }
+
+  async cancelByPatient(patientId: string, reason: string) {
+    const [booking] = await this.db
+      .getDb()
+      .update(bookings)
+      .set({
+        status: "CANCELLED",
+        cancellationReason: reason
+      }).where(and(
+        eq(bookings.patientId, patientId),
+        ne(bookings.status, "COMPLETED")
+      )).returning()
+
+    return booking
   }
 }
