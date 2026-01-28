@@ -19,4 +19,4 @@ export const insertDriverSchema = createInsertSchema(users)
 export const selectDriverSchema = createSelectSchema(users);
 
 export type InsertDriverDto = z.infer<typeof insertDriverSchema>;
-export type DriverDto = z.infer<typeof selectDriverSchema>;
+export type SelectDriverDto = z.infer<typeof selectDriverSchema>;

@@ -2,15 +2,15 @@ import { Injectable } from "@nestjs/common";
 import { eq, sql } from "drizzle-orm";
 import { DbService } from "@/services/db.service";
 import { bookings } from "@/database/schema";
-import { PatientDto } from "@/common/dto/patient.schema";
-import { DriverDto } from "@/common/dto/driver.schema";
+import { SelectPatientDto } from "@/common/dto/patient.schema";
+import { SelectDriverDto } from "@/common/dto/driver.schema";
 
 @Injectable()
 export class BookingService {
   constructor(private db: DbService) { }
 
   async createBooking(
-    patient: PatientDto,
+    patient: SelectPatientDto,
     patientLat: number,
     patientLng: number,
     pickupAddr: string | null,

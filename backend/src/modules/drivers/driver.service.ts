@@ -3,7 +3,7 @@ import { eq, and, sql, isNotNull, asc } from "drizzle-orm";
 import { DbService } from "@/services/db.service";
 import { ambulanceProviders, bookings, users } from "@/database/schema";
 import type {
-  DriverDto,
+  SelectDriverDto,
   InsertDriverDto,
 } from "@/common/dto/driver.schema";
 
@@ -13,7 +13,7 @@ export class DriverService {
     private db: DbService,
   ) { }
 
-  async create(createDriverDto: InsertDriverDto): Promise<DriverDto> {
+  async create(createDriverDto: InsertDriverDto): Promise<SelectDriverDto> {
     const result = await this.db
       .getDb()
       .insert(users)
@@ -32,7 +32,7 @@ export class DriverService {
   async findAll(
     providerId?: string,
     isActive?: boolean
-  ): Promise<DriverDto[]> {
+  ): Promise<SelectDriverDto[]> {
     const conditions = [eq(users.role, "DRIVER" as const)];
 
     if (providerId) {
@@ -50,7 +50,7 @@ export class DriverService {
       .where(and(...conditions));
   }
 
-  async findOne(id: string): Promise<DriverDto> {
+  async findOne(id: string): Promise<SelectDriverDto> {
     const result = await this.db
       .getDb()
       .select()
@@ -66,7 +66,7 @@ export class DriverService {
   async update(
     id: string,
     updateDriverDto: Partial<InsertDriverDto>
-  ): Promise<DriverDto> {
+  ): Promise<SelectDriverDto> {
     await this.findOne(id);
 
     const updateData: Record<string, unknown> = {
