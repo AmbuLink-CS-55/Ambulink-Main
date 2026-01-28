@@ -15,4 +15,4 @@ export const insertPatientSchema = createInsertSchema(users)
 export const selectPatientSchema = createSelectSchema(users);
 
 export type InsertPatientDto = z.infer<typeof insertPatientSchema>;
-export type SelectPatientDto = z.infer<typeof selectPatientSchema>;
+export type PatientDto = z.infer<typeof selectPatientSchema>;

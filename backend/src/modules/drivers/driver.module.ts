@@ -4,9 +4,9 @@ import { DriverService } from "./driver.service";
 import { DbService } from "@/services/db.service";
 import { BookingService } from "../booking/booking.service";
 import { DriverGateway } from "./driver.gateway";
-import { WebsocketSessionService } from "@/services/websocket-session.service";
 import { PatientGateway } from "../patients/patient.gateway";
 import { PatientModule } from "../patients/patient.module";
+import { SocketService } from "@/services/socket.service";
 
 @Module({
   controllers: [DriverController],
@@ -14,10 +14,10 @@ import { PatientModule } from "../patients/patient.module";
     DriverService,
     DbService,
     BookingService,
+    SocketService,
     DriverGateway,
-    WebsocketSessionService,
   ],
   imports: [forwardRef(() => PatientModule)],
   exports: [DriverService, DriverGateway],
 })
-export class DriverModule {}
+export class DriverModule { }

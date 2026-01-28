@@ -6,10 +6,10 @@ import { DbService } from "@/services/db.service";
 import { DriverService } from "../drivers/driver.service";
 import { PatientGateway } from "./patient.gateway";
 import { BookingService } from "../booking/booking.service";
-import { WebsocketSessionService } from "@/services/websocket-session.service";
 import { HospitalService } from "../hospital/hospital.service";
 import { DriverGateway } from "../drivers/driver.gateway";
 import { DriverModule } from "../drivers/driver.module";
+import { SocketService } from "@/services/socket.service";
 
 @Module({
   controllers: [PatientController],
@@ -19,10 +19,10 @@ import { DriverModule } from "../drivers/driver.module";
     DriverService,
     PatientGateway,
     BookingService,
-    WebsocketSessionService,
     HospitalService,
+    SocketService,
   ],
   imports: [forwardRef(() => DriverModule)],
   exports: [PatientService, PatientGateway],
 })
-export class PatientModule {}
+export class PatientModule { }

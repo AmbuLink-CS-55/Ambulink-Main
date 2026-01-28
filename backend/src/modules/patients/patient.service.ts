@@ -4,16 +4,17 @@ import { DbService } from "@/services/db.service";
 import { users } from "@/database/schema";
 import type {
   InsertPatientDto,
-  SelectPatientDto,
+  PatientDto,
 } from "@/common/dto/patient.schema";
+import { DriverDto } from "@/common/dto/driver.schema";
 
 @Injectable()
 export class PatientService {
   // patientID : socketID
 
-  constructor(private db: DbService) {}
+  constructor(private db: DbService) { }
 
-  async create(createPatientDto: InsertPatientDto): Promise<SelectPatientDto> {
+  async create(createPatientDto: InsertPatientDto): Promise<DriverDto> {
     const patientData = {
       ...createPatientDto,
       role: "PATIENT" as const,
@@ -27,7 +28,7 @@ export class PatientService {
     return result[0];
   }
 
-  async findAll(isActive?: boolean): Promise<SelectPatientDto[]> {
+  async findAll(isActive?: boolean): Promise<PatientDto[]> {
     const conditions = [eq(users.role, "PATIENT" as const)];
 
     if (isActive !== undefined) {
@@ -41,7 +42,7 @@ export class PatientService {
       .where(and(...conditions));
   }
 
-  async findOne(id: string): Promise<SelectPatientDto> {
+  async findOne(id: string): Promise<PatientDto> {
     const result = await this.db
       .getDb()
       .select()
@@ -57,7 +58,7 @@ export class PatientService {
   async update(
     id: string,
     updatePatientDto: Partial<InsertPatientDto>
-  ): Promise<SelectPatientDto> {
+  ): Promise<PatientDto> {
     await this.findOne(id);
 
     const result = await this.db

@@ -3,23 +3,17 @@ import { eq, and, sql, isNotNull, asc } from "drizzle-orm";
 import { DbService } from "@/services/db.service";
 import { ambulanceProviders, bookings, users } from "@/database/schema";
 import type {
+  DriverDto,
   InsertDriverDto,
-  SelectDriverDto,
 } from "@/common/dto/driver.schema";
-import { WebsocketSessionService } from "@/services/websocket-session.service";
-import Redis from "ioredis";
-import { Socket } from "socket.io";
-
-type DriverStatus = "AVAILABLE" | "BUSY" | "OFFLINE";
 
 @Injectable()
 export class DriverService {
   constructor(
     private db: DbService,
-    private websocketSessionService: WebsocketSessionService
-  ) {}
+  ) { }
 
-  async create(createDriverDto: InsertDriverDto): Promise<SelectDriverDto> {
+  async create(createDriverDto: InsertDriverDto): Promise<DriverDto> {
     const result = await this.db
       .getDb()
       .insert(users)
@@ -38,7 +32,7 @@ export class DriverService {
   async findAll(
     providerId?: string,
     isActive?: boolean
-  ): Promise<SelectDriverDto[]> {
+  ): Promise<DriverDto[]> {
     const conditions = [eq(users.role, "DRIVER" as const)];
 
     if (providerId) {
@@ -56,7 +50,7 @@ export class DriverService {
       .where(and(...conditions));
   }
 
-  async findOne(id: string): Promise<SelectDriverDto> {
+  async findOne(id: string): Promise<DriverDto> {
     const result = await this.db
       .getDb()
       .select()
@@ -72,7 +66,7 @@ export class DriverService {
   async update(
     id: string,
     updateDriverDto: Partial<InsertDriverDto>
-  ): Promise<SelectDriverDto> {
+  ): Promise<DriverDto> {
     await this.findOne(id);
 
     const updateData: Record<string, unknown> = {
@@ -123,14 +117,8 @@ export class DriverService {
       .where(eq(users.id, driverId));
     console.log(driverId, "to", status);
   }
-  setWS(driverId: string, socket: Socket) {
-    this.websocketSessionService.setDriverSocket(driverId, socket);
-  }
 
-  async getWS(driverId: string) {
-    const socket = this.websocketSessionService.getDriverSocket(driverId);
-    if (socket) return socket;
-  }
+
 
   async isAvailable(driverId: string) {
     const result = await this.db

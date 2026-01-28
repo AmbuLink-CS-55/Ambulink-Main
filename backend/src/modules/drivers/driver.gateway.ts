@@ -1,19 +1,16 @@
 import { Server, Socket } from "socket.io";
 import {
+  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from "@nestjs/websockets";
 import { DbService } from "@/services/db.service";
-import { AmbulanceService } from "../ambulance/ambulance.service";
 import { DriverService } from "../drivers/driver.service";
 import { BookingService } from "../booking/booking.service";
-import Redis from "ioredis";
-import { WebsocketSessionService } from "@/services/websocket-session.service";
-import { bookings } from "@/database/schema";
-import { eq } from "drizzle-orm";
 import { PatientGateway } from "../patients/patient.gateway";
 import { Inject, forwardRef } from "@nestjs/common";
+import { SocketService } from "@/services/socket.service";
 
 type DriverLocation = {
   id: string;
@@ -27,13 +24,11 @@ export class DriverGateway {
   server: Server;
 
   constructor(
-    private db: DbService,
     private driverService: DriverService,
-    private websocketSessionService: WebsocketSessionService,
     @Inject(forwardRef(() => PatientGateway))
     private patientGateway: PatientGateway,
-    private bookingService: BookingService
-  ) {}
+    private bookingService: BookingService,
+  ) { }
 
   handleConnection(client: Socket) {
     const driverId = client.handshake.auth.driverId as string;
@@ -43,9 +38,7 @@ export class DriverGateway {
     client.join(`driver:${driverId}`);
 
     this.driverService.setStatus(driverId, "AVAILABLE");
-    this.websocketSessionService
-      .getDriverSocket(driverId)
-      ?.emit("message", "works");
+
     console.log("driver:connected", driverId);
   }
 
@@ -60,7 +53,7 @@ export class DriverGateway {
     this.driverService.setDriverLocation(
       driverId,
       data.latitude,
-      data.latitude
+      data.longitude
     );
   }
 

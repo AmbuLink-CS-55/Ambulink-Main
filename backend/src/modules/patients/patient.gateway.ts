@@ -4,15 +4,14 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from "@nestjs/websockets";
-import { DbService } from "@/services/db.service";
 
 import { DriverService } from "../drivers/driver.service";
 import { PatientService } from "./patient.service";
 import { BookingService } from "../booking/booking.service";
-import { WebsocketSessionService } from "@/services/websocket-session.service";
 import { HospitalService } from "../hospital/hospital.service";
 import { DriverGateway } from "../drivers/driver.gateway";
 import { Inject, forwardRef } from "@nestjs/common";
+import { SocketService } from "@/services/socket.service";
 
 type PickupRequest = {
   patientId: string;
@@ -28,15 +27,13 @@ export class PatientGateway {
     private patientService: PatientService,
     private driverService: DriverService,
     private bookingService: BookingService,
-    private db: DbService,
-    private websocketSessionService: WebsocketSessionService,
     private hospitalService: HospitalService,
     @Inject(forwardRef(() => DriverGateway))
-    private driverGateway: DriverGateway
+    private driverGateway: DriverGateway,
+    private socketService: SocketService
   ) { }
 
   handleConnection(client: Socket) {
-    // console.log("ws:connect", client)
     const patientId = client.handshake.auth.patientId as string;
     if (!patientId) return client.disconnect(true);
     client.data.patientId = patientId;
