@@ -77,6 +77,7 @@ export default function Map() {
     socket.on("booking:completed", () => {
       console.log("booking:completed");
       setStatus("completed");
+      setTimeout(() => {setStatus("idle")}, 5000)
     });
 
   }, [socket]);
