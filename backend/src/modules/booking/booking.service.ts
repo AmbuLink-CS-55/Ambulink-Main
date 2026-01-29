@@ -1,14 +1,15 @@
 import { Injectable } from "@nestjs/common";
-import { eq, ne, sql } from "drizzle-orm";
+import { eq, ne, SQL, sql } from "drizzle-orm";
 import { DbService } from "@/services/db.service";
-import { bookings } from "@/database/schema";
+import { bookings, users } from "@/database/schema";
 import { SelectPatientDto } from "@/common/dto/patient.schema";
-import { SelectDriverDto } from "@/common/dto/driver.schema";
 import { and } from "drizzle-orm";
+import { InsertBookingDto } from "@/common/dto/bookings.schema";
+import { or } from "drizzle-orm";
 
 @Injectable()
 export class BookingService {
-  constructor(private db: DbService) { }
+  constructor(private db: DbService) {}
 
   async createBooking(
     patient: SelectPatientDto,
@@ -69,26 +70,37 @@ export class BookingService {
     };
   }
 
-  setArrived(bookingId: string) {
+  updateBooking(bookingId: string, booking: Partial<InsertBookingDto>) {
     this.db
       .getDb()
       .update(bookings)
-      .set({
-        status: "ARRIVED",
-        arrivedAt: new Date(),
-      })
+      .set(booking)
       .where(eq(bookings.id, bookingId));
   }
 
-  setCompleted(bookingId: string) {
-    this.db
+  async getOngoingBookingByUserId(userId: string) {
+    const data = await this.db
       .getDb()
-      .update(bookings)
-      .set({
-        status: "COMPLETED",
-        arrivedAt: new Date(),
+      .select({
+        id: bookings.id,
+        patientId: bookings.patientId,
+        driverId: bookings.driverId,
+        status: bookings.status,
       })
-      .where(eq(bookings.id, bookingId));
+      .from(bookings)
+      .where(
+        and(
+          or(eq(bookings.patientId, userId), eq(bookings.driverId, userId)),
+          ne(bookings.status, "COMPLETED")
+        )
+      );
+
+    if (data.length > 1) {
+      console.log(
+        "Something is wrong, users cannot have multiple uncompleted bookings"
+      );
+    }
+    return data[0];
   }
 
   async cancelByPatient(patientId: string, reason: string) {
@@ -97,12 +109,13 @@ export class BookingService {
       .update(bookings)
       .set({
         status: "CANCELLED",
-        cancellationReason: reason
-      }).where(and(
-        eq(bookings.patientId, patientId),
-        ne(bookings.status, "COMPLETED")
-      )).returning()
+        cancellationReason: reason,
+      })
+      .where(
+        and(eq(bookings.patientId, patientId), ne(bookings.status, "COMPLETED"))
+      )
+      .returning();
 
-    return booking
+    return booking;
   }
 }

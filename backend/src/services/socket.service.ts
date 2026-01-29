@@ -3,7 +3,7 @@ import { Server, ServerOptions, Socket } from "socket.io";
 
 @Injectable({ scope: Scope.DEFAULT })
 export class SocketService {
-  static id = Math.random()
+  static id = Math.random();
   public driverServer: Server;
   public patientServer: Server;
 
@@ -17,7 +17,7 @@ export class SocketService {
 
   getDriverServer() {
     if (this.driverServer != null) {
-      return this.driverServer
+      return this.driverServer;
     }
   }
 
@@ -28,5 +28,4 @@ export class SocketService {
   sendPatientMessage(patientId: string, event: string, message: any) {
     this.patientServer.emit(event, { message });
   }
-
 }

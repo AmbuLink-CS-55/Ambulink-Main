@@ -17,10 +17,7 @@ cd backend
 
 docker build -t postgres-postgis .
 
-docker run --name postgres-db \
-  -e POSTGRES_PASSWORD=123 \
-  -p 5432:5432 \
-  -d postgres-postgis
+docker run --name postgres-db -e POSTGRES_PASSWORD=123 -p 5432:5432 -d postgres-postgis
 
 ```
 

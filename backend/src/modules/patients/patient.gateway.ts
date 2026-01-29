@@ -31,7 +31,7 @@ export class PatientGateway {
     @Inject(forwardRef(() => DriverGateway))
     private driverGateway: DriverGateway,
     private socketService: SocketService
-  ) { }
+  ) {}
 
   handleConnection(client: Socket) {
     const patientId = client.handshake.auth.patientId as string;
@@ -55,7 +55,7 @@ export class PatientGateway {
       console.log("No drivers found");
       return;
     }
-    console.log("near by drivers: ", nearestDrivers)
+    console.log("near by drivers: ", nearestDrivers);
     const hospital = await this.hospitalService.findTheNearestHospital(
       lat,
       lng
@@ -84,10 +84,12 @@ export class PatientGateway {
   @SubscribeMessage("patient:cancelled")
   async patientCancel(client: Socket, data: PickupRequest) {
     const patientId = client.data.patientId;
-    const booking = await this.bookingService.cancelByPatient(patientId, "cancelled by patient");
-    const driverId = booking.driverId;
+    const bookingData =
+      await this.bookingService.getOngoingBookingByUserId(patientId);
+    this.bookingService.updateBooking(bookingData.id, { status: "CANCELLED" });
+    const driverId = bookingData.driverId;
     this.driverGateway.server
       .to(`driver:${driverId}`)
-      .emit("booking:cancelled", booking);
+      .emit("booking:cancelled", bookingData);
   }
 }

@@ -1,16 +1,13 @@
 import { Server, Socket } from "socket.io";
 import {
-  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from "@nestjs/websockets";
-import { DbService } from "@/services/db.service";
 import { DriverService } from "../drivers/driver.service";
 import { BookingService } from "../booking/booking.service";
 import { PatientGateway } from "../patients/patient.gateway";
 import { Inject, forwardRef } from "@nestjs/common";
-import { SocketService } from "@/services/socket.service";
 
 type DriverLocation = {
   id: string;
@@ -27,8 +24,8 @@ export class DriverGateway {
     private driverService: DriverService,
     @Inject(forwardRef(() => PatientGateway))
     private patientGateway: PatientGateway,
-    private bookingService: BookingService,
-  ) { }
+    private bookingService: BookingService
+  ) {}
 
   handleConnection(client: Socket) {
     const driverId = client.handshake.auth.driverId as string;
@@ -61,7 +58,7 @@ export class DriverGateway {
   async driverArrived(client: Socket) {
     const driverId = client.data.driverId;
     const bookingData = await this.driverService.getDriverBooking(driverId);
-    this.bookingService.setArrived(bookingData.id);
+    this.bookingService.updateBooking(bookingData.id, { status: "ARRIVED" });
     const { id, patientId } = bookingData;
     this.patientGateway.server
       .to(`patient:${patientId}`)
@@ -70,14 +67,14 @@ export class DriverGateway {
   }
 
   @SubscribeMessage("driver:completed")
-  async driverCompleted(client: Socket, data: { driverId: string }) {
+  async driverCompleted(client: Socket) {
     const driverId = client.data.driverId;
     const bookingData = await this.driverService.getDriverBooking(driverId);
-    this.bookingService.setCompleted(bookingData.id);
+    this.bookingService.updateBooking(bookingData.id, { status: "COMPLETED" });
     const { id, patientId } = bookingData;
     this.patientGateway.server
       .to(`patient:${patientId}`)
       .emit("booking:completed", { bookingId: id });
-    console.log("patient:arrived", patientId);
+    console.log("patient:completed", patientId);
   }
 }

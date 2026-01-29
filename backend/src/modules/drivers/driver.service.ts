@@ -9,9 +9,7 @@ import type {
 
 @Injectable()
 export class DriverService {
-  constructor(
-    private db: DbService,
-  ) { }
+  constructor(private db: DbService) {}
 
   async create(createDriverDto: InsertDriverDto): Promise<SelectDriverDto> {
     const result = await this.db
@@ -117,8 +115,6 @@ export class DriverService {
       .where(eq(users.id, driverId));
     console.log(driverId, "to", status);
   }
-
-
 
   async isAvailable(driverId: string) {
     const result = await this.db

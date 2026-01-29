@@ -15,4 +15,4 @@ import { BookingModule } from "./modules/booking/booking.module";
     BookingModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}

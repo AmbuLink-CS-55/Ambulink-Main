@@ -20,10 +20,12 @@ export class DbService implements OnModuleInit {
 
   async onModuleInit() {
     try {
-      await this.db.execute('SELECT 1');
+      await this.db.execute("SELECT 1");
       this.logger.log("Database connected");
     } catch (error) {
-      this.logger.error("Database connection failed check your .env file for a valid DATABASE_URL");
+      this.logger.error(
+        "Database connection failed check your .env file for a valid DATABASE_URL"
+      );
       process.exit(1);
     }
   }

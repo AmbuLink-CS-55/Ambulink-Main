@@ -20,4 +20,4 @@ import { SocketService } from "@/services/socket.service";
   imports: [forwardRef(() => PatientModule)],
   exports: [DriverService, DriverGateway],
 })
-export class DriverModule { }
+export class DriverModule {}

@@ -12,7 +12,7 @@ import { SelectDriverDto } from "@/common/dto/driver.schema";
 export class PatientService {
   // patientID : socketID
 
-  constructor(private db: DbService) { }
+  constructor(private db: DbService) {}
 
   async create(createPatientDto: InsertPatientDto): Promise<SelectPatientDto> {
     const patientData = {

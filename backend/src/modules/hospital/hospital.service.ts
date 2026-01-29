@@ -6,7 +6,7 @@ import Redis from "ioredis";
 
 @Injectable()
 export class HospitalService {
-  constructor(private db: DbService) { }
+  constructor(private db: DbService) {}
 
   async findTheNearestHospital(lat: number, lng: number) {
     const nearestHospital = await this.db

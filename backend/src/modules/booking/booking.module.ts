@@ -5,4 +5,4 @@ import { BookingService } from "./booking.service";
 @Module({
   providers: [DbService, BookingService],
 })
-export class BookingModule { }
+export class BookingModule {}

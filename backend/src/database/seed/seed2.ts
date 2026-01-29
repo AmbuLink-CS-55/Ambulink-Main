@@ -13,9 +13,9 @@ async function toPoint(lat: number, lng: number) {
 
 async function main() {
   const db = drizzle(client, { schema });
-  console.log("reseting DB")
+  console.log("reseting DB");
   await reset(db, schema);
-  console.log("seeding")
+  console.log("seeding");
 
   await db.insert(schema.users).values({
     id: env.PATIENT_ID,
@@ -29,15 +29,18 @@ async function main() {
     currentLocation: sql`ST_SetSRID(ST_MakePoint(79.85469529731564,6.901523549363248), 4326)`,
   });
 
-  const [customProvider] = await db.insert(schema.ambulanceProviders).values({
-    name: "AMBULINK AMBULANCE PROVIDERS",
-    providerType: "PRIVATE",
-    hotlineNumber: "+94112345678",
-    address: "123 Main Street, Colombo 03",
-    initialPrice: "2500.00",
-    pricePerKm: "1500.00",
-    isActive: true,
-  }).returning();
+  const [customProvider] = await db
+    .insert(schema.ambulanceProviders)
+    .values({
+      name: "AMBULINK AMBULANCE PROVIDERS",
+      providerType: "PRIVATE",
+      hotlineNumber: "+94112345678",
+      address: "123 Main Street, Colombo 03",
+      initialPrice: "2500.00",
+      pricePerKm: "1500.00",
+      isActive: true,
+    })
+    .returning();
 
   await db.insert(schema.users).values({
     id: env.DRIVER_ID,
@@ -75,7 +78,7 @@ async function main() {
           maxXValue: 79.95,
           minYValue: 6.83,
           maxYValue: 6.98,
-        })
+        }),
       },
     },
     ambulanceProviders: {
@@ -92,10 +95,10 @@ async function main() {
             "Nawaloka Medicare Ambulance",
             "Asiri Health Emergency Service",
             "Durdans Hospital Ambulance",
-            "Red Cross Sri Lanka"
+            "Red Cross Sri Lanka",
           ],
         }),
-      }
+      },
     },
     ambulance: {
       columns: {
@@ -105,7 +108,7 @@ async function main() {
           minYValue: 6.83,
           maxYValue: 6.98,
         }),
-      }
+      },
     },
     hospitals: {
       count: 15,
@@ -126,7 +129,7 @@ async function main() {
             "Kings Hospital Colombo",
             "Hemas Hospital Thalawathugoda",
             "Ninewells Hospital",
-            "Western Hospital Colombo"
+            "Western Hospital Colombo",
           ],
         }),
         location: f.point({
@@ -145,7 +148,7 @@ async function main() {
           minYValue: 6.83,
           maxYValue: 6.98,
         }),
-      }
+      },
     },
   }));
 
@@ -168,5 +171,5 @@ async function main() {
 
 main().catch((e) => {
   console.error(e);
-  process.exit(1)
+  process.exit(1);
 });

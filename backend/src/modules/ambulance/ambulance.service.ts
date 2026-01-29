@@ -9,7 +9,7 @@ import type {
 
 @Injectable()
 export class AmbulanceService {
-  constructor(private db: DbService) { }
+  constructor(private db: DbService) {}
 
   async create(
     createAmbulanceDto: InsertAmbulanceDto
