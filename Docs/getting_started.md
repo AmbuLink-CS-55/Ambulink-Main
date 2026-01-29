@@ -7,6 +7,10 @@
 4. cd into the project you are going to be working on
 5. follow the Contributing guide.
 
+## setting up enviornmental variables
+1. make a copy of `.env.example` and name it `.env`, do this for both backend and frontend.
+2. for now you only have to change the value for `EXPO_PUBLIC_API_SERVER_URL`, `EXPO_PUBLIC_WS_SERVER_URL` in mobile,keep the port the same just change ip address to yours.
+
 ## run Postgres with PostGIS
 ```sh
 cd backend
@@ -35,10 +39,6 @@ npm run seed
 npm run studio
 ```
 so far these should not error, if they do let me know.
-
-## setting up enviornmental variables
-1. make a copy of `.env.example` and name it `.env`, do this for both backend and frontend.
-2. for now you only have to change the value for `EXPO_PUBLIC_API_SERVER_URL`, `EXPO_PUBLIC_WS_SERVER_URL` ,keep the port the same just change ip address to yours.
 
 ## installing dependencies 
 ```sh
