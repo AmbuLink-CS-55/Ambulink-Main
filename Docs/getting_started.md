@@ -1,4 +1,6 @@
-# Getting started
+# Cloning and Running the Project
+
+## Getting started
 1. install `git`, `node`, `github cli`, `docker`
 2. authenticate your git using `github cli`, by running `gh auth login`
 3. clone the repo `git clone git@github.com:AmbuLink-CS-55/AmbuLink-mono.git`
@@ -18,28 +20,41 @@ docker run --name postgres-db \
 
 ```
 
-## run Redis 
-```sh
-docker run -d -p 6379:6379 --name redis redis:7-alpine
-```
-these should not error, if they do let me know.
-
-## setting up drizzle schema 
+## setting up drizzle schema
 ```sh
 cd backend
 
 npm run generate
+# this will generate a drizzle directory with a `.sql` file inside it. add `CREATE EXTENSION postgis;` at the top of the `.sql` file.
 
 npm run migrate
+
+npm run seed
 
 # to check out the database
 npm run studio
 ```
+so far these should not error, if they do let me know.
 
-## general tips
+## setting up enviornmental variables
+1. make a copy of `.env.example` and name it `.env`, do this for both backend and frontend.
+2. for now you only have to change the value for `EXPO_PUBLIC_API_SERVER_URL`, `EXPO_PUBLIC_WS_SERVER_URL` ,keep the port the same just change ip address to yours.
+
+## installing dependencies 
+```sh
+cd mobile 
+npm i -y
+
+cd ..
+
+cd backend
+npm i -y
+``
+
+# general tips
 - before branching out run `git pull` to make sure everything is up to date 
 - in each project there is a `package.json` file, in there under `"scripts"` there are commands you can run using `npm run <COMMAND>`.
-- `npm run start` should work with every project.
+- `npm run start` works with every project.
 
 # Useful Docs
 - expo: https://docs.expo.dev/
