@@ -49,7 +49,7 @@ cd ..
 
 cd backend
 npm i -y
-``
+```
 
 # general tips
 - before branching out run `git pull` to make sure everything is up to date 
