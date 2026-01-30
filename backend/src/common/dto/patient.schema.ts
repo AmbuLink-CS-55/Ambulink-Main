@@ -1,6 +1,6 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
-import { users } from "@/database/schema";
+import { users } from "@/common/database/schema";
 
 export const insertPatientSchema = createInsertSchema(users)
   .omit({

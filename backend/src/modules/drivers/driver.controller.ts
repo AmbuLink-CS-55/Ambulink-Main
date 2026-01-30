@@ -15,7 +15,7 @@ import type { InsertDriverDto } from "@/common/dto/driver.schema";
 
 @Controller("api/drivers")
 export class DriverController {
-  constructor(private readonly driverService: DriverService) {}
+  constructor(private readonly driverService: DriverService) { }
 
   @Post()
   create(

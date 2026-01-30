@@ -4,10 +4,12 @@ import { PatientModule } from "@/modules/patients/patient.module";
 import { DriverModule } from "@/modules/drivers/driver.module";
 import { AmbulanceModule } from "@/modules/ambulance/ambulance.module";
 import { BookingModule } from "./modules/booking/booking.module";
+import { DbModule } from "./common/database/db.module";
 // import { WebsocketModule } from "./services/websocket-session.module";
 
 @Module({
   imports: [
+    DbModule,
     AmbulanceProviderModule,
     PatientModule,
     DriverModule,
@@ -15,4 +17,4 @@ import { BookingModule } from "./modules/booking/booking.module";
     BookingModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }

@@ -1,18 +1,18 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq, and } from "drizzle-orm";
-import { DbService } from "@/services/db.service";
-import { users } from "@/database/schema";
+import { users } from "@/common/database/schema";
 import type {
   InsertPatientDto,
   SelectPatientDto,
 } from "@/common/dto/patient.schema";
 import { SelectDriverDto } from "@/common/dto/driver.schema";
+import { DbService } from "@/common/database/db.service";
 
 @Injectable()
 export class PatientService {
   // patientID : socketID
 
-  constructor(private db: DbService) {}
+  constructor(private dbService: DbService) { }
 
   async create(createPatientDto: InsertPatientDto): Promise<SelectPatientDto> {
     const patientData = {
@@ -20,8 +20,7 @@ export class PatientService {
       role: "PATIENT" as const,
     };
 
-    const result = await this.db
-      .getDb()
+    const result = await this.dbService.db
       .insert(users)
       .values(patientData)
       .returning();
@@ -35,16 +34,14 @@ export class PatientService {
       conditions.push(eq(users.isActive, isActive));
     }
 
-    return this.db
-      .getDb()
+    return this.dbService.db
       .select()
       .from(users)
       .where(and(...conditions));
   }
 
   async findOne(id: string): Promise<SelectPatientDto> {
-    const result = await this.db
-      .getDb()
+    const result = await this.dbService.db
       .select()
       .from(users)
       .where(and(eq(users.id, id), eq(users.role, "PATIENT")));
@@ -61,8 +58,7 @@ export class PatientService {
   ): Promise<SelectPatientDto> {
     await this.findOne(id);
 
-    const result = await this.db
-      .getDb()
+    const result = await this.dbService.db
       .update(users)
       .set({
         ...updatePatientDto,
@@ -79,8 +75,7 @@ export class PatientService {
 
   async remove(id: string): Promise<void> {
     await this.findOne(id);
-    await this.db
-      .getDb()
+    await this.dbService.db
       .update(users)
       .set({ isActive: false, updatedAt: new Date() })
       .where(eq(users.id, id));

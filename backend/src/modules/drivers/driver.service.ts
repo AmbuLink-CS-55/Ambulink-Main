@@ -1,19 +1,18 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq, and, sql, isNotNull, asc } from "drizzle-orm";
-import { DbService } from "@/services/db.service";
-import { ambulanceProviders, bookings, users } from "@/database/schema";
+import { ambulanceProviders, bookings, users } from "@/common/database/schema";
 import type {
   SelectDriverDto,
   InsertDriverDto,
 } from "@/common/dto/driver.schema";
+import { DbService } from "@/common/database/db.service";
 
 @Injectable()
 export class DriverService {
-  constructor(private db: DbService) {}
+  constructor(private dbService: DbService) { }
 
   async create(createDriverDto: InsertDriverDto): Promise<SelectDriverDto> {
-    const result = await this.db
-      .getDb()
+    const result = await this.dbService.db
       .insert(users)
       .values({
         fullName: createDriverDto.fullName,
@@ -41,16 +40,14 @@ export class DriverService {
       conditions.push(eq(users.isActive, isActive));
     }
 
-    return this.db
-      .getDb()
+    return this.dbService.db
       .select()
       .from(users)
       .where(and(...conditions));
   }
 
   async findOne(id: string): Promise<SelectDriverDto> {
-    const result = await this.db
-      .getDb()
+    const result = await this.dbService.db
       .select()
       .from(users)
       .where(and(eq(users.id, id), eq(users.role, "DRIVER" as const)));
@@ -82,8 +79,7 @@ export class DriverService {
     if (updateDriverDto.providerId !== undefined)
       updateData.providerId = updateDriverDto.providerId as string | null;
 
-    const result = await this.db
-      .getDb()
+    const result = await this.dbService.db
       .update(users)
       .set(updateData)
       .where(eq(users.id, id))
@@ -97,16 +93,14 @@ export class DriverService {
 
   async remove(id: string): Promise<void> {
     await this.findOne(id);
-    await this.db
-      .getDb()
+    await this.dbService.db
       .update(users)
       .set({ isActive: false, updatedAt: new Date() })
       .where(eq(users.id, id));
   }
 
   async setStatus(driverId: string, status: "AVAILABLE" | "BUSY" | "OFFLINE") {
-    await this.db
-      .getDb()
+    await this.dbService.db
       .update(users)
       .set({
         status: status,
@@ -117,8 +111,7 @@ export class DriverService {
   }
 
   async isAvailable(driverId: string) {
-    const result = await this.db
-      .getDb()
+    const result = await this.dbService.db
       .select({ status: users.status })
       .from(users)
       .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")));
@@ -128,8 +121,7 @@ export class DriverService {
   }
 
   async removeStatus(driverId: string) {
-    await this.db
-      .getDb()
+    await this.dbService.db
       .update(users)
       .set({
         status: null,
@@ -143,8 +135,7 @@ export class DriverService {
 
     const pointWkt = `POINT(${lng} ${lat})`;
 
-    await this.db
-      .getDb()
+    await this.dbService.db
       .update(users)
       .set({
         currentLocation: sql`ST_GeomFromText(${pointWkt}, 4326)`,
@@ -161,8 +152,7 @@ export class DriverService {
       ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography
     )`;
 
-    const nearbyDrivers = await this.db
-      .getDb()
+    const nearbyDrivers = await this.dbService.db
       .select({
         id: users.id,
         phoneNumber: users.phoneNumber,
@@ -193,8 +183,7 @@ export class DriverService {
   }
 
   async getDriverBooking(driverId: string) {
-    const [data] = await this.db
-      .getDb()
+    const [data] = await this.dbService.db
       .select()
       .from(bookings)
       .where(

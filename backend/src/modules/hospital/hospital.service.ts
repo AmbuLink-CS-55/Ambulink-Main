@@ -1,16 +1,15 @@
-import { DbService } from "@/services/db.service";
-import { hospitals } from "@/database/schema";
+import { DbService } from "@/common/database/db.service";
+import { hospitals } from "@/common/database/schema";
 import { Injectable } from "@nestjs/common";
 import { sql } from "drizzle-orm";
 import Redis from "ioredis";
 
 @Injectable()
 export class HospitalService {
-  constructor(private db: DbService) {}
+  constructor(private dbService: DbService) { }
 
   async findTheNearestHospital(lat: number, lng: number) {
-    const nearestHospital = await this.db
-      .getDb()
+    const nearestHospital = await this.dbService.db
       .select()
       .from(hospitals)
       .orderBy(

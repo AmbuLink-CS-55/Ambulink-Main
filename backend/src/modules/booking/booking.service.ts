@@ -1,15 +1,15 @@
 import { Injectable } from "@nestjs/common";
 import { eq, ne, SQL, sql } from "drizzle-orm";
-import { DbService } from "@/services/db.service";
-import { bookings, users } from "@/database/schema";
+import { bookings, users } from "@/common/database/schema";
 import { SelectPatientDto } from "@/common/dto/patient.schema";
 import { and } from "drizzle-orm";
 import { InsertBookingDto } from "@/common/dto/bookings.schema";
 import { or } from "drizzle-orm";
+import { DbService } from "@/common/database/db.service";
 
 @Injectable()
 export class BookingService {
-  constructor(private db: DbService) {}
+  constructor(private dbService: DbService) { }
 
   async createBooking(
     patient: SelectPatientDto,
@@ -20,8 +20,7 @@ export class BookingService {
     pickedDriver: any,
     emergencyType: string | null
   ) {
-    const [newBooking] = await this.db
-      .getDb()
+    const [newBooking] = await this.dbService.db
       .insert(bookings)
       .values({
         patientId: patient.id,
@@ -71,16 +70,14 @@ export class BookingService {
   }
 
   updateBooking(bookingId: string, booking: Partial<InsertBookingDto>) {
-    this.db
-      .getDb()
+    this.dbService.db
       .update(bookings)
       .set(booking)
       .where(eq(bookings.id, bookingId));
   }
 
   async getOngoingBookingByUserId(userId: string) {
-    const data = await this.db
-      .getDb()
+    const data = await this.dbService.db
       .select({
         id: bookings.id,
         patientId: bookings.patientId,
@@ -104,8 +101,7 @@ export class BookingService {
   }
 
   async cancelByPatient(patientId: string, reason: string) {
-    const [booking] = await this.db
-      .getDb()
+    const [booking] = await this.dbService.db
       .update(bookings)
       .set({
         status: "CANCELLED",

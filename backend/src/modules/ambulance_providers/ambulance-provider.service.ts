@@ -1,21 +1,20 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
-import { DbService } from "@/services/db.service";
-import { ambulanceProviders } from "@/database/schema";
+import { ambulanceProviders } from "@/common/database/schema";
 import type {
   InsertAmbulanceProviderDto,
   SelectAmbulanceProviderDto,
 } from "@/common/dto/ambulance-provider.schema";
+import { DbService } from "@/common/database/db.service";
 
 @Injectable()
 export class AmbulanceProviderService {
-  constructor(private db: DbService) {}
+  constructor(private dbService: DbService) { }
 
   async create(
     createAmbulanceProviderDto: InsertAmbulanceProviderDto
   ): Promise<SelectAmbulanceProviderDto> {
-    const result = await this.db
-      .getDb()
+    const result = await this.dbService.db
       .insert(ambulanceProviders)
       .values(createAmbulanceProviderDto)
       .returning();
@@ -23,12 +22,11 @@ export class AmbulanceProviderService {
   }
 
   async findAll(): Promise<SelectAmbulanceProviderDto[]> {
-    return this.db.getDb().select().from(ambulanceProviders);
+    return this.dbService.db.select().from(ambulanceProviders);
   }
 
   async findOne(id: string): Promise<SelectAmbulanceProviderDto> {
-    const result = await this.db
-      .getDb()
+    const result = await this.dbService.db
       .select()
       .from(ambulanceProviders)
       .where(eq(ambulanceProviders.id, id));
@@ -42,8 +40,7 @@ export class AmbulanceProviderService {
     id: string,
     updateAmbulanceProviderDto: Partial<InsertAmbulanceProviderDto>
   ): Promise<SelectAmbulanceProviderDto> {
-    const result = await this.db
-      .getDb()
+    const result = await this.dbService.db
       .update(ambulanceProviders)
       .set(updateAmbulanceProviderDto)
       .where(eq(ambulanceProviders.id, id))
@@ -56,9 +53,7 @@ export class AmbulanceProviderService {
 
   async remove(id: string): Promise<void> {
     await this.findOne(id);
-    await this.db
-      .getDb()
-      .delete(ambulanceProviders)
+    await this.dbService.db.delete(ambulanceProviders)
       .where(eq(ambulanceProviders.id, id));
   }
 }

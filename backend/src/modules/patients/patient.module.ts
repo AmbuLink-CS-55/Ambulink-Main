@@ -1,7 +1,6 @@
 import { forwardRef, Module } from "@nestjs/common";
 import { PatientController } from "./patient.controller";
 import { PatientService } from "./patient.service";
-import { DbService } from "@/services/db.service";
 
 import { DriverService } from "../drivers/driver.service";
 import { PatientGateway } from "./patient.gateway";
@@ -15,7 +14,6 @@ import { SocketService } from "@/services/socket.service";
   controllers: [PatientController],
   providers: [
     PatientService,
-    DbService,
     DriverService,
     PatientGateway,
     BookingService,
@@ -25,4 +23,4 @@ import { SocketService } from "@/services/socket.service";
   imports: [forwardRef(() => DriverModule)],
   exports: [PatientService, PatientGateway],
 })
-export class PatientModule {}
+export class PatientModule { }

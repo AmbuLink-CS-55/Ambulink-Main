@@ -25,7 +25,7 @@ export class DriverGateway {
     @Inject(forwardRef(() => PatientGateway))
     private patientGateway: PatientGateway,
     private bookingService: BookingService
-  ) {}
+  ) { }
 
   handleConnection(client: Socket) {
     const driverId = client.handshake.auth.driverId as string;

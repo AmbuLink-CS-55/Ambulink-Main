@@ -1,21 +1,20 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
-import { DbService } from "@/services/db.service";
-import { ambulance } from "@/database/schema";
+import { ambulance } from "@/common/database/schema";
 import type {
   InsertAmbulanceDto,
   SelectAmbulanceDto,
 } from "@/common/dto/ambulance.schema";
+import { DbService } from "@/common/database/db.service";
 
 @Injectable()
 export class AmbulanceService {
-  constructor(private db: DbService) {}
+  constructor(private dbService: DbService) { }
 
   async create(
     createAmbulanceDto: InsertAmbulanceDto
   ): Promise<SelectAmbulanceDto> {
-    const result = await this.db
-      .getDb()
+    const result = await this.dbService.db
       .insert(ambulance)
       .values(createAmbulanceDto)
       .returning();
@@ -23,13 +22,11 @@ export class AmbulanceService {
   }
 
   async findAll(): Promise<SelectAmbulanceDto[]> {
-    return this.db.getDb().select().from(ambulance);
+    return this.dbService.db.select().from(ambulance);
   }
 
   async findOne(id: string): Promise<SelectAmbulanceDto> {
-    const result = await this.db
-      .getDb()
-      .select()
+    const result = await this.dbService.db.select()
       .from(ambulance)
       .where(eq(ambulance.id, id));
     if (result.length === 0) {
@@ -42,9 +39,7 @@ export class AmbulanceService {
     id: string,
     updateAmbulanceDto: Partial<InsertAmbulanceDto>
   ): Promise<SelectAmbulanceDto> {
-    const result = await this.db
-      .getDb()
-      .update(ambulance)
+    const result = await this.dbService.db.update(ambulance)
       .set(updateAmbulanceDto)
       .where(eq(ambulance.id, id))
       .returning();
@@ -56,6 +51,6 @@ export class AmbulanceService {
 
   async remove(id: string): Promise<void> {
     await this.findOne(id); // Check if exists
-    await this.db.getDb().delete(ambulance).where(eq(ambulance.id, id));
+    await this.dbService.db.delete(ambulance).where(eq(ambulance.id, id));
   }
 }

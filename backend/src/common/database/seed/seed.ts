@@ -1,11 +1,11 @@
-import * as schema from "@/database/schema";
+import * as schema from "@/common/database/schema";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 const client = postgres(
   process.env.DATABASE_URL ||
-    "postgresql://postgres:123@localhost:5432/postgres",
+  "postgresql://postgres:123@localhost:5432/postgres",
   { prepare: false }
 );
 const db = drizzle(client, { schema });
