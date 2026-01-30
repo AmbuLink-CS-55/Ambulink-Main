@@ -24,8 +24,6 @@ export class DriverGateway implements OnGatewayInit {
 
   constructor(
     private driverService: DriverService,
-    @Inject(forwardRef(() => PatientGateway))
-    private patientGateway: PatientGateway,
     private bookingService: BookingService,
     private socketService: SocketService
   ) { }

@@ -1,4 +1,4 @@
-import { forwardRef, Module } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { PatientController } from "./patient.controller";
 import { PatientService } from "./patient.service";
 
@@ -6,8 +6,6 @@ import { DriverService } from "../drivers/driver.service";
 import { PatientGateway } from "./patient.gateway";
 import { BookingService } from "../booking/booking.service";
 import { HospitalService } from "../hospital/hospital.service";
-import { DriverGateway } from "../drivers/driver.gateway";
-import { DriverModule } from "../drivers/driver.module";
 
 @Module({
   controllers: [PatientController],
@@ -18,7 +16,7 @@ import { DriverModule } from "../drivers/driver.module";
     BookingService,
     HospitalService,
   ],
-  imports: [forwardRef(() => DriverModule)],
+  imports: [],
   exports: [PatientService, PatientGateway],
 })
 export class PatientModule { }

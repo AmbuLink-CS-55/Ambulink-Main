@@ -29,8 +29,6 @@ export class PatientGateway implements OnGatewayInit {
     private driverService: DriverService,
     private bookingService: BookingService,
     private hospitalService: HospitalService,
-    @Inject(forwardRef(() => DriverGateway))
-    private driverGateway: DriverGateway,
     private socketService: SocketService
   ) { }
 
