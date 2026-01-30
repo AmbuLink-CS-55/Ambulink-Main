@@ -63,3 +63,4 @@ npm i -y
 - postgis: https://postgis.net/docs/manual-3.6/
 - postgis with drizzle: https://orm.drizzle.team/docs/extensions/pg#postgis, https://orm.drizzle.team/docs/guides-/postgis-geometry-point
 - ioredis: https://ioredis.com/
+- https://kadajett.github.io/agent-nestjs-skills/
