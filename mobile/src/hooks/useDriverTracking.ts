@@ -1,6 +1,6 @@
 import * as Location from 'expo-location';
 import { useEffect } from 'react';
-import { LOCATION_TASK_NAME } from '../task/locationTasks';
+import { LOCATION_TASK_NAME } from '@/tasks/locationTasks';
 
 export const useDriverTracking = (isDriver: boolean) => {
   useEffect(() => {
