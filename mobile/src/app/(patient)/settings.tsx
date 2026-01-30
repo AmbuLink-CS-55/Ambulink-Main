@@ -8,7 +8,7 @@ import {
 } from "@/utils/settingsStorage";
 import { useEffect, useState, useCallback, useRef } from "react";
 import * as ImagePicker from "expo-image-picker";
-import { styles } from "@/components/styles";
+
 import AppSettingsSection from "@/components/patient/settings/AppSettingsSection";
 import EmergencyContactsSection from "@/components/patient/settings/EmergencyContactsSection";
 import MedicalSection from "@/components/patient/settings/MedicalSection";
@@ -176,8 +176,8 @@ export default function Settings() {
         className="p-4"
         contentContainerStyle={{ paddingBottom: 4, paddingTop: 7 }}
       >
-        <View style={styles.header} className="mb-24">
-          <Text style={styles.headerTitle}>{i18n.t("settings.title")}</Text>
+        <View>
+          <Text className="text-3xl font-bold pb-5">{i18n.t("settings.title")}</Text>
         </View>
 
         <PersonalSection

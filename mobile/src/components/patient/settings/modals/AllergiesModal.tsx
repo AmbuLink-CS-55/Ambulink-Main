@@ -5,7 +5,6 @@ import {
   Pressable,
   FlatList,
   TextInput,
-  StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import i18n from "@/i18n/i18n";
@@ -42,17 +41,17 @@ export default function AllergiesModal({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{i18n.t("settings.medical.selectAllergies")}</Text>
+      <View className="flex-1 bg-black/50 justify-end">
+        <View className="bg-white rounded-t-2xl p-4 pb-8 max-h-[80%]">
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className="text-lg font-semibold text-gray-800">{i18n.t("settings.medical.selectAllergies")}</Text>
             <Pressable onPress={onClose}>
               <Ionicons name="close" size={24} color="#333" />
             </Pressable>
           </View>
 
           <TextInput
-            style={styles.searchInput}
+            className="border border-gray-200 rounded-xl p-3 text-sm mb-4"
             placeholder={i18n.t("settings.medical.searchAllergies")}
             value={allergiesSearch}
             onChangeText={setAllergiesSearch}
@@ -62,14 +61,14 @@ export default function AllergiesModal({
             data={filteredAllergies}
             renderItem={({ item }) => (
               <Pressable
-                style={styles.allergyOption}
+                className="flex-row items-center py-3 px-4 border-b border-gray-100"
                 onPress={() =>
                   selectedAllergies.includes(item)
                     ? onRemoveAllergy(item)
                     : onAddAllergy(item)
                 }
               >
-                <View style={styles.checkbox}>
+                <View className="w-6 h-6 border-2 border-teal-500 rounded-md justify-center items-center mr-3">
                   {selectedAllergies.includes(item) && (
                     <Ionicons
                       name="checkmark"
@@ -78,7 +77,7 @@ export default function AllergiesModal({
                     />
                   )}
                 </View>
-                <Text style={styles.allergyOptionText}>{item}</Text>
+                <Text className="text-base text-gray-800 flex-1">{item}</Text>
               </Pressable>
             )}
             keyExtractor={(item) => item}
@@ -86,84 +85,13 @@ export default function AllergiesModal({
           />
 
           <Pressable
-            style={styles.modalConfirmButton}
+            className="bg-teal-500 rounded-full p-3.5 justify-center items-center mt-4"
             onPress={onClose}
           >
-            <Text style={styles.modalConfirmButtonText}>{i18n.t("common.done")}</Text>
+            <Text className="text-white text-base font-semibold">{i18n.t("common.done")}</Text>
           </Pressable>
         </View>
       </View>
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: "white",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 16,
-    paddingBottom: 32,
-    maxHeight: "80%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  searchInput: {
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 14,
-    marginBottom: 16,
-  },
-  allergyOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderWidth: 2,
-    borderColor: "#26A69A",
-    borderRadius: 6,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  allergyOptionText: {
-    fontSize: 16,
-    color: "#333",
-    flex: 1,
-  },
-  modalConfirmButton: {
-    backgroundColor: "#26A69A",
-    borderRadius: 30,
-    padding: 14,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 16,
-  },
-  modalConfirmButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});

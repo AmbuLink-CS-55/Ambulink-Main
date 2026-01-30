@@ -4,7 +4,6 @@ import {
   Text,
   Pressable,
   TextInput,
-  StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import i18n from "@/i18n/i18n";
@@ -38,10 +37,10 @@ export default function EmergencyContactModal({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>
+      <View className="flex-1 bg-black/50 justify-end">
+        <View className="bg-white rounded-t-2xl p-4 pb-8 max-h-[80%]">
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className="text-lg font-semibold text-gray-800">
               {isEditing ? i18n.t("common.edit") + " " + i18n.t("settings.emergency.title") : i18n.t("settings.emergency.addEmergencyContact")}
             </Text>
             <Pressable onPress={onClose}>
@@ -49,20 +48,20 @@ export default function EmergencyContactModal({
             </Pressable>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>{i18n.t("settings.emergency.contactName")}</Text>
+          <View className="mb-4">
+            <Text className="text-sm font-medium text-gray-600 mb-1.5">{i18n.t("settings.emergency.contactName")}</Text>
             <TextInput
-              style={styles.input}
+              className="border border-gray-200 rounded-xl p-3 text-sm text-gray-800"
               placeholder={i18n.t("settings.emergency.exampleName")}
               value={contactName}
               onChangeText={setContactName}
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>{i18n.t("settings.emergency.phoneNumber")}</Text>
+          <View className="mb-4">
+            <Text className="text-sm font-medium text-gray-600 mb-1.5">{i18n.t("settings.emergency.phoneNumber")}</Text>
             <TextInput
-              style={styles.input}
+              className="border border-gray-200 rounded-xl p-3 text-sm text-gray-800"
               placeholder={i18n.t("settings.emergency.enterPhoneNumber")}
               value={emergencyContactNumber}
               onChangeText={setEmergencyContactNumber}
@@ -71,10 +70,10 @@ export default function EmergencyContactModal({
           </View>
 
           <Pressable
-            style={styles.modalConfirmButton}
+            className="bg-teal-500 rounded-full p-3.5 justify-center items-center mt-4"
             onPress={onSubmit}
           >
-            <Text style={styles.modalConfirmButtonText}>
+            <Text className="text-white text-base font-semibold">
               {isEditing ? i18n.t("common.update") : i18n.t("common.add")}
             </Text>
           </Pressable>
@@ -83,60 +82,3 @@ export default function EmergencyContactModal({
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: "white",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 16,
-    paddingBottom: 32,
-    maxHeight: "80%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#666",
-    marginBottom: 6,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 14,
-    color: "#333",
-  },
-  modalConfirmButton: {
-    backgroundColor: "#26A69A",
-    borderRadius: 30,
-    padding: 14,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 16,
-  },
-  modalConfirmButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});

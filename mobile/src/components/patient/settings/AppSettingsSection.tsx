@@ -1,4 +1,4 @@
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import i18n from "@/i18n/i18n";
 
@@ -17,71 +17,6 @@ const LANGUAGES = [
   { id: "ta", label: i18n.t("languages.tamil") },
 ];
 
-const styles = StyleSheet.create({
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 12,
-  },
-  card: {
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 16,
-  },
-  selectRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#666",
-    marginBottom: 6,
-  },
-  selectedValue: {
-    fontSize: 16,
-    color: "#26A69A",
-    fontWeight: "500",
-    marginTop: 4,
-  },
-  placeholderText: {
-    fontSize: 14,
-    color: "#999",
-    marginTop: 4,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#E0E0E0",
-  },
-  toggle: {
-    width: 50,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#E0E0E0",
-    justifyContent: "center",
-    paddingHorizontal: 2,
-  },
-  toggleActive: {
-    backgroundColor: "#26A69A",
-  },
-  toggleThumb: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "white",
-    alignSelf: "flex-start",
-  },
-  toggleThumbActive: {
-    alignSelf: "flex-end",
-  },
-});
-
 export default function AppSettingsSection({
   language,
   setLanguageModal,
@@ -96,66 +31,61 @@ export default function AppSettingsSection({
   };
 
   return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{i18n.t("settings.appSettings.title")}</Text>
+    <View className="mb-6">
+      <Text className="text-lg font-semibold text-gray-800 mb-3">{i18n.t("settings.appSettings.title")}</Text>
 
-      <View style={styles.card}>
+      <View className="bg-white rounded-2xl p-4">
         <Pressable
-          style={styles.selectRow}
+          className="flex-row justify-between items-center py-3"
           onPress={() => setLanguageModal(true)}
         >
           <View>
-            <Text style={styles.inputLabel}>{i18n.t("settings.appSettings.language")}</Text>
-            <Text style={styles.selectedValue}>
+            <Text className="text-sm font-medium text-gray-600 mb-1.5">{i18n.t("settings.appSettings.language")}</Text>
+            <Text className="text-base text-teal-500 font-medium mt-1">
               {getLanguageLabel()}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#26A69A" />
         </Pressable>
 
-        <View style={styles.divider} />
+        <View className="h-px bg-gray-200" />
 
-        <View style={styles.selectRow}>
+        <View className="flex-row justify-between items-center py-3">
           <View>
-            <Text style={styles.inputLabel}>{i18n.t("settings.appSettings.notifications")}</Text>
-            <Text style={styles.placeholderText}>
+            <Text className="text-sm font-medium text-gray-600 mb-1.5">{i18n.t("settings.appSettings.notifications")}</Text>
+            <Text className="text-sm text-gray-400 mt-1">
               {notifications ? i18n.t("common.enabled") : i18n.t("common.disabled")}
             </Text>
           </View>
           <Pressable
-            style={[
-              styles.toggle,
-              notifications && styles.toggleActive,
-            ]}
+            className={`w-12 h-7 rounded-full justify-center p-0.5 ${notifications ? "bg-teal-500" : "bg-gray-200"
+              }`}
             onPress={() => setNotifications(!notifications)}
           >
             <View
-              style={[
-                styles.toggleThumb,
-                notifications && styles.toggleThumbActive,
-              ]}
+              className={`w-6 h-6 rounded-full bg-white ${notifications ? "self-end" : "self-start"
+                }`}
             />
           </Pressable>
         </View>
 
-        <View style={styles.divider} />
+        <View className="h-px bg-gray-200" />
 
-        <View style={styles.selectRow}>
+        <View className="flex-row justify-between items-center py-3">
           <View>
-            <Text style={styles.inputLabel}>{i18n.t("settings.appSettings.darkMode")}</Text>
-            <Text style={styles.placeholderText}>
+            <Text className="text-sm font-medium text-gray-600 mb-1.5">{i18n.t("settings.appSettings.darkMode")}</Text>
+            <Text className="text-sm text-gray-400 mt-1">
               {darkMode ? i18n.t("common.enabled") : i18n.t("common.disabled")}
             </Text>
           </View>
           <Pressable
-            style={[styles.toggle, darkMode && styles.toggleActive]}
+            className={`w-12 h-7 rounded-full justify-center p-0.5 ${darkMode ? "bg-teal-500" : "bg-gray-200"
+              }`}
             onPress={() => setDarkMode(!darkMode)}
           >
             <View
-              style={[
-                styles.toggleThumb,
-                darkMode && styles.toggleThumbActive,
-              ]}
+              className={`w-6 h-6 rounded-full bg-white ${darkMode ? "self-end" : "self-start"
+                }`}
             />
           </Pressable>
         </View>

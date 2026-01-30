@@ -1,4 +1,4 @@
-import { Modal, View, Text, Pressable, FlatList, StyleSheet } from
+import { Modal, View, Text, Pressable, FlatList } from
   "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import i18n from "@/i18n/i18n";;
@@ -31,10 +31,10 @@ export default function LanguageModal({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{i18n.t("settings.appSettings.selectLanguage")}</Text>
+      <View className="flex-1 bg-black/50 justify-end">
+        <View className="bg-white rounded-t-2xl p-4 pb-8 max-h-[80%]">
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className="text-lg font-semibold text-gray-800">{i18n.t("settings.appSettings.selectLanguage")}</Text>
             <Pressable onPress={onClose}>
               <Ionicons name="close" size={24} color="#333" />
             </Pressable>
@@ -44,23 +44,17 @@ export default function LanguageModal({
             data={languages}
             renderItem={({ item }) => (
               <Pressable
-                style={[
-                  styles.modalOption,
-                  language === item.id &&
-                  styles.modalOptionSelected,
-                ]}
+                className={`flex-row justify-between items-center py-3 px-4 border-b border-gray-100 ${language === item.id && "bg-teal-50"
+                  }`}
                 onPress={() => {
                   setLanguage(item.id);
                   onClose();
                 }}
               >
-                <View style={styles.languageOption}>
+                <View className="flex-row items-center gap-3">
                   <Text
-                    style={[
-                      styles.modalOptionText,
-                      language === item.id &&
-                      styles.modalOptionTextSelected,
-                    ]}
+                    className={`text-base text-gray-800 ${language === item.id && "text-teal-500 font-semibold"
+                      }`}
                   >
                     {item.label}
                   </Text>
@@ -82,58 +76,3 @@ export default function LanguageModal({
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: "white",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 16,
-    paddingBottom: 32,
-    maxHeight: "80%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  modalOption: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
-  },
-  modalOptionSelected: {
-    backgroundColor: "#E0F2F1",
-  },
-  languageOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  languageFlag: {
-    fontSize: 24,
-  },
-  modalOptionText: {
-    fontSize: 16,
-    color: "#333",
-  },
-  modalOptionTextSelected: {
-    color: "#26A69A",
-    fontWeight: "600",
-  },
-});

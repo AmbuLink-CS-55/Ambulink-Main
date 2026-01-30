@@ -1,4 +1,4 @@
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import i18n from "@/i18n/i18n";
 
@@ -26,11 +26,11 @@ export default function EmergencyContactsSection({
   onDelete,
 }: EmergencyContactsSectionProps) {
   return (
-    <View style={styles.section}>
-      <View style={styles.emergencyHeader}>
-        <Text style={styles.sectionTitle}>{i18n.t("settings.emergency.title")}</Text>
+    <View className="mb-6">
+      <View className="flex-row justify-between items-center mb-3">
+        <Text className="text-lg font-semibold text-gray-800">{i18n.t("settings.emergency.title")}</Text>
         <Pressable
-          style={styles.addButton}
+          className="w-10 h-10 rounded-full bg-teal-500 justify-center items-center"
           onPress={() => {
             resetForm();
             setEmergencyContactModal(true);
@@ -40,29 +40,29 @@ export default function EmergencyContactsSection({
         </Pressable>
       </View>
 
-      <View style={styles.card}>
+      <View className="bg-white rounded-2xl p-4">
         {emergencyContacts.map((contact, index) => (
           <View key={contact.id}>
-            <View style={styles.contactRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.contactName}>{contact.name}</Text>
-                <Text style={styles.contactNumber}>{contact.number}</Text>
+            <View className="flex-row justify-between items-center py-3">
+              <View className="flex-1">
+                <Text className="text-sm font-medium text-gray-800">{contact.name}</Text>
+                <Text className="text-xs text-gray-600 mt-1">{contact.number}</Text>
               </View>
               <Pressable
                 onPress={() => onEdit(contact)}
-                style={styles.iconButton}
+                className="p-2"
               >
                 <Ionicons name="pencil" size={18} color="#26A69A" />
               </Pressable>
               <Pressable
                 onPress={() => onDelete(contact.id)}
-                style={styles.iconButton}
+                className="p-2"
               >
                 <Ionicons name="trash" size={18} color="#E74C3C" />
               </Pressable>
             </View>
             {index !== emergencyContacts.length - 1 && (
-              <View style={styles.divider} />
+              <View className="h-px bg-gray-200" />
             )}
           </View>
         ))}
@@ -70,56 +70,3 @@ export default function EmergencyContactsSection({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  section: {
-    marginBottom: 24,
-  },
-  emergencyHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#26A69A",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  card: {
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 16,
-  },
-  contactRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  contactName: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#333",
-  },
-  contactNumber: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 4,
-  },
-  iconButton: {
-    padding: 8,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#E0E0E0",
-  },
-});

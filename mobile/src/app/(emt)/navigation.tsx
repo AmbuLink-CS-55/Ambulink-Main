@@ -2,7 +2,7 @@ import UserMap from "@/components/patient/UserMap";
 import { useSocket } from "@/hooks/SocketContext";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocation } from "@/hooks/useLocation";
 
@@ -12,26 +12,27 @@ type LatLng = {
 };
 
 const LocationCard = ({ title, subtitle, onPress }: { title: string, subtitle?: string, onPress?: () => void }) => (
-  <TouchableOpacity style={styles.cardContainer} onPress={onPress}>
-    <View style={styles.iconCircle}>
+  <TouchableOpacity className="flex-row items-center bg-gray-100 rounded-2xl p-4 w-full shadow-md" onPress={onPress}>
+    <View className="w-10 h-10 rounded-full bg-red-300 justify-center items-center mr-4">
       <MaterialCommunityIcons name="heart-pulse" size={24} color="#000" />
     </View>
-    <View style={styles.textContainer}>
-      <Text style={styles.cardTitle}>{title}</Text>
-      {subtitle && <Text style={styles.cardSubtitle}>{subtitle}</Text>}
+    <View className="flex-1 justify-center">
+      <Text className="text-base font-bold text-gray-800">{title}</Text>
+      {subtitle && <Text className="text-xs text-gray-600 mt-0.5">{subtitle}</Text>}
     </View>
     <Image
       source={{ uri: 'https://via.placeholder.com/50' }}
-      style={styles.logoImage}
+      className="w-10 h-10"
+      resizeMode="contain"
     />
   </TouchableOpacity>
 );
 
 const Separator = () => (
-  <View style={styles.separatorContainer}>
-    <View style={styles.separatorLine} />
-    <View style={styles.separatorLine} />
-    <View style={styles.separatorLine} />
+  <View className="h-5 justify-center items-center gap-0.5">
+    <View className="w-5 h-1 bg-gray-300 rounded-sm" />
+    <View className="w-5 h-1 bg-gray-300 rounded-sm" />
+    <View className="w-5 h-1 bg-gray-300 rounded-sm" />
   </View>
 );
 
@@ -70,7 +71,7 @@ export default function Navigation() {
           }
         }
       />
-      <View style={styles.topOverlayContainer}>
+      <View className="absolute top-16 left-4 right-4 items-center">
         <LocationCard
           title="Hospital"
           onPress={() => console.log("Hospital Clicked")}
@@ -85,66 +86,3 @@ export default function Navigation() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  topOverlayContainer: {
-    position: "absolute",
-    top: 60,
-    left: 15,
-    right: 15,
-    alignItems: "center",
-  },
-  cardContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F5F5F5",
-    borderRadius: 15,
-    padding: 15,
-    width: "100%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#F08080",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 15,
-  },
-  textContainer: {
-    flex: 1,
-    justifyContent: "center",
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  cardSubtitle: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 2,
-  },
-  logoImage: {
-    width: 40,
-    height: 40,
-    resizeMode: "contain",
-  },
-  separatorContainer: {
-    height: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 3,
-  },
-  separatorLine: {
-    width: 20,
-    height: 3,
-    backgroundColor: "#D3D3D3",
-    borderRadius: 2,
-  },
-});

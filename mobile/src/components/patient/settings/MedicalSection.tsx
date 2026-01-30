@@ -1,4 +1,4 @@
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import i18n from "@/i18n/i18n";
 
@@ -17,50 +17,50 @@ export default function MedicalSection({
   setAllergiesModal,
 }: MedicalSectionProps) {
   return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{i18n.t("settings.medical.title")}</Text>
+    <View className="mb-6">
+      <Text className="text-lg font-semibold text-gray-800 mb-3">{i18n.t("settings.medical.title")}</Text>
 
-      <View style={styles.card}>
+      <View className="bg-white rounded-2xl p-4">
         <Pressable
-          style={styles.selectRow}
+          className="flex-row justify-between items-center py-3"
           onPress={() => setBloodTypeModal(true)}
         >
           <View>
-            <Text style={styles.inputLabel}>{i18n.t("settings.medical.bloodType")}</Text>
-            <Text style={styles.selectedValue}>{bloodType}</Text>
+            <Text className="text-sm font-medium text-gray-600 mb-1.5">{i18n.t("settings.medical.bloodType")}</Text>
+            <Text className="text-base text-teal-500 font-medium mt-1">{bloodType}</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#26A69A" />
         </Pressable>
 
-        <View style={styles.divider} />
+        <View className="h-px bg-gray-200" />
 
         <Pressable
-          style={styles.selectRow}
+          className="flex-row justify-between items-center py-3"
           onPress={() => setAllergiesModal(true)}
         >
-          <View style={{ flex: 1 }}>
-            <Text style={styles.inputLabel}>{i18n.t("settings.medical.allergies")}</Text>
+          <View className="flex-1">
+            <Text className="text-sm font-medium text-gray-600 mb-1.5">{i18n.t("settings.medical.allergies")}</Text>
             {selectedAllergies.length > 0 ? (
-              <View style={styles.allergyTags}>
+              <View className="flex-row flex-wrap gap-2 mt-2">
                 {selectedAllergies.map((allergy) => (
-                  <View key={allergy} style={styles.allergyTag}>
-                    <Text style={styles.allergyTagText}>{allergy}</Text>
+                  <View key={allergy} className="flex-row items-center bg-teal-50 rounded-full pl-3 pr-1.5 py-1.5 gap-1.5">
+                    <Text className="text-xs text-teal-500 font-medium">{allergy}</Text>
                   </View>
                 ))}
               </View>
             ) : (
-              <Text style={styles.placeholderText}>{i18n.t("settings.medical.addAllergies")}</Text>
+              <Text className="text-sm text-gray-400 mt-1">{i18n.t("settings.medical.addAllergies")}</Text>
             )}
           </View>
           <Ionicons name="chevron-forward" size={20} color="#26A69A" />
         </Pressable>
 
-        <View style={styles.divider} />
+        <View className="h-px bg-gray-200" />
 
-        <Pressable style={styles.selectRow}>
+        <Pressable className="flex-row justify-between items-center py-3">
           <View>
-            <Text style={styles.inputLabel}>{i18n.t("settings.medical.medicalDocuments")}</Text>
-            <Text style={styles.placeholderText}>{i18n.t("settings.medical.uploadDocuments")}</Text>
+            <Text className="text-sm font-medium text-gray-600 mb-1.5">{i18n.t("settings.medical.medicalDocuments")}</Text>
+            <Text className="text-sm text-gray-400 mt-1">{i18n.t("settings.medical.uploadDocuments")}</Text>
           </View>
           <Ionicons
             name="document-attach-outline"
@@ -72,68 +72,3 @@ export default function MedicalSection({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 12,
-  },
-  card: {
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 16,
-  },
-  selectRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#666",
-    marginBottom: 6,
-  },
-  selectedValue: {
-    fontSize: 16,
-    color: "#26A69A",
-    fontWeight: "500",
-    marginTop: 4,
-  },
-  placeholderText: {
-    fontSize: 14,
-    color: "#999",
-    marginTop: 4,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#E0E0E0",
-  },
-  allergyTags: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginTop: 8,
-  },
-  allergyTag: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#E0F2F1",
-    borderRadius: 20,
-    paddingLeft: 12,
-    paddingRight: 6,
-    paddingVertical: 6,
-    gap: 6,
-  },
-  allergyTagText: {
-    fontSize: 12,
-    color: "#26A69A",
-    fontWeight: "500",
-  },
-});

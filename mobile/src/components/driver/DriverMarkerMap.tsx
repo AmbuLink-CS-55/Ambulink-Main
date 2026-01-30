@@ -31,7 +31,7 @@ export function DriverMap({
   }, [driverLocation]);
 
   return (
-    <MapView ref={mapRef} style={{ flex: 1 }} initialRegion={initialRegion}>
+    <MapView ref={mapRef} className="flex-1" initialRegion={initialRegion}>
       {driverLocation && <Marker coordinate={driverLocation} title="Driver" />}
     </MapView>
   );

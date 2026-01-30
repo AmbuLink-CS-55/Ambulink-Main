@@ -14,7 +14,7 @@ type Props = {
   children?: React.ReactNode;
 };
 
-export default function UserMap({ userLocation, driverLocations = [], children}: Props) {
+export default function UserMap({ userLocation, driverLocations = [], children }: Props) {
   const mapRef = React.useRef<MapView>(null);
 
   const region: Region = {
@@ -43,19 +43,19 @@ export default function UserMap({ userLocation, driverLocations = [], children}:
         {driverLocations.map((d) => (
           <Marker
             key={`${d.lat}-${d.lng}`}
-            coordinate={{latitude: d.lat, longitude: d.lng}}
+            coordinate={{ latitude: d.lat, longitude: d.lng }}
             anchor={{ x: 0.5, y: 1 }}
             tracksViewChanges={false}
           />
         ))}
       </MapView>
       <View className="items-center flex-1 justify-end my-5 mx-10">
-          <TouchableOpacity
-            className="bg-white p-1 rounded-md self-end mr-0 m-3 shadow-lg"
-            onPress={handleLocate}
-          >
-            <Ionicons name="locate" size={24} color="#000000" />
-          </TouchableOpacity>
+        <TouchableOpacity
+          className="bg-white p-1 rounded-md self-end mr-0 m-3 shadow-lg"
+          onPress={handleLocate}
+        >
+          <Ionicons name="locate" size={24} color="#000000" />
+        </TouchableOpacity>
 
         {children}
       </ View>
