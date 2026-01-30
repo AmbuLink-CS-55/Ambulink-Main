@@ -1,4 +1,4 @@
-import UserMap from "@/components/UserMap";
+import UserMap from "@/components/patient/UserMap";
 import { useEffect, useState } from "react";
 import { Text } from "react-native";
 import { useLocation } from "@/hooks/useLocation";
