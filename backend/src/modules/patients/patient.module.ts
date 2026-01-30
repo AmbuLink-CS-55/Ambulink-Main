@@ -8,7 +8,6 @@ import { BookingService } from "../booking/booking.service";
 import { HospitalService } from "../hospital/hospital.service";
 import { DriverGateway } from "../drivers/driver.gateway";
 import { DriverModule } from "../drivers/driver.module";
-import { SocketService } from "@/services/socket.service";
 
 @Module({
   controllers: [PatientController],
@@ -18,7 +17,6 @@ import { SocketService } from "@/services/socket.service";
     PatientGateway,
     BookingService,
     HospitalService,
-    SocketService,
   ],
   imports: [forwardRef(() => DriverModule)],
   exports: [PatientService, PatientGateway],

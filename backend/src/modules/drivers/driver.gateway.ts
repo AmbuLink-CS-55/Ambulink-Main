@@ -1,5 +1,6 @@
 import { Server, Socket } from "socket.io";
 import {
+  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -8,6 +9,7 @@ import { DriverService } from "../drivers/driver.service";
 import { BookingService } from "../booking/booking.service";
 import { PatientGateway } from "../patients/patient.gateway";
 import { Inject, forwardRef } from "@nestjs/common";
+import { SocketService } from "@/common/socket/socket.service";
 
 type DriverLocation = {
   id: string;
@@ -16,7 +18,7 @@ type DriverLocation = {
 };
 
 @WebSocketGateway({ cors: { origin: "*" }, namespace: "/driver" })
-export class DriverGateway {
+export class DriverGateway implements OnGatewayInit {
   @WebSocketServer()
   server: Server;
 
@@ -24,8 +26,13 @@ export class DriverGateway {
     private driverService: DriverService,
     @Inject(forwardRef(() => PatientGateway))
     private patientGateway: PatientGateway,
-    private bookingService: BookingService
+    private bookingService: BookingService,
+    private socketService: SocketService
   ) { }
+
+  afterInit() {
+    this.socketService.driverServer = this.server;
+  }
 
   handleConnection(client: Socket) {
     const driverId = client.handshake.auth.driverId as string;
@@ -60,9 +67,7 @@ export class DriverGateway {
     const bookingData = await this.driverService.getDriverBooking(driverId);
     this.bookingService.updateBooking(bookingData.id, { status: "ARRIVED" });
     const { id, patientId } = bookingData;
-    this.patientGateway.server
-      .to(`patient:${patientId}`)
-      .emit("booking:arrived", { bookingId: id });
+    this.socketService.emitToPatient(patientId!, "booking:arrived", { bookingId: id })
     console.log("patient:arrived", patientId);
   }
 
@@ -72,9 +77,7 @@ export class DriverGateway {
     const bookingData = await this.driverService.getDriverBooking(driverId);
     this.bookingService.updateBooking(bookingData.id, { status: "COMPLETED" });
     const { id, patientId } = bookingData;
-    this.patientGateway.server
-      .to(`patient:${patientId}`)
-      .emit("booking:completed", { bookingId: id });
+    this.socketService.emitToPatient(patientId!, "booking:completed", { bookingId: id })
     console.log("patient:completed", patientId);
   }
 }

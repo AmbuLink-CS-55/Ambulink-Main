@@ -1,5 +1,6 @@
 import { Server, Socket } from "socket.io";
 import {
+  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -11,7 +12,7 @@ import { BookingService } from "../booking/booking.service";
 import { HospitalService } from "../hospital/hospital.service";
 import { DriverGateway } from "../drivers/driver.gateway";
 import { Inject, forwardRef } from "@nestjs/common";
-import { SocketService } from "@/services/socket.service";
+import { SocketService } from "@/common/socket/socket.service";
 
 type PickupRequest = {
   patientId: string;
@@ -20,7 +21,7 @@ type PickupRequest = {
 };
 
 @WebSocketGateway({ cors: { origin: "*" }, namespace: "/patient" })
-export class PatientGateway {
+export class PatientGateway implements OnGatewayInit {
   @WebSocketServer() server: Server;
 
   constructor(
@@ -31,7 +32,11 @@ export class PatientGateway {
     @Inject(forwardRef(() => DriverGateway))
     private driverGateway: DriverGateway,
     private socketService: SocketService
-  ) {}
+  ) { }
+
+  afterInit() {
+    this.socketService.patientServer = this.server;
+  }
 
   handleConnection(client: Socket) {
     const patientId = client.handshake.auth.patientId as string;
@@ -75,9 +80,7 @@ export class PatientGateway {
     );
 
     console.log("sending:booking:assigned", booking);
-    this.driverGateway.server
-      .to(`driver:${pickedDriver.id}`)
-      .emit("booking:assigned", booking);
+    this.socketService.emitToDriver(pickedDriver.id, "booking:assigned", booking);
     client.emit("booking:assigned", booking);
   }
 
@@ -88,8 +91,6 @@ export class PatientGateway {
       await this.bookingService.getOngoingBookingByUserId(patientId);
     this.bookingService.updateBooking(bookingData.id, { status: "CANCELLED" });
     const driverId = bookingData.driverId;
-    this.driverGateway.server
-      .to(`driver:${driverId}`)
-      .emit("booking:cancelled", bookingData);
+    this.socketService.emitToDriver(driverId!, "booking:cancelled", bookingData);
   }
 }
