@@ -1361,3 +1361,34 @@ export {
 };
 
 export type { MapRef };
+
+type MapState = {
+  lng: number;
+  lat: number;
+  zoom: number;
+};
+
+export function MapEvents({ onChange }: { onChange: (view: { center: [number, number]; zoom: number }) => void }) {
+  const { map } = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+
+    const handleMove = () => {
+      const center = map.getCenter();
+      const zoom = map.getZoom();
+
+      onChange({
+        center: [center.lng, center.lat],
+        zoom: zoom,
+      });
+    };
+    map.on("moveend", handleMove);
+
+    return () => {
+      map.off("move", handleMove);
+    };
+  }, [map, onChange]);
+
+  return null;
+}

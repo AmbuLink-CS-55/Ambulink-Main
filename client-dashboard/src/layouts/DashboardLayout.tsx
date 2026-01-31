@@ -4,15 +4,16 @@ import { Outlet } from "react-router-dom";
 
 export function DashboardLayout() {
 
-
   return (
     <SidebarProvider >
-      <div className="flex h-screen">
+      <div className="flex h-screen w-full">
         <AppSidebar />
 
-        <main className="flex-1 overflow-y-auto">
-          <SidebarTrigger />
-          <Outlet />
+        <main className="flex-1 overflow-y-auto w-full">
+          <SidebarTrigger className={"m-2"} size={"icon"} />
+          <div className="w-full h-screen">
+            <Outlet />
+          </div>
         </main>
       </div>
     </SidebarProvider>
