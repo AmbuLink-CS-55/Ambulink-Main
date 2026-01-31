@@ -1,8 +1,18 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Outlet } from "react-router-dom";
+import { useSocketStore } from "@/hooks/use-socket-store";
+import { useEffect } from "react";
 
 export function DashboardLayout() {
+
+  const connectSocket = useSocketStore((state) => state.connect)
+  const disconnectSocket = useSocketStore((state) => state.disconnect);
+
+  useEffect(() => {
+    connectSocket("ws://192.168.1.3:3000")
+    return () => disconnectSocket();
+  }, [connectSocket, disconnectSocket])
 
   return (
     <SidebarProvider >
@@ -15,6 +25,10 @@ export function DashboardLayout() {
             <Outlet />
           </div>
         </main>
+
+        <div className="z-10">
+
+        </div>
       </div>
     </SidebarProvider>
   )
