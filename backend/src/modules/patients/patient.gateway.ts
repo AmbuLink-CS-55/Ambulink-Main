@@ -10,9 +10,9 @@ import { DriverService } from "../drivers/driver.service";
 import { PatientService } from "./patient.service";
 import { BookingService } from "../booking/booking.service";
 import { HospitalService } from "../hospital/hospital.service";
-import { DriverGateway } from "../drivers/driver.gateway";
-import { Inject, forwardRef } from "@nestjs/common";
 import { SocketService } from "@/common/socket/socket.service";
+import { DispatcherService } from "../dispatcher/dispatcher.service";
+import { reset } from "drizzle-seed";
 
 type PickupRequest = {
   patientId: string;
@@ -29,7 +29,8 @@ export class PatientGateway implements OnGatewayInit {
     private driverService: DriverService,
     private bookingService: BookingService,
     private hospitalService: HospitalService,
-    private socketService: SocketService
+    private socketService: SocketService,
+    private dispatcherService: DispatcherService
   ) { }
 
   afterInit() {
@@ -48,7 +49,7 @@ export class PatientGateway implements OnGatewayInit {
   async findAmbulance(client: Socket, data: PickupRequest) {
     const { lat, lng } = data;
     const patientId = client.data.patientId;
-    console.log("patient:help", patientId);
+    const patient = await this.patientService.findOne(patientId);
 
     const nearestDrivers = await this.driverService.findDriverByLocation(
       lat,
@@ -58,15 +59,20 @@ export class PatientGateway implements OnGatewayInit {
       console.log("No drivers found");
       return;
     }
-    console.log("near by drivers: ", nearestDrivers);
+
+    console.log("waiting for dispatcher approval")
+    const result = await this.bookingService.askDispatchers(nearestDrivers, patient);
+    if (!result) {
+        client.emit("die")
+        return
+    }
+    const { dispatcherId, pickedDriver} = result;
+
     const hospital = await this.hospitalService.findTheNearestHospital(
       lat,
       lng
     );
-    // console.log("near by hospital: ", hospital)
-    const patient = await this.patientService.findOne(patientId);
-    // console.log("patient", patient)
-    const pickedDriver = nearestDrivers[0];
+
     const booking = await this.bookingService.createBooking(
       patient,
       lat,
@@ -77,18 +83,25 @@ export class PatientGateway implements OnGatewayInit {
       null
     );
 
-    console.log("sending:booking:assigned", booking);
-    this.socketService.emitToDriver(pickedDriver.id, "booking:assigned", booking);
+    this.socketService.emitToDispatcher(dispatcherId, "booking:assigned", booking)
+    this.socketService.emitToDriver(
+      pickedDriver.id,
+      "booking:assigned",
+      booking
+    );
     client.emit("booking:assigned", booking);
   }
 
   @SubscribeMessage("patient:cancelled")
   async patientCancel(client: Socket, data: PickupRequest) {
     const patientId = client.data.patientId;
-    const bookingData =
-      await this.bookingService.getOngoingBookingByUserId(patientId);
+    const bookingData = await this.bookingService.getOngoingBookingByUserId(patientId);
     this.bookingService.updateBooking(bookingData.id, { status: "CANCELLED" });
     const driverId = bookingData.driverId;
-    this.socketService.emitToDriver(driverId!, "booking:cancelled", bookingData);
+    this.socketService.emitToDriver(
+      driverId!,
+      "booking:cancelled",
+      bookingData
+    );
   }
 }

@@ -9,7 +9,7 @@ import { DbService } from "@/common/database/db.service";
 
 @Injectable()
 export class AmbulanceService {
-  constructor(private dbService: DbService) { }
+  constructor(private dbService: DbService) {}
 
   async create(
     createAmbulanceDto: InsertAmbulanceDto
@@ -26,7 +26,8 @@ export class AmbulanceService {
   }
 
   async findOne(id: string): Promise<SelectAmbulanceDto> {
-    const result = await this.dbService.db.select()
+    const result = await this.dbService.db
+      .select()
       .from(ambulance)
       .where(eq(ambulance.id, id));
     if (result.length === 0) {
@@ -39,7 +40,8 @@ export class AmbulanceService {
     id: string,
     updateAmbulanceDto: Partial<InsertAmbulanceDto>
   ): Promise<SelectAmbulanceDto> {
-    const result = await this.dbService.db.update(ambulance)
+    const result = await this.dbService.db
+      .update(ambulance)
       .set(updateAmbulanceDto)
       .where(eq(ambulance.id, id))
       .returning();

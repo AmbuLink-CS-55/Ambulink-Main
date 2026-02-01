@@ -1,41 +1,51 @@
 // Enums
-export enum UserRole {
-  PATIENT = "PATIENT",
-  DISPATCHER = "DISPATCHER",
-  DRIVER = "DRIVER",
-  EMT = "EMT",
-}
+const UserRole = {
+  PATIENT: "PATIENT",
+  DISPATCHER: "DISPATCHER",
+  DRIVER: "DRIVER",
+  EMT: "EMT",
+} as const;
 
-export enum UserStatus {
-  AVAILABLE = "AVAILABLE",
-  BUSY = "BUSY",
-  OFFLINE = "OFFLINE",
-}
+export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
-export enum ProviderType {
-  PUBLIC = "PUBLIC",
-  PRIVATE = "PRIVATE",
-}
+const UserStatus = {
+  AVAILABLE: "AVAILABLE",
+  BUSY: "BUSY",
+  OFFLINE: "OFFLINE",
+} as const;
 
-export enum AmbulanceStatus {
-  AVAILABLE = "AVAILABLE",
-  BUSY = "BUSY",
-  OFFLINE = "OFFLINE",
-}
+export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus];
 
-export enum BookingStatus {
-  REQUESTED = "REQUESTED",
-  ASSIGNED = "ASSIGNED",
-  ARRIVED = "ARRIVED",
-  PICKEDUP = "PICKEDUP",
-  COMPLETED = "COMPLETED",
-  CANCELLED = "CANCELLED",
-}
+const ProviderType = {
+  PUBLIC: "PUBLIC",
+  PRIVATE: "PRIVATE",
+} as const;
+
+export type ProviderType = (typeof ProviderType)[keyof typeof ProviderType];
+
+const AmbulanceStatus = {
+  AVAILABLE: "AVAILABLE",
+  BUSY: "BUSY",
+  OFFLINE: "OFFLINE",
+} as const;
+
+export type AmbulanceStatus = (typeof AmbulanceStatus)[keyof typeof AmbulanceStatus];
+
+const BookingStatus = {
+  REQUESTED: "REQUESTED",
+  ASSIGNED: "ASSIGNED",
+  ARRIVED: "ARRIVED",
+  PICKEDUP: "PICKEDUP",
+  COMPLETED: "COMPLETED",
+  CANCELLED: "CANCELLED",
+} as const;
+
+export type BookingStatus = (typeof BookingStatus)[keyof typeof BookingStatus];
 
 // Geometry Type
 export interface Point {
-  lat: number; // Latitude
-  lng: number; // Longitude
+  lat: number;
+  lng: number;
 }
 
 // Table Types
@@ -139,14 +149,6 @@ export interface DriverLocationUpdate {
 export interface BookingEventPayload {
   bookingId: string;
 }
-
-// Generic WebSocket Message Structure (optional, but good for consistency)
-export interface WebSocketMessage<T = any> {
-  event: string;
-  payload?: T;
-}
-
-// Specific WebSocket Request and Response Payloads
 
 // Patient to Server
 export type PatientToServerEvents = {

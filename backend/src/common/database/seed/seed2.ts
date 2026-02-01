@@ -19,14 +19,14 @@ async function main() {
 
   await db.insert(schema.users).values({
     id: env.PATIENT_ID,
-    fullName: "Joe Doe",
+    fullName: "Joe Patient",
     phoneNumber: "+94771234567",
     email: "patient@example.com",
     passwordHash: "pw123",
     role: "PATIENT",
     isActive: true,
     status: "OFFLINE",
-    currentLocation: sql`ST_SetSRID(ST_MakePoint(79.85469529731564,6.901523549363248), 4326)`,
+    // currentLocation: sql`ST_SetSRID(ST_MakePoint(79.85469529731564,6.901523549363248), 4326)`,
   });
 
   const [customProvider] = await db
@@ -44,7 +44,7 @@ async function main() {
 
   await db.insert(schema.users).values({
     id: env.DRIVER_ID,
-    fullName: "Joe Biden",
+    fullName: "Joe Driver",
     phoneNumber: "+94777654321",
     email: "driver@example.com",
     passwordHash: "pw123",
@@ -57,7 +57,7 @@ async function main() {
 
   await db.insert(schema.users).values({
     id: env.EMT_ID,
-    fullName: "Joe Joe",
+    fullName: "Joe EMT",
     phoneNumber: "+94777654329",
     email: "emt@example.com",
     passwordHash: "pw123",
@@ -65,6 +65,19 @@ async function main() {
     isActive: true,
     status: "OFFLINE",
     currentLocation: sql`ST_SetSRID(ST_MakePoint(79.85369529731564,6.901523549363248), 4326)`,
+    providerId: customProvider.id,
+  });
+
+  await db.insert(schema.users).values({
+    id: env.DISPATCHER_ID,
+    fullName: "Joe Dispatcher",
+    phoneNumber: "+94777654391",
+    email: "dispatcher@example.com",
+    passwordHash: "pw123",
+    role: "DISPATCHER",
+    isActive: true,
+    status: "OFFLINE",
+    // currentLocation: sql`ST_SetSRID(ST_MakePoint(79.85469529731564,6.901523549363248), 4326)`,
     providerId: customProvider.id,
   });
 

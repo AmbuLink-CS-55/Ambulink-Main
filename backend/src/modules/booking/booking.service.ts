@@ -1,15 +1,23 @@
 import { Injectable } from "@nestjs/common";
-import { eq, ne, SQL, sql } from "drizzle-orm";
+import { eq, mapColumnsInAliasedSQLToAlias, ne, SQL, sql } from "drizzle-orm";
 import { bookings, users } from "@/common/database/schema";
 import { SelectPatientDto } from "@/common/dto/patient.schema";
 import { and } from "drizzle-orm";
 import { InsertBookingDto } from "@/common/dto/bookings.schema";
 import { or } from "drizzle-orm";
 import { DbService } from "@/common/database/db.service";
+import { DispatcherService } from "../dispatcher/dispatcher.service";
+import { SocketService } from "@/common/socket/socket.service";
+import { NearByDriver } from "@/common/types";
+import { AwsPgDialect } from "drizzle-orm/aws-data-api/pg";
 
 @Injectable()
 export class BookingService {
-  constructor(private dbService: DbService) { }
+  constructor(
+    private dbService: DbService,
+    private dispatcherService: DispatcherService,
+    private socketService: SocketService
+  ) { }
 
   async createBooking(
     patient: SelectPatientDto,
@@ -114,4 +122,50 @@ export class BookingService {
 
     return booking;
   }
+
+  async askDispatchers(nearByDrivers: NearByDriver[], patient: SelectPatientDto) {
+    const approvalPromises = nearByDrivers.map(async (driver) => {
+      const dispatcherId = await this.dispatcherService.findLiveDispatchersByProvider(
+        driver.ambulance_provider.id
+      );
+
+      return this.waitForDispatcherApproval(
+        dispatcherId,
+        driver,
+        patient,
+        `req_${Date.now()}_${driver.id}`
+      );
+    });
+
+    try {
+      const winningResponse = await Promise.any(approvalPromises);
+      return winningResponse;
+    } catch (error) {
+      console.error("All dispatchers rejected the request");
+      return null;
+    }
+  }
+
+  private async waitForDispatcherApproval(
+    dispatcherId: string,
+    driver: NearByDriver,
+    patient: SelectPatientDto,
+    requestId: string
+  ): Promise<{ dispatcherId: string, pickedDriver: NearByDriver }> {
+    return new Promise((resolve, reject) => {
+      this.socketService.dispatcherServer
+        ?.to(`dispatcher:${dispatcherId}`)
+        .timeout(30000)
+        .emit("booking:new", { requestId, driver, patient }, (err: any, response: any) => {
+          // response is a array
+          if (err || !response[0]?.approved) {
+            return reject("Dispatcher declined or ignored");
+          }
+
+
+          resolve({ dispatcherId: dispatcherId, pickedDriver: driver })
+        });
+    });
+  }
+
 }

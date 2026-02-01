@@ -13,9 +13,7 @@ export default function DashBoard() {
   useEffect(() => {
     if (!socket) return;
 
-    // Listen for global ambulance updates
     socket.on("driver:update", (data) => {
-      // Update local state or Zustand store
     });
 
     return () => {

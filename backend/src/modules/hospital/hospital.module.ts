@@ -4,4 +4,4 @@ import { HospitalService } from "./hospital.service";
 @Module({
   providers: [HospitalService],
 })
-export class HospitalModule { }
+export class HospitalModule {}

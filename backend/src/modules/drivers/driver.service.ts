@@ -9,7 +9,7 @@ import { DbService } from "@/common/database/db.service";
 
 @Injectable()
 export class DriverService {
-  constructor(private dbService: DbService) { }
+  constructor(private dbService: DbService) {}
 
   async create(createDriverDto: InsertDriverDto): Promise<SelectDriverDto> {
     const result = await this.dbService.db

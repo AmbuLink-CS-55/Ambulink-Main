@@ -6,6 +6,7 @@ import { AmbulanceModule } from "@/modules/ambulance/ambulance.module";
 import { BookingModule } from "./modules/booking/booking.module";
 import { DbModule } from "./common/database/db.module";
 import { SocketModule } from "./common/socket/socket.module";
+import { DispatcherModule } from "./modules/dispatcher/dispatcher.module";
 // import { WebsocketModule } from "./services/websocket-session.module";
 
 @Module({
@@ -17,6 +18,7 @@ import { SocketModule } from "./common/socket/socket.module";
     DriverModule,
     AmbulanceModule,
     BookingModule,
+    DispatcherModule
   ],
 })
 export class AppModule { }

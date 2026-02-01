@@ -9,7 +9,7 @@ import { DbService } from "@/common/database/db.service";
 
 @Injectable()
 export class AmbulanceProviderService {
-  constructor(private dbService: DbService) { }
+  constructor(private dbService: DbService) {}
 
   async create(
     createAmbulanceProviderDto: InsertAmbulanceProviderDto
@@ -53,7 +53,8 @@ export class AmbulanceProviderService {
 
   async remove(id: string): Promise<void> {
     await this.findOne(id);
-    await this.dbService.db.delete(ambulanceProviders)
+    await this.dbService.db
+      .delete(ambulanceProviders)
       .where(eq(ambulanceProviders.id, id));
   }
 }

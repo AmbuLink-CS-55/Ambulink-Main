@@ -6,6 +6,7 @@ import { DriverService } from "../drivers/driver.service";
 import { PatientGateway } from "./patient.gateway";
 import { BookingService } from "../booking/booking.service";
 import { HospitalService } from "../hospital/hospital.service";
+import { DispatcherService } from "../dispatcher/dispatcher.service";
 
 @Module({
   controllers: [PatientController],
@@ -15,8 +16,9 @@ import { HospitalService } from "../hospital/hospital.service";
     PatientGateway,
     BookingService,
     HospitalService,
+    DispatcherService,
   ],
   imports: [],
   exports: [PatientService, PatientGateway],
 })
-export class PatientModule { }
+export class PatientModule {}

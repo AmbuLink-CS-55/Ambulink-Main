@@ -6,13 +6,43 @@ import { useEffect } from "react";
 
 export function DashboardLayout() {
 
-  const connectSocket = useSocketStore((state) => state.connect)
-  const disconnectSocket = useSocketStore((state) => state.disconnect);
+  const socket = useSocketStore((state) => state.socket);
+  const connect = useSocketStore((state) => state.connect);
+  const disconnect = useSocketStore((state) => state.disconnect);
 
   useEffect(() => {
-    connectSocket("ws://192.168.1.3:3000")
-    return () => disconnectSocket();
-  }, [connectSocket, disconnectSocket])
+    connect()
+
+    return () => {
+      console.log("disconnecting")
+      disconnect()
+    }
+  }, [connect, disconnect])
+
+  useEffect(() => {
+    if (!socket) return;
+    console.log("socket connected")
+
+    const handleNewBooking = (data: any, callback: (res: any) => void) => {
+      const { requestId } = data;
+      console.log("Received booking request:", requestId);
+
+      if (callback) {
+        callback({ approved: true });
+      }
+    };
+
+    const handleBookingAssigned = (data: any) => {
+        console.log(data)
+    }
+
+    socket.on("booking:new", handleNewBooking);
+    socket.on("booking:assigned", handleBookingAssigned);
+
+    return () => {
+      socket.off("booking:new", handleNewBooking);
+    };
+  }, [socket]);
 
   return (
     <SidebarProvider >
@@ -32,5 +62,4 @@ export function DashboardLayout() {
       </div>
     </SidebarProvider>
   )
-
 }

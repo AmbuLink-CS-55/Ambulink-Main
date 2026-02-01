@@ -7,8 +7,6 @@ import {
 } from "@nestjs/websockets";
 import { DriverService } from "../drivers/driver.service";
 import { BookingService } from "../booking/booking.service";
-import { PatientGateway } from "../patients/patient.gateway";
-import { Inject, forwardRef } from "@nestjs/common";
 import { SocketService } from "@/common/socket/socket.service";
 
 type DriverLocation = {
@@ -26,7 +24,7 @@ export class DriverGateway implements OnGatewayInit {
     private driverService: DriverService,
     private bookingService: BookingService,
     private socketService: SocketService
-  ) { }
+  ) {}
 
   afterInit() {
     this.socketService.driverServer = this.server;
@@ -65,7 +63,9 @@ export class DriverGateway implements OnGatewayInit {
     const bookingData = await this.driverService.getDriverBooking(driverId);
     this.bookingService.updateBooking(bookingData.id, { status: "ARRIVED" });
     const { id, patientId } = bookingData;
-    this.socketService.emitToPatient(patientId!, "booking:arrived", { bookingId: id })
+    this.socketService.emitToPatient(patientId!, "booking:arrived", {
+      bookingId: id,
+    });
     console.log("patient:arrived", patientId);
   }
 
@@ -75,7 +75,9 @@ export class DriverGateway implements OnGatewayInit {
     const bookingData = await this.driverService.getDriverBooking(driverId);
     this.bookingService.updateBooking(bookingData.id, { status: "COMPLETED" });
     const { id, patientId } = bookingData;
-    this.socketService.emitToPatient(patientId!, "booking:completed", { bookingId: id })
+    this.socketService.emitToPatient(patientId!, "booking:completed", {
+      bookingId: id,
+    });
     console.log("patient:completed", patientId);
   }
 }

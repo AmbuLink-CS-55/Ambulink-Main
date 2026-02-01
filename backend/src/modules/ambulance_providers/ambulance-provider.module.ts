@@ -6,4 +6,4 @@ import { AmbulanceProviderService } from "./ambulance-provider.service";
   controllers: [AmbulanceProviderController],
   providers: [AmbulanceProviderService],
 })
-export class AmbulanceProviderModule { }
+export class AmbulanceProviderModule {}

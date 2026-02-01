@@ -12,7 +12,7 @@ import { DbService } from "@/common/database/db.service";
 export class PatientService {
   // patientID : socketID
 
-  constructor(private dbService: DbService) { }
+  constructor(private dbService: DbService) {}
 
   async create(createPatientDto: InsertPatientDto): Promise<SelectPatientDto> {
     const patientData = {

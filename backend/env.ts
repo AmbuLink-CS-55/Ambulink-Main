@@ -8,6 +8,7 @@ const envSchema = z.object({
   PATIENT_ID: z.uuidv4(),
   DRIVER_ID: z.uuidv4(),
   EMT_ID: z.uuidv4(),
+  DISPATCHER_ID: z.uuidv4(),
   APP_STAGE: z.enum(["dev", "prod", "test"]).default("dev"),
 });
 
