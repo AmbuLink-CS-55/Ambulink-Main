@@ -1,4 +1,5 @@
-CREATE EXTENSION postgis;
+-- CREATE EXTENSION postgis;
+CREATE EXTENSION IF NOT EXISTS postgis;
 
 CREATE TYPE "public"."ambulance_status" AS ENUM('AVAILABLE', 'BUSY', 'OFFLINE');--> statement-breakpoint
 CREATE TYPE "public"."booking_status" AS ENUM('REQUESTED', 'ASSIGNED', 'ARRIVED', 'PICKEDUP', 'COMPLETED', 'CANCELLED');--> statement-breakpoint
