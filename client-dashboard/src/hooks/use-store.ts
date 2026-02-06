@@ -1,13 +1,12 @@
-import { create } from 'zustand';
+import type { BookingAssignedPayload, BookingNewPayload } from "@/lib/types";
 
-interface BookingRequests {
-  bookingId: string;
-  patientId: string;
-}
+import { create } from "zustand";
 
 interface AppState {
   mapView: { center: [number, number]; zoom: number };
   setMapView: (view: { center: [number, number]; zoom: number }) => void;
+  pendingBookingRequests: BookingNewPayload[];
+  activeBookingRequests: BookingAssignedPayload[];
   // bookingRequests:
   // ongoingBookings:
   // completedBookings:
@@ -16,4 +15,6 @@ interface AppState {
 export const useStore = create<AppState>((set) => ({
   mapView: { center: [79.87, 6.9], zoom: 11.5 },
   setMapView: (view) => set({ mapView: view }),
+  pendingBookingRequests: [],
+  activeBookingRequests: [],
 }));

@@ -4,11 +4,12 @@ import { Outlet } from "react-router-dom";
 import { useSocketStore } from "@/hooks/use-socket-store";
 import { useEffect } from "react";
 import { BookingRequestOverlay } from "@/components/BookingRequestOverlay";
-import type { 
-  BookingNewPayload, 
+import type {
+  BookingNewPayload,
   DispatcherApprovalResponse,
-  BookingAssignedPayload 
+  BookingAssignedPayload,
 } from "@/lib/types";
+import { useQuery } from "@tanstack/react-query";
 
 export function DashboardLayout() {
   const socket = useSocketStore((state) => state.socket);
@@ -30,8 +31,8 @@ export function DashboardLayout() {
     console.log("socket connected");
 
     const handleNewBooking = (
-      data: BookingNewPayload, 
-      callback: (res: DispatcherApprovalResponse) => void
+      data: BookingNewPayload,
+      callback: (res: DispatcherApprovalResponse) => void,
     ) => {
       const { requestId } = data;
       console.log("Received booking request:", requestId);
@@ -56,6 +57,10 @@ export function DashboardLayout() {
       socket.off("booking:new", handleNewBooking);
     };
   }, [socket]);
+
+  useEffect(() => {
+    useQuery("");
+  }, []);
 
   return (
     <SidebarProvider>

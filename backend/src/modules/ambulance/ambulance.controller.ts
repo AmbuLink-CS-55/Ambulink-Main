@@ -26,11 +26,6 @@ export class AmbulanceController {
     return this.ambulanceService.create(body);
   }
 
-  @Get()
-  findAll() {
-    return this.ambulanceService.findAll();
-  }
-
   @Get(":id")
   findOne(@Param("id") id: string) {
     return this.ambulanceService.findOne(id);
