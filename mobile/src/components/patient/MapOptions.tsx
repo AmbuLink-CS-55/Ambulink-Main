@@ -1,4 +1,4 @@
-import { View, TouchableOpacity, Text } from "react-native";
+import { View, TouchableOpacity, Text, ActivityIndicator } from "react-native";
 import React from "react";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -38,6 +38,7 @@ interface MapOptionsProps {
   booking: BookingResponse | null;
   onHelpRequest: () => void;
   cancelRequest: () => void;
+  isCancelling?: boolean;
 }
 
 export default function MapOptions({
@@ -46,6 +47,7 @@ export default function MapOptions({
   booking,
   onHelpRequest,
   cancelRequest,
+  isCancelling = false,
 }: MapOptionsProps) {
   if (status === "completed") {
     return (
@@ -110,11 +112,19 @@ export default function MapOptions({
         </View>
 
         <TouchableOpacity
-          className="bg-red-500 justify-center items-center p-3 mt-4 rounded-xl"
+          className={`justify-center items-center p-3 mt-4 rounded-xl ${isCancelling ? 'bg-red-300' : 'bg-red-500'}`}
           activeOpacity={0.8}
           onPress={cancelRequest}
+          disabled={isCancelling}
         >
-          <Text className="text-white font-bold uppercase">Cancel</Text>
+          {isCancelling ? (
+            <View className="flex-row items-center">
+              <ActivityIndicator color="white" size="small" />
+              <Text className="text-white font-bold uppercase ml-2">Cancelling...</Text>
+            </View>
+          ) : (
+            <Text className="text-white font-bold uppercase">Cancel</Text>
+          )}
         </TouchableOpacity>
       </View>
     );

@@ -77,11 +77,14 @@ export class BookingService {
     };
   }
 
-  updateBooking(bookingId: string, booking: Partial<InsertBookingDto>) {
-    this.dbService.db
+  async updateBooking(bookingId: string, booking: Partial<InsertBookingDto>) {
+    const [updatedBooking] = await this.dbService.db
       .update(bookings)
       .set(booking)
-      .where(eq(bookings.id, bookingId));
+      .where(eq(bookings.id, bookingId))
+      .returning();
+
+    return updatedBooking;
   }
 
   async getOngoingBookingByUserId(userId: string) {

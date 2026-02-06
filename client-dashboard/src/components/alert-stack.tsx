@@ -1,3 +1,7 @@
+// TODO: This component needs to be implemented with proper alert state management
+// Currently disabled due to missing alerts property in SocketState
+
+/*
 import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -37,4 +41,10 @@ export function AlertStack() {
       )}
     </div>
   );
+}
+*/
+
+export function AlertStack() {
+  // Placeholder implementation until alert functionality is added
+  return null;
 }

@@ -7,20 +7,19 @@ import {
 
 import { SocketService } from "@/common/socket/socket.service";
 import { DispatcherService } from "./dispatcher.service";
-
-type PickupRequest = {
-  patientId: string;
-  lat: number;
-  lng: number;
-};
+import type { 
+  DispatcherToServerEvents,
+  ServerToDispatcherEvents
+} from "@/common/types";
 
 @WebSocketGateway({ cors: { origin: "*" }, namespace: "/dispatcher" })
 export class DispatcherGateway implements OnGatewayInit {
-  @WebSocketServer() server: Server;
+  @WebSocketServer() server: Server<DispatcherToServerEvents, ServerToDispatcherEvents>;
 
   constructor(
     private dispatcherServise: DispatcherService,
-    private socketService: SocketService) { }
+    private socketService: SocketService
+  ) {}
 
   afterInit() {
     this.socketService.dispatcherServer = this.server;

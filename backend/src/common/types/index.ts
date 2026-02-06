@@ -45,3 +45,6 @@ export type NearByDriver = {
   ambulance_provider: AmbulanceProvider;
   distance: number;
 };
+
+// Export socket event types
+export * from "./socket.types";

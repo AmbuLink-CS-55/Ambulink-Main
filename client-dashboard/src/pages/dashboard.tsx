@@ -1,25 +1,14 @@
 import { Map, MapControls, MapEvents } from "@/components/ui/map";
-import { useSocketStore } from "@/hooks/use-socket-store";
 import { useStore } from "@/hooks/use-store";
-import { useEffect } from "react";
 
 
 export default function DashBoard() {
   const mapView = useStore((state) => state.mapView)
   const setMapView = useStore((state) => state.setMapView)
 
-  const socket = useSocketStore((state) => state.socket);
-
-  useEffect(() => {
-    if (!socket) return;
-
-    socket.on("driver:update", (data) => {
-    });
-
-    return () => {
-      socket.off("ambulance_moved");
-    };
-  }, [socket]);
+  // Note: The dispatcher socket doesn't receive driver:update events
+  // Driver location updates would need to be forwarded to dispatchers if needed
+  // or dispatchers would need to connect to a separate driver tracking service
 
   return (
     <>

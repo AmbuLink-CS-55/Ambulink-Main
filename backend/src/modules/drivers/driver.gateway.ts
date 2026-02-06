@@ -8,17 +8,16 @@ import {
 import { DriverService } from "../drivers/driver.service";
 import { BookingService } from "../booking/booking.service";
 import { SocketService } from "@/common/socket/socket.service";
-
-type DriverLocation = {
-  id: string;
-  latitude: number;
-  longitude: number;
-};
+import type { 
+  DriverLocationUpdate,
+  DriverToServerEvents,
+  ServerToDriverEvents
+} from "@/common/types";
 
 @WebSocketGateway({ cors: { origin: "*" }, namespace: "/driver" })
 export class DriverGateway implements OnGatewayInit {
   @WebSocketServer()
-  server: Server;
+  server: Server<DriverToServerEvents, ServerToDriverEvents>;
 
   constructor(
     private driverService: DriverService,
@@ -48,7 +47,7 @@ export class DriverGateway implements OnGatewayInit {
   }
 
   @SubscribeMessage("driver:update")
-  async updateDriverLocation(client: Socket, data: DriverLocation) {
+  async updateDriverLocation(client: Socket, data: DriverLocationUpdate) {
     const driverId = client.data.driverId;
     this.driverService.setDriverLocation(
       driverId,

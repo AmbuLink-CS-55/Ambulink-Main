@@ -18,7 +18,6 @@ cd backend
 docker build -t postgres-postgis .
 
 docker run --name postgres-db -e POSTGRES_PASSWORD=123 -p 5432:5432 -d postgres-postgis
-
 ```
 
 ## setting up drizzle schema
@@ -32,7 +31,7 @@ npm run migrate
 
 npm run seed
 
-# to check out the database
+# to check out the database (optional)
 npm run studio
 ```
 so far these should not error, if they do let me know.

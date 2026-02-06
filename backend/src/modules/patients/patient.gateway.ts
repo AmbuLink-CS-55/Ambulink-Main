@@ -12,17 +12,16 @@ import { BookingService } from "../booking/booking.service";
 import { HospitalService } from "../hospital/hospital.service";
 import { SocketService } from "@/common/socket/socket.service";
 import { DispatcherService } from "../dispatcher/dispatcher.service";
-import { reset } from "drizzle-seed";
-
-type PickupRequest = {
-  patientId: string;
-  lat: number;
-  lng: number;
-};
+import type { 
+  PatientPickupRequest, 
+  PatientCancelRequest,
+  PatientToServerEvents,
+  ServerToPatientEvents 
+} from "@/common/types";
 
 @WebSocketGateway({ cors: { origin: "*" }, namespace: "/patient" })
 export class PatientGateway implements OnGatewayInit {
-  @WebSocketServer() server: Server;
+  @WebSocketServer() server: Server<PatientToServerEvents, ServerToPatientEvents>;
 
   constructor(
     private patientService: PatientService,
@@ -46,7 +45,7 @@ export class PatientGateway implements OnGatewayInit {
   }
 
   @SubscribeMessage("patient:help")
-  async findAmbulance(client: Socket, data: PickupRequest) {
+  async findAmbulance(client: Socket, data: PatientPickupRequest) {
     const { lat, lng } = data;
     const patientId = client.data.patientId;
     const patient = await this.patientService.findOne(patientId);
@@ -63,10 +62,10 @@ export class PatientGateway implements OnGatewayInit {
     console.log("waiting for dispatcher approval")
     const result = await this.bookingService.askDispatchers(nearestDrivers, patient);
     if (!result) {
-        client.emit("die")
-        return
+      client.emit("die")
+      return
     }
-    const { dispatcherId, pickedDriver} = result;
+    const { dispatcherId, pickedDriver } = result;
 
     const hospital = await this.hospitalService.findTheNearestHospital(
       lat,
@@ -93,15 +92,54 @@ export class PatientGateway implements OnGatewayInit {
   }
 
   @SubscribeMessage("patient:cancelled")
-  async patientCancel(client: Socket, data: PickupRequest) {
-    const patientId = client.data.patientId;
-    const bookingData = await this.bookingService.getOngoingBookingByUserId(patientId);
-    this.bookingService.updateBooking(bookingData.id, { status: "CANCELLED" });
-    const driverId = bookingData.driverId;
-    this.socketService.emitToDriver(
-      driverId!,
-      "booking:cancelled",
-      bookingData
-    );
+  async patientCancel(client: Socket, data?: PatientCancelRequest) {
+    try {
+      const patientId = client.data.patientId;
+
+      // Get the ongoing booking
+      const bookingData = await this.bookingService.getOngoingBookingByUserId(patientId);
+
+      if (!bookingData) {
+        console.log(`No ongoing booking found for patient ${patientId}`);
+        client.emit("booking:cancel:error", { message: "No active booking to cancel" });
+        return;
+      }
+
+      // Update booking status to CANCELLED
+      const cancellationReason = data?.reason || "Cancelled by patient";
+      await this.bookingService.updateBooking(bookingData.id, {
+        status: "CANCELLED",
+        cancellationReason,
+      });
+
+      console.log(`Booking ${bookingData.id} cancelled by patient ${patientId}`);
+
+      // Notify driver if assigned
+      if (bookingData.driverId) {
+        this.socketService.emitToDriver(
+          bookingData.driverId,
+          "booking:cancelled",
+          {
+            bookingId: bookingData.id,
+            reason: cancellationReason,
+          }
+        );
+      }
+
+      // TODO: Notify dispatcher about the cancellation
+      // We would need to track which dispatcher approved the booking
+      // For now, we'll skip this as it requires schema changes
+
+      // Confirm cancellation to patient
+      client.emit("booking:cancelled", {
+        bookingId: bookingData.id,
+        message: "Booking cancelled successfully",
+      });
+    } catch (error) {
+      console.error("Error cancelling booking:", error);
+      client.emit("booking:cancel:error", {
+        message: "Failed to cancel booking. Please try again.",
+      });
+    }
   }
 }

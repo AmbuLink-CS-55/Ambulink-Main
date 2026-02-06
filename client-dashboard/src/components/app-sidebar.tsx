@@ -1,12 +1,6 @@
 import * as React from "react";
 import { Link, useLocation } from "react-router-dom";
-import {
-  ChevronDown,
-  Ambulance,
-  Users,
-  UserRound,
-  Map,
-} from "lucide-react";
+import { ChevronDown, Ambulance, Users, UserRound, Map } from "lucide-react";
 
 import {
   Sidebar,
@@ -51,7 +45,11 @@ const resourceGroups = [
   },
 ];
 
-function CollapsibleResourceGroup({ group }: { group: typeof resourceGroups[0] }) {
+function CollapsibleResourceGroup({
+  group,
+}: {
+  group: (typeof resourceGroups)[0];
+}) {
   const [isOpen, setIsOpen] = React.useState(true);
   const location = useLocation();
 
@@ -72,16 +70,18 @@ function CollapsibleResourceGroup({ group }: { group: typeof resourceGroups[0] }
             <group.icon className="mr-2 size-4" />
             {group.title}
             <ChevronDown
-              className={`ml-auto size-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
-                }`}
+              className={`ml-auto size-4 transition-transform duration-200 ${
+                isOpen ? "rotate-180" : ""
+              }`}
             />
           </button>
         </SidebarGroupLabel>
       </div>
 
       <div
-        className={`grid transition-[grid-template-rows] duration-200 ease-in-out ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-          }`}
+        className={`grid transition-[grid-template-rows] duration-200 ease-in-out ${
+          isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        }`}
       >
         <div className="overflow-hidden">
           <SidebarGroupContent className="pt-1">
@@ -122,14 +122,13 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-
         <SidebarGroup>
           <SidebarGroupLabel>Operations</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <Link to="/">
-                  <SidebarMenuButton tooltip="Dashboard">
+                  <SidebarMenuButton>
                     <Map />
                     <span>Dashboard Home</span>
                   </SidebarMenuButton>

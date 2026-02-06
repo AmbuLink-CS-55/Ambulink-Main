@@ -1,6 +1,6 @@
 import UserMap from "@/components/patient/UserMap";
 import { useEffect, useState } from "react";
-import { Text } from "react-native";
+import { Text, Alert } from "react-native";
 import { useLocation } from "@/hooks/useLocation";
 import MapOptions from "../../components/patient/MapOptions";
 import { useSocket } from "@/hooks/SocketContext";
@@ -42,6 +42,7 @@ export default function Map() {
   const socket = useSocket();
   const [booking, setBooking] = useState<BookingResponse | null>(null);
   const [status, setStatus] = useState<BookingStatus>("idle");
+  const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
     if (!socket) return;
@@ -77,9 +78,32 @@ export default function Map() {
     socket.on("booking:completed", () => {
       console.log("booking:completed");
       setStatus("completed");
-      setTimeout(() => { setStatus("idle") }, 5000)
+      setTimeout(() => {
+        setStatus("idle");
+      }, 5000);
     });
 
+    // Handle cancellation confirmation from backend
+    socket.on(
+      "booking:cancelled",
+      (data: { bookingId: string; message: string }) => {
+        console.log("booking:cancelled", data);
+        setBooking(null);
+        setStatus("idle");
+        setIsCancelling(false);
+        Alert.alert(
+          "Cancelled",
+          data.message || "Booking cancelled successfully",
+        );
+      },
+    );
+
+    // Handle cancellation errors
+    socket.on("booking:cancel:error", (data: { message: string }) => {
+      console.error("booking:cancel:error", data);
+      setIsCancelling(false);
+      Alert.alert("Error", data.message || "Failed to cancel booking");
+    });
   }, [socket]);
 
   const handleHelpRequest = () => {
@@ -95,12 +119,31 @@ export default function Map() {
 
   const handleCancel = () => {
     if (!socket?.connected) {
-      console.log("socket not ready");
+      Alert.alert("Error", "Not connected to server");
       return;
     }
-    socket.emit("patient:cancelled")
-    setBooking(null);
-    setStatus("idle");
+
+    // Show confirmation dialog
+    Alert.alert(
+      "Cancel Booking",
+      "Are you sure you want to cancel this booking?",
+      [
+        {
+          text: "No",
+          style: "cancel",
+        },
+        {
+          text: "Yes, Cancel",
+          style: "destructive",
+          onPress: () => {
+            setIsCancelling(true);
+            socket.emit("patient:cancelled", {
+              reason: "Cancelled by patient",
+            });
+          },
+        },
+      ],
+    );
   };
 
   if (!locationState?.location?.latitude) {
@@ -109,7 +152,9 @@ export default function Map() {
 
   return (
     <UserMap
-      driverLocations={booking ? [{ lat: booking.driver.lat, lng: booking.driver.lng }] : []}
+      driverLocations={
+        booking ? [{ lat: booking.driver.lat, lng: booking.driver.lng }] : []
+      }
       userLocation={{
         lat: locationState.location.latitude,
         lng: locationState.location.longitude,
@@ -121,6 +166,7 @@ export default function Map() {
         booking={booking}
         onHelpRequest={handleHelpRequest}
         cancelRequest={handleCancel}
+        isCancelling={isCancelling}
       />
     </UserMap>
   );

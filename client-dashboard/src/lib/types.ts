@@ -134,8 +134,14 @@ export interface Booking {
 
 // Requests from Patient
 export interface PatientPickupRequest {
+  patientId: string;
   lat: number;
   lng: number;
+}
+
+// Patient cancellation request
+export interface PatientCancelRequest {
+  reason?: string;
 }
 
 // Requests from Driver
@@ -150,28 +156,132 @@ export interface BookingEventPayload {
   bookingId: string;
 }
 
+// Error payload
+export interface ErrorPayload {
+  message: string;
+}
+
+// Booking cancellation payload
+export interface BookingCancelledPayload {
+  bookingId: string;
+  reason: string;
+}
+
+// ============================================================================
+// Detailed Booking Structures (from backend)
+// ============================================================================
+
+/**
+ * Complete booking assignment payload sent when a booking is created
+ */
+export interface BookingAssignedPayload {
+  id: string;
+  patient: {
+    id: string;
+    phone_number: string;
+    name: string;
+    lat: number;
+    lng: number;
+  };
+  driver: {
+    id: string;
+    phone_number: string;
+    lat: number;
+    lng: number;
+    ambulance_provider: {
+      id: string;
+      name: string;
+    };
+  };
+  hospital: {
+    id: string;
+    name: string;
+    phone_number: string;
+    lat: number;
+    lng: number;
+  };
+}
+
+/**
+ * Nearby driver information
+ */
+export interface NearByDriver {
+  id: string;
+  phoneNumber: string | null;
+  lat: number;
+  lng: number;
+  ambulance_provider: {
+    id: string;
+    name: string;
+  };
+  distance: number;
+}
+
+/**
+ * Booking request payload sent to dispatchers for approval
+ */
+export interface BookingNewPayload {
+  requestId: string;
+  driver: NearByDriver;
+  patient: {
+    id: string;
+    fullName: string | null;
+    phoneNumber: string | null;
+    email: string | null;
+    [key: string]: any; // Other patient fields
+  };
+}
+
+/**
+ * Dispatcher approval response
+ */
+export interface DispatcherApprovalResponse {
+  approved: boolean;
+}
+
+// ============================================================================
+// Socket Event Type Definitions
+// ============================================================================
+
 // Patient to Server
 export type PatientToServerEvents = {
-  "patient:help": PatientPickupRequest;
-  "patient:cancelled": PatientPickupRequest; // Data is not directly used for cancellation logic, but still sent
-};
-
-// Driver to Server
-export type DriverToServerEvents = {
-  "driver:update": DriverLocationUpdate;
-  "driver:arrived": undefined; // No direct payload from client
-  "driver:completed": undefined; // No direct payload from client
+  "patient:help": (data: PatientPickupRequest) => void;
+  "patient:cancelled": (data: PatientCancelRequest) => void;
 };
 
 // Server to Patient
 export type ServerToPatientEvents = {
-  "booking:assigned": Booking;
-  "booking:arrived": BookingEventPayload;
-  "booking:completed": BookingEventPayload;
+  die: () => void;
+  "booking:assigned": (data: BookingAssignedPayload) => void;
+  "booking:arrived": (data: BookingEventPayload) => void;
+  "booking:completed": (data: BookingEventPayload) => void;
+  "booking:cancelled": (data: { bookingId: string; message: string }) => void;
+  "booking:cancel:error": (data: ErrorPayload) => void;
+};
+
+// Driver to Server
+export type DriverToServerEvents = {
+  "driver:update": (data: DriverLocationUpdate) => void;
+  "driver:arrived": () => void;
+  "driver:completed": () => void;
 };
 
 // Server to Driver
 export type ServerToDriverEvents = {
-  "booking:assigned": Booking; // Already defined in ServerToPatientEvents
-  "booking:cancelled": Booking;
+  "booking:assigned": (data: BookingAssignedPayload) => void;
+  "booking:cancelled": (data: BookingCancelledPayload) => void;
+};
+
+// Dispatcher to Server (none currently - uses callbacks)
+export type DispatcherToServerEvents = {
+  // Empty - dispatchers use acknowledgment callbacks instead of emit
+};
+
+// Server to Dispatcher
+export type ServerToDispatcherEvents = {
+  "booking:new": (
+    data: BookingNewPayload,
+    callback: (response: DispatcherApprovalResponse) => void
+  ) => void;
+  "booking:assigned": (data: BookingAssignedPayload) => void;
 };
