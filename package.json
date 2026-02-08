@@ -1,0 +1,26 @@
+{
+  "name": "ambulink-mono",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "client-dashboard",
+    "mobile"
+  ],
+  "scripts": {
+    "env:sync": "node scripts/env-sync.js",
+    "dev": "npm run env:sync && turbo run dev --ui=tui --parallel --filter=./backend --filter=./client-dashboard --filter=./mobile",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.6"
+  },
+  "packageManager": "npm@11.8.0",
+  "overrides": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.5",
+    "expo": "54.0.32" 
+  }
+}

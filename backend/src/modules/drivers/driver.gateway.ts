@@ -27,23 +27,44 @@ export class DriverGateway implements OnGatewayInit {
 
   afterInit() {
     this.socketService.driverServer = this.server;
+    console.log("[socket] gateway_ready", {
+      namespace: "/driver",
+    });
   }
 
   handleConnection(client: Socket) {
+    console.log("[socket] connection_attempt", {
+      namespace: "/driver",
+      clientId: client.id,
+    });
     const driverId = client.handshake.auth.driverId as string;
-    if (!driverId) return client.disconnect(true);
+    if (!driverId) {
+      console.warn("[socket] missing_auth", {
+        namespace: "/driver",
+        clientId: client.id,
+      });
+      return client.disconnect(true);
+    }
     client.data.driverId = driverId;
 
     client.join(`driver:${driverId}`);
 
     this.driverService.setStatus(driverId, "AVAILABLE");
 
-    console.log("driver:connected", driverId);
+    console.log("[socket] connected", {
+      namespace: "/driver",
+      clientId: client.id,
+      driverId,
+    });
   }
 
   handleDisconnect(client: Socket) {
     this.driverService.setStatus(client.data.driverId, "OFFLINE");
-    console.log(`Client disconnected: ${client.id}`);
+    console.log("[socket] disconnected", {
+      namespace: "/driver",
+      clientId: client.id,
+      driverId: client.data.driverId,
+    });
   }
 
   @SubscribeMessage("driver:update")
@@ -71,7 +92,9 @@ export class DriverGateway implements OnGatewayInit {
   @SubscribeMessage("driver:completed")
   async driverCompleted(client: Socket) {
     const driverId = client.data.driverId;
+    console.log("completed from", driverId)
     const bookingData = await this.driverService.getDriverBooking(driverId);
+    console.log(bookingData)
     this.bookingService.updateBooking(bookingData.id, { status: "COMPLETED" });
     const { id, patientId } = bookingData;
     this.socketService.emitToPatient(patientId!, "booking:completed", {

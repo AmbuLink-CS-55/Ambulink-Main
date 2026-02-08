@@ -6,6 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "dev": "nest start --watch",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -21,13 +22,12 @@
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
     "studio": "drizzle-kit studio",
-    "seed": "npx tsx src/common/database/seed/seed2.ts",
-    "seed3": "npx tsx src/common/database/seed/seed3.ts"
+    "seed": "npx tsx src/common/database/seed/seed.ts"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^11.1.12",
-    "@nestjs/core": "^11.1.12",
+    "@nestjs/core": "^11.1.13",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/platform-socket.io": "^11.1.12",
     "@nestjs/swagger": "^11.2.5",

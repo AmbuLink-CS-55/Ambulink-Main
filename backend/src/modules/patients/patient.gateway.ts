@@ -12,16 +12,19 @@ import { BookingService } from "../booking/booking.service";
 import { HospitalService } from "../hospital/hospital.service";
 import { SocketService } from "@/common/socket/socket.service";
 import { DispatcherService } from "../dispatcher/dispatcher.service";
-import type { 
-  PatientPickupRequest, 
+import type {
+  PatientPickupRequest,
   PatientCancelRequest,
   PatientToServerEvents,
-  ServerToPatientEvents 
+  ServerToPatientEvents,
 } from "@/common/types";
 
 @WebSocketGateway({ cors: { origin: "*" }, namespace: "/patient" })
 export class PatientGateway implements OnGatewayInit {
-  @WebSocketServer() server: Server<PatientToServerEvents, ServerToPatientEvents>;
+  @WebSocketServer() server: Server<
+    PatientToServerEvents,
+    ServerToPatientEvents
+  >;
 
   constructor(
     private patientService: PatientService,
@@ -30,22 +33,40 @@ export class PatientGateway implements OnGatewayInit {
     private hospitalService: HospitalService,
     private socketService: SocketService,
     private dispatcherService: DispatcherService
-  ) { }
+  ) {}
 
   afterInit() {
     this.socketService.patientServer = this.server;
+    console.log("[socket] gateway_ready", {
+      namespace: "/patient",
+    });
   }
 
   handleConnection(client: Socket) {
+    console.log("[socket] connection_attempt", {
+      namespace: "/patient",
+      clientId: client.id,
+    });
     const patientId = client.handshake.auth.patientId as string;
-    if (!patientId) return client.disconnect(true);
+    if (!patientId) {
+      console.warn("[socket] missing_auth", {
+        namespace: "/patient",
+        clientId: client.id,
+      });
+      return client.disconnect(true);
+    }
     client.data.patientId = patientId;
-    console.log("patient:connected", patientId);
+    console.log("[socket] connected", {
+      namespace: "/patient",
+      clientId: client.id,
+      patientId,
+    });
     client.join(`patient:${patientId}`);
   }
 
   @SubscribeMessage("patient:help")
   async findAmbulance(client: Socket, data: PatientPickupRequest) {
+      console.log("help request")
     const { lat, lng } = data;
     const patientId = client.data.patientId;
     const patient = await this.patientService.findOne(patientId);
@@ -59,11 +80,14 @@ export class PatientGateway implements OnGatewayInit {
       return;
     }
 
-    console.log("waiting for dispatcher approval")
-    const result = await this.bookingService.askDispatchers(nearestDrivers, patient);
+    console.log("waiting for dispatcher approval");
+    const result = await this.bookingService.askDispatchers(
+      nearestDrivers,
+      patient
+    );
     if (!result) {
-      client.emit("die")
-      return
+      client.emit("die");
+      return;
     }
     const { dispatcherId, pickedDriver } = result;
 
@@ -82,7 +106,11 @@ export class PatientGateway implements OnGatewayInit {
       null
     );
 
-    this.socketService.emitToDispatcher(dispatcherId, "booking:assigned", booking)
+    this.socketService.emitToDispatcher(
+      dispatcherId,
+      "booking:assigned",
+      booking
+    );
     this.socketService.emitToDriver(
       pickedDriver.id,
       "booking:assigned",
@@ -97,11 +125,14 @@ export class PatientGateway implements OnGatewayInit {
       const patientId = client.data.patientId;
 
       // Get the ongoing booking
-      const bookingData = await this.bookingService.getOngoingBookingByUserId(patientId);
+      const bookingData =
+        await this.bookingService.getOngoingBookingByUserId(patientId);
 
       if (!bookingData) {
         console.log(`No ongoing booking found for patient ${patientId}`);
-        client.emit("booking:cancel:error", { message: "No active booking to cancel" });
+        client.emit("booking:cancel:error", {
+          message: "No active booking to cancel",
+        });
         return;
       }
 
@@ -112,7 +143,9 @@ export class PatientGateway implements OnGatewayInit {
         cancellationReason,
       });
 
-      console.log(`Booking ${bookingData.id} cancelled by patient ${patientId}`);
+      console.log(
+        `Booking ${bookingData.id} cancelled by patient ${patientId}`
+      );
 
       // Notify driver if assigned
       if (bookingData.driverId) {
@@ -141,5 +174,13 @@ export class PatientGateway implements OnGatewayInit {
         message: "Failed to cancel booking. Please try again.",
       });
     }
+  }
+
+  handleDisconnect(client: Socket) {
+    console.log("[socket] disconnected", {
+      namespace: "/patient",
+      clientId: client.id,
+      patientId: client.data.patientId,
+    });
   }
 }

@@ -9,13 +9,14 @@ import type {
   DispatcherApprovalResponse,
   BookingAssignedPayload,
 } from "@/lib/types";
-import { useQuery } from "@tanstack/react-query";
 
 export function DashboardLayout() {
   const socket = useSocketStore((state) => state.socket);
   const connect = useSocketStore((state) => state.connect);
   const disconnect = useSocketStore((state) => state.disconnect);
   const addBookingRequest = useSocketStore((state) => state.addBookingRequest);
+
+
 
   useEffect(() => {
     connect();
@@ -58,9 +59,6 @@ export function DashboardLayout() {
     };
   }, [socket]);
 
-  useEffect(() => {
-    useQuery("");
-  }, []);
 
   return (
     <SidebarProvider>

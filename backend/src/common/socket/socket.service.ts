@@ -1,5 +1,4 @@
 import { Injectable } from "@nestjs/common";
-import { ConnectableObservable } from "rxjs";
 import { Server } from "socket.io";
 
 @Injectable()

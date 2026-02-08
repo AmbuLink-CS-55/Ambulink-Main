@@ -6,6 +6,7 @@ import type {
   InsertDriverDto,
 } from "@/common/dto/driver.schema";
 import { DbService } from "@/common/database/db.service";
+import { or } from "drizzle-orm";
 
 @Injectable()
 export class DriverService {
@@ -187,7 +188,7 @@ export class DriverService {
       .select()
       .from(bookings)
       .where(
-        and(eq(bookings.driverId, driverId), eq(bookings.status, "ASSIGNED"))
+        and(eq(bookings.driverId, driverId), or(eq(bookings.status, "ASSIGNED"), eq(bookings.status, "ARRIVED")))
       );
     return data;
   }

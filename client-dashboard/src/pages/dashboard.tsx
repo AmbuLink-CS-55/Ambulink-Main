@@ -1,22 +1,18 @@
+import HospitalMarkersLayer from "@/components/map/HospitalMarkerLayer";
 import { Map, MapControls, MapEvents } from "@/components/ui/map";
 import { useStore } from "@/hooks/use-store";
-
+import { useGetHospitals } from "@/services/hospital.service";
 
 export default function DashBoard() {
-  const mapView = useStore((state) => state.mapView)
-  const setMapView = useStore((state) => state.setMapView)
+  const mapView = useStore((state) => state.mapView);
+  const setMapView = useStore((state) => state.setMapView);
+  const { error, data: hospitals } = useGetHospitals();
 
-  // Note: The dispatcher socket doesn't receive driver:update events
-  // Driver location updates would need to be forwarded to dispatchers if needed
-  // or dispatchers would need to connect to a separate driver tracking service
+  if (error) throw Error("Error fetching hospitals")
 
   return (
     <>
-      <Map
-        theme="light"
-        center={mapView.center}
-        zoom={mapView.zoom}
-      >
+      <Map theme="dark" center={mapView.center} zoom={mapView.zoom}>
         <MapEvents onChange={setMapView} />
         <MapControls
           position="bottom-right"
@@ -24,7 +20,8 @@ export default function DashBoard() {
           showLocate
           className="mb-4"
         />
-      </ Map>
+        {hospitals && <HospitalMarkersLayer hospitals={hospitals} />}
+      </Map>
     </>
   );
 }

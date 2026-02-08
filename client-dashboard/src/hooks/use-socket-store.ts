@@ -45,15 +45,43 @@ export const useSocketStore = create<SocketState>((set, get) => ({
   connect: () => {
     if (get().socket?.connected) return;
 
-    const socket = io(`${env!.VITE_WS_SERVER_URL}/dispatcher`, {
+    const socketUrl = `${env!.VITE_WS_SERVER_URL}/dispatcher`;
+    const socket = io(socketUrl, {
       auth: {
         dispatcherId: env!.VITE_DISPATCHER_ID,
       },
       transports: ["websocket"],
     });
 
-    socket.on("connect", () => set({ isConnected: true }));
-    socket.on("disconnect", () => set({ isConnected: false }));
+    socket.on("connect", () => {
+      console.log("[socket] connected", {
+        url: socketUrl,
+        namespace: "/dispatcher",
+      });
+      set({ isConnected: true });
+    });
+    socket.on("connect_error", (error) => {
+      console.error("[socket] connect_error", {
+        url: socketUrl,
+        namespace: "/dispatcher",
+        message: error?.message,
+      });
+    });
+    socket.on("disconnect", (reason) => {
+      console.warn("[socket] disconnected", {
+        url: socketUrl,
+        namespace: "/dispatcher",
+        reason,
+      });
+      set({ isConnected: false });
+    });
+    socket.io.on("reconnect_attempt", (attempt) => {
+      console.info("[socket] reconnect_attempt", {
+        url: socketUrl,
+        namespace: "/dispatcher",
+        attempt,
+      });
+    });
 
     set({ socket });
   },

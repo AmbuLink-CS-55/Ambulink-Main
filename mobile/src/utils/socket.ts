@@ -10,7 +10,6 @@ export class SocketClientCreator {
   private static instance: Socket | null = null;
 
   static async getSocket(type: "PATIENT" | "DRIVER" | "EMT"): Promise<Socket> {
-    console.log(this.patientSocketUrl, this.driverSocketUrl)
     if (this.instance?.connected) {
       return this.instance;
     }
@@ -42,6 +41,37 @@ export class SocketClientCreator {
       reconnection: true,
       reconnectionAttempts: Infinity,
       autoConnect: true,
+    });
+
+    this.instance.on("connect", () => {
+      console.log("[socket] connected", {
+        url,
+        type,
+      });
+    });
+
+    this.instance.on("connect_error", (error) => {
+      console.error("[socket] connect_error", {
+        url,
+        type,
+        message: error?.message,
+      });
+    });
+
+    this.instance.on("disconnect", (reason) => {
+      console.warn("[socket] disconnected", {
+        url,
+        type,
+        reason,
+      });
+    });
+
+    this.instance.io.on("reconnect_attempt", (attempt) => {
+      console.info("[socket] reconnect_attempt", {
+        url,
+        type,
+        attempt,
+      });
     });
 
     return this.instance;

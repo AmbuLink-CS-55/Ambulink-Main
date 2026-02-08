@@ -23,17 +23,40 @@ export class DispatcherGateway implements OnGatewayInit {
 
   afterInit() {
     this.socketService.dispatcherServer = this.server;
+    console.log("[socket] gateway_ready", {
+      namespace: "/dispatcher",
+    });
   }
 
   handleConnection(client: Socket) {
+    console.log("[socket] connection_attempt", {
+      namespace: "/dispatcher",
+      clientId: client.id,
+    });
     const dispatcherId = client.handshake.auth.dispatcherId as string;
-    if (!dispatcherId) return client.disconnect(true);
+    if (!dispatcherId) {
+      console.warn("[socket] missing_auth", {
+        namespace: "/dispatcher",
+        clientId: client.id,
+      });
+      return client.disconnect(true);
+    }
     client.data.dispatcherId = dispatcherId;
     this.dispatcherServise.setStatus(dispatcherId, "AVAILABLE");
     client.join(`dispatcher:${dispatcherId}`);
+    console.log("[socket] connected", {
+      namespace: "/dispatcher",
+      clientId: client.id,
+      dispatcherId,
+    });
   }
 
   handleDisconnect(client: Socket) {
     this.dispatcherServise.setStatus(client.data.dispatcherId, "OFFLINE");
+    console.log("[socket] disconnected", {
+      namespace: "/dispatcher",
+      clientId: client.id,
+      dispatcherId: client.data.dispatcherId,
+    });
   }
 }

@@ -29,7 +29,8 @@ const AmbulanceStatus = {
   OFFLINE: "OFFLINE",
 } as const;
 
-export type AmbulanceStatus = (typeof AmbulanceStatus)[keyof typeof AmbulanceStatus];
+export type AmbulanceStatus =
+  (typeof AmbulanceStatus)[keyof typeof AmbulanceStatus];
 
 const BookingStatus = {
   REQUESTED: "REQUESTED",
@@ -44,8 +45,8 @@ export type BookingStatus = (typeof BookingStatus)[keyof typeof BookingStatus];
 
 // Geometry Type
 export interface Point {
-  lat: number;
-  lng: number;
+  x: number;
+  y: number;
 }
 
 // Table Types
@@ -281,7 +282,7 @@ export type DispatcherToServerEvents = {
 export type ServerToDispatcherEvents = {
   "booking:new": (
     data: BookingNewPayload,
-    callback: (response: DispatcherApprovalResponse) => void
+    callback: (response: DispatcherApprovalResponse) => void,
   ) => void;
   "booking:assigned": (data: BookingAssignedPayload) => void;
 };

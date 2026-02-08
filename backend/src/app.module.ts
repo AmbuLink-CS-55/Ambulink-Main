@@ -7,6 +7,8 @@ import { BookingModule } from "./modules/booking/booking.module";
 import { DbModule } from "./common/database/db.module";
 import { SocketModule } from "./common/socket/socket.module";
 import { DispatcherModule } from "./modules/dispatcher/dispatcher.module";
+import { HealthController } from "./common/health/health.controller";
+import { HospitalModule } from "./modules/hospital/hospital.module";
 // import { WebsocketModule } from "./services/websocket-session.module";
 
 @Module({
@@ -18,7 +20,9 @@ import { DispatcherModule } from "./modules/dispatcher/dispatcher.module";
     DriverModule,
     AmbulanceModule,
     BookingModule,
-    DispatcherModule
+    DispatcherModule,
+    HospitalModule
   ],
+  controllers: [HealthController],
 })
 export class AppModule { }
