@@ -1,20 +1,50 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": [
+    "tsconfig.json",
+    ".eslintrc.json",
+    "prettier.config.js",
+    ".prettierrc.js"
+  ],
   "tasks": {
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "interactive": true
     },
     "build": {
       "dependsOn": ["^build"],
       "outputs": [
-        "backend/dist/**",
-        "client-dashboard/dist/**"
-      ]
+        "dist/**",
+        "build/**",
+        ".next/**",
+        "metro-cache/**"
+      ],
+      "cache": true
     },
-    "lint": {},
+    "lint": {
+      "outputs": [],
+      "cache": true
+    },
+    "lint:fix": {
+      "cache": false,
+      "outputs": []
+    },
+    "format": {
+      "cache": false,
+      "outputs": []
+    },
+    "format:check": {
+      "outputs": [],
+      "cache": true
+    },
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "outputs": [
+        "coverage/**",
+        "test-results/**"
+      ],
+      "cache": true
     }
   }
 }

@@ -1,0 +1,8 @@
+{
+  "name": "@ambulink/prettier-config",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Shared Prettier configuration for AmbuLink monorepo",
+  "exports": "./index.js",
+  "files": ["index.js"]
+}

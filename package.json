@@ -2,15 +2,18 @@
   "name": "ambulink-mono",
   "private": true,
   "workspaces": [
-    "backend",
-    "client-dashboard",
-    "mobile"
+    "apps/*",
+    "packages/*",
+    "internal/*"
   ],
   "scripts": {
-    "env:sync": "node scripts/env-sync.js",
-    "dev": "npm run env:sync && turbo run dev --ui=tui --parallel --filter=./backend --filter=./client-dashboard --filter=./mobile",
+    "env:sync": "node tools/env-sync.js",
+    "dev": "npm run env:sync && turbo run dev --ui=tui --parallel",
     "build": "turbo run build",
     "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "format": "turbo run format",
+    "format:check": "turbo run format:check",
     "test": "turbo run test"
   },
   "devDependencies": {

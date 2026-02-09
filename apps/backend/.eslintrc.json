@@ -1,0 +1,6 @@
+{
+  "extends": ["@ambulink/eslint-config/nestjs"],
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  }
+}

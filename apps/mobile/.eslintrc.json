@@ -1,0 +1,3 @@
+{
+  "extends": ["@ambulink/eslint-config/react-native", "expo"]
+}
