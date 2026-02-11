@@ -1,20 +1,20 @@
-import { Injectable } from "@nestjs/common";
-import { eq, mapColumnsInAliasedSQLToAlias, ne, SQL, sql } from "drizzle-orm";
-import { bookings, users } from "@/common/database/schema";
-import type {Booking, Hospital, User} from "@/common/database/schema";
-import { and } from "drizzle-orm";
-import { or } from "drizzle-orm";
-import { DbService } from "@/common/database/db.service";
-import { DispatcherService } from "../dispatcher/dispatcher.service";
-import { SocketService } from "@/common/socket/socket.service";
+import { Injectable } from '@nestjs/common';
+import { eq, mapColumnsInAliasedSQLToAlias, ne, SQL, sql } from 'drizzle-orm';
+import { bookings, users } from '@/common/database/schema';
+import type { Booking, Hospital, User } from '@/common/database/schema';
+import { and } from 'drizzle-orm';
+import { or } from 'drizzle-orm';
+import { DbService } from '@/common/database/db.service';
+import { DispatcherService } from '../dispatcher/dispatcher.service';
+import { SocketService } from '@/common/socket/socket.service';
 
 @Injectable()
 export class BookingService {
   constructor(
     private dbService: DbService,
     private dispatcherService: DispatcherService,
-    private socketService: SocketService
-  ) { }
+    private socketService: SocketService,
+  ) {}
 
   async createBooking(
     patient: User,
@@ -23,7 +23,7 @@ export class BookingService {
     pickupAddr: string | null,
     hospital: Hospital,
     pickedDriver: User,
-    emergencyType: string | null
+    emergencyType: string | null,
   ) {
     const [newBooking] = await this.dbService.db
       .insert(bookings)
@@ -32,7 +32,7 @@ export class BookingService {
         pickupAddress: pickupAddr,
         pickupLocation: sql`ST_SetSRID(ST_MakePoint(${pickedDriver.currentLocation?.x}, ${pickedDriver.currentLocation?.y}), 4326)`,
 
-        status: "ASSIGNED",
+        status: 'ASSIGNED',
 
         providerId: pickedDriver.providerId,
         driverId: pickedDriver.id,
@@ -45,7 +45,7 @@ export class BookingService {
       })
       .returning();
 
-    return {patient, pickedDriver, hospital, };
+    return { patient, pickedDriver, hospital };
   }
 
   async updateBooking(bookingId: string, booking: Partial<Booking>) {
@@ -70,14 +70,12 @@ export class BookingService {
       .where(
         and(
           or(eq(bookings.patientId, userId), eq(bookings.driverId, userId)),
-          ne(bookings.status, "COMPLETED")
-        )
+          ne(bookings.status, 'COMPLETED'),
+        ),
       );
 
     if (data.length > 1) {
-      console.log(
-        "Something is wrong, users cannot have multiple uncompleted bookings"
-      );
+      console.log('Something is wrong, users cannot have multiple uncompleted bookings');
     }
     return data[0];
   }
@@ -86,12 +84,10 @@ export class BookingService {
     const [booking] = await this.dbService.db
       .update(bookings)
       .set({
-        status: "CANCELLED",
+        status: 'CANCELLED',
         cancellationReason: reason,
       })
-      .where(
-        and(eq(bookings.patientId, patientId), ne(bookings.status, "COMPLETED"))
-      )
+      .where(and(eq(bookings.patientId, patientId), ne(bookings.status, 'COMPLETED')))
       .returning();
 
     return booking;
@@ -100,14 +96,14 @@ export class BookingService {
   async askDispatchers(nearByDrivers: User[], patient: User) {
     const approvalPromises = nearByDrivers.map(async (driver) => {
       const dispatcherId = await this.dispatcherService.findLiveDispatchersByProvider(
-        driver.providerId!
+        driver.providerId!,
       );
 
       return this.waitForDispatcherApproval(
         dispatcherId,
         driver,
         patient,
-        `req_${Date.now()}_${driver.id}`
+        `req_${Date.now()}_${driver.id}`,
       );
     });
 
@@ -115,7 +111,7 @@ export class BookingService {
       const winningResponse = await Promise.any(approvalPromises);
       return winningResponse;
     } catch (error) {
-      console.error("All dispatchers rejected the request");
+      console.error('All dispatchers rejected the request');
       return null;
     }
   }
@@ -124,22 +120,20 @@ export class BookingService {
     dispatcherId: string,
     driver: User,
     patient: User,
-    requestId: string
-  ): Promise<{ dispatcherId: string, pickedDriver: User}> {
+    requestId: string,
+  ): Promise<{ dispatcherId: string; pickedDriver: User }> {
     return new Promise((resolve, reject) => {
       this.socketService.dispatcherServer
         ?.to(`dispatcher:${dispatcherId}`)
         .timeout(30000)
-        .emit("booking:new", { requestId, driver, patient }, (err: any, response: any) => {
+        .emit('booking:new', { requestId, driver, patient }, (err: any, response: any) => {
           // response is a array
           if (err || !response[0]?.approved) {
-            return reject("Dispatcher declined or ignored");
+            return reject('Dispatcher declined or ignored');
           }
 
-
-          resolve({ dispatcherId: dispatcherId, pickedDriver: driver })
+          resolve({ dispatcherId: dispatcherId, pickedDriver: driver });
         });
     });
   }
-
 }

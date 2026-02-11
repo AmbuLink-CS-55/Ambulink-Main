@@ -1,41 +1,13 @@
 import { View, TouchableOpacity, Text, ActivityIndicator } from "react-native";
 import React from "react";
 import { Ionicons } from "@expo/vector-icons";
+import type { Point, Booking, BookingStatus, User, Hospital } from "@ambulink/types";
 
-type BookingResponse = {
-  id: number;
-  patient: {
-    id: string;
-    phone_number: string;
-    name: string | null;
-    lat: number;
-    lng: number;
-  };
-  driver: {
-    id: string;
-    phone_number: string;
-    lat: number;
-    lng: number;
-    ambulance_provider: {
-      id: string;
-      name: string;
-    };
-  };
-  hospital: {
-    id: string;
-    name: string;
-    phone_number: string;
-    lat: number;
-    lng: number;
-  };
-};
-
-type BookingStatus = "idle" | "assigned" | "arrived" | "completed";
 
 interface MapOptionsProps {
   bookingAssigned: boolean;
   status: BookingStatus;
-  booking: BookingResponse | null;
+  booking: {patient: User, pickedDriver: User, hospital: Hospital} | null;
   onHelpRequest: () => void;
   cancelRequest: () => void;
   isCancelling?: boolean;
@@ -49,21 +21,21 @@ export default function MapOptions({
   cancelRequest,
   isCancelling = false,
 }: MapOptionsProps) {
-  if (status === "completed") {
-    return (
-      <View className="bg-white p-4 w-full rounded-2xl shadow-lg items-center">
-        <Ionicons name="checkmark-circle" size={48} color="#22c55e" />
-        <Text className="text-green-600 font-bold text-xl mt-2">
-          Ride Completed
-        </Text>
-        <Text className="text-gray-500 mt-1">
-          You have arrived at {booking?.hospital.name}
-        </Text>
-      </View>
-    );
-  }
+  // if (status === "COMPLETED") {
+  //   return (
+  //     <View className="bg-white p-4 w-full rounded-2xl shadow-lg items-center">
+  //       <Ionicons name="checkmark-circle" size={48} color="#22c55e" />
+  //       <Text className="text-green-600 font-bold text-xl mt-2">
+  //         Ride Completed
+  //       </Text>
+  //       <Text className="text-gray-500 mt-1">
+  //         You have arrived at {booking?.hospital.name}
+  //       </Text>
+  //     </View>
+  //   );
+  // }
 
-  if (status === "arrived") {
+  if (status === "ARRIVED") {
     return (
       <View className="bg-white p-4 w-full rounded-2xl shadow-lg">
         <View className="items-center mb-3">
@@ -75,7 +47,7 @@ export default function MapOptions({
         <View className="border-t border-gray-100 pt-3">
           <Text className="text-gray-500 text-sm">Provider</Text>
           <Text className="font-semibold">
-            {booking?.driver.ambulance_provider.name}
+            {booking?.pickedDriver.providerId}
           </Text>
         </View>
         <View className="mt-2">
@@ -86,7 +58,7 @@ export default function MapOptions({
     );
   }
 
-  if (status === "assigned" && booking) {
+  if (status === "ASSIGNED" && booking) {
     return (
       <View className="bg-white p-4 w-full rounded-2xl shadow-lg">
         <View className="flex-row items-center mb-3">
@@ -102,7 +74,7 @@ export default function MapOptions({
         <View className="border-t border-gray-100 pt-3">
           <Text className="text-gray-500 text-sm">Provider</Text>
           <Text className="font-semibold">
-            {booking.driver.ambulance_provider.name}
+            {booking.pickedDriver.providerId}
           </Text>
         </View>
 

@@ -24,7 +24,8 @@
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
     "studio": "drizzle-kit studio",
-    "seed": "npx tsx src/common/database/seed/seed.ts"
+    "seed": "npx tsx src/common/database/seed/seed.ts",
+    "build:types": "npx tsx scripts/generate-types.ts"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^3.1.0",

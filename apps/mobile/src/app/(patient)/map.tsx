@@ -4,44 +4,13 @@ import { Text, Alert } from "react-native";
 import { useLocation } from "@/hooks/useLocation";
 import MapOptions from "../../components/patient/MapOptions";
 import { useSocket } from "@/hooks/SocketContext";
-
-type LatLng = { lat: number; lng: number };
-
-type BookingResponse = {
-  id: number;
-  patient: {
-    id: string;
-    phone_number: string;
-    name: string | null;
-    lat: number;
-    lng: number;
-  };
-  driver: {
-    id: string;
-    phone_number: string;
-    lat: number;
-    lng: number;
-    ambulance_provider: {
-      id: string;
-      name: string;
-    };
-  };
-  hospital: {
-    id: string;
-    name: string;
-    phone_number: string;
-    lat: number;
-    lng: number;
-  };
-};
-
-type BookingStatus = "idle" | "assigned" | "arrived" | "completed";
+import type { Point, Booking, BookingStatus, User, Hospital } from "@ambulink/types";
 
 export default function Map() {
   const locationState = useLocation();
   const socket = useSocket();
-  const [booking, setBooking] = useState<BookingResponse | null>(null);
-  const [status, setStatus] = useState<BookingStatus>("idle");
+  const [booking, setBooking] = useState<{patient: User, pickedDriver: User, hospital: Hospital} | null>(null);
+  const [status, setStatus] = useState<BookingStatus>("COMPLETED");
   const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
@@ -49,22 +18,21 @@ export default function Map() {
 
     socket.on("connect", () => console.log("ws Connected"));
 
-    socket.on("booking:assigned", (data: BookingResponse) => {
+    socket.on("booking:assigned", (data: {patient: User, pickedDriver: User, hospital: Hospital}) => {
       console.log("booking:assigned", data);
       setBooking(data);
-      setStatus("assigned");
+      setStatus("ASSIGNED");
     });
 
-    socket.on("driver:location", (data: LatLng) => {
+    socket.on("driver:location", (data: Point) => {
       setBooking((prev) => {
         if (!prev) return null;
 
         return {
           ...prev,
-          driver: {
-            ...prev.driver,
-            lat: data.lat,
-            lng: data.lng,
+          pickedDriver: {
+            ...prev.pickedDriver,
+            currentLocation: data
           },
         };
       });
@@ -72,15 +40,15 @@ export default function Map() {
 
     socket.on("booking:arrived", () => {
       console.log("booking:arrived");
-      setStatus("arrived");
+      setStatus("ARRIVED");
     });
 
     socket.on("booking:completed", () => {
       console.log("booking:completed");
-      setStatus("completed");
-      setTimeout(() => {
-        setStatus("idle");
-      }, 5000);
+      setStatus("COMPLETED");
+      // setTimeout(() => {
+      //   setStatus("idle");
+      // }, 5000);
     });
 
     // Handle cancellation confirmation from backend
@@ -89,7 +57,7 @@ export default function Map() {
       (data: { bookingId: string; message: string }) => {
         console.log("booking:cancelled", data);
         setBooking(null);
-        setStatus("idle");
+        setStatus("CANCELLED");
         setIsCancelling(false);
         Alert.alert(
           "Cancelled",
@@ -112,8 +80,8 @@ export default function Map() {
       return;
     }
     socket.emit("patient:help", {
-      lat: locationState.location.latitude,
-      lng: locationState.location.longitude,
+      x: locationState.location.latitude,
+      y: locationState.location.longitude,
     });
   };
 
@@ -153,23 +121,17 @@ export default function Map() {
   return (
     <UserMap
       driverLocations={
-        booking ? [{ lat: booking.driver.lat, lng: booking.driver.lng }] : []
+        booking?.pickedDriver.currentLocation ? [booking.pickedDriver.currentLocation] : []
       }
       hospitalLocation={
-        booking
-          ? {
-              lat: booking.hospital.lat,
-              lng: booking.hospital.lng,
-            }
-          : undefined
+        booking?.hospital.location ? booking.hospital.location : undefined
       }
-      userLocation={{
-        lat: locationState.location.latitude,
-        lng: locationState.location.longitude,
-      }}
+      userLocation={
+        booking?.patient.currentLocation ? booking.patient.currentLocation : {x: locationState.location.latitude, y: locationState.location.longitude}
+      }
     >
       <MapOptions
-        bookingAssigned={status !== "idle"}
+        bookingAssigned={status !== "COMPLETED"}
         status={status}
         booking={booking}
         onHelpRequest={handleHelpRequest}

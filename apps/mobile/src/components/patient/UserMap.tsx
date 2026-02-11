@@ -2,16 +2,12 @@ import React from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from "react-native-maps";
 import { Ionicons } from "@expo/vector-icons";
-
-type LatLng = {
-  lat: number;
-  lng: number;
-};
+import { Point } from "@ambulink/types";
 
 type Props = {
-  userLocation: LatLng;
-  driverLocations?: LatLng[];
-  hospitalLocation?: LatLng;
+  userLocation: Point;
+  driverLocations?: Point[];
+  hospitalLocation?: Point;
   children?: React.ReactNode;
 };
 
@@ -24,8 +20,8 @@ export default function UserMap({
   const mapRef = React.useRef<MapView>(null);
 
   const region: Region = {
-    latitude: userLocation.lat,
-    longitude: userLocation.lng,
+    latitude: userLocation.x,
+    longitude: userLocation.y,
     latitudeDelta: 0.01,
     longitudeDelta: 0.01,
   };
@@ -48,18 +44,18 @@ export default function UserMap({
       >
         {driverLocations.map((d) => (
           <Marker
-            key={`${d.lat}-${d.lng}`}
-            coordinate={{ latitude: d.lat, longitude: d.lng }}
+            key={`${d.x}-${d.y}`}
+            coordinate={{ latitude: d.x, longitude: d.y }}
             anchor={{ x: 0.5, y: 1 }}
             tracksViewChanges={false}
           />
         ))}
         {hospitalLocation && (
           <Marker
-            key={`${hospitalLocation.lat}-${hospitalLocation.lng}`}
+            key={`${hospitalLocation.x}-${hospitalLocation.y}`}
             coordinate={{
-              latitude: hospitalLocation.lat,
-              longitude: hospitalLocation.lng,
+              latitude: hospitalLocation.x,
+              longitude: hospitalLocation.y,
             }}
             anchor={{ x: 0.5, y: 1 }}
             tracksViewChanges={false}
