@@ -61,13 +61,24 @@ export default function LoginModern() {
                         />
                     </View>
                     {/* Form Section */}
-                    <View style={{ paddingHorizontal: 20, marginTop: -100 }}>
+                    <View style={{ paddingHorizontal: 20, marginTop: -150 }}>
+                        <Text
+                            style={{
+                                textAlign: 'left',
+                                fontSize: 22,
+                                fontWeight: '700',
+                                color: '#205fb7ff',
+                                marginBottom: 30,
+                            }}
+                        >
+                            Log in
+                        </Text>
                         {/* Email Input */}
                         <View style={{
-                            backgroundColor: '#F9FAFB',
+                            backgroundColor: '#d9e9fdff',
                             borderRadius: 12,
                             borderWidth: 1,
-                            borderColor: '#E5E7EB',
+                            borderColor: '#79a5fcff',
                             marginBottom: 16,
                             paddingHorizontal: 16,
                             height: 56,
@@ -93,10 +104,10 @@ export default function LoginModern() {
 
                         {/* Password Input */}
                         <View style={{
-                            backgroundColor: '#F9FAFB',
+                            backgroundColor: '#d9e9fdff',
                             borderRadius: 12,
                             borderWidth: 1,
-                            borderColor: '#E5E7EB',
+                            borderColor: '#79a5fcff',
                             marginBottom: 12,
                             paddingHorizontal: 16,
                             height: 56,
@@ -123,8 +134,8 @@ export default function LoginModern() {
                         </View>
 
                         {/* Forgot Password */}
-                        <TouchableOpacity style={{ alignItems: 'flex-end', marginBottom: 24 }}>
-                            <Text style={{ color: '#205fb7ff', fontSize: 14, fontWeight: '500' }}>Forgot Password?</Text>
+                        <TouchableOpacity style={{ alignItems: 'flex-start', marginBottom: 24 }}>
+                            <Text style={{ color: '#205fb7ff', fontSize: 13, fontWeight: '500' }}>Forgot Password?</Text>
                         </TouchableOpacity>
 
                         {/* Sign In Button */}
