@@ -197,7 +197,7 @@ export default function LoginModern() {
                     {/* Footer */}
                     <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 32, marginBottom: 40 }}>
                         <Text style={{ color: '#6B7280', fontSize: 15 }}>Don't have an account? </Text>
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={() => router.push("/(public)/signup")}>
                             <Text style={{ color: '#205fb7ff', fontSize: 15, fontWeight: '600' }}>Sign Up</Text>
                         </TouchableOpacity>
                     </View>
