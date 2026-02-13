@@ -4,7 +4,7 @@ import { useAuthStore } from "../hooks/AuthContext";
 export default function Index() {
   const role = useAuthStore((s) => s.user?.role);
 
-  if (!role) return <Redirect href="/(public)/login" />;
+  if (!role) return <Redirect href="/(public)/login_modern" />;
 
   if (role === "patient") return <Redirect href="/(patient)/map" />;
   if (role === "driver") return <Redirect href="/(driver)" />;
