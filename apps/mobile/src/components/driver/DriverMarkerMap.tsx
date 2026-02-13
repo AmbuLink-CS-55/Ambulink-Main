@@ -1,13 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import MapView, { Marker, Region } from "react-native-maps";
 
 type LatLng = { latitude: number; longitude: number };
 
-export function DriverMap({
-  driverLocation,
-}: {
-  driverLocation: LatLng | null;
-}) {
+export function DriverMap({ driverLocation }: { driverLocation: LatLng | null }) {
   const mapRef = useRef<MapView>(null);
 
   const initialRegion: Region = {

@@ -60,12 +60,9 @@
     "@types/react": "~19.1.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
-    "eslint-plugin-react": "^7.34.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
     "prettier": "^3.4.2",
     "tailwindcss-language-server": "^0.0.1",
     "typescript": "~5.9.2"
   },
-  "prettier": "@ambulink/prettier-config",
   "private": true
 }

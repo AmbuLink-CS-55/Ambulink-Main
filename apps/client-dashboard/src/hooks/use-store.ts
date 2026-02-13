@@ -8,7 +8,7 @@ interface AppState {
   pendingBookingRequests: BookingNewPayload[];
   activeBookingRequests: BookingAssignedPayload[];
   hospitals: Hospital[];
-  setHospitals: (hospitals: Hospital[]) => void
+  setHospitals: (hospitals: Hospital[]) => void;
   // bookingRequests:
   // ongoingBookings:
   // completedBookings:
@@ -20,5 +20,5 @@ export const useStore = create<AppState>((set) => ({
   pendingBookingRequests: [],
   activeBookingRequests: [],
   hospitals: [],
-  setHospitals: (hospitals) =>  set({hospitals}) ,
+  setHospitals: (hospitals) => set({ hospitals }),
 }));

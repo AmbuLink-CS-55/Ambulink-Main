@@ -86,7 +86,7 @@ async function main() {
 
   // 3. Insert Real Ambulance Providers (from Seed 3)
   console.log("🚑 Seeding real ambulance providers...");
-  const realProviders = await db
+  await db
     .insert(schema.ambulanceProviders)
     .values([
       {
@@ -838,8 +838,7 @@ async function main() {
     {
       name: "Suwa Seriya - National Ambulance Service",
       phoneNumber: "1990",
-      description:
-        "Free 24/7 national ambulance service covering all of Sri Lanka",
+      description: "Free 24/7 national ambulance service covering all of Sri Lanka",
       isActive: true,
     },
     {
@@ -863,8 +862,7 @@ async function main() {
     {
       name: "Accident Service - National Hospital",
       phoneNumber: "011-2691111",
-      description:
-        "National Hospital Colombo 24/7 accident and emergency service",
+      description: "National Hospital Colombo 24/7 accident and emergency service",
       isActive: true,
     },
     {

@@ -15,7 +15,7 @@ import {
   SidebarGroupContent,
 } from "@/components/ui/sidebar";
 
-const resourceGroups = [
+const RESOURCE_GROUPS = [
   {
     title: "Ambulances",
     basePath: "/ambulances",
@@ -43,19 +43,23 @@ const resourceGroups = [
       { title: "Register", url: "new" },
     ],
   },
-];
+] as const;
 
-function CollapsibleResourceGroup({
-  group,
-}: {
-  group: (typeof resourceGroups)[0];
-}) {
-  const [isOpen, setIsOpen] = React.useState(true);
+interface ResourceGroup {
+  title: string;
+  basePath: string;
+  icon: React.ComponentType<{ className?: string }>;
+  items: readonly { title: string; url: string }[];
+}
+
+function ResourceSection({ group }: { group: ResourceGroup }) {
+  const [isExpanded, setIsExpanded] = React.useState(true);
   const location = useLocation();
+  const Icon = group.icon;
 
   React.useEffect(() => {
     if (location.pathname.startsWith(group.basePath)) {
-      setIsOpen(true);
+      setIsExpanded(true);
     }
   }, [location.pathname, group.basePath]);
 
@@ -64,14 +68,14 @@ function CollapsibleResourceGroup({
       <div className="flex items-center justify-between pr-2">
         <SidebarGroupLabel
           className="cursor-pointer flex-1 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md transition-colors"
-          onClick={() => setIsOpen((prev) => !prev)}
+          onClick={() => setIsExpanded((prev) => !prev)}
         >
           <button className="flex items-center w-full text-sm font-medium outline-none">
-            <group.icon className="mr-2 size-4" />
+            <Icon className="mr-2 size-4" />
             {group.title}
             <ChevronDown
               className={`ml-auto size-4 transition-transform duration-200 ${
-                isOpen ? "rotate-180" : ""
+                isExpanded ? "rotate-180" : ""
               }`}
             />
           </button>
@@ -80,20 +84,19 @@ function CollapsibleResourceGroup({
 
       <div
         className={`grid transition-[grid-template-rows] duration-200 ease-in-out ${
-          isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+          isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
         }`}
       >
         <div className="overflow-hidden">
           <SidebarGroupContent className="pt-1">
             <SidebarMenu>
               {group.items.map((item) => {
-                const suffix = item.url ? `/${item.url}` : "";
-                const absoluteUrl = `${group.basePath}${suffix}`;
-                const isActive = location.pathname === absoluteUrl;
+                const path = item.url ? `${group.basePath}/${item.url}` : group.basePath;
+                const isActive = location.pathname === path;
 
                 return (
-                  <SidebarMenuItem key={absoluteUrl}>
-                    <Link to={absoluteUrl}>
+                  <SidebarMenuItem key={path}>
+                    <Link to={path}>
                       <SidebarMenuButton
                         isActive={isActive}
                         className="pl-8 text-sidebar-foreground/70 data-[active=true]:text-sidebar-foreground"
@@ -116,9 +119,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="p-2 border-b">
-        <h1 className="font-bold text-xl items-center text-center ">
-          Dispatch.Ambulink
-        </h1>
+        <h1 className="font-bold text-xl items-center text-center">Dispatch.Ambulink</h1>
       </SidebarHeader>
 
       <SidebarContent>
@@ -138,8 +139,8 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {resourceGroups.map((group) => (
-          <CollapsibleResourceGroup key={group.title} group={group} />
+        {RESOURCE_GROUPS.map((group) => (
+          <ResourceSection key={group.title} group={group} />
         ))}
       </SidebarContent>
 

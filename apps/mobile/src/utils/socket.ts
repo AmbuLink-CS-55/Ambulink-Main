@@ -1,5 +1,4 @@
 import { io, Socket } from "socket.io-client";
-import { getData } from "./settingsStorage";
 import env from "../../env";
 
 export class SocketClientCreator {
@@ -36,7 +35,7 @@ export class SocketClientCreator {
     }
 
     this.instance = io(url, {
-      transports: ['websocket'],
+      transports: ["websocket"],
       auth: authPayload,
       reconnection: true,
       reconnectionAttempts: Infinity,

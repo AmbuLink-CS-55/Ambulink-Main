@@ -11,4 +11,4 @@ import { DispatcherModule } from "../dispatcher/dispatcher.module";
   imports: [DispatcherModule],
   exports: [DriverService, DriverGateway],
 })
-export class DriverModule { }
+export class DriverModule {}

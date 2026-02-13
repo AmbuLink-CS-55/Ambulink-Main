@@ -11,31 +11,18 @@ import {
   geometry,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { type InferSelectModel, type InferInsertModel } from 'drizzle-orm';
+import { type InferSelectModel, type InferInsertModel } from "drizzle-orm";
 
-export const userRoleEnum = pgEnum("user_role", [
-  "PATIENT",
-  "DISPATCHER",
-  "DRIVER",
-  "EMT",
-]);
+export const userRoleEnum = pgEnum("user_role", ["PATIENT", "DISPATCHER", "DRIVER", "EMT"]);
 export type UserRole = (typeof userRoleEnum.enumValues)[number];
 
-export const userStatusEnum = pgEnum("user_status", [
-  "AVAILABLE",
-  "BUSY",
-  "OFFLINE",
-]);
+export const userStatusEnum = pgEnum("user_status", ["AVAILABLE", "BUSY", "OFFLINE"]);
 export type UserStatus = (typeof userStatusEnum.enumValues)[number];
 
 export const providerTypeEnum = pgEnum("provider_type", ["PUBLIC", "PRIVATE"]);
 export type ProviderType = (typeof providerTypeEnum.enumValues)[number];
 
-export const ambulanceStatusEnum = pgEnum("ambulance_status", [
-  "AVAILABLE",
-  "BUSY",
-  "OFFLINE",
-]);
+export const ambulanceStatusEnum = pgEnum("ambulance_status", ["AVAILABLE", "BUSY", "OFFLINE"]);
 export type AmbulanceStatus = (typeof ambulanceStatusEnum.enumValues)[number];
 
 export const bookingStatusEnum = pgEnum("booking_status", [
@@ -57,12 +44,8 @@ export const ambulanceProviders = pgTable("ambulance_providers", {
   initialPrice: decimal("initial_price", { precision: 12, scale: 2 }),
   pricePerKm: decimal("price_per_km", { precision: 12, scale: 2 }),
   isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 export type AmbulanceProvider = InferSelectModel<typeof ambulanceProviders>;
 export type NewAmbulanceProvider = InferInsertModel<typeof ambulanceProviders>;
@@ -75,12 +58,8 @@ export const users = pgTable(
     phoneNumber: varchar("phone_number", { length: 50 }),
     email: varchar("email", { length: 255 }),
     passwordHash: varchar("password_hash", { length: 255 }).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     isActive: boolean("is_active").notNull().default(true),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
     role: userRoleEnum("role").notNull(),
@@ -133,12 +112,8 @@ export const ambulance = pgTable(
     vehicleNumber: varchar("vehicle_number", { length: 100 }).notNull(),
     equipmentLevel: varchar("equipment_level", { length: 100 }),
     status: ambulanceStatusEnum("status").notNull().default("AVAILABLE"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     lastUpdateTime: timestamp("last_update_time", { withTimezone: true }),
     currentLocation: geometry("current_location", {
       type: "point",
@@ -147,14 +122,9 @@ export const ambulance = pgTable(
     }),
   },
   (t) => ({
-    vehicleNumberUnique: uniqueIndex("vehicle_number_unique").on(
-      t.vehicleNumber
-    ),
+    vehicleNumberUnique: uniqueIndex("vehicle_number_unique").on(t.vehicleNumber),
     providerIdx: index("provider_idx_ambulances").on(t.providerId),
-    statusLocationIdx: index("ambulance_status_location_idx").on(
-      t.status,
-      t.currentLocation
-    ),
+    statusLocationIdx: index("ambulance_status_location_idx").on(t.status, t.currentLocation),
   })
 );
 export type Ambulance = InferSelectModel<typeof ambulance>;
@@ -228,9 +198,7 @@ export const bookings = pgTable(
 
     emergencyType: varchar("emergency_type", { length: 100 }),
 
-    requestedAt: timestamp("requested_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    requestedAt: timestamp("requested_at", { withTimezone: true }).notNull().defaultNow(),
     assignedAt: timestamp("assigned_at", { withTimezone: true }),
     pickedupAt: timestamp("pickedup_at", { withTimezone: true }),
     arrivedAt: timestamp("arrived_at", { withTimezone: true }),
@@ -252,14 +220,11 @@ export type Booking = InferSelectModel<typeof bookings>;
 export type NewBooking = InferInsertModel<typeof bookings>;
 
 // Relations for quarying
-export const ambulanceProvidersRelations = relations(
-  ambulanceProviders,
-  ({ many }) => ({
-    users: many(users),
-    ambulances: many(ambulance),
-    bookings: many(bookings),
-  })
-);
+export const ambulanceProvidersRelations = relations(ambulanceProviders, ({ many }) => ({
+  users: many(users),
+  ambulances: many(ambulance),
+  bookings: many(bookings),
+}));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
   provider: one(ambulanceProviders, {

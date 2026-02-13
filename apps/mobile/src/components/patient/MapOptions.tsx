@@ -1,13 +1,12 @@
 import { View, TouchableOpacity, Text, ActivityIndicator } from "react-native";
 import React from "react";
 import { Ionicons } from "@expo/vector-icons";
-import type { Point, Booking, BookingStatus, User, Hospital } from "@ambulink/types";
-
+import type { BookingStatus, User, Hospital } from "@ambulink/types";
 
 interface MapOptionsProps {
   bookingAssigned: boolean;
   status: BookingStatus;
-  booking: {patient: User, pickedDriver: User, hospital: Hospital} | null;
+  booking: { patient: User; pickedDriver: User; hospital: Hospital } | null;
   onHelpRequest: () => void;
   cancelRequest: () => void;
   isCancelling?: boolean;
@@ -21,6 +20,7 @@ export default function MapOptions({
   cancelRequest,
   isCancelling = false,
 }: MapOptionsProps) {
+
   // if (status === "COMPLETED") {
   //   return (
   //     <View className="bg-white p-4 w-full rounded-2xl shadow-lg items-center">
@@ -35,20 +35,16 @@ export default function MapOptions({
   //   );
   // }
 
-  if (status === "ARRIVED") {
+  if (status === "ARRIVED" && booking) {
     return (
       <View className="bg-white p-4 w-full rounded-2xl shadow-lg">
         <View className="items-center mb-3">
           <Ionicons name="car" size={32} color="#f59e0b" />
-          <Text className="text-amber-600 font-bold text-lg mt-1">
-            Ambulance Arrived!
-          </Text>
+          <Text className="text-amber-600 font-bold text-lg mt-1">Ambulance Arrived!</Text>
         </View>
         <View className="border-t border-gray-100 pt-3">
           <Text className="text-gray-500 text-sm">Provider</Text>
-          <Text className="font-semibold">
-            {booking?.pickedDriver.providerId}
-          </Text>
+          <Text className="font-semibold">{booking?.pickedDriver.providerId}</Text>
         </View>
         <View className="mt-2">
           <Text className="text-gray-500 text-sm">Destination</Text>
@@ -73,9 +69,7 @@ export default function MapOptions({
 
         <View className="border-t border-gray-100 pt-3">
           <Text className="text-gray-500 text-sm">Provider</Text>
-          <Text className="font-semibold">
-            {booking.pickedDriver.providerId}
-          </Text>
+          <Text className="font-semibold">{booking.pickedDriver.providerId}</Text>
         </View>
 
         <View className="mt-2">
@@ -84,7 +78,7 @@ export default function MapOptions({
         </View>
 
         <TouchableOpacity
-          className={`justify-center items-center p-3 mt-4 rounded-xl ${isCancelling ? 'bg-red-300' : 'bg-red-500'}`}
+          className={`justify-center items-center p-3 mt-4 rounded-xl ${isCancelling ? "bg-red-300" : "bg-red-500"}`}
           activeOpacity={0.8}
           onPress={cancelRequest}
           disabled={isCancelling}

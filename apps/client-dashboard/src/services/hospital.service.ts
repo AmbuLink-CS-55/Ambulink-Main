@@ -3,7 +3,7 @@ import type { Hospital } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 
 export const useGetHospitals = () => {
-//NOTE: check if we have it sotred localy
+  //NOTE: check if we have it sotred localy
   return useQuery({
     queryKey: ["hospitals"],
     staleTime: 6000 * 60 * 10,

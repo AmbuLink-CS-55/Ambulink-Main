@@ -1,11 +1,11 @@
 import { create } from "zustand";
 import { io, Socket } from "socket.io-client";
 import env from "../../env";
-import type { 
-  BookingNewPayload, 
+import type {
+  BookingNewPayload,
   DispatcherApprovalResponse,
   ServerToDispatcherEvents,
-  DispatcherToServerEvents
+  DispatcherToServerEvents,
 } from "@/lib/types";
 
 export interface BookingRequest {
@@ -37,9 +37,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
   removeBookingRequest: (requestId) =>
     set((state) => ({
-      bookingRequests: state.bookingRequests.filter(
-        (req) => req.requestId !== requestId
-      ),
+      bookingRequests: state.bookingRequests.filter((req) => req.requestId !== requestId),
     })),
 
   connect: () => {
@@ -47,41 +45,18 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
     const socketUrl = `${env!.VITE_WS_SERVER_URL}/dispatcher`;
     const socket = io(socketUrl, {
-      auth: {
-        dispatcherId: env!.VITE_DISPATCHER_ID,
-      },
+      auth: { dispatcherId: env!.VITE_DISPATCHER_ID },
       transports: ["websocket"],
     });
 
-    socket.on("connect", () => {
-      console.log("[socket] connected", {
-        url: socketUrl,
-        namespace: "/dispatcher",
-      });
-      set({ isConnected: true });
-    });
+    socket.on("connect", () => set({ isConnected: true }));
     socket.on("connect_error", (error) => {
-      console.error("[socket] connect_error", {
-        url: socketUrl,
-        namespace: "/dispatcher",
-        message: error?.message,
+      console.error("[socket] Connection failed:", {
+        message: error.message,
+        type: error.name,
       });
     });
-    socket.on("disconnect", (reason) => {
-      console.warn("[socket] disconnected", {
-        url: socketUrl,
-        namespace: "/dispatcher",
-        reason,
-      });
-      set({ isConnected: false });
-    });
-    socket.io.on("reconnect_attempt", (attempt) => {
-      console.info("[socket] reconnect_attempt", {
-        url: socketUrl,
-        namespace: "/dispatcher",
-        attempt,
-      });
-    });
+    socket.on("disconnect", () => set({ isConnected: false }));
 
     set({ socket });
   },

@@ -7,13 +7,8 @@ import { DbService } from "@/common/database/db.service";
 export class AmbulanceService {
   constructor(private dbService: DbService) {}
 
-  async create(
-    createAmbulanceDto: NewAmbulance
-  ): Promise<Ambulance> {
-    const result = await this.dbService.db
-      .insert(ambulance)
-      .values(createAmbulanceDto)
-      .returning();
+  async create(createAmbulanceDto: NewAmbulance): Promise<Ambulance> {
+    const result = await this.dbService.db.insert(ambulance).values(createAmbulanceDto).returning();
     return result[0];
   }
 
@@ -22,20 +17,14 @@ export class AmbulanceService {
   }
 
   async findOne(id: string): Promise<Ambulance> {
-    const result = await this.dbService.db
-      .select()
-      .from(ambulance)
-      .where(eq(ambulance.id, id));
+    const result = await this.dbService.db.select().from(ambulance).where(eq(ambulance.id, id));
     if (result.length === 0) {
       throw new NotFoundException(`Ambulance with id ${id} not found`);
     }
     return result[0];
   }
 
-  async update(
-    id: string,
-    updateAmbulanceDto: Partial<NewAmbulance>
-  ): Promise<Ambulance> {
+  async update(id: string, updateAmbulanceDto: Partial<NewAmbulance>): Promise<Ambulance> {
     const result = await this.dbService.db
       .update(ambulance)
       .set(updateAmbulanceDto)

@@ -16,18 +16,14 @@ export default function TabLayout() {
           name="map"
           options={{
             title: "Map",
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="map" size={size} color={color} />
-            ),
+            tabBarIcon: ({ color, size }) => <Ionicons name="map" size={size} color={color} />,
           }}
         />
         <Tabs.Screen
           name="settings"
           options={{
             title: "Settings",
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="settings" size={size} color={color} />
-            ),
+            tabBarIcon: ({ color, size }) => <Ionicons name="settings" size={size} color={color} />,
           }}
         />
       </Tabs>

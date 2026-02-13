@@ -1,3 +1,3 @@
-import config from '@ambulink/prettier-config';
+const config = require("@ambulink/prettier-config");
 
-export default config;
+module.exports = config;

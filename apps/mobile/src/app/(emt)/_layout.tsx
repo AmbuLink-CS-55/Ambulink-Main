@@ -15,9 +15,7 @@ export default function TabLayout() {
         name="medical"
         options={{
           title: "Medical",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="medical" color={color} size={size} />
-          ),
+          tabBarIcon: ({ color, size }) => <Ionicons name="medical" color={color} size={size} />,
           tabBarLabel: "Medical",
           tabBarAccessibilityLabel: "Access medical tools",
         }}
@@ -26,9 +24,7 @@ export default function TabLayout() {
         name="navigation"
         options={{
           title: "Navigation",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="navigate" color={color} size={size} />
-          ),
+          tabBarIcon: ({ color, size }) => <Ionicons name="navigate" color={color} size={size} />,
           tabBarLabel: "Navigation",
           tabBarAccessibilityLabel: "Navigate routes",
         }}
@@ -37,9 +33,7 @@ export default function TabLayout() {
         name="communication"
         options={{
           title: "Communication",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="chatbubble" color={color} size={size} />
-          ),
+          tabBarIcon: ({ color, size }) => <Ionicons name="chatbubble" color={color} size={size} />,
           tabBarLabel: "Communication",
           tabBarAccessibilityLabel: "Communicate with team",
         }}

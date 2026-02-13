@@ -9,24 +9,25 @@ export class PatientService {
 
   constructor(private dbService: DbService) {}
 
-  async updateStatus(patientId: string, status: UserStatus){
-    return await this.dbService.db.update(users).set({status: status, updatedAt: new Date()}).where(eq(users.id, patientId)).returning()
+  async updateStatus(patientId: string, status: UserStatus) {
+    return await this.dbService.db
+      .update(users)
+      .set({ status: status, updatedAt: new Date() })
+      .where(eq(users.id, patientId))
+      .returning();
   }
 
-  async lookupActiveBooking(patientId: string){
+  async lookupActiveBooking(patientId: string) {
     const ACTIVE_STATUSES = ["REQUESTED", "ASSIGNED", "ARRIVED", "PICKEDUP"] as const;
     const booking = await this.dbService.db
       .select()
       .from(bookings)
-      .where(
-        and(
-          eq(bookings.patientId, patientId),
-          inArray(bookings.status, ACTIVE_STATUSES)
-        )
-      );
+      .where(and(eq(bookings.patientId, patientId), inArray(bookings.status, ACTIVE_STATUSES)));
 
-    if(booking.length != 0 && booking.length > 1) {console.log(`patient ${patientId} has more than one active bookings`)}
-    return booking[0]
+    if (booking.length != 0 && booking.length > 1) {
+      console.log(`patient ${patientId} has more than one active bookings`);
+    }
+    return booking[0];
   }
 
   async create(createPatientDto: NewUser): Promise<User> {
@@ -35,10 +36,7 @@ export class PatientService {
       role: "PATIENT" as const,
     };
 
-    const result = await this.dbService.db
-      .insert(users)
-      .values(patientData)
-      .returning();
+    const result = await this.dbService.db.insert(users).values(patientData).returning();
     return result[0];
   }
 
@@ -67,10 +65,7 @@ export class PatientService {
     return result[0];
   }
 
-  async update(
-    id: string,
-    updatePatientDto: Partial<NewUser>
-  ): Promise<User> {
+  async update(id: string, updatePatientDto: Partial<NewUser>): Promise<User> {
     await this.findOne(id);
 
     const result = await this.dbService.db

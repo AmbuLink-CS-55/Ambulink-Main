@@ -8,4 +8,4 @@ import { DispatcherGateway } from "./dispatcher.gateway";
   imports: [],
   exports: [DispatcherService, DispatcherGateway],
 })
-export class DispatcherModule { }
+export class DispatcherModule {}

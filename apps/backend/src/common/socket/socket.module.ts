@@ -1,5 +1,4 @@
 import { Global, Module } from "@nestjs/common";
-import { Socket } from "socket.io";
 import { SocketService } from "./socket.service";
 
 @Global()

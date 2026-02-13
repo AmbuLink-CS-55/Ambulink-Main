@@ -1,4 +1,4 @@
-import { User } from '@/common/database/schema';
+import { User } from "@/common/database/schema";
 
 export type PatientPickupRequest = {
   patientId: string;
@@ -111,8 +111,8 @@ export type DispatcherApprovalResponse = {
  * Events that patients can send to the server
  */
 export interface PatientToServerEvents {
-  'patient:help': (data: PatientPickupRequest) => void;
-  'patient:cancelled': (data: PatientCancelRequest) => void;
+  "patient:help": (data: PatientPickupRequest) => void;
+  "patient:cancelled": (data: PatientCancelRequest) => void;
 }
 
 /**
@@ -120,45 +120,43 @@ export interface PatientToServerEvents {
  */
 export interface ServerToPatientEvents {
   die: () => void; // No dispatchers available
-  'booking:assigned': (data: BookingAssignedPayload) => void;
-  'booking:arrived': (data: BookingEventPayload) => void;
-  'booking:completed': (data: BookingEventPayload) => void;
-  'booking:cancelled': (data: { bookingId: string; message: string }) => void;
-  'booking:cancel:error': (data: ErrorPayload) => void;
+  "booking:assigned": (data: BookingAssignedPayload) => void;
+  "booking:arrived": (data: BookingEventPayload) => void;
+  "booking:completed": (data: BookingEventPayload) => void;
+  "booking:cancelled": (data: { bookingId: string; message: string }) => void;
+  "booking:cancel:error": (data: ErrorPayload) => void;
 }
 
 /**
  * Events that drivers can send to the server
  */
 export interface DriverToServerEvents {
-  'driver:update': (data: DriverLocationUpdate) => void;
-  'driver:arrived': () => void;
-  'driver:completed': () => void;
+  "driver:update": (data: DriverLocationUpdate) => void;
+  "driver:arrived": () => void;
+  "driver:completed": () => void;
 }
 
 /**
  * Events that the server can send to drivers
  */
 export interface ServerToDriverEvents {
-  'booking:assigned': (data: BookingAssignedPayload) => void;
-  'booking:cancelled': (data: BookingCancelledPayload) => void;
+  "booking:assigned": (data: BookingAssignedPayload) => void;
+  "booking:cancelled": (data: BookingCancelledPayload) => void;
 }
 
 /**
  * Events that dispatchers can send to the server
  * Currently none - dispatchers respond via acknowledgment callbacks
  */
-export interface DispatcherToServerEvents {
-  // Empty - dispatchers use acknowledgment callbacks instead of emit
-}
+export type DispatcherToServerEvents = Record<string, never>;
 
 /**
  * Events that the server can send to dispatchers
  */
 export interface ServerToDispatcherEvents {
-  'booking:new': (
+  "booking:new": (
     data: BookingNewPayload,
-    callback: (response: DispatcherApprovalResponse) => void,
+    callback: (response: DispatcherApprovalResponse) => void
   ) => void;
-  'booking:assigned': (data: BookingAssignedPayload) => void;
+  "booking:assigned": (data: BookingAssignedPayload) => void;
 }

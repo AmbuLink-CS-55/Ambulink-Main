@@ -1,18 +1,23 @@
 {
   "name": "@ambulink/eslint-config",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": true,
   "description": "Shared ESLint configuration for AmbuLink monorepo",
+  "main": "base.js",
   "exports": {
-    "./nestjs": "./nestjs.js",
+    ".": "./base.js",
+    "./base": "./base.js",
     "./react": "./react.js",
-    "./react-native": "./react-native.js"
+    "./react-native": "./react-native.js",
+    "./node": "./node.js"
+  },
+  "peerDependencies": {
+    "eslint": "^9.0.0",
+    "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@eslint/js": "^9.39.1",
-    "eslint-plugin-react": "^7.34.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.24",
-    "typescript-eslint": "^8.46.4"
+    "@eslint/js": "^9.18.0",
+    "typescript-eslint": "^8.0.0",
+    "globals": "^16.0.0"
   }
 }

@@ -116,7 +116,7 @@ function generateEnumTypes(types: TypeInfo[]): string {
   return output + '\n';
 }
 
-function generateTableTypes(schema: any): string {
+function generateTableTypes(_schema: any): string {
   let output = '// ============================================================================\n';
   output += '// Table Types\n';
   output += '// ============================================================================\n\n';

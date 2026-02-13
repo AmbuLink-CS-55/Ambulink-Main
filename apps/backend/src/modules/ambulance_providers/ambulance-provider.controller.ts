@@ -1,21 +1,10 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from "@nestjs/common";
+import { Controller, Get, Post, Patch, Param, Delete } from "@nestjs/common";
 import { AmbulanceProviderService } from "./ambulance-provider.service";
-import { Validate } from "@/common/pipes/zod-validation.pipe";
 import type { AmbulanceProvider, NewAmbulanceProvider } from "@/common/database/schema";
 
 @Controller("api/ambulance-providers")
 export class AmbulanceProviderController {
-  constructor(
-    private readonly ambulanceProviderService: AmbulanceProviderService
-  ) {}
+  constructor(private readonly ambulanceProviderService: AmbulanceProviderService) {}
 
   @Post()
   create(

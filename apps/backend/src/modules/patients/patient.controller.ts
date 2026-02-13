@@ -1,15 +1,5 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Query,
-} from "@nestjs/common";
+import { Controller, Get, Post, Patch, Param, Delete, Query } from "@nestjs/common";
 import { PatientService } from "./patient.service";
-import { Validate } from "@/common/pipes/zod-validation.pipe";
 import type { NewUser } from "@/common/database/schema";
 
 @Controller("api/patients")
@@ -26,8 +16,7 @@ export class PatientController {
 
   @Get()
   findAll(@Query("isActive") isActive?: string) {
-    const isActiveBool =
-      isActive !== undefined ? isActive === "true" : undefined;
+    const isActiveBool = isActive !== undefined ? isActive === "true" : undefined;
     return this.patientService.findAll(isActiveBool);
   }
 

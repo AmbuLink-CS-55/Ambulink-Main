@@ -1,10 +1,20 @@
-// https://docs.expo.dev/guides/using-eslint/
-const { defineConfig } = require('eslint/config');
-const expoConfig = require('eslint-config-expo/flat');
+/**
+ * ESLint configuration for mobile (React Native/Expo)
+ * Extends shared @ambulink/eslint-config with React Native-specific settings
+ */
+
+const { defineConfig } = require("eslint/config");
+const expoConfig = require("eslint-config-expo/flat");
+const ambulinkConfig = require("@ambulink/eslint-config/react-native");
 
 module.exports = defineConfig([
-  expoConfig,
+  { ignores: ["dist/*", "*.config.js"] },
+  ...ambulinkConfig,
+  ...expoConfig,
   {
-    ignores: ['dist/*'],
+    files: ["*.config.js"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
   },
 ]);

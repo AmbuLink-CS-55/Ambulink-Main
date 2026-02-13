@@ -1,11 +1,4 @@
-import {
-  Modal,
-  View,
-  Text,
-  Pressable,
-  FlatList,
-  TextInput,
-} from "react-native";
+import { Modal, View, Text, Pressable, FlatList, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import i18n from "@/i18n/i18n";
 
@@ -35,16 +28,13 @@ export default function AllergiesModal({
   );
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View className="flex-1 bg-black/50 justify-end">
         <View className="bg-white rounded-t-2xl p-4 pb-8 max-h-[80%]">
           <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-lg font-semibold text-gray-800">{i18n.t("settings.medical.selectAllergies")}</Text>
+            <Text className="text-lg font-semibold text-gray-800">
+              {i18n.t("settings.medical.selectAllergies")}
+            </Text>
             <Pressable onPress={onClose}>
               <Ionicons name="close" size={24} color="#333" />
             </Pressable>
@@ -63,18 +53,12 @@ export default function AllergiesModal({
               <Pressable
                 className="flex-row items-center py-3 px-4 border-b border-gray-100"
                 onPress={() =>
-                  selectedAllergies.includes(item)
-                    ? onRemoveAllergy(item)
-                    : onAddAllergy(item)
+                  selectedAllergies.includes(item) ? onRemoveAllergy(item) : onAddAllergy(item)
                 }
               >
                 <View className="w-6 h-6 border-2 border-teal-500 rounded-md justify-center items-center mr-3">
                   {selectedAllergies.includes(item) && (
-                    <Ionicons
-                      name="checkmark"
-                      size={16}
-                      color="#26A69A"
-                    />
+                    <Ionicons name="checkmark" size={16} color="#26A69A" />
                   )}
                 </View>
                 <Text className="text-base text-gray-800 flex-1">{item}</Text>

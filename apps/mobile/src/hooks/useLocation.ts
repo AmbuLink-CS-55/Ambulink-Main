@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
-import * as Location from 'expo-location';
-import { LatLng } from 'react-native-maps';
+import { useEffect, useState } from "react";
+import * as Location from "expo-location";
+import { LatLng } from "react-native-maps";
 
 type LocationData = LatLng & {
   accuracy: number | null;
-}
+};
 
 export const useLocation = () => {
   const [location, setLocation] = useState<LocationData | null>(null);
@@ -15,17 +15,18 @@ export const useLocation = () => {
     (async () => {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-          setError('Permission to access location was denied');
+        if (status !== "granted") {
+          setError("Permission to access location was denied");
           setLoading(false);
           return;
         }
         const cached = await Location.getLastKnownPositionAsync();
-        if (cached) setLocation({
-          latitude: cached.coords.latitude,
-          longitude: cached.coords.longitude,
-          accuracy: cached.coords.accuracy,
-        });
+        if (cached)
+          setLocation({
+            latitude: cached.coords.latitude,
+            longitude: cached.coords.longitude,
+            accuracy: cached.coords.accuracy,
+          });
 
         const currentLocation = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
@@ -39,9 +40,7 @@ export const useLocation = () => {
           accuracy: currentLocation.coords.accuracy,
         });
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Unknown error'
-        );
+        setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
         setLoading(false);
       }

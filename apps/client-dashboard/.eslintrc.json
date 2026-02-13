@@ -1,6 +1,0 @@
-{
-  "extends": ["@ambulink/eslint-config/react"],
-  "parserOptions": {
-    "project": "./tsconfig.json"
-  }
-}

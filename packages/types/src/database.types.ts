@@ -1,25 +1,19 @@
 // Auto-generated from backend schema - do not edit manually
-// Generated: 2026-02-11T15:12:45.100Z
+// Generated: 2026-02-11T17:33:36.847Z
 // Source: apps/backend/src/common/database/schema.ts
 // Command: npm run generate:types
 
-import { Point } from "./common.types";
+import { Point } from './common.types';
 
 // ============================================================================
 // Enum Types
 // ============================================================================
 
-export type UserRole = "PATIENT" | "DISPATCHER" | "DRIVER" | "EMT";
-export type UserStatus = "AVAILABLE" | "BUSY" | "OFFLINE";
-export type ProviderType = "PUBLIC" | "PRIVATE";
-export type AmbulanceStatus = "AVAILABLE" | "BUSY" | "OFFLINE";
-export type BookingStatus =
-  | "REQUESTED"
-  | "ASSIGNED"
-  | "ARRIVED"
-  | "PICKEDUP"
-  | "COMPLETED"
-  | "CANCELLED";
+export type UserRole = 'PATIENT' | 'DISPATCHER' | 'DRIVER' | 'EMT';
+export type UserStatus = 'AVAILABLE' | 'BUSY' | 'OFFLINE';
+export type ProviderType = 'PUBLIC' | 'PRIVATE';
+export type AmbulanceStatus = 'AVAILABLE' | 'BUSY' | 'OFFLINE';
+export type BookingStatus = 'REQUESTED' | 'ASSIGNED' | 'ARRIVED' | 'PICKEDUP' | 'COMPLETED' | 'CANCELLED';
 
 // ============================================================================
 // Table Types

@@ -9,9 +9,7 @@ export class SocketService {
 
   emitToDriver(driverId: string, event: string, payload: any) {
     if (!this.driverServer) {
-      console.warn(
-        `[SocketService] DriverServer not initialized yet! Event ${event} dropped.`
-      );
+      console.warn(`[SocketService] DriverServer not initialized yet! Event ${event} dropped.`);
       return;
     }
     this.driverServer.to(`driver:${driverId}`).emit(event, payload);
@@ -19,9 +17,7 @@ export class SocketService {
 
   emitToPatient(patientId: string, event: string, payload: any) {
     if (!this.patientServer) {
-      console.warn(
-        `[SocketService] PatientServer not initialized yet! Event ${event} dropped.`
-      );
+      console.warn(`[SocketService] PatientServer not initialized yet! Event ${event} dropped.`);
       return;
     }
     this.patientServer.to(`patient:${patientId}`).emit(event, payload);
@@ -29,12 +25,10 @@ export class SocketService {
 
   emitToDispatcher(dispatcherId: string, event: string, payload: any) {
     if (!this.dispatcherServer) {
-      console.warn(
-        `[SocketService] dispatcherServer not initialized yet! Event ${event} dropped.`
-      );
+      console.warn(`[SocketService] dispatcherServer not initialized yet! Event ${event} dropped.`);
       return;
     }
-    console.log("emited", dispatcherId, "events:", event, payload)
+    console.log("emited", dispatcherId, "events:", event, payload);
     this.dispatcherServer.to(`dispatcher:${dispatcherId}`).emit(event, payload);
   }
 }

@@ -16,38 +16,27 @@ export function DashboardLayout() {
   const disconnect = useSocketStore((state) => state.disconnect);
   const addBookingRequest = useSocketStore((state) => state.addBookingRequest);
 
-
-
   useEffect(() => {
     connect();
-
-    return () => {
-      console.log("disconnecting");
-      disconnect();
-    };
+    return () => disconnect();
   }, [connect, disconnect]);
 
   useEffect(() => {
     if (!socket) return;
-    console.log("socket connected");
 
     const handleNewBooking = (
       data: BookingNewPayload,
-      callback: (res: DispatcherApprovalResponse) => void,
+      callback: (res: DispatcherApprovalResponse) => void
     ) => {
-      const { requestId } = data;
-      console.log("Received booking request:", requestId);
-
       addBookingRequest({
-        requestId,
+        requestId: data.requestId,
         data,
         callback,
         timestamp: new Date(),
       });
     };
 
-    const handleBookingAssigned = (data: BookingAssignedPayload) => {
-      console.log("Booking assigned:", data);
+    const handleBookingAssigned = (_data: BookingAssignedPayload) => {
       // TODO: Add proper implementation to handle booking assignments
     };
 
@@ -56,9 +45,9 @@ export function DashboardLayout() {
 
     return () => {
       socket.off("booking:new", handleNewBooking);
+      socket.off("booking:assigned", handleBookingAssigned);
     };
-  }, [socket]);
-
+  }, [socket, addBookingRequest]);
 
   return (
     <SidebarProvider>

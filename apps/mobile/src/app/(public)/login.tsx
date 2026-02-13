@@ -3,10 +3,7 @@ import i18n from "@/i18n/i18n";
 import { router } from "expo-router";
 import { Button } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-;
-
 export default function Login() {
-
   const signInAs = useAuthStore((s) => s.signInAs);
 
   return (

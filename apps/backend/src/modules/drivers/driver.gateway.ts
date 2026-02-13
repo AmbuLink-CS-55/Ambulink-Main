@@ -8,7 +8,6 @@ import {
 import { DriverService } from "../drivers/driver.service";
 import { BookingService } from "../booking/booking.service";
 import { SocketService } from "@/common/socket/socket.service";
-import { userStatusEnum } from "@/common/database/schema";
 import type { DriverLocationUpdate } from "@/common/types/socket.types";
 
 @WebSocketGateway({ cors: { origin: "*" }, namespace: "/driver" })
@@ -56,7 +55,7 @@ export class DriverGateway implements OnGatewayInit {
   }
 
   handleDisconnect(client: Socket) {
-    this.driverService.setStatus(client.data.driverId,"OFFLINE");
+    this.driverService.setStatus(client.data.driverId, "OFFLINE");
     console.log("[socket] disconnected", {
       namespace: "/driver",
       clientId: client.id,
@@ -67,11 +66,7 @@ export class DriverGateway implements OnGatewayInit {
   @SubscribeMessage("driver:update")
   async updateDriverLocation(client: Socket, data: DriverLocationUpdate) {
     const driverId = client.data.driverId;
-    this.driverService.setDriverLocation(
-      driverId,
-      data.latitude,
-      data.longitude
-    );
+    this.driverService.setDriverLocation(driverId, data.latitude, data.longitude);
   }
 
   @SubscribeMessage("driver:arrived")
@@ -89,9 +84,9 @@ export class DriverGateway implements OnGatewayInit {
   @SubscribeMessage("driver:completed")
   async driverCompleted(client: Socket) {
     const driverId = client.data.driverId;
-    console.log("completed from", driverId)
+    console.log("completed from", driverId);
     const bookingData = await this.driverService.getDriverBooking(driverId);
-    console.log(bookingData)
+    console.log(bookingData);
     this.bookingService.updateBooking(bookingData.id, { status: "COMPLETED" });
     const { id, patientId } = bookingData;
     this.socketService.emitToPatient(patientId!, "booking:completed", {

@@ -1,16 +1,6 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Query,
-} from "@nestjs/common";
+import { Controller, Get, Post, Patch, Param, Delete, Query } from "@nestjs/common";
 import { DriverService } from "./driver.service";
-import { Validate } from "@/common/pipes/zod-validation.pipe";
-import type { NewUser, User } from "@/common/database/schema";
+import type { NewUser } from "@/common/database/schema";
 
 @Controller("api/drivers")
 export class DriverController {
@@ -25,12 +15,8 @@ export class DriverController {
   }
 
   @Get()
-  findAll(
-    @Query("providerId") providerId?: string,
-    @Query("isActive") isActive?: string
-  ) {
-    const isActiveBool =
-      isActive !== undefined ? isActive === "true" : undefined;
+  findAll(@Query("providerId") providerId?: string, @Query("isActive") isActive?: string) {
+    const isActiveBool = isActive !== undefined ? isActive === "true" : undefined;
     return this.driverService.findAll(providerId, isActiveBool);
   }
 

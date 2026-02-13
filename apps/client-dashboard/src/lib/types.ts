@@ -29,8 +29,7 @@ const AmbulanceStatus = {
   OFFLINE: "OFFLINE",
 } as const;
 
-export type AmbulanceStatus =
-  (typeof AmbulanceStatus)[keyof typeof AmbulanceStatus];
+export type AmbulanceStatus = (typeof AmbulanceStatus)[keyof typeof AmbulanceStatus];
 
 const BookingStatus = {
   REQUESTED: "REQUESTED",
@@ -274,15 +273,13 @@ export type ServerToDriverEvents = {
 };
 
 // Dispatcher to Server (none currently - uses callbacks)
-export type DispatcherToServerEvents = {
-  // Empty - dispatchers use acknowledgment callbacks instead of emit
-};
+export type DispatcherToServerEvents = Record<string, never>;
 
 // Server to Dispatcher
 export type ServerToDispatcherEvents = {
   "booking:new": (
     data: BookingNewPayload,
-    callback: (response: DispatcherApprovalResponse) => void,
+    callback: (response: DispatcherApprovalResponse) => void
   ) => void;
   "booking:assigned": (data: BookingAssignedPayload) => void;
 };

@@ -1,13 +1,11 @@
 import { View, ScrollView, Text, Alert } from "react-native";
 import {
   loadSettings,
-  saveSettings,
   defaultSettings,
   type SettingsData,
   type EmergencyContact,
 } from "@/utils/settingsStorage";
-import { useEffect, useState, useCallback, useRef } from "react";
-import * as ImagePicker from "expo-image-picker";
+import { useEffect, useState, useCallback } from "react";
 
 import AppSettingsSection from "@/components/patient/settings/AppSettingsSection";
 import EmergencyContactsSection from "@/components/patient/settings/EmergencyContactsSection";
@@ -85,10 +83,7 @@ export default function Settings() {
 
   const handleAddAllergy = (allergy: string) => {
     if (!settings.selectedAllergies.includes(allergy)) {
-      updateSetting("selectedAllergies", [
-        ...settings.selectedAllergies,
-        allergy,
-      ]);
+      updateSetting("selectedAllergies", [...settings.selectedAllergies, allergy]);
     }
   };
 
@@ -101,10 +96,7 @@ export default function Settings() {
 
   const handleAddEmergencyContact = () => {
     if (!emergencyContactNumber.trim()) {
-      Alert.alert(
-        i18n.t("common.error"),
-        i18n.t("common.pleaseEnterContactNumber")
-      );
+      Alert.alert(i18n.t("common.error"), i18n.t("common.pleaseEnterContactNumber"));
       return;
     }
 
@@ -168,14 +160,8 @@ export default function Settings() {
   }
 
   return (
-    <SafeAreaView
-      className="flex-1"
-      edges={['top', 'left', 'right']}
-    >
-      <ScrollView
-        className="p-4"
-        contentContainerStyle={{ paddingBottom: 4, paddingTop: 7 }}
-      >
+    <SafeAreaView className="flex-1" edges={["top", "left", "right"]}>
+      <ScrollView className="p-4" contentContainerStyle={{ paddingBottom: 4, paddingTop: 7 }}>
         <View>
           <Text className="text-3xl font-bold pb-5">{i18n.t("settings.title")}</Text>
         </View>

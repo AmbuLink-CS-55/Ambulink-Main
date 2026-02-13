@@ -2,7 +2,6 @@ import { DbService } from "@/common/database/db.service";
 import { hospitals } from "@/common/database/schema";
 import { Injectable } from "@nestjs/common";
 import { sql } from "drizzle-orm";
-import Redis from "ioredis";
 
 @Injectable()
 export class HospitalService {

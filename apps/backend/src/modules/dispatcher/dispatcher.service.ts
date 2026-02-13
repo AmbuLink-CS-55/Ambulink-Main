@@ -1,16 +1,15 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { DbService } from "@/common/database/db.service";
 import { users, UserStatus } from "@/common/database/schema";
 import { and } from "drizzle-orm";
 import { eq } from "drizzle-orm";
-import { id } from "zod/locales";
 
 @Injectable()
 export class DispatcherService {
-  constructor(private dbService: DbService) { }
+  constructor(private dbService: DbService) {}
 
   async setStatus(dispatcherId: string, status: UserStatus) {
-    const user = await this.dbService.db
+    await this.dbService.db
       .update(users)
       .set({
         status: status,

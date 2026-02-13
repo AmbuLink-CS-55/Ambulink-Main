@@ -4,7 +4,13 @@ import { SocketClientCreator } from "@/utils/socket";
 
 const SocketContext = createContext<Socket | null>(null);
 
-export const SocketProvider = ({ type, children }: { type: "PATIENT" | "DRIVER" | "EMT", children: React.ReactNode }) => {
+export const SocketProvider = ({
+  type,
+  children,
+}: {
+  type: "PATIENT" | "DRIVER" | "EMT";
+  children: React.ReactNode;
+}) => {
   const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
@@ -12,8 +18,10 @@ export const SocketProvider = ({ type, children }: { type: "PATIENT" | "DRIVER" 
 
     const init = async () => {
       const instance = await SocketClientCreator.getSocket(type);
-      console.log("creating socket", type)
-      if (isMounted) setSocket(instance);
+      console.info("[socket] Initializing connection:", { type });
+      if (isMounted) {
+        setSocket(instance);
+      }
     };
 
     init();
@@ -24,11 +32,7 @@ export const SocketProvider = ({ type, children }: { type: "PATIENT" | "DRIVER" 
     };
   }, [type]);
 
-  return (
-    <SocketContext.Provider value={socket}>
-      {children}
-    </SocketContext.Provider>
-  );
+  return <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>;
 };
 
 export const useSocket = () => useContext(SocketContext);

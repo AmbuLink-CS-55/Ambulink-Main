@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq, and, sql, isNotNull, asc } from "drizzle-orm";
-import { ambulanceProviders, bookings, NewUser, User, users, UserStatus } from "@/common/database/schema";
+import { bookings, NewUser, User, users, UserStatus } from "@/common/database/schema";
 import { DbService } from "@/common/database/db.service";
 import { or } from "drizzle-orm";
 
@@ -23,10 +23,7 @@ export class DriverService {
     return result[0];
   }
 
-  async findAll(
-    providerId?: string,
-    isActive?: boolean
-  ): Promise<User[]> {
+  async findAll(providerId?: string, isActive?: boolean): Promise<User[]> {
     const conditions = [eq(users.role, "DRIVER" as const)];
 
     if (providerId) {
@@ -55,22 +52,17 @@ export class DriverService {
     return result[0];
   }
 
-  async update(
-    id: string,
-    updateDriverDto: NewUser
-  ): Promise<User> {
+  async update(id: string, updateDriverDto: NewUser): Promise<User> {
     await this.findOne(id);
 
     const updateData: Record<string, unknown> = {
       updatedAt: new Date(),
     };
 
-    if (updateDriverDto.fullName !== undefined)
-      updateData.fullName = updateDriverDto.fullName;
+    if (updateDriverDto.fullName !== undefined) updateData.fullName = updateDriverDto.fullName;
     if (updateDriverDto.phoneNumber !== undefined)
       updateData.phoneNumber = updateDriverDto.phoneNumber;
-    if (updateDriverDto.email !== undefined)
-      updateData.email = updateDriverDto.email;
+    if (updateDriverDto.email !== undefined) updateData.email = updateDriverDto.email;
     if (updateDriverDto.passwordHash !== undefined)
       updateData.passwordHash = updateDriverDto.passwordHash;
     if (updateDriverDto.providerId !== undefined)
@@ -174,7 +166,10 @@ export class DriverService {
       .select()
       .from(bookings)
       .where(
-        and(eq(bookings.driverId, driverId), or(eq(bookings.status, "ASSIGNED"), eq(bookings.status, "ARRIVED")))
+        and(
+          eq(bookings.driverId, driverId),
+          or(eq(bookings.status, "ASSIGNED"), eq(bookings.status, "ARRIVED"))
+        )
       );
     return data;
   }

@@ -11,8 +11,19 @@ type LatLng = {
   lng: number;
 };
 
-const LocationCard = ({ title, subtitle, onPress }: { title: string, subtitle?: string, onPress?: () => void }) => (
-  <TouchableOpacity className="flex-row items-center bg-gray-100 rounded-2xl p-4 w-full shadow-md" onPress={onPress}>
+const LocationCard = ({
+  title,
+  subtitle,
+  onPress,
+}: {
+  title: string;
+  subtitle?: string;
+  onPress?: () => void;
+}) => (
+  <TouchableOpacity
+    className="flex-row items-center bg-gray-100 rounded-2xl p-4 w-full shadow-md"
+    onPress={onPress}
+  >
     <View className="w-10 h-10 rounded-full bg-red-300 justify-center items-center mr-4">
       <MaterialCommunityIcons name="heart-pulse" size={24} color="#000" />
     </View>
@@ -21,7 +32,7 @@ const LocationCard = ({ title, subtitle, onPress }: { title: string, subtitle?: 
       {subtitle && <Text className="text-xs text-gray-600 mt-0.5">{subtitle}</Text>}
     </View>
     <Image
-      source={{ uri: 'https://via.placeholder.com/50' }}
+      source={{ uri: "https://via.placeholder.com/50" }}
       className="w-10 h-10"
       resizeMode="contain"
     />
@@ -46,41 +57,39 @@ export default function Navigation() {
     { lat: 6.893795771439718, lng: 79.85671259848431 },
   ];
 
-  async function sendLocation() {
-    if (!socket) return;
-    socket.emit("emt-location");
-  }
-
   useEffect(() => {
     if (!socket) return;
-    socket.on("connect", () => { console.log("ws Connected") });
-    socket.on("message", (msg: string) => { console.log(msg) });
-  }, []);
+    socket.on("connect", () => {
+      console.info("[emt] WebSocket connected");
+    });
+    socket.on("message", (msg: string) => {
+      console.log("[emt] Message received:", msg);
+    });
+  }, [socket]);
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <UserMap
         driverLocations={drivers}
         userLocation={
-          location ? {
-            lat: location.latitude,
-            lng: location.longitude,
-          } : {
-            lat: 6.898527830579406,
-            lng: 79.85385178316076,
-          }
+          location
+            ? {
+                lat: location.latitude,
+                lng: location.longitude,
+              }
+            : {
+                lat: 6.898527830579406,
+                lng: 79.85385178316076,
+              }
         }
       />
       <View className="absolute top-16 left-4 right-4 items-center">
-        <LocationCard
-          title="Hospital"
-          onPress={() => console.log("Hospital Clicked")}
-        />
+        <LocationCard title="Hospital" onPress={() => console.info("[emt] Hospital card pressed")} />
         <Separator />
         <LocationCard
           title="Address, Address, No 123"
           subtitle="10Km away"
-          onPress={() => console.log("Address Clicked")}
+          onPress={() => console.info("[emt] Address card pressed")}
         />
       </View>
     </SafeAreaView>

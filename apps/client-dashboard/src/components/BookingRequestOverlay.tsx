@@ -7,23 +7,15 @@ import { cn } from "@/lib/utils";
 
 export function BookingRequestOverlay() {
   const bookingRequests = useSocketStore((state) => state.bookingRequests);
-  const removeBookingRequest = useSocketStore(
-    (state) => state.removeBookingRequest,
-  );
+  const removeBookingRequest = useSocketStore((state) => state.removeBookingRequest);
   const [isOpen, setIsOpen] = useState(true);
 
-  const handleAccept = (
-    requestId: string,
-    callback: (response: { approved: boolean }) => void,
-  ) => {
+  const handleAccept = (requestId: string, callback: (response: { approved: boolean }) => void) => {
     callback({ approved: true });
     removeBookingRequest(requestId);
   };
 
-  const handleReject = (
-    requestId: string,
-    callback: (response: { approved: boolean }) => void,
-  ) => {
+  const handleReject = (requestId: string, callback: (response: { approved: boolean }) => void) => {
     callback({ approved: false });
     removeBookingRequest(requestId);
   };
@@ -51,15 +43,13 @@ export function BookingRequestOverlay() {
       <div
         className={cn(
           "fixed top-0 right-0 h-full w-96 bg-background border-l shadow-2xl z-40 transition-transform duration-300 ease-in-out",
-          isOpen ? "translate-x-0" : "translate-x-full",
+          isOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="items-center w-full justify-between p-2 border-b">
-            <h1 className="font-bold text-xl items-center text-center ">
-              Activity
-            </h1>
+            <h1 className="font-bold text-xl items-center text-center ">Activity</h1>
           </div>
 
           {/* Content */}
@@ -93,9 +83,7 @@ export function BookingRequestOverlay() {
                       <div className="flex gap-2 mt-3">
                         <Button
                           size="sm"
-                          onClick={() =>
-                            handleAccept(request.requestId, request.callback)
-                          }
+                          onClick={() => handleAccept(request.requestId, request.callback)}
                           className="flex-1 bg-green-600 hover:bg-green-700"
                         >
                           <Check className="h-4 w-4 mr-1" />
@@ -104,9 +92,7 @@ export function BookingRequestOverlay() {
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() =>
-                            handleReject(request.requestId, request.callback)
-                          }
+                          onClick={() => handleReject(request.requestId, request.callback)}
                           className="flex-1"
                         >
                           <XCircle className="h-4 w-4 mr-1" />

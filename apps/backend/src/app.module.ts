@@ -21,8 +21,8 @@ import { HospitalModule } from "./modules/hospital/hospital.module";
     AmbulanceModule,
     BookingModule,
     DispatcherModule,
-    HospitalModule
+    HospitalModule,
   ],
   controllers: [HealthController],
 })
-export class AppModule { }
+export class AppModule {}

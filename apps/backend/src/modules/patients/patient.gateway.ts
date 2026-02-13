@@ -1,20 +1,20 @@
-import { Server, Socket } from 'socket.io';
+import { Server, Socket } from "socket.io";
 import {
   OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-} from '@nestjs/websockets';
+} from "@nestjs/websockets";
 
-import { DriverService } from '../drivers/driver.service';
-import { PatientService } from './patient.service';
-import { BookingService } from '../booking/booking.service';
-import { HospitalService } from '../hospital/hospital.service';
-import { SocketService } from '@/common/socket/socket.service';
-import { DispatcherService } from '../dispatcher/dispatcher.service';
-import type { PatientCancelRequest, PatientPickupRequest } from '@/common/types/socket.types';
+import { DriverService } from "../drivers/driver.service";
+import { PatientService } from "./patient.service";
+import { BookingService } from "../booking/booking.service";
+import { HospitalService } from "../hospital/hospital.service";
+import { SocketService } from "@/common/socket/socket.service";
+import { DispatcherService } from "../dispatcher/dispatcher.service";
+import type { PatientCancelRequest, PatientPickupRequest } from "@/common/types/socket.types";
 
-@WebSocketGateway({ cors: { origin: '*' }, namespace: '/patient' })
+@WebSocketGateway({ cors: { origin: "*" }, namespace: "/patient" })
 export class PatientGateway implements OnGatewayInit {
   @WebSocketServer() server: Server;
 
@@ -24,25 +24,25 @@ export class PatientGateway implements OnGatewayInit {
     private bookingService: BookingService,
     private hospitalService: HospitalService,
     private socketService: SocketService,
-    private dispatcherService: DispatcherService,
+    private dispatcherService: DispatcherService
   ) {}
 
   afterInit() {
     this.socketService.patientServer = this.server;
-    console.log('[socket] gateway_ready', {
-      namespace: '/patient',
+    console.log("[socket] gateway_ready", {
+      namespace: "/patient",
     });
   }
 
   async handleConnection(client: Socket) {
-    console.log('[socket] connection_attempt', {
-      namespace: '/patient',
+    console.log("[socket] connection_attempt", {
+      namespace: "/patient",
       clientId: client.id,
     });
     const patientId = client.handshake.auth.patientId as string;
     if (!patientId) {
-      console.warn('[socket] missing_auth', {
-        namespace: '/patient',
+      console.warn("[socket] missing_auth", {
+        namespace: "/patient",
         clientId: client.id,
       });
       return client.disconnect(true);
@@ -53,23 +53,23 @@ export class PatientGateway implements OnGatewayInit {
 
     // restate user activity to before when they logged out
     if (activeBooking) {
-      if (activeBooking.status === 'ARRIVED') {
-        client.emit('booking:assigned', activeBooking);
+      if (activeBooking.status === "ARRIVED") {
+        // client.emit('booking:assigned', activeBooking);
       }
     } else {
-      this.patientService.updateStatus(patientId, 'AVAILABLE');
+      this.patientService.updateStatus(patientId, "AVAILABLE");
     }
 
-    console.log('[socket] connected', {
-      namespace: '/patient',
+    console.log("[socket] connected", {
+      namespace: "/patient",
       clientId: client.id,
       patientId,
     });
   }
 
-  @SubscribeMessage('patient:help')
+  @SubscribeMessage("patient:help")
   async findAmbulance(client: Socket, data: PatientPickupRequest) {
-    console.log('help request');
+    console.log("help request");
     const { x, y } = data;
     const patientId = client.data.patientId;
     const patient = await this.patientService.findOne(patientId);
@@ -77,14 +77,14 @@ export class PatientGateway implements OnGatewayInit {
 
     const nearestDrivers = await this.driverService.findDriverByLocation(x, y);
     if (nearestDrivers.length == 0) {
-      console.log('No drivers found');
+      console.log("No drivers found");
       return;
     }
 
-    console.log('waiting for dispatcher approval');
+    console.log("waiting for dispatcher approval");
     const result = await this.bookingService.askDispatchers(nearestDrivers, patient);
     if (!result) {
-      client.emit('die');
+      client.emit("die");
       return;
     }
     const { dispatcherId, pickedDriver } = result;
@@ -98,15 +98,15 @@ export class PatientGateway implements OnGatewayInit {
       null,
       hospital,
       pickedDriver,
-      null,
+      null
     );
-    console.log('Booking created:', booking);
-    this.socketService.emitToDispatcher(dispatcherId, 'booking:assigned', booking);
-    this.socketService.emitToDriver(pickedDriver.id, 'booking:assigned', booking);
-    client.emit('booking:assigned', booking);
+    console.log("Booking created:", booking);
+    this.socketService.emitToDispatcher(dispatcherId, "booking:assigned", booking);
+    this.socketService.emitToDriver(pickedDriver.id, "booking:assigned", booking);
+    client.emit("booking:assigned", booking);
   }
 
-  @SubscribeMessage('patient:cancelled')
+  @SubscribeMessage("patient:cancelled")
   async patientCancel(client: Socket, data?: PatientCancelRequest) {
     try {
       const patientId = client.data.patientId;
@@ -116,16 +116,16 @@ export class PatientGateway implements OnGatewayInit {
 
       if (!bookingData) {
         console.log(`No ongoing booking found for patient ${patientId}`);
-        client.emit('booking:cancel:error', {
-          message: 'No active booking to cancel',
+        client.emit("booking:cancel:error", {
+          message: "No active booking to cancel",
         });
         return;
       }
 
       // Update booking status to CANCELLED
-      const cancellationReason = data?.reason || 'Cancelled by patient';
+      const cancellationReason = data?.reason || "Cancelled by patient";
       await this.bookingService.updateBooking(bookingData.id, {
-        status: 'CANCELLED',
+        status: "CANCELLED",
         cancellationReason,
       });
 
@@ -133,7 +133,7 @@ export class PatientGateway implements OnGatewayInit {
 
       // Notify driver if assigned
       if (bookingData.driverId) {
-        this.socketService.emitToDriver(bookingData.driverId, 'booking:cancelled', {
+        this.socketService.emitToDriver(bookingData.driverId, "booking:cancelled", {
           bookingId: bookingData.id,
           reason: cancellationReason,
         });
@@ -144,21 +144,21 @@ export class PatientGateway implements OnGatewayInit {
       // For now, we'll skip this as it requires schema changes
 
       // Confirm cancellation to patient
-      client.emit('booking:cancelled', {
+      client.emit("booking:cancelled", {
         bookingId: bookingData.id,
-        message: 'Booking cancelled successfully',
+        message: "Booking cancelled successfully",
       });
     } catch (error) {
-      console.error('Error cancelling booking:', error);
-      client.emit('booking:cancel:error', {
-        message: 'Failed to cancel booking. Please try again.',
+      console.error("Error cancelling booking:", error);
+      client.emit("booking:cancel:error", {
+        message: "Failed to cancel booking. Please try again.",
       });
     }
   }
 
   handleDisconnect(client: Socket) {
-    console.log('[socket] disconnected', {
-      namespace: '/patient',
+    console.log("[socket] disconnected", {
+      namespace: "/patient",
       clientId: client.id,
       patientId: client.data.patientId,
     });

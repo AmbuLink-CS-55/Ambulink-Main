@@ -46,7 +46,10 @@ export const storeData = async (key: string, value: any) => {
     const jsonValue = JSON.stringify(value);
     await AsyncStorage.setItem(key, jsonValue);
   } catch (e) {
-    console.error("Error saving data", e);
+    console.error("[storage] Failed to save data:", {
+      key,
+      error: e instanceof Error ? e.message : String(e),
+    });
   }
 };
 
@@ -55,6 +58,9 @@ export const getData = async (key: string) => {
     const jsonValue = await AsyncStorage.getItem(key);
     return jsonValue != null ? JSON.parse(jsonValue) : null;
   } catch (e) {
-    console.error("Error reading data", e);
+    console.error("[storage] Failed to read data:", {
+      key,
+      error: e instanceof Error ? e.message : String(e),
+    });
   }
 };

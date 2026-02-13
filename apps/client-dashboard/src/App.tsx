@@ -1,60 +1,87 @@
-import { DashboardLayout } from "./pages/layouts/DashboardLayout";
+import { Suspense, lazy } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import DashBoard from "./pages/dashboard";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { get, set, del } from "idb-keyval";
+import { DashboardLayout } from "./pages/layouts/DashboardLayout";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const Dashboard = lazy(() => import("./pages/dashboard"));
+const LoginPage = lazy(() => import("./pages/login"));
+const AmbulancesDashboard = lazy(() => import("./pages/ambulances/dashboard"));
+const NewAmbulancePage = lazy(() => import("./pages/ambulances/new"));
+const AmbulanceDetailsPage = lazy(() => import("./pages/ambulances/details"));
+const DriversDashboard = lazy(() => import("./pages/drivers/dashboard"));
+const NewDriverPage = lazy(() => import("./pages/drivers/new"));
+const DriverDetailsPage = lazy(() => import("./pages/drivers/details"));
+const PatientsDashboard = lazy(() => import("./pages/patients/dashboard"));
+const NewPatientPage = lazy(() => import("./pages/patients/new"));
+const PatientDetailsPage = lazy(() => import("./pages/patients/details"));
+
+const HOUR_IN_MS = 1000 * 60 * 60;
+const DAY_IN_MS = HOUR_IN_MS * 24;
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: HOUR_IN_MS,
+      gcTime: DAY_IN_MS,
+    },
+  },
+});
+
+const persister = createAsyncStoragePersister({
+  storage: {
+    getItem: async (key) => get(key),
+    setItem: async (key, value) => set(key, value),
+    removeItem: async (key) => del(key),
+  },
+});
+
+function PageLoader() {
+  return (
+    <div className="flex h-screen items-center justify-center p-8">
+      <div className="space-y-4 w-full max-w-md">
+        <Skeleton className="h-8 w-3/4" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-5/6" />
+      </div>
+    </div>
+  );
+}
 
 export function App() {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 1000 * 60 * 60,
-        gcTime: 1000 * 60 * 60 * 24,
-      },
-    },
-  });
-
-  const persister = createAsyncStoragePersister({
-    storage: {
-      getItem: async (key) => await get(key),
-      setItem: async (key, value) => await set(key, value),
-      removeItem: async (key) => await del(key),
-    },
-  });
-
   return (
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{ persister }}
-    >
+    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
       <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={"Login"} />
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
 
-          <Route element={<DashboardLayout />}>
-            <Route path="" element={<DashBoard />} />
+            <Route element={<DashboardLayout />}>
+              <Route path="/" element={<Dashboard />} />
 
-            <Route path="ambulances">
-              <Route index element={<h1>dashboard</h1>} />
-              <Route path="new" element={<h1>dashboard</h1>} />
-              <Route path=":id" element={<h1>dashboard</h1>} />
+              <Route path="/ambulances">
+                <Route index element={<AmbulancesDashboard />} />
+                <Route path="new" element={<NewAmbulancePage />} />
+                <Route path=":id" element={<AmbulanceDetailsPage />} />
+              </Route>
+
+              <Route path="/drivers">
+                <Route index element={<DriversDashboard />} />
+                <Route path="new" element={<NewDriverPage />} />
+                <Route path=":id" element={<DriverDetailsPage />} />
+              </Route>
+
+              <Route path="/patients">
+                <Route index element={<PatientsDashboard />} />
+                <Route path="new" element={<NewPatientPage />} />
+                <Route path=":id" element={<PatientDetailsPage />} />
+              </Route>
             </Route>
-
-            <Route path="drivers">
-              <Route index element={<h1>dashboard</h1>} />
-              <Route path="new" element={<h1>dashboard</h1>} />
-              <Route path=":id" element={<h1>dashboard</h1>} />
-            </Route>
-
-            <Route path="patients">
-              <Route path="" element={<h1>dashboard</h1>} />
-              <Route path="new" element={<h1>dashboard</h1>} />
-              <Route path=":id" element={<h1>dashboard</h1>} />
-            </Route>
-          </Route>
-        </Routes>
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </PersistQueryClientProvider>
   );

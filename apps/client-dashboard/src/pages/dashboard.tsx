@@ -1,27 +1,20 @@
-import HospitalMarkersLayer from "@/components/map/HospitalMarkerLayer";
-import { Map, MapControls, MapEvents } from "@/components/ui/map";
-import { useStore } from "@/hooks/use-store";
 import { useGetHospitals } from "@/services/hospital.service";
+import { Map, MapControls, MapEvents } from "@/components/ui/map";
+import HospitalMarkersLayer from "@/components/map/HospitalMarkerLayer";
+import { useStore } from "@/hooks/use-store";
 
-export default function DashBoard() {
+export default function Dashboard() {
   const mapView = useStore((state) => state.mapView);
   const setMapView = useStore((state) => state.setMapView);
   const { error, data: hospitals } = useGetHospitals();
 
-  if (error) throw Error("Error fetching hospitals")
+  if (error) throw new Error("Failed to fetch hospitals");
 
   return (
-    <>
-      <Map theme="dark" center={mapView.center} zoom={mapView.zoom}>
-        <MapEvents onChange={setMapView} />
-        <MapControls
-          position="bottom-right"
-          showZoom
-          showLocate
-          className="mb-4"
-        />
-        {hospitals && <HospitalMarkersLayer hospitals={hospitals} />}
-      </Map>
-    </>
+    <Map theme="dark" center={mapView.center} zoom={mapView.zoom}>
+      <MapEvents onChange={setMapView} />
+      <MapControls position="bottom-right" showZoom showLocate className="mb-4" />
+      {hospitals && <HospitalMarkersLayer hospitals={hospitals} />}
+    </Map>
   );
 }

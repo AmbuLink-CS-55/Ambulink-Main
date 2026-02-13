@@ -1,14 +1,5 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-} from "@nestjs/common";
-import { Validate } from "@/common/pipes/zod-validation.pipe";
-import { ambulance, type NewAmbulance } from "@/common/database/schema";
+import { Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
+import { type NewAmbulance } from "@/common/database/schema";
 import { AmbulanceService } from "./ambulance.service";
 
 @Controller("api/ambulances")

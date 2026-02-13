@@ -1,6 +1,6 @@
-import * as Location from 'expo-location';
-import { useEffect } from 'react';
-import { LOCATION_TASK_NAME } from '@/tasks/locationTasks';
+import * as Location from "expo-location";
+import { useEffect } from "react";
+import { LOCATION_TASK_NAME } from "@/tasks/locationTasks";
 
 export const useDriverTracking = (isDriver: boolean) => {
   useEffect(() => {
@@ -10,7 +10,7 @@ export const useDriverTracking = (isDriver: boolean) => {
       const { status: fg } = await Location.requestForegroundPermissionsAsync();
       const { status: bg } = await Location.requestBackgroundPermissionsAsync();
 
-      if (fg === 'granted' && bg === 'granted') {
+      if (fg === "granted" && bg === "granted") {
         await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
           accuracy: Location.Accuracy.Balanced,
           timeInterval: 10000, // 10 seconds
@@ -31,9 +31,9 @@ export const useDriverTracking = (isDriver: boolean) => {
       Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME).then((isRunning) => {
         if (isRunning) {
           Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
-          console.log("Tracking stopped.");
+          console.info("[driver] Location tracking stopped");
         }
       });
-    }
+    };
   }, [isDriver]);
 };

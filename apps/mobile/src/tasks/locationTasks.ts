@@ -1,7 +1,7 @@
-import * as TaskManager from 'expo-task-manager';
-import { SocketClientCreator } from '@/utils/socket';
+import * as TaskManager from "expo-task-manager";
+import { SocketClientCreator } from "@/utils/socket";
 
-export const LOCATION_TASK_NAME = 'background-location-task';
+export const LOCATION_TASK_NAME = "background-location-task";
 
 TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }: any) => {
   if (error) return;
