@@ -30,8 +30,8 @@ export default function Home() {
       "booking:assigned",
       (data: { patient: User; pickedDriver: User; hospital: Hospital }) => {
         console.info("[driver] Booking assigned:", {
-          patientId: data.patient.id,
-          hospital: data.hospital.name,
+          patientId: data.patient,
+          hospital: data.hospital,
         });
         setCurrentRide(data);
         setRideStatus("ASSIGNED");
@@ -71,11 +71,11 @@ export default function Home() {
     let url = "";
 
     if (rideStatus === "ASSIGNED") {
-      url = `https://www.google.com/maps/dir/?api=1&destination=${currentRide.patient.currentLocation!.x},${currentRide.patient.currentLocation!.y}`;
+      url = `https://www.google.com/maps/dir/?api=1&destination=${currentRide.patient.currentLocation!.y},${currentRide.patient.currentLocation!.x}`;
     } else if (rideStatus === "ARRIVED") {
-      url = `https://www.google.com/maps/dir/?api=1&origin=${currentRide.patient.currentLocation!.x},${currentRide.patient.currentLocation!.y}&destination=${currentRide.hospital.location!.x},${currentRide.hospital.location!.y}`;
+      url = `https://www.google.com/maps/dir/?api=1&origin=${currentRide.patient.currentLocation!.y},${currentRide.patient.currentLocation!.x}&destination=${currentRide.hospital.location!.y},${currentRide.hospital.location!.x}`;
     }
-
+    console.info("[driver] Opening Maps:", url);
     if (url) {
       Linking.openURL(url).catch((err) => Alert.alert("Error", "Could not open Google Maps"));
     }
@@ -117,16 +117,16 @@ export default function Home() {
 
                     <Marker
                       coordinate={{
-                        latitude: currentRide.patient.currentLocation!.x,
-                        longitude: currentRide.patient.currentLocation!.y,
+                        latitude: currentRide.patient.currentLocation!.y,
+                        longitude: currentRide.patient.currentLocation!.x,
                       }}
                       title="Patient"
                       pinColor="red"
                     />
                     <Marker
                       coordinate={{
-                        latitude: currentRide.hospital.location!.x,
-                        longitude: currentRide.hospital.location!.y,
+                        latitude: currentRide.hospital.location!.y,
+                        longitude: currentRide.hospital.location!.x,
                       }}
                       title="Hospital"
                       pinColor="blue"

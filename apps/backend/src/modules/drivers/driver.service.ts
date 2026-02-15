@@ -132,7 +132,7 @@ export class DriverService {
         updatedAt: new Date(),
       })
       .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")));
-    console.log("location set", lat, lng);
+    console.info("[driver] location set", lat, lng);
   }
 
   async findDriverByLocation(lat: number, lng: number) {

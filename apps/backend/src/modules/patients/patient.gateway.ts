@@ -75,7 +75,7 @@ export class PatientGateway implements OnGatewayInit {
     const patient = await this.patientService.findOne(patientId);
     patient.currentLocation = { x, y };
 
-    const nearestDrivers = await this.driverService.findDriverByLocation(x, y);
+    const nearestDrivers = await this.driverService.findDriverByLocation(y, x);
     if (nearestDrivers.length == 0) {
       console.log("No drivers found");
       return;
@@ -89,12 +89,12 @@ export class PatientGateway implements OnGatewayInit {
     }
     const { dispatcherId, pickedDriver } = result;
 
-    const hospital = await this.hospitalService.findTheNearestHospital(x, y);
+    const hospital = await this.hospitalService.findTheNearestHospital(y, x);
 
     const booking = await this.bookingService.createBooking(
       patient,
-      x,
       y,
+      x,
       null,
       hospital,
       pickedDriver,

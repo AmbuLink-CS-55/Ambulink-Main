@@ -17,7 +17,7 @@ export const usePatientEvents = (
     }
   );
 
-  useSocketEvent("driver:location", (point: Point) => {
+  useSocketEvent("driver:update", (point: Point) => {
     if (!point) return;
     setBooking((prev: any) =>
       prev

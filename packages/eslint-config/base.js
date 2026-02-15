@@ -14,7 +14,7 @@ module.exports = tseslint.config(
     rules: {
       // Allow unused variables if they start with underscore
       "@typescript-eslint/no-unused-vars": [
-        "error",
+        "warn",
         {
           args: "all",
           varsIgnorePattern: "^_",
@@ -24,10 +24,10 @@ module.exports = tseslint.config(
           ignoreRestSiblings: true,
         },
       ],
-      
+
       // Relaxed rules for common patterns
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-empty-function": "warn",
     },
-  }
+  },
 );

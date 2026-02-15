@@ -1,11 +1,4 @@
-import { View, ScrollView, Text, Alert } from "react-native";
-import {
-  loadSettings,
-  defaultSettings,
-  type SettingsData,
-  type EmergencyContact,
-} from "@/utils/settingsStorage";
-import { useEffect, useState, useCallback } from "react";
+import { View, ScrollView, Text } from "react-native";
 
 import AppSettingsSection from "@/components/patient/settings/AppSettingsSection";
 import EmergencyContactsSection from "@/components/patient/settings/EmergencyContactsSection";
@@ -17,137 +10,31 @@ import LanguageModal from "@/components/patient/settings/modals/LanguageModal";
 import PersonalSection from "@/components/patient/settings/PersonalSection";
 import { SafeAreaView } from "react-native-safe-area-context";
 import i18n from "@/i18n/i18n";
-
-const BLOOD_TYPES = ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"];
-const ALLERGIES_LIST = [
-  "Peanuts",
-  "Tree nuts",
-  "Shellfish",
-  "Fish",
-  "Eggs",
-  "Milk",
-  "Soy",
-  "Wheat",
-  "Sesame",
-  "Sulfites",
-  "Penicillin",
-  "Aspirin",
-  "Ibuprofen",
-  "Latex",
-];
-const LANGUAGES = [
-  { id: "en", label: i18n.t("languages.english") },
-  { id: "si", label: i18n.t("languages.sinhala") },
-  { id: "ta", label: i18n.t("languages.tamil") },
-];
+import { ALLERGIES_LIST, BLOOD_TYPES, LANGUAGES } from "@/constants/settings";
+import { useSettingsLogic } from "@/hooks/useSettingsLogic";
 
 export default function Settings() {
-  const [loaded, setLoaded] = useState(false);
-
-  // Modals
-  const [bloodTypeModal, setBloodTypeModal] = useState(false);
-  const [allergiesModal, setAllergiesModal] = useState(false);
-  const [allergiesSearch, setAllergiesSearch] = useState("");
-  const [emergencyContactModal, setEmergencyContactModal] = useState(false);
-  const [languageModal, setLanguageModal] = useState(false);
-
-  // Data
-  const [settings, setSettings] = useState<SettingsData>(defaultSettings);
-  const [contactName, setContactName] = useState("");
-  const [emergencyContactNumber, setEmergencyContactNumber] = useState("");
-  const [editingContactId, setEditingContactId] = useState<number | null>(null);
-
-  // prevents rerender
-  const updateSetting = useCallback(
-    <K extends keyof SettingsData>(key: K, value: SettingsData[K]) => {
-      setSettings((prev) => ({ ...prev, [key]: value }));
-    },
-    []
-  );
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const saved = await loadSettings();
-        setSettings(saved);
-        if (saved.language) {
-          i18n.locale = saved.language;
-        }
-      } catch {
-        Alert.alert(i18n.t("common.error"), "Failed to load settings");
-      } finally {
-        setLoaded(true);
-      }
-    })();
-  }, []);
-
-  const handleAddAllergy = (allergy: string) => {
-    if (!settings.selectedAllergies.includes(allergy)) {
-      updateSetting("selectedAllergies", [...settings.selectedAllergies, allergy]);
-    }
-  };
-
-  const handleRemoveAllergy = (allergy: string) => {
-    updateSetting(
-      "selectedAllergies",
-      settings.selectedAllergies.filter((a) => a !== allergy)
-    );
-  };
-
-  const handleAddEmergencyContact = () => {
-    if (!emergencyContactNumber.trim()) {
-      Alert.alert(i18n.t("common.error"), i18n.t("common.pleaseEnterContactNumber"));
-      return;
-    }
-
-    if (editingContactId) {
-      updateSetting(
-        "emergencyContacts",
-        settings.emergencyContacts.map((c) =>
-          c.id === editingContactId
-            ? { ...c, number: emergencyContactNumber, name: contactName }
-            : c
-        )
-      );
-    } else {
-      updateSetting("emergencyContacts", [
-        ...settings.emergencyContacts,
-        {
-          id: Date.now(),
-          number: emergencyContactNumber,
-          name: contactName || "Contact",
-        },
-      ]);
-    }
-
-    resetEmergencyContactForm();
-    setEmergencyContactModal(false);
-  };
-
-  const handleDeleteEmergencyContact = (id: number) => {
-    updateSetting(
-      "emergencyContacts",
-      settings.emergencyContacts.filter((c) => c.id !== id)
-    );
-  };
-
-  const handleEditEmergencyContact = (contact: EmergencyContact) => {
-    setEmergencyContactNumber(contact.number);
-    setContactName(contact.name);
-    setEditingContactId(contact.id);
-    setEmergencyContactModal(true);
-  };
-
-  const resetEmergencyContactForm = () => {
-    setEmergencyContactNumber("");
-    setContactName("");
-    setEditingContactId(null);
-  };
-
-  const handleLanguageChange = (newLanguage: string) => {
-    updateSetting("language", newLanguage);
-    i18n.locale = newLanguage;
-  };
+  const {
+    loaded,
+    settings,
+    updateSetting,
+    activeModal,
+    setActiveModal,
+    allergiesSearch,
+    setAllergiesSearch,
+    contactName,
+    setContactName,
+    emergencyContactNumber,
+    setEmergencyContactNumber,
+    isEditingContact,
+    handleAddAllergy,
+    handleRemoveAllergy,
+    handleAddEmergencyContact,
+    handleDeleteEmergencyContact,
+    handleEditEmergencyContact,
+    resetEmergencyContactForm,
+    handleLanguageChange,
+  } = useSettingsLogic();
 
   if (!loaded) {
     return (
@@ -175,14 +62,14 @@ export default function Settings() {
 
         <MedicalSection
           bloodType={settings.bloodType}
-          setBloodTypeModal={setBloodTypeModal}
+          setBloodTypeModal={(visible) => setActiveModal(visible ? "bloodType" : null)}
           selectedAllergies={settings.selectedAllergies}
-          setAllergiesModal={setAllergiesModal}
+          setAllergiesModal={(visible) => setActiveModal(visible ? "allergies" : null)}
         />
 
         <EmergencyContactsSection
           emergencyContacts={settings.emergencyContacts}
-          setEmergencyContactModal={setEmergencyContactModal}
+          setEmergencyContactModal={(visible) => setActiveModal(visible ? "contact" : null)}
           resetForm={resetEmergencyContactForm}
           onEdit={handleEditEmergencyContact}
           onDelete={handleDeleteEmergencyContact}
@@ -190,7 +77,7 @@ export default function Settings() {
 
         <AppSettingsSection
           language={settings.language}
-          setLanguageModal={setLanguageModal}
+          setLanguageModal={(visible) => setActiveModal(visible ? "language" : null)}
           notifications={settings.notifications}
           setNotifications={(v) => updateSetting("notifications", v)}
           darkMode={settings.darkMode}
@@ -199,20 +86,20 @@ export default function Settings() {
 
         <View style={{ height: 40 }} />
 
-        {bloodTypeModal && (
+        {activeModal === "bloodType" && (
           <BloodTypeModal
-            visible={bloodTypeModal}
-            onClose={() => setBloodTypeModal(false)}
+            visible
+            onClose={() => setActiveModal(null)}
             bloodType={settings.bloodType}
             setBloodType={(v) => updateSetting("bloodType", v)}
             bloodTypes={BLOOD_TYPES}
           />
         )}
 
-        {allergiesModal && (
+        {activeModal === "allergies" && (
           <AllergiesModal
-            visible={allergiesModal}
-            onClose={() => setAllergiesModal(false)}
+            visible
+            onClose={() => setActiveModal(null)}
             selectedAllergies={settings.selectedAllergies}
             onAddAllergy={handleAddAllergy}
             onRemoveAllergy={handleRemoveAllergy}
@@ -222,26 +109,26 @@ export default function Settings() {
           />
         )}
 
-        {emergencyContactModal && (
+        {activeModal === "contact" && (
           <EmergencyContactModal
-            visible={emergencyContactModal}
+            visible
             onClose={() => {
-              setEmergencyContactModal(false);
+              setActiveModal(null);
               resetEmergencyContactForm();
             }}
             contactName={contactName}
             setContactName={setContactName}
             emergencyContactNumber={emergencyContactNumber}
             setEmergencyContactNumber={setEmergencyContactNumber}
-            isEditing={editingContactId !== null}
+            isEditing={isEditingContact}
             onSubmit={handleAddEmergencyContact}
           />
         )}
 
-        {languageModal && (
+        {activeModal === "language" && (
           <LanguageModal
-            visible={languageModal}
-            onClose={() => setLanguageModal(false)}
+            visible
+            onClose={() => setActiveModal(null)}
             language={settings.language}
             setLanguage={handleLanguageChange}
             languages={LANGUAGES}

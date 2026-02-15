@@ -1,14 +1,15 @@
 import { Modal, View, Text, Pressable, FlatList, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import i18n from "@/i18n/i18n";
+import type { Allergie } from "@/constants/settings";
 
 interface AllergiesModalProps {
   visible: boolean;
   onClose: () => void;
   selectedAllergies: string[];
-  onAddAllergy: (allergy: string) => void;
-  onRemoveAllergy: (allergy: string) => void;
-  allergiesList: string[];
+  onAddAllergy: (allergy: Allergie) => void;
+  onRemoveAllergy: (allergy: Allergie) => void;
+  allergiesList: readonly Allergie[];
   allergiesSearch: string;
   setAllergiesSearch: (search: string) => void;
 }

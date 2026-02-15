@@ -6,6 +6,7 @@ import { useLocation } from "@/hooks/useLocation";
 import { useSocket } from "@/hooks/SocketContext";
 import { usePatientEvents } from "@/hooks/usePatientEvents";
 import type { BookingStatus, User, Hospital } from "@ambulink/types";
+import { loadSettings } from "@/utils/settingsStorage";
 
 export default function Map() {
   const socket = useSocket();
@@ -21,11 +22,13 @@ export default function Map() {
 
   usePatientEvents(setBooking, setStatus, setIsCancelling);
 
-  const handleHelpRequest = () => {
+  const handleHelpRequest = async () => {
+    // TODO: send this to server
+    console.log(await loadSettings());
     if (!locationState?.location || !socket?.connected) return;
     socket.emit("patient:help", {
-      x: locationState.location.latitude,
-      y: locationState.location.longitude,
+      x: locationState.location.longitude,
+      y: locationState.location.latitude,
     });
   };
 
@@ -55,8 +58,8 @@ export default function Map() {
       hospitalLocation={booking?.hospital?.location}
       userLocation={
         booking?.patient?.currentLocation ?? {
-          x: locationState.location.latitude,
-          y: locationState.location.longitude,
+          x: locationState.location.longitude,
+          y: locationState.location.latitude,
         }
       }
     >

@@ -7,6 +7,7 @@ import { or } from "drizzle-orm";
 import { DbService } from "@/common/database/db.service";
 import { DispatcherService } from "../dispatcher/dispatcher.service";
 import { SocketService } from "@/common/socket/socket.service";
+import { DriverLocationUpdate } from "@/common/types/socket.types";
 
 @Injectable()
 export class BookingService {
@@ -30,7 +31,7 @@ export class BookingService {
       .values({
         patientId: patient.id,
         pickupAddress: pickupAddr,
-        pickupLocation: sql`ST_SetSRID(ST_MakePoint(${pickedDriver.currentLocation?.x}, ${pickedDriver.currentLocation?.y}), 4326)`,
+        pickupLocation: sql`ST_SetSRID(ST_MakePoint(${_patientLng}, ${_patientLat}), 4326)`,
 
         status: "ASSIGNED",
 
@@ -135,5 +136,21 @@ export class BookingService {
           resolve({ dispatcherId: dispatcherId, pickedDriver: driver });
         });
     });
+  }
+
+  async sendDriverLocation(driverId: string, data: DriverLocationUpdate) {
+    const [booking] = await this.dbService.db
+      .select({
+        patientId: bookings.patientId,
+        dispatcherId: bookings.dispatcherId,
+      })
+      .from(bookings)
+      .where(and(eq(bookings.ongoing, true), eq(bookings.driverId, driverId)));
+    const { patientId, dispatcherId } = booking;
+    if (!patientId || !dispatcherId) {
+      return;
+    }
+    this.socketService.emitToDispatcher(dispatcherId, "driver:update", data);
+    this.socketService.emitToPatient(patientId, "driver:update", data);
   }
 }

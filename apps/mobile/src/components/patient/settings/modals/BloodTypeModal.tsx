@@ -1,13 +1,14 @@
 import { Modal, View, Text, Pressable, FlatList } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import i18n from "@/i18n/i18n";
+import type { BloodType } from "@/constants/settings";
 
 interface BloodTypeModalProps {
   visible: boolean;
   onClose: () => void;
   bloodType: string;
-  setBloodType: (type: string) => void;
-  bloodTypes: string[];
+  setBloodType: (type: BloodType) => void;
+  bloodTypes: readonly BloodType[];
 }
 
 export default function BloodTypeModal({

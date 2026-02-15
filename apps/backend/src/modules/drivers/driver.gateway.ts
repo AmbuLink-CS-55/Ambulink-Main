@@ -66,7 +66,8 @@ export class DriverGateway implements OnGatewayInit {
   @SubscribeMessage("driver:update")
   async updateDriverLocation(client: Socket, data: DriverLocationUpdate) {
     const driverId = client.data.driverId;
-    this.driverService.setDriverLocation(driverId, data.latitude, data.longitude);
+    this.driverService.setDriverLocation(driverId, data.y, data.x);
+    this.bookingService.sendDriverLocation(driverId, data);
   }
 
   @SubscribeMessage("driver:arrived")

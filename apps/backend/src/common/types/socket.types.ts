@@ -11,8 +11,8 @@ export type PatientPickupRequest = {
  */
 export type DriverLocationUpdate = {
   id: string;
-  latitude: number;
-  longitude: number;
+  x: number;
+  y: number;
 };
 
 /**

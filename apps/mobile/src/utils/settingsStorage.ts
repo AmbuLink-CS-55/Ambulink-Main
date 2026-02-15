@@ -1,3 +1,4 @@
+import { Allergie, BloodType } from "@/constants/settings";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export type EmergencyContact = {
@@ -10,8 +11,8 @@ export type SettingsData = {
   profileName: string;
   profileMobile: string;
   profileImage: string | null;
-  bloodType: string;
-  selectedAllergies: string[];
+  bloodType: BloodType;
+  selectedAllergies: Allergie[];
   emergencyContacts: EmergencyContact[];
   language: string;
   notifications: boolean;

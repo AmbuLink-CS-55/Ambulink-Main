@@ -20,8 +20,8 @@ export default function UserMap({
   const mapRef = React.useRef<MapView>(null);
 
   const region: Region = {
-    latitude: userLocation.x,
-    longitude: userLocation.y,
+    latitude: userLocation.y,
+    longitude: userLocation.x,
     latitudeDelta: 0.01,
     longitudeDelta: 0.01,
   };
@@ -42,20 +42,20 @@ export default function UserMap({
         customMapStyle={mapStyle}
         showsPointsOfInterest={false}
       >
-        {driverLocations.map((d) => (
+        {driverLocations.map((d, i) => (
           <Marker
-            key={`${d.x}-${d.y}`}
-            coordinate={{ latitude: d.x, longitude: d.y }}
+            key={`driver:marker${i}`}
+            coordinate={{ latitude: d.y, longitude: d.x }}
             anchor={{ x: 0.5, y: 1 }}
-            tracksViewChanges={false}
+            tracksViewChanges={true}
           />
         ))}
         {hospitalLocation && (
           <Marker
             key={`${hospitalLocation.x}-${hospitalLocation.y}`}
             coordinate={{
-              latitude: hospitalLocation.x,
-              longitude: hospitalLocation.y,
+              latitude: hospitalLocation.y,
+              longitude: hospitalLocation.x,
             }}
             anchor={{ x: 0.5, y: 1 }}
             tracksViewChanges={false}

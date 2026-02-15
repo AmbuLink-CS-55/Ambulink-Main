@@ -1,6 +1,7 @@
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import i18n from "@/i18n/i18n";
+import { LANGUAGES } from "@/constants/settings";
 
 interface AppSettingsSectionProps {
   language: string;
@@ -10,12 +11,6 @@ interface AppSettingsSectionProps {
   darkMode: boolean;
   setDarkMode: (value: boolean) => void;
 }
-
-const LANGUAGES = [
-  { id: "en", label: i18n.t("languages.english") },
-  { id: "si", label: i18n.t("languages.sinhala") },
-  { id: "ta", label: i18n.t("languages.tamil") },
-];
 
 export default function AppSettingsSection({
   language,

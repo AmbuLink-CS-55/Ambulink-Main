@@ -170,6 +170,7 @@ export const bookings = pgTable(
     }),
 
     status: bookingStatusEnum("status").notNull().default("REQUESTED"),
+    ongoing: boolean("ongoing").notNull().default(true),
 
     providerId: uuid("provider_id").references(() => ambulanceProviders.id, {
       onDelete: "set null",
