@@ -30,7 +30,10 @@ export const findAllDrivers = (db: Db, providerId?: string, isActive?: boolean) 
     conditions.push(eq(users.isActive, isActive));
   }
 
-  return db.select().from(users).where(and(...conditions));
+  return db
+    .select()
+    .from(users)
+    .where(and(...conditions));
 };
 
 export const findDriverById = (db: Db, id: string) =>
@@ -54,10 +57,7 @@ export const updateDriver = (db: Db, id: string, driver: Partial<NewUser>) => {
 };
 
 export const removeDriver = (db: Db, id: string) =>
-  db
-    .update(users)
-    .set({ isActive: false, updatedAt: new Date() })
-    .where(eq(users.id, id));
+  db.update(users).set({ isActive: false, updatedAt: new Date() }).where(eq(users.id, id));
 
 export const setDriverStatus = (db: Db, driverId: string, status: UserStatus) =>
   db

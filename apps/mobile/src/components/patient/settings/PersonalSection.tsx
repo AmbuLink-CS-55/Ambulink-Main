@@ -1,20 +1,11 @@
 import { View, Text, TextInput } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import i18n from "@/i18n/i18n";
+import { useSettings } from "@/contexts/SettingsContext";
 
-interface PersonalSectionProps {
-  profileName: string;
-  setProfileName: (name: string) => void;
-  profileMobile: string;
-  setProfileMobile: (mobile: string) => void;
-}
+export default function PersonalSection() {
+  const { settings, updateSetting } = useSettings();
 
-export default function PersonalSection({
-  profileName,
-  setProfileName,
-  profileMobile,
-  setProfileMobile,
-}: PersonalSectionProps) {
   return (
     <View className="mb-6">
       <Text className="text-lg font-semibold text-[#333] mb-3">
@@ -36,8 +27,8 @@ export default function PersonalSection({
           </Text>
           <TextInput
             className="border border-[#E0E0E0] rounded-xl p-3 text-sm text-[#333]"
-            value={profileName}
-            onChangeText={setProfileName}
+            value={settings.profileName}
+            onChangeText={(v) => updateSetting("profileName", v)}
             placeholder={i18n.t("settings.personal.enterName")}
           />
         </View>
@@ -48,8 +39,8 @@ export default function PersonalSection({
           <TextInput
             className="border border-[#E0E0E0] rounded-xl p-3 text-sm text-[#333]"
             keyboardType="numeric"
-            value={profileMobile}
-            onChangeText={setProfileMobile}
+            value={settings.profileMobile}
+            onChangeText={(v) => updateSetting("profileMobile", v)}
             placeholder={i18n.t("settings.personal.enterMobile")}
           />
         </View>

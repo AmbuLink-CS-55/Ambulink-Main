@@ -17,6 +17,26 @@ export class DbService implements OnModuleInit {
   }
 
   async onModuleInit() {
+    const retrys = 10;
+    let delay = 1000;
+
+    for (let i = 1; i < retrys; i++) {
+      try {
+        await this.db.execute("SELECT 1");
+        this.logger.log("Database connected");
+        return;
+      } catch (err) {
+        this.logger.log(`Database connection failed, retrying ${i} in ${delay}`);
+        if (i > retrys) {
+          this.logger.log(`all database connection attepts failed`);
+          process.exit(0);
+        }
+        await new Promise((res) => {
+          setTimeout(res, delay);
+        });
+        delay *= 2;
+      }
+    }
     try {
       await this.db.execute("SELECT 1");
       this.logger.log("Database connected");

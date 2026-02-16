@@ -58,13 +58,16 @@ export function useSettingsLogic() {
   useEffect(() => {
     if (!loaded) return;
 
+    // NOTE: Could be a race condition (settings saving issues)
     const timer = setTimeout(() => {
       saveSettings(settings).catch(() => {
         Alert.alert(i18n.t("common.error"), "Failed to save settings");
       });
     }, SAVE_DEBOUNCE_MS);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+    };
   }, [settings, loaded]);
 
   const handleAddAllergy = useCallback(
@@ -156,7 +159,7 @@ export function useSettingsLogic() {
 
   const isEditingContact = useMemo(() => editingContactId !== null, [editingContactId]);
 
-  return {
+  const contextValue = {
     loaded,
     settings,
     updateSetting,
@@ -178,4 +181,8 @@ export function useSettingsLogic() {
     resetEmergencyContactForm,
     handleLanguageChange,
   };
+
+  return contextValue;
 }
+
+export type UseSettingsLogicReturn = ReturnType<typeof useSettingsLogic>;

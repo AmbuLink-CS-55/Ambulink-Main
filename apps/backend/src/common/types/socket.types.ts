@@ -1,9 +1,43 @@
 import { User } from "@/common/database/schema";
 
+export type BloodType = "O+" | "O-" | "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "";
+export type Allergie =
+  | "Peanuts"
+  | "Tree nuts"
+  | "Shellfish"
+  | "Fish"
+  | "Eggs"
+  | "Milk"
+  | "Soy"
+  | "Wheat"
+  | "Sesame"
+  | "Sulfites"
+  | "Penicillin"
+  | "Aspirin"
+  | "Ibuprofen"
+  | "Latex"
+  | "";
+export type EmergencyContact = {
+  id: number;
+  number: string;
+  name: string;
+};
+export type PatientSettingsData = {
+  profileName: string;
+  profileMobile: string;
+  profileImage: string | null;
+  bloodType: BloodType;
+  selectedAllergies: Allergie[];
+  emergencyContacts: EmergencyContact[];
+  language: string;
+  notifications: boolean;
+  darkMode: boolean;
+};
+
 export type PatientPickupRequest = {
-  patientId: string;
   x: number;
   y: number;
+  patientSettings: PatientSettingsData;
 };
 
 /**

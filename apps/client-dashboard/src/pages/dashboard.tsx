@@ -8,7 +8,9 @@ export default function Dashboard() {
   const setMapView = useStore((state) => state.setMapView);
   const { error, data: hospitals } = useGetHospitals();
 
-  if (error) throw new Error("Failed to fetch hospitals");
+  if (error) {
+    console.error("Error fetching hospitals");
+  }
 
   return (
     <Map theme="dark" center={mapView.center} zoom={mapView.zoom}>

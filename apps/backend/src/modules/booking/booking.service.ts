@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { eq, ne, sql } from "drizzle-orm";
-import { bookings } from "@/common/database/schema";
+import { ambulanceProviders, bookings } from "@/common/database/schema";
 import type { Booking, Hospital, User } from "@/common/database/schema";
 import { and } from "drizzle-orm";
 import { or } from "drizzle-orm";
@@ -46,7 +46,16 @@ export class BookingService {
       })
       .returning();
 
-    return { patient, pickedDriver, hospital };
+    if (!pickedDriver.providerId) {
+      throw new Error("Driver without provider");
+    }
+
+    const provider = this.dbService.db
+      .select()
+      .from(ambulanceProviders)
+      .where(eq(ambulanceProviders.id, pickedDriver.providerId));
+
+    return { patient, pickedDriver, provider, hospital };
   }
 
   async updateBooking(bookingId: string, booking: Partial<Booking>) {

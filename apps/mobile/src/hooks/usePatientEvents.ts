@@ -1,5 +1,5 @@
 // hooks/usePatientEvents.ts
-import { BookingStatus, Point, User, Hospital } from "@ambulink/types";
+import { BookingStatus, Point, User, Hospital, AmbulanceProvider } from "@ambulink/types";
 import { useSocketEvent } from "./useSocketEvent";
 import { Alert } from "react-native";
 
@@ -10,7 +10,12 @@ export const usePatientEvents = (
 ) => {
   useSocketEvent(
     "booking:assigned",
-    (data: { patient: User; pickedDriver: User; hospital: Hospital }) => {
+    (data: {
+      patient: User;
+      pickedDriver: User;
+      provider: AmbulanceProvider;
+      hospital: Hospital;
+    }) => {
       if (!data) return;
       setBooking(data);
       setStatus("ASSIGNED");

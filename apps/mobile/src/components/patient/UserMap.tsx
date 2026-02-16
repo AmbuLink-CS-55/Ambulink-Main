@@ -3,6 +3,7 @@ import { View, StyleSheet, TouchableOpacity } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from "react-native-maps";
 import { Ionicons } from "@expo/vector-icons";
 import { Point } from "@ambulink/types";
+import Svg, { Path, Circle, Rect } from "react-native-svg";
 
 type Props = {
   userLocation: Point;
@@ -43,12 +44,20 @@ export default function UserMap({
         showsPointsOfInterest={false}
       >
         {driverLocations.map((d, i) => (
-          <Marker
-            key={`driver:marker${i}`}
-            coordinate={{ latitude: d.y, longitude: d.x }}
-            anchor={{ x: 0.5, y: 1 }}
-            tracksViewChanges={true}
-          />
+          // <Marker
+          //   key={`driver:marker${i}`}
+          //   coordinate={{ latitude: d.y, longitude: d.x }}
+          //   anchor={{ x: 0.5, y: 1 }}
+          //   tracksViewChanges={true}
+          // />
+          <Marker key={`d${i}`} coordinate={{ latitude: d.y, longitude: d.x }}>
+            <View style={{ alignItems: "center", justifyContent: "center" }}>
+              <Svg width="40" height="40" viewBox="0 0 100 100">
+                <Circle cx="50" cy="50" r="45" stroke="blue" strokeWidth="2.5" fill="skyblue" />
+                <Path d="M30 30 L70 70 M70 30 L30 70" stroke="red" strokeWidth="5" />
+              </Svg>
+            </View>
+          </Marker>
         ))}
         {hospitalLocation && (
           <Marker
@@ -59,7 +68,11 @@ export default function UserMap({
             }}
             anchor={{ x: 0.5, y: 1 }}
             tracksViewChanges={false}
-          />
+          >
+            <View
+              style={{ width: 40, height: 40, alignItems: "center", justifyContent: "center" }}
+            ></View>
+          </Marker>
         )}
       </MapView>
       <View className="items-center flex-1 justify-end my-5 mx-10">

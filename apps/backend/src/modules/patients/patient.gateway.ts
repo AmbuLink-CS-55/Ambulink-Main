@@ -70,7 +70,8 @@ export class PatientGateway implements OnGatewayInit {
   @SubscribeMessage("patient:help")
   async findAmbulance(client: Socket, data: PatientPickupRequest) {
     console.log("help request");
-    const { x, y } = data;
+    const { x, y, patientSettings } = data;
+    console.info("[patient] sent settings: ", patientSettings);
     const patientId = client.data.patientId;
     const patient = await this.patientService.findOne(patientId);
     patient.currentLocation = { x, y };

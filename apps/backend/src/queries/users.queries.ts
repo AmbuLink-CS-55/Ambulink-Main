@@ -24,7 +24,10 @@ export const findAllPatients = (db: Db, isActive?: boolean) => {
     conditions.push(eq(users.isActive, isActive));
   }
 
-  return db.select().from(users).where(and(...conditions));
+  return db
+    .select()
+    .from(users)
+    .where(and(...conditions));
 };
 
 export const findPatientById = (db: Db, id: string) =>
@@ -44,10 +47,7 @@ export const updatePatient = (db: Db, id: string, patient: Partial<NewUser>) =>
     .returning();
 
 export const removePatient = (db: Db, id: string) =>
-  db
-    .update(users)
-    .set({ isActive: false, updatedAt: new Date() })
-    .where(eq(users.id, id));
+  db.update(users).set({ isActive: false, updatedAt: new Date() }).where(eq(users.id, id));
 
 export const updateUserStatus = (db: Db, userId: string, status: UserStatus) =>
   db
@@ -61,15 +61,14 @@ export const findActiveBookingByPatient = (db: Db, patientId: string) =>
     .select()
     .from(bookings)
     .where(
-      and(
-        eq(bookings.patientId, patientId),
-        inArray(bookings.status, ACTIVE_BOOKING_STATUSES)
-      )
+      and(eq(bookings.patientId, patientId), inArray(bookings.status, ACTIVE_BOOKING_STATUSES))
     );
 
 export type CreatePatientResult = Awaited<ReturnType<typeof createPatient>>;
 export type FindAllPatientsResult = Awaited<ReturnType<typeof findAllPatients>>;
 export type FindPatientByIdResult = Awaited<ReturnType<typeof findPatientById>>;
 export type UpdatePatientResult = Awaited<ReturnType<typeof updatePatient>>;
-export type FindActiveBookingByPatientResult = Awaited<ReturnType<typeof findActiveBookingByPatient>>;
+export type FindActiveBookingByPatientResult = Awaited<
+  ReturnType<typeof findActiveBookingByPatient>
+>;
 export type UpdateUserStatusResult = Awaited<ReturnType<typeof updateUserStatus>>;

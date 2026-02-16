@@ -24,11 +24,12 @@ export default function Map() {
 
   const handleHelpRequest = async () => {
     // TODO: send this to server
-    console.log(await loadSettings());
+    const patientSettings = await loadSettings();
     if (!locationState?.location || !socket?.connected) return;
     socket.emit("patient:help", {
       x: locationState.location.longitude,
       y: locationState.location.latitude,
+      patientSettings: patientSettings,
     });
   };
 

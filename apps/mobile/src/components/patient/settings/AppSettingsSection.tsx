@@ -2,26 +2,13 @@ import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import i18n from "@/i18n/i18n";
 import { LANGUAGES } from "@/constants/settings";
+import { useSettings } from "@/contexts/SettingsContext";
 
-interface AppSettingsSectionProps {
-  language: string;
-  setLanguageModal: (visible: boolean) => void;
-  notifications: boolean;
-  setNotifications: (value: boolean) => void;
-  darkMode: boolean;
-  setDarkMode: (value: boolean) => void;
-}
+export default function AppSettingsSection() {
+  const { settings, setActiveModal, updateSetting } = useSettings();
 
-export default function AppSettingsSection({
-  language,
-  setLanguageModal,
-  notifications,
-  setNotifications,
-  darkMode,
-  setDarkMode,
-}: AppSettingsSectionProps) {
   const getLanguageLabel = () => {
-    return LANGUAGES.find((lang) => lang.id === language)?.label || i18n.t("languages.english");
+    return LANGUAGES.find((lang) => lang.id === settings.language)?.label || i18n.t("languages.english");
   };
 
   return (
@@ -33,7 +20,7 @@ export default function AppSettingsSection({
       <View className="bg-white rounded-2xl p-4">
         <Pressable
           className="flex-row justify-between items-center py-3"
-          onPress={() => setLanguageModal(true)}
+          onPress={() => setActiveModal("language")}
         >
           <View>
             <Text className="text-sm font-medium text-gray-600 mb-1.5">
@@ -52,18 +39,18 @@ export default function AppSettingsSection({
               {i18n.t("settings.appSettings.notifications")}
             </Text>
             <Text className="text-sm text-gray-400 mt-1">
-              {notifications ? i18n.t("common.enabled") : i18n.t("common.disabled")}
+              {settings.notifications ? i18n.t("common.enabled") : i18n.t("common.disabled")}
             </Text>
           </View>
           <Pressable
             className={`w-12 h-7 rounded-full justify-center p-0.5 ${
-              notifications ? "bg-teal-500" : "bg-gray-200"
+              settings.notifications ? "bg-teal-500" : "bg-gray-200"
             }`}
-            onPress={() => setNotifications(!notifications)}
+            onPress={() => updateSetting("notifications", !settings.notifications)}
           >
             <View
               className={`w-6 h-6 rounded-full bg-white ${
-                notifications ? "self-end" : "self-start"
+                settings.notifications ? "self-end" : "self-start"
               }`}
             />
           </Pressable>
@@ -77,17 +64,17 @@ export default function AppSettingsSection({
               {i18n.t("settings.appSettings.darkMode")}
             </Text>
             <Text className="text-sm text-gray-400 mt-1">
-              {darkMode ? i18n.t("common.enabled") : i18n.t("common.disabled")}
+              {settings.darkMode ? i18n.t("common.enabled") : i18n.t("common.disabled")}
             </Text>
           </View>
           <Pressable
             className={`w-12 h-7 rounded-full justify-center p-0.5 ${
-              darkMode ? "bg-teal-500" : "bg-gray-200"
+              settings.darkMode ? "bg-teal-500" : "bg-gray-200"
             }`}
-            onPress={() => setDarkMode(!darkMode)}
+            onPress={() => updateSetting("darkMode", !settings.darkMode)}
           >
             <View
-              className={`w-6 h-6 rounded-full bg-white ${darkMode ? "self-end" : "self-start"}`}
+              className={`w-6 h-6 rounded-full bg-white ${settings.darkMode ? "self-end" : "self-start"}`}
             />
           </Pressable>
         </View>

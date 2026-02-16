@@ -1,19 +1,31 @@
 import { View, ScrollView, Text } from "react-native";
-
-import AppSettingsSection from "@/components/patient/settings/AppSettingsSection";
-import EmergencyContactsSection from "@/components/patient/settings/EmergencyContactsSection";
-import MedicalSection from "@/components/patient/settings/MedicalSection";
-import AllergiesModal from "@/components/patient/settings/modals/AllergiesModal";
-import BloodTypeModal from "@/components/patient/settings/modals/BloodTypeModal";
-import EmergencyContactModal from "@/components/patient/settings/modals/EmergencyContactModal";
-import LanguageModal from "@/components/patient/settings/modals/LanguageModal";
-import PersonalSection from "@/components/patient/settings/PersonalSection";
 import { SafeAreaView } from "react-native-safe-area-context";
 import i18n from "@/i18n/i18n";
-import { ALLERGIES_LIST, BLOOD_TYPES, LANGUAGES } from "@/constants/settings";
-import { useSettingsLogic } from "@/hooks/useSettingsLogic";
+import { SettingsProvider, useSettings } from "@/contexts/SettingsContext";
+
+// Sections
+import PersonalSection from "@/components/patient/settings/PersonalSection";
+import MedicalSection from "@/components/patient/settings/MedicalSection";
+import EmergencyContactsSection from "@/components/patient/settings/EmergencyContactsSection";
+import AppSettingsSection from "@/components/patient/settings/AppSettingsSection";
+
+// Modals
+import BloodTypeModal from "@/components/patient/settings/modals/BloodTypeModal";
+import LanguageModal from "@/components/patient/settings/modals/LanguageModal";
+import AllergiesModal from "@/components/patient/settings/modals/AllergiesModal";
+import EmergencyContactModal from "@/components/patient/settings/modals/EmergencyContactModal";
+
+import { BLOOD_TYPES, LANGUAGES, ALLERGIES_LIST } from "@/constants/settings";
 
 export default function Settings() {
+  return (
+    <SettingsProvider>
+      <SettingsContent />
+    </SettingsProvider>
+  );
+}
+
+function SettingsContent() {
   const {
     loaded,
     settings,
@@ -30,11 +42,9 @@ export default function Settings() {
     handleAddAllergy,
     handleRemoveAllergy,
     handleAddEmergencyContact,
-    handleDeleteEmergencyContact,
-    handleEditEmergencyContact,
     resetEmergencyContactForm,
     handleLanguageChange,
-  } = useSettingsLogic();
+  } = useSettings();
 
   if (!loaded) {
     return (
@@ -53,36 +63,10 @@ export default function Settings() {
           <Text className="text-3xl font-bold pb-5">{i18n.t("settings.title")}</Text>
         </View>
 
-        <PersonalSection
-          profileName={settings.profileName}
-          setProfileName={(v) => updateSetting("profileName", v)}
-          profileMobile={settings.profileMobile}
-          setProfileMobile={(v) => updateSetting("profileMobile", v)}
-        />
-
-        <MedicalSection
-          bloodType={settings.bloodType}
-          setBloodTypeModal={(visible) => setActiveModal(visible ? "bloodType" : null)}
-          selectedAllergies={settings.selectedAllergies}
-          setAllergiesModal={(visible) => setActiveModal(visible ? "allergies" : null)}
-        />
-
-        <EmergencyContactsSection
-          emergencyContacts={settings.emergencyContacts}
-          setEmergencyContactModal={(visible) => setActiveModal(visible ? "contact" : null)}
-          resetForm={resetEmergencyContactForm}
-          onEdit={handleEditEmergencyContact}
-          onDelete={handleDeleteEmergencyContact}
-        />
-
-        <AppSettingsSection
-          language={settings.language}
-          setLanguageModal={(visible) => setActiveModal(visible ? "language" : null)}
-          notifications={settings.notifications}
-          setNotifications={(v) => updateSetting("notifications", v)}
-          darkMode={settings.darkMode}
-          setDarkMode={(v) => updateSetting("darkMode", v)}
-        />
+        <PersonalSection />
+        <MedicalSection />
+        <EmergencyContactsSection />
+        <AppSettingsSection />
 
         <View style={{ height: 40 }} />
 

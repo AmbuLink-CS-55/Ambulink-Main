@@ -42,9 +42,9 @@ export default function Home() {
       setRideStatus("CANCELLED");
     });
 
-    // return () => {
-    //   socket?.disconnect();
-    // };
+    return () => {
+      socket?.disconnect();
+    };
   }, [socket]);
 
   const handleArrived = async () => {
@@ -96,8 +96,8 @@ export default function Home() {
                 initialRegion={
                   currentRide
                     ? {
-                        latitude: currentRide.patient.currentLocation!.x,
-                        longitude: currentRide.patient.currentLocation!.y,
+                        latitude: currentRide.patient.currentLocation!.y,
+                        longitude: currentRide.patient.currentLocation!.x,
                         latitudeDelta: 0.05,
                         longitudeDelta: 0.05,
                       }

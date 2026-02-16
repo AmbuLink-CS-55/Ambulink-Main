@@ -65,6 +65,10 @@ export default function Navigation() {
     socket.on("message", (msg: string) => {
       console.log("[emt] Message received:", msg);
     });
+
+    return () => {
+      socket.disconnect();
+    };
   }, [socket]);
 
   return (
@@ -84,7 +88,10 @@ export default function Navigation() {
         }
       />
       <View className="absolute top-16 left-4 right-4 items-center">
-        <LocationCard title="Hospital" onPress={() => console.info("[emt] Hospital card pressed")} />
+        <LocationCard
+          title="Hospital"
+          onPress={() => console.info("[emt] Hospital card pressed")}
+        />
         <Separator />
         <LocationCard
           title="Address, Address, No 123"

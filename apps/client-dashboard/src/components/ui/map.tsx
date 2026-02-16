@@ -1319,7 +1319,7 @@ export function MapEvents({
         zoom: zoom,
       });
     };
-    map.on("moveend", handleMove);
+    map.on("move", handleMove);
 
     return () => {
       map.off("move", handleMove);

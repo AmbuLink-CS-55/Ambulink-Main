@@ -20,7 +20,6 @@ export default function MapOptions({
   cancelRequest,
   isCancelling = false,
 }: MapOptionsProps) {
-
   // if (status === "COMPLETED") {
   //   return (
   //     <View className="bg-white p-4 w-full rounded-2xl shadow-lg items-center">
