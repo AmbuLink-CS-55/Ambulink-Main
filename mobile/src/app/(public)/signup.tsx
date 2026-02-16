@@ -9,10 +9,22 @@ import {
     ScrollView,
     Image,
     StyleSheet,
+    Modal,
+    FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+
+const hospitalNames = [
+    "City General Hospital",
+    "St. Mary's Medical Center",
+    "Central Valley Clinic",
+    "Westside Community Hospital",
+    "East Ridge Health System",
+    "General Hospital",
+    "Emergency Care Unit"
+];
 
 export default function SignupPage() {
     const router = useRouter();
@@ -21,12 +33,16 @@ export default function SignupPage() {
     const [lastName, setLastName] = useState("");
     const [phone, setPhone] = useState("");
     const [role, setRole] = useState<"patient" | "driver" | "emt">("patient");
+    const [staffId, setStaffId] = useState("");
+    const [hospitalName, setHospitalName] = useState("");
     const [agreed, setAgreed] = useState(false);
     const [otp, setOtp] = useState("");
     const [loading, setLoading] = useState(false);
+    const [showHospitalModal, setShowHospitalModal] = useState(false);
 
     const handleNext = () => {
-        if (!agreed) return;
+        const isStaff = role === 'driver' || role === 'emt';
+        if (!firstName || !lastName || !phone || !agreed || (isStaff && (!staffId || !hospitalName))) return;
         setLoading(true);
         // Simulate sending OTP
         setTimeout(() => {
@@ -66,157 +82,234 @@ export default function SignupPage() {
     );
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === "ios" ? "padding" : "height"}
-                style={{ flex: 1 }}
-            >
-                <ScrollView
-                    contentContainerStyle={{ flexGrow: 1 }}
-                    className="px-6"
-                    showsVerticalScrollIndicator={false}
+        <>
+            <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    style={{ flex: 1 }}
                 >
-                    {/* Header */}
-                    <View style={styles.header}>
-                        <TouchableOpacity
-                            onPress={() => step === 2 ? setStep(1) : router.back()}
-                            style={styles.backButton}
-                        >
-                            <Ionicons name="arrow-back" size={24} color="#1F2937" />
-                        </TouchableOpacity>
-                        <Text style={styles.headerTitle}>Create Account</Text>
-                    </View>
-
-                    {step === 1 ? (
-                        <View style={styles.formContainer}>
-                            <Text style={styles.title}>Join AmbuLink</Text>
-
-                            {/* First Name */}
-                            <View style={styles.inputContainer}>
-                                <Ionicons name="person-outline" size={20} color="#9CA3AF" />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="First Name"
-                                    value={firstName}
-                                    onChangeText={setFirstName}
-                                />
-                            </View>
-
-                            {/* Last Name */}
-                            <View style={styles.inputContainer}>
-                                <Ionicons name="person-outline" size={20} color="#9CA3AF" />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Last Name"
-                                    value={lastName}
-                                    onChangeText={setLastName}
-                                />
-                            </View>
-
-                            {/* Phone Input */}
-                            <View style={styles.inputContainer}>
-                                <Ionicons name="call-outline" size={20} color="#9CA3AF" />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Phone Number"
-                                    keyboardType="phone-pad"
-                                    value={phone}
-                                    onChangeText={setPhone}
-                                />
-                            </View>
-
-                            {/* Role Selection */}
-                            <Text style={styles.label}>Sign up as:</Text>
-                            <View style={styles.roleContainer}>
-                                <RoleButton type="patient" label="Patient" icon="person-outline" />
-                                <RoleButton type="driver" label="Driver" icon="car-outline" />
-                                <RoleButton type="emt" label="EMT" icon="medkit-outline" />
-                            </View>
-
-                            {/* Terms & Conditions */}
+                    <ScrollView
+                        contentContainerStyle={{ flexGrow: 1 }}
+                        className="px-6"
+                        showsVerticalScrollIndicator={false}
+                    >
+                        {/* Header */}
+                        <View style={styles.header}>
                             <TouchableOpacity
-                                style={styles.termsContainer}
-                                onPress={() => setAgreed(!agreed)}
+                                onPress={() => step === 2 ? setStep(1) : router.back()}
+                                style={styles.backButton}
                             >
-                                <View style={[
-                                    styles.checkbox,
-                                    agreed && styles.checkboxActive
-                                ]}>
-                                    {agreed && <Ionicons name="checkmark" size={16} color="white" />}
+                                <Ionicons name="arrow-back" size={24} color="#1F2937" />
+                            </TouchableOpacity>
+                            <Text style={styles.headerTitle}>Create Account</Text>
+                        </View>
+
+                        {step === 1 ? (
+                            <View style={styles.formContainer}>
+                                <Text style={styles.title}>Join AmbuLink</Text>
+
+                                {/* First Name */}
+                                <View style={styles.inputContainer}>
+                                    <Ionicons name="person-outline" size={20} color="#9CA3AF" />
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="First Name"
+                                        value={firstName}
+                                        onChangeText={setFirstName}
+                                    />
                                 </View>
-                                <Text style={styles.termsText}>
-                                    I agree to the <Text style={styles.termsLink}>Terms and Conditions</Text>
-                                </Text>
-                            </TouchableOpacity>
 
-                            {/* Next Button */}
-                            <TouchableOpacity
-                                onPress={handleNext}
-                                disabled={!firstName || !lastName || !phone || !agreed || loading}
-                                style={[
-                                    styles.primaryButton,
-                                    (!firstName || !lastName || !phone || !agreed || loading) && styles.buttonDisabled
-                                ]}
-                            >
-                                <Text style={styles.buttonText}>
-                                    {loading ? "Processing..." : "Next"}
+                                {/* Last Name */}
+                                <View style={styles.inputContainer}>
+                                    <Ionicons name="person-outline" size={20} color="#9CA3AF" />
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Last Name"
+                                        value={lastName}
+                                        onChangeText={setLastName}
+                                    />
+                                </View>
+
+                                {/* Phone Input */}
+                                <View style={styles.inputContainer}>
+                                    <Ionicons name="call-outline" size={20} color="#9CA3AF" />
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Phone Number"
+                                        keyboardType="phone-pad"
+                                        value={phone}
+                                        onChangeText={setPhone}
+                                    />
+                                </View>
+
+                                {/* Role Selection */}
+                                <Text style={styles.label}>Sign up as:</Text>
+                                <View style={styles.roleContainer}>
+                                    <RoleButton type="patient" label="Patient" icon="person-outline" />
+                                    <RoleButton type="driver" label="Driver" icon="car-outline" />
+                                    <RoleButton type="emt" label="EMT" icon="medkit-outline" />
+                                </View>
+
+                                {(role === "driver" || role === "emt") && (
+                                    <>
+                                        {/* Staff ID */}
+                                        <View style={styles.inputContainer}>
+                                            <Ionicons name="id-card-outline" size={20} color="#9CA3AF" />
+                                            <TextInput
+                                                style={styles.input}
+                                                placeholder="Staff ID"
+                                                value={staffId}
+                                                onChangeText={setStaffId}
+                                            />
+                                        </View>
+
+                                        {/* Hospital Selection */}
+                                        <TouchableOpacity
+                                            style={styles.inputContainer}
+                                            onPress={() => setShowHospitalModal(true)}
+                                        >
+                                            <Ionicons name="business-outline" size={20} color="#9CA3AF" />
+                                            <View style={{ flex: 1, marginLeft: 12 }}>
+                                                <Text style={{
+                                                    fontSize: 16,
+                                                    color: hospitalName ? '#1F2937' : '#9CA3AF'
+                                                }}>
+                                                    {hospitalName || "Select Hospital Name"}
+                                                </Text>
+                                            </View>
+                                            <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
+                                        </TouchableOpacity>
+                                    </>
+                                )}
+
+                                {/* Terms & Conditions */}
+                                <TouchableOpacity
+                                    style={styles.termsContainer}
+                                    onPress={() => setAgreed(!agreed)}
+                                >
+                                    <View style={[
+                                        styles.checkbox,
+                                        agreed && styles.checkboxActive
+                                    ]}>
+                                        {agreed && <Ionicons name="checkmark" size={16} color="white" />}
+                                    </View>
+                                    <Text style={styles.termsText}>
+                                        I agree to the <Text style={styles.termsLink}>Terms and Conditions</Text>
+                                    </Text>
+                                </TouchableOpacity>
+
+                                {/* Next Button */}
+                                <TouchableOpacity
+                                    onPress={handleNext}
+                                    disabled={!firstName || !lastName || !phone || !agreed || loading || ((role === 'driver' || role === 'emt') && (!staffId || !hospitalName))}
+                                    style={[
+                                        styles.primaryButton,
+                                        (!firstName || !lastName || !phone || !agreed || loading || ((role === 'driver' || role === 'emt') && (!staffId || !hospitalName))) && styles.buttonDisabled
+                                    ]}
+                                >
+                                    <Text style={styles.buttonText}>
+                                        {loading ? "Processing..." : "Next"}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        ) : (
+                            <View style={styles.formContainer}>
+                                <View style={styles.otpIconContainer}>
+                                    <Ionicons name="shield-checkmark-outline" size={80} color="#205fb7ff" />
+                                </View>
+                                <Text style={styles.title}>Verify Phone</Text>
+                                <Text style={styles.subtitle}>
+                                    We've sent a 4-digit code to {phone}
                                 </Text>
+
+                                <View style={styles.otpContainer}>
+                                    <TextInput
+                                        style={styles.otpInput}
+                                        placeholder="0000"
+                                        keyboardType="number-pad"
+                                        maxLength={4}
+                                        value={otp}
+                                        onChangeText={setOtp}
+                                        autoFocus
+                                    />
+                                </View>
+
+                                <TouchableOpacity
+                                    style={styles.resendContainer}
+                                    onPress={() => { }}
+                                >
+                                    <Text style={styles.resendText}>Didn't receive code? <Text style={styles.resendLink}>Resend</Text></Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    onPress={handleVerify}
+                                    disabled={otp.length < 4 || loading}
+                                    style={[
+                                        styles.primaryButton,
+                                        (otp.length < 4 || loading) && styles.buttonDisabled
+                                    ]}
+                                >
+                                    <Text style={styles.buttonText}>
+                                        {loading ? "Verifying..." : "Verify & Sign Up"}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+
+                        {/* Footer */}
+                        <View style={styles.footer}>
+                            <Text style={styles.footerText}>Already have an account? </Text>
+                            <TouchableOpacity onPress={() => router.push("/(public)/login_modern")}>
+                                <Text style={styles.footerLink}>Log In</Text>
                             </TouchableOpacity>
                         </View>
-                    ) : (
-                        <View style={styles.formContainer}>
-                            <View style={styles.otpIconContainer}>
-                                <Ionicons name="shield-checkmark-outline" size={80} color="#205fb7ff" />
-                            </View>
-                            <Text style={styles.title}>Verify Phone</Text>
-                            <Text style={styles.subtitle}>
-                                We've sent a 4-digit code to {phone}
-                            </Text>
+                    </ScrollView>
+                </KeyboardAvoidingView>
+            </SafeAreaView>
 
-                            <View style={styles.otpContainer}>
-                                <TextInput
-                                    style={styles.otpInput}
-                                    placeholder="0000"
-                                    keyboardType="number-pad"
-                                    maxLength={4}
-                                    value={otp}
-                                    onChangeText={setOtp}
-                                    autoFocus
-                                />
-                            </View>
-
-                            <TouchableOpacity
-                                style={styles.resendContainer}
-                                onPress={() => { }}
-                            >
-                                <Text style={styles.resendText}>Didn't receive code? <Text style={styles.resendLink}>Resend</Text></Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                onPress={handleVerify}
-                                disabled={otp.length < 4 || loading}
-                                style={[
-                                    styles.primaryButton,
-                                    (otp.length < 4 || loading) && styles.buttonDisabled
-                                ]}
-                            >
-                                <Text style={styles.buttonText}>
-                                    {loading ? "Verifying..." : "Verify & Sign Up"}
-                                </Text>
+            {/* Hospital Selection Modal */}
+            <Modal
+                visible={showHospitalModal}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowHospitalModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Select Hospital</Text>
+                            <TouchableOpacity onPress={() => setShowHospitalModal(false)}>
+                                <Ionicons name="close" size={24} color="#1F2937" />
                             </TouchableOpacity>
                         </View>
-                    )}
-
-                    {/* Footer */}
-                    <View style={styles.footer}>
-                        <Text style={styles.footerText}>Already have an account? </Text>
-                        <TouchableOpacity onPress={() => router.push("/(public)/login_modern")}>
-                            <Text style={styles.footerLink}>Log In</Text>
-                        </TouchableOpacity>
+                        <FlatList
+                            data={hospitalNames}
+                            keyExtractor={(item) => item}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    style={styles.hospitalItem}
+                                    onPress={() => {
+                                        setHospitalName(item);
+                                        setShowHospitalModal(false);
+                                    }}
+                                >
+                                    <Text style={[
+                                        styles.hospitalItemText,
+                                        hospitalName === item && styles.hospitalItemTextActive
+                                    ]}>
+                                        {item}
+                                    </Text>
+                                    {hospitalName === item && (
+                                        <Ionicons name="checkmark-circle" size={22} color="#205fb7ff" />
+                                    )}
+                                </TouchableOpacity>
+                            )}
+                            contentContainerStyle={{ paddingBottom: 20 }}
+                        />
                     </View>
-                </ScrollView>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
+                </View>
+            </Modal>
+        </>
     );
 }
 
@@ -307,6 +400,49 @@ const styles = StyleSheet.create({
     },
     roleButtonTextActive: {
         color: 'white',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        maxHeight: '60%',
+        paddingTop: 20,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 24,
+        paddingBottom: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F3F4F6',
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#1F2937',
+    },
+    hospitalItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 16,
+        paddingHorizontal: 24,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F3F4F6',
+    },
+    hospitalItemText: {
+        fontSize: 16,
+        color: '#374151',
+    },
+    hospitalItemTextActive: {
+        color: '#205fb7ff',
+        fontWeight: '600',
     },
     termsContainer: {
         flexDirection: 'row',

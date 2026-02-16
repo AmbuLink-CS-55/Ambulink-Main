@@ -30,8 +30,6 @@ export default function LoginModern() {
     if (user?.role === "emt") return <Redirect href="/(emt)/medical" />;
 
     const handleSignIn = () => {
-        // For now, this just defaults to patient if they use the form
-        // In a real app, this would validate credentials
         setLoading(true);
         setTimeout(() => {
             signInAs("patient");
@@ -39,60 +37,37 @@ export default function LoginModern() {
         }, 1000);
     };
 
-
-
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
-                className="flex-1"
+                style={{ flex: 1 }}
             >
                 <ScrollView
                     contentContainerStyle={{ flexGrow: 1 }}
-                    className="px-6"
+                    style={{ paddingHorizontal: 24 }}
                     showsVerticalScrollIndicator={false}
                 >
                     {/* Header Section */}
-                    <View style={{ alignItems: 'center', marginTop: 0, marginBottom: 0 }}>
+                    <View style={{ alignItems: 'center' }}>
                         <Image
                             source={require('../../../assets/images/Gemini_Generated_Image_obcq05obcq05obcq-removebg-preview.png')}
                             style={{ width: 600, height: 600, marginTop: -195 }}
                             resizeMode="contain"
                         />
                     </View>
+
                     {/* Form Section */}
                     <View style={{ paddingHorizontal: 20, marginTop: -150 }}>
-                        <Text
-                            style={{
-                                textAlign: 'left',
-                                fontSize: 22,
-                                fontWeight: '700',
-                                color: '#205fb7ff',
-                                marginBottom: 30,
-                            }}
-                        >
+                        <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#205fb7ff', marginBottom: 30 }}>
                             Log in
                         </Text>
+
                         {/* Email Input */}
-                        <View style={{
-                            backgroundColor: '#d9e9fdff',
-                            borderRadius: 12,
-                            borderWidth: 1,
-                            borderColor: '#79a5fcff',
-                            marginBottom: 16,
-                            paddingHorizontal: 16,
-                            height: 56,
-                            flexDirection: 'row',
-                            alignItems: 'center'
-                        }}>
+                        <View style={{ backgroundColor: '#d9e9fdff', borderRadius: 12, borderWidth: 1, borderColor: '#79a5fcff', marginBottom: 16, paddingHorizontal: 16, height: 56, flexDirection: 'row', alignItems: 'center' }}>
                             <Ionicons name="mail-outline" size={22} color="#9CA3AF" />
                             <TextInput
-                                style={{
-                                    flex: 1,
-                                    marginLeft: 12,
-                                    fontSize: 16,
-                                    color: '#1F2937'
-                                }}
+                                style={{ flex: 1, marginLeft: 12, fontSize: 16, color: '#1F2937' }}
                                 placeholder="Email"
                                 placeholderTextColor="#9CA3AF"
                                 value={email}
@@ -103,25 +78,10 @@ export default function LoginModern() {
                         </View>
 
                         {/* Password Input */}
-                        <View style={{
-                            backgroundColor: '#d9e9fdff',
-                            borderRadius: 12,
-                            borderWidth: 1,
-                            borderColor: '#79a5fcff',
-                            marginBottom: 12,
-                            paddingHorizontal: 16,
-                            height: 56,
-                            flexDirection: 'row',
-                            alignItems: 'center'
-                        }}>
+                        <View style={{ backgroundColor: '#d9e9fdff', borderRadius: 12, borderWidth: 1, borderColor: '#79a5fcff', marginBottom: 12, paddingHorizontal: 16, height: 56, flexDirection: 'row', alignItems: 'center' }}>
                             <Ionicons name="lock-closed-outline" size={22} color="#9CA3AF" />
                             <TextInput
-                                style={{
-                                    flex: 1,
-                                    marginLeft: 12,
-                                    fontSize: 16,
-                                    color: '#1F2937'
-                                }}
+                                style={{ flex: 1, marginLeft: 12, fontSize: 16, color: '#1F2937' }}
                                 placeholder="Password"
                                 placeholderTextColor="#9CA3AF"
                                 value={password}
@@ -134,7 +94,10 @@ export default function LoginModern() {
                         </View>
 
                         {/* Forgot Password */}
-                        <TouchableOpacity style={{ alignItems: 'flex-start', marginBottom: 24 }}>
+                        <TouchableOpacity
+                            onPress={() => { }}
+                            style={{ alignItems: 'flex-start', marginBottom: 24 }}
+                        >
                             <Text style={{ color: '#205fb7ff', fontSize: 13, fontWeight: '500' }}>Forgot Password?</Text>
                         </TouchableOpacity>
 
