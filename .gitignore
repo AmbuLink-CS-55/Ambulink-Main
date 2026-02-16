@@ -1,2 +1,8 @@
 .DS_Store
 /dev.sh
+.turbo
+dist
+.dist
+.env
+node_modules
+.expo
