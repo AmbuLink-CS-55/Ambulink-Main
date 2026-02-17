@@ -7,6 +7,9 @@ import type {
   DispatcherApprovalResponse,
   ServerToDispatcherEvents,
   DispatcherToServerEvents,
+  DispatcherBookingPayload,
+  DispatcherBookingUpdatePayload,
+  DriverLocationUpdate,
 } from "@/lib/types";
 
 export interface BookingRequest {
@@ -21,18 +24,29 @@ export interface BookingDecisionState {
   winner: BookingDecisionPayload["winner"];
 }
 
+export interface OngoingBookingState extends DispatcherBookingPayload {
+  updatedAt?: string;
+}
+
 interface SocketState {
   socket: Socket<ServerToDispatcherEvents, DispatcherToServerEvents> | null;
   isConnected: boolean;
   bookingRequests: BookingRequest[];
   bookingDecisions: Record<string, BookingDecisionState>;
+  ongoingBookings: Record<string, OngoingBookingState>;
   connect: () => void;
   disconnect: () => void;
   addBookingRequest: (request: BookingRequest) => void;
   removeBookingRequest: (requestId: string) => void;
+  clearBookingRequests: () => void;
   setBookingDecision: (payload: BookingDecisionPayload) => void;
   setBookingDecisionPending: (requestId: string) => void;
   clearBookingDecision: (requestId: string) => void;
+  syncOngoingBookings: (payload: DispatcherBookingPayload[]) => void;
+  upsertOngoingBooking: (payload: DispatcherBookingPayload) => void;
+  updateOngoingBooking: (payload: DispatcherBookingUpdatePayload) => void;
+  updateDriverLocation: (payload: DriverLocationUpdate) => void;
+  removeOngoingBooking: (bookingId: string) => void;
 }
 
 export const useSocketStore = create<SocketState>((set, get) => ({
@@ -40,6 +54,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
   isConnected: false,
   bookingRequests: [],
   bookingDecisions: {},
+  ongoingBookings: {},
 
   addBookingRequest: (request) =>
     set((state) => ({
@@ -50,6 +65,8 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     set((state) => ({
       bookingRequests: state.bookingRequests.filter((req) => req.requestId !== requestId),
     })),
+
+  clearBookingRequests: () => set({ bookingRequests: [] }),
 
   setBookingDecision: (payload) =>
     set((state) => ({
@@ -78,6 +95,73 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       const next = { ...state.bookingDecisions };
       delete next[requestId];
       return { bookingDecisions: next };
+    }),
+
+  syncOngoingBookings: (payloads) =>
+    set(() => {
+      const next: Record<string, OngoingBookingState> = {};
+      payloads.forEach((payload) => {
+        next[payload.bookingId] = payload;
+      });
+      return { ongoingBookings: next };
+    }),
+
+  upsertOngoingBooking: (payload) =>
+    set((state) => ({
+      ongoingBookings: {
+        ...state.ongoingBookings,
+        [payload.bookingId]: {
+          ...state.ongoingBookings[payload.bookingId],
+          ...payload,
+        },
+      },
+    })),
+
+  updateOngoingBooking: (payload) =>
+    set((state) => {
+      const current = state.ongoingBookings[payload.bookingId];
+      if (!current) return state;
+      if (payload.status === "COMPLETED" || payload.status === "CANCELLED") {
+        const next = { ...state.ongoingBookings };
+        delete next[payload.bookingId];
+        return { ongoingBookings: next };
+      }
+      return {
+        ongoingBookings: {
+          ...state.ongoingBookings,
+          [payload.bookingId]: {
+            ...current,
+            status: payload.status,
+            updatedAt: payload.updatedAt,
+          },
+        },
+      };
+    }),
+
+  updateDriverLocation: (payload) =>
+    set((state) => {
+      const next = { ...state.ongoingBookings };
+      let updated = false;
+      Object.entries(next).forEach(([bookingId, booking]) => {
+        if (booking.driver.id && booking.driver.id === payload.id) {
+          next[bookingId] = {
+            ...booking,
+            driver: {
+              ...booking.driver,
+              location: { x: payload.x, y: payload.y },
+            },
+          };
+          updated = true;
+        }
+      });
+      return updated ? { ongoingBookings: next } : state;
+    }),
+
+  removeOngoingBooking: (bookingId) =>
+    set((state) => {
+      const next = { ...state.ongoingBookings };
+      delete next[bookingId];
+      return { ongoingBookings: next };
     }),
 
   connect: () => {

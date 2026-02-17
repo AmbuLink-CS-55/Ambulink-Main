@@ -147,8 +147,8 @@ export interface PatientCancelRequest {
 // Requests from Driver
 export interface DriverLocationUpdate {
   id: string; // Driver ID
-  latitude: number;
-  longitude: number;
+  x: number;
+  y: number;
 }
 
 // Responses to Patient/Driver (common booking event payload)
@@ -200,6 +200,11 @@ export interface BookingAssignedPayload {
     lat: number;
     lng: number;
   };
+  dispatcherId?: string | null;
+  provider?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 /**
@@ -222,12 +227,25 @@ export interface NearByDriver {
  */
 export interface BookingNewPayload {
   requestId: string;
-  driver: NearByDriver;
+  driver: {
+    id: string;
+    providerId?: string | null;
+    currentLocation?: Point | null;
+    lat?: number;
+    lng?: number;
+    ambulance_provider?: {
+      id: string;
+      name: string;
+    };
+  };
   patient: {
     id: string;
     fullName: string | null;
     phoneNumber: string | null;
     email: string | null;
+    currentLocation?: Point | null;
+    lat?: number;
+    lng?: number;
     [key: string]: any; // Other patient fields
   };
 }
@@ -247,6 +265,44 @@ export interface BookingDecisionPayload {
     name: string | null;
     providerName: string | null;
   };
+}
+
+export interface DispatcherBookingPayload {
+  bookingId: string;
+  status: "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED";
+  pickupLocation: Point | null;
+  patient: {
+    id: string;
+    fullName: string | null;
+    phoneNumber: string | null;
+    location: Point | null;
+  };
+  driver: {
+    id: string | null;
+    fullName: string | null;
+    phoneNumber: string | null;
+    location: Point | null;
+    provider: {
+      id: string;
+      name: string;
+    } | null;
+  };
+  hospital: {
+    id: string | null;
+    name: string | null;
+    phoneNumber: string | null;
+    location: Point | null;
+  };
+  provider: {
+    id: string;
+    name: string;
+  } | null;
+}
+
+export interface DispatcherBookingUpdatePayload {
+  bookingId: string;
+  status: "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED";
+  updatedAt: string;
 }
 
 // ============================================================================
@@ -291,6 +347,9 @@ export type ServerToDispatcherEvents = {
     data: BookingNewPayload,
     callback: (response: DispatcherApprovalResponse) => void
   ) => void;
-  "booking:assigned": (data: BookingAssignedPayload) => void;
+  "booking:assigned": (data: DispatcherBookingPayload) => void;
+  "booking:sync": (data: { bookings: DispatcherBookingPayload[] }) => void;
+  "booking:update": (data: DispatcherBookingUpdatePayload) => void;
   "booking:decision": (data: BookingDecisionPayload) => void;
+  "driver:update": (data: DriverLocationUpdate) => void;
 };

@@ -49,6 +49,11 @@ export type DriverLocationUpdate = {
   y: number;
 };
 
+export type LocationPoint = {
+  x: number;
+  y: number;
+};
+
 /**
  * Basic booking event payload with just the booking ID
  */
@@ -112,6 +117,49 @@ export type BookingAssignedPayload = {
     lat: number;
     lng: number;
   };
+  dispatcherId?: string | null;
+  provider?: {
+    id: string;
+    name: string;
+  } | null;
+};
+
+export type DispatcherBookingPayload = {
+  bookingId: string;
+  status: "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED";
+  pickupLocation: LocationPoint | null;
+  patient: {
+    id: string;
+    fullName: string | null;
+    phoneNumber: string | null;
+    location: LocationPoint | null;
+  };
+  driver: {
+    id: string | null;
+    fullName: string | null;
+    phoneNumber: string | null;
+    location: LocationPoint | null;
+    provider: {
+      id: string;
+      name: string;
+    } | null;
+  };
+  hospital: {
+    id: string | null;
+    name: string | null;
+    phoneNumber: string | null;
+    location: LocationPoint | null;
+  };
+  provider: {
+    id: string;
+    name: string;
+  } | null;
+};
+
+export type DispatcherBookingUpdatePayload = {
+  bookingId: string;
+  status: "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED";
+  updatedAt: string;
 };
 
 /**
@@ -120,12 +168,17 @@ export type BookingAssignedPayload = {
  */
 export type BookingNewPayload = {
   requestId: string;
-  driver: User;
+  driver: {
+    id: string;
+    providerId?: string | null;
+    currentLocation?: { x: number; y: number } | null;
+  };
   patient: {
     id: string;
     fullName: string | null;
     phoneNumber: string | null;
     email: string | null;
+    currentLocation?: { x: number; y: number } | null;
     [key: string]: any; // Other patient fields from SelectPatientDto
   };
 };
@@ -192,7 +245,9 @@ export interface ServerToDispatcherEvents {
     data: BookingNewPayload,
     callback: (response: DispatcherApprovalResponse) => void
   ) => void;
-  "booking:assigned": (data: BookingAssignedPayload) => void;
+  "booking:assigned": (data: DispatcherBookingPayload) => void;
+  "booking:sync": (data: { bookings: DispatcherBookingPayload[] }) => void;
+  "booking:update": (data: DispatcherBookingUpdatePayload) => void;
   "booking:decision": (data: {
     requestId: string;
     isWinner: boolean;
@@ -202,4 +257,5 @@ export interface ServerToDispatcherEvents {
       providerName: string | null;
     };
   }) => void;
+  "driver:update": (data: DriverLocationUpdate) => void;
 }

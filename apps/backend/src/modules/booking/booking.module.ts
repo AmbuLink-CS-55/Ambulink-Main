@@ -1,9 +1,9 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { BookingService } from "./booking.service";
 import { DispatcherModule } from "../dispatcher/dispatcher.module";
 
 @Module({
-  imports: [DispatcherModule],
+  imports: [forwardRef(() => DispatcherModule)],
   providers: [BookingService],
   exports: [BookingService],
 })

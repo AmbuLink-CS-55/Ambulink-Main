@@ -7,8 +7,10 @@ import { BookingRequestOverlay } from "@/components/BookingRequestOverlay";
 import type {
   BookingNewPayload,
   DispatcherApprovalResponse,
-  BookingAssignedPayload,
   BookingDecisionPayload,
+  DispatcherBookingPayload,
+  DispatcherBookingUpdatePayload,
+  DriverLocationUpdate,
 } from "@/lib/types";
 
 export function DashboardLayout() {
@@ -17,6 +19,13 @@ export function DashboardLayout() {
   const disconnect = useSocketStore((state) => state.disconnect);
   const addBookingRequest = useSocketStore((state) => state.addBookingRequest);
   const setBookingDecision = useSocketStore((state) => state.setBookingDecision);
+  const clearBookingRequests = useSocketStore((state) => state.clearBookingRequests);
+  const syncOngoingBookings = useSocketStore((state) => state.syncOngoingBookings);
+  const upsertOngoingBooking = useSocketStore((state) => state.upsertOngoingBooking);
+  const updateOngoingBooking = useSocketStore((state) => state.updateOngoingBooking);
+  const updateDriverLocation = useSocketStore((state) => state.updateDriverLocation);
+  const removeBookingRequest = useSocketStore((state) => state.removeBookingRequest);
+  const clearBookingDecision = useSocketStore((state) => state.clearBookingDecision);
 
   useEffect(() => {
     connect();
@@ -38,24 +47,67 @@ export function DashboardLayout() {
       });
     };
 
-    const handleBookingAssigned = (_data: BookingAssignedPayload) => {
-      // TODO: Add proper implementation to handle booking assignments
+    const handleBookingAssigned = (data: DispatcherBookingPayload) => {
+      upsertOngoingBooking(data);
+      removeBookingRequest(data.bookingId);
+      clearBookingDecision(data.bookingId);
+    };
+
+    const handleBookingSync = (data: { bookings: DispatcherBookingPayload[] }) => {
+      syncOngoingBookings(data.bookings);
+    };
+
+    const handleBookingUpdate = (data: DispatcherBookingUpdatePayload) => {
+      updateOngoingBooking(data);
     };
 
     const handleBookingDecision = (data: BookingDecisionPayload) => {
       setBookingDecision(data);
     };
 
+    const handleDriverUpdate = (data: DriverLocationUpdate) => {
+      updateDriverLocation(data);
+    };
+
     socket.on("booking:new", handleNewBooking);
     socket.on("booking:assigned", handleBookingAssigned);
+    socket.on("booking:sync", handleBookingSync);
+    socket.on("booking:update", handleBookingUpdate);
     socket.on("booking:decision", handleBookingDecision);
+    socket.on("driver:update", handleDriverUpdate);
 
     return () => {
       socket.off("booking:new", handleNewBooking);
       socket.off("booking:assigned", handleBookingAssigned);
+      socket.off("booking:sync", handleBookingSync);
+      socket.off("booking:update", handleBookingUpdate);
       socket.off("booking:decision", handleBookingDecision);
+      socket.off("driver:update", handleDriverUpdate);
     };
-  }, [socket, addBookingRequest, setBookingDecision]);
+  }, [
+    socket,
+    addBookingRequest,
+    setBookingDecision,
+    syncOngoingBookings,
+    upsertOngoingBooking,
+    updateOngoingBooking,
+    updateDriverLocation,
+    removeBookingRequest,
+    clearBookingDecision,
+  ]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleDisconnect = () => {
+      clearBookingRequests();
+    };
+
+    socket.on("disconnect", handleDisconnect);
+    return () => {
+      socket.off("disconnect", handleDisconnect);
+    };
+  }, [socket, clearBookingRequests]);
 
   return (
     <SidebarProvider>

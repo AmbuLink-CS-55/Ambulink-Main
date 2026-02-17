@@ -23,17 +23,43 @@ function HospitalMarkersLayer({ hospitals }: { hospitals: Hospital[] }) {
       (map.getSource(sourceId) as maplibregl.GeoJSONSource).setData(geoJsonData);
     }
 
-    map.addLayer({
-      id: layerId,
-      type: "circle",
-      source: sourceId,
-      paint: {
-        "circle-radius": 8,
-        "circle-color": "#2B7FFF",
-        "circle-stroke-width": 2,
-        "circle-stroke-color": "#ffffff",
-      },
-    });
+    const triangleId = "hospital-triangle-marker";
+    const ensureLayer = () => {
+      const existingLayer = map.getLayer(layerId);
+      if (existingLayer && existingLayer.type !== "symbol") {
+        map.removeLayer(layerId);
+      }
+
+      if (!map.getLayer(layerId)) {
+        map.addLayer({
+          id: layerId,
+          type: "symbol",
+          source: sourceId,
+          layout: {
+            "icon-image": triangleId,
+            "icon-size": 0.9,
+            "icon-allow-overlap": true,
+          },
+        });
+      }
+    };
+
+    if (!map.hasImage(triangleId)) {
+      const triangleSvg =
+        "<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 24 24'>" +
+        "<path d='M12 3 L22 21 L2 21 Z' fill='#2B7FFF' stroke='#ffffff' stroke-width='2'/>" +
+        "</svg>";
+      const image = new Image(26, 26);
+      image.onload = () => {
+        if (!map.hasImage(triangleId)) {
+          map.addImage(triangleId, image);
+        }
+        ensureLayer();
+      };
+      image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(triangleSvg)}`;
+    } else {
+      ensureLayer();
+    }
 
     const handleClick = (
       e: maplibregl.MapMouseEvent & { features?: maplibregl.MapGeoJSONFeature[] }
@@ -41,10 +67,21 @@ function HospitalMarkersLayer({ hospitals }: { hospitals: Hospital[] }) {
       if (!e.features?.length) return;
       setSelectedHospital(hospitals[e.features[0].properties.arrIdx]);
     };
-    map.on("mouseover", layerId, handleClick);
-    map.on("mouseout", layerId, () => {
+    const handleMouseOut = () => {
       setSelectedHospital(null);
-    });
+    };
+    const attachEvents = () => {
+      if (!map.getLayer(layerId)) return;
+      map.on("mouseover", layerId, handleClick);
+      map.on("mouseout", layerId, handleMouseOut);
+    };
+
+    attachEvents();
+
+    return () => {
+      map.off("mouseover", layerId, handleClick);
+      map.off("mouseout", layerId, handleMouseOut);
+    };
   }, [map, isLoaded, geoJsonData, sourceId, layerId, hospitals]);
 
   if (hospitals === undefined) return <></>;

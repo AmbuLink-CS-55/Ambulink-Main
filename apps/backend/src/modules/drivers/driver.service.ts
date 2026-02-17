@@ -24,7 +24,7 @@ export class DriverService {
     return result[0];
   }
 
-  async findAll(providerId?: string, isActive?: boolean): Promise<User[]> {
+  async findAll(providerId?: string, isActive?: boolean, status?: UserStatus): Promise<User[]> {
     const conditions = [eq(users.role, "DRIVER" as const)];
 
     if (providerId) {
@@ -33,6 +33,10 @@ export class DriverService {
 
     if (isActive !== undefined) {
       conditions.push(eq(users.isActive, isActive));
+    }
+
+    if (status) {
+      conditions.push(eq(users.status, status));
     }
 
     return this.dbService.db

@@ -7,11 +7,14 @@ import { cn } from "@/lib/utils";
 
 export function BookingRequestOverlay() {
   const bookingRequests = useSocketStore((state) => state.bookingRequests);
+  const ongoingBookings = useSocketStore((state) => state.ongoingBookings);
   const removeBookingRequest = useSocketStore((state) => state.removeBookingRequest);
   const bookingDecisions = useSocketStore((state) => state.bookingDecisions);
   const setBookingDecisionPending = useSocketStore((state) => state.setBookingDecisionPending);
   const clearBookingDecision = useSocketStore((state) => state.clearBookingDecision);
   const [isOpen, setIsOpen] = useState(true);
+
+  const ongoingList = Object.values(ongoingBookings);
 
   const handleAccept = (requestId: string, callback: (response: { approved: boolean }) => void) => {
     callback({ approved: true });
@@ -73,13 +76,82 @@ export function BookingRequestOverlay() {
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-4">
-            {bookingRequests.length === 0 ? (
+            {bookingRequests.length === 0 && ongoingList.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                 <Bell className="h-12 w-12 mb-2 opacity-20" />
                 <p className="text-sm">No pending requests</p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
+                {ongoingList.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Ongoing Bookings
+                    </div>
+                    {ongoingList.map((booking) => (
+                      <Alert key={booking.bookingId} variant="default" className="border-emerald-200">
+                        <Truck className="h-4 w-4" />
+                        <AlertTitle>Active Booking</AlertTitle>
+                        <AlertDescription className="space-y-2">
+                          <div className="text-xs text-muted-foreground">
+                            Booking ID: {booking.bookingId}
+                          </div>
+                          <div className="grid gap-3 text-xs">
+                            <div className="rounded-md border bg-muted/40 p-3">
+                              <div className="text-[10px] uppercase text-muted-foreground">
+                                Patient
+                              </div>
+                              <div className="mt-1 flex items-center gap-2">
+                                <User2 className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">
+                                  {booking.patient.fullName ?? "Unknown"}
+                                </span>
+                              </div>
+                              {booking.patient.phoneNumber && (
+                                <div className="mt-1 flex items-center gap-2 text-muted-foreground">
+                                  <Phone className="h-4 w-4" />
+                                  <span>{booking.patient.phoneNumber}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="rounded-md border bg-muted/40 p-3">
+                              <div className="text-[10px] uppercase text-muted-foreground">
+                                Driver / Provider
+                              </div>
+                              <div className="mt-1 text-sm font-medium">
+                                {booking.driver.provider?.name ?? "Unknown Provider"}
+                              </div>
+                              <div className="mt-1 text-xs text-muted-foreground">
+                                Driver: {booking.driver.fullName ?? booking.driver.id ?? "Unknown"}
+                              </div>
+                            </div>
+
+                            <div className="rounded-md border bg-muted/40 p-3">
+                              <div className="text-[10px] uppercase text-muted-foreground">
+                                Hospital
+                              </div>
+                              <div className="mt-1 text-sm font-medium">
+                                {booking.hospital.name ?? "Unknown"}
+                              </div>
+                              {booking.hospital.phoneNumber && (
+                                <div className="mt-1 text-xs text-muted-foreground">
+                                  {booking.hospital.phoneNumber}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                              <span>Status</span>
+                              <span className="font-mono">{booking.status}</span>
+                            </div>
+                          </div>
+                        </AlertDescription>
+                      </Alert>
+                    ))}
+                  </div>
+                )}
+
                 {bookingRequests.map((request) => (
                   <Alert
                     key={request.requestId}

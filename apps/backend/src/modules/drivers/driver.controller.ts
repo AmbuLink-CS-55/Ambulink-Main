@@ -7,6 +7,7 @@ import {
   type CreateDriverDto,
   type UpdateDriverDto,
 } from "@/common/validation/schemas";
+import type { UserStatus } from "@/common/database/schema";
 
 @Controller("api/drivers")
 export class DriverController {
@@ -21,9 +22,13 @@ export class DriverController {
   }
 
   @Get()
-  findAll(@Query("providerId") providerId?: string, @Query("isActive") isActive?: string) {
+  findAll(
+    @Query("providerId") providerId?: string,
+    @Query("isActive") isActive?: string,
+    @Query("status") status?: string
+  ) {
     const isActiveBool = isActive !== undefined ? isActive === "true" : undefined;
-    return this.driverService.findAll(providerId, isActiveBool);
+    return this.driverService.findAll(providerId, isActiveBool, status as UserStatus | undefined);
   }
 
   @Get(":id")

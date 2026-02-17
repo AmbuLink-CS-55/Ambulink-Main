@@ -99,10 +99,16 @@ export class PatientGateway implements OnGatewayInit {
       null,
       hospital,
       pickedDriver,
-      null
+      null,
+      dispatcherId
     );
     console.log("Booking created:", booking);
-    this.socketService.emitToDispatcher(dispatcherId, "booking:assigned", booking);
+    const dispatcherPayload = booking.bookingId
+      ? await this.bookingService.buildDispatcherBookingPayload(booking.bookingId)
+      : null;
+    if (dispatcherPayload) {
+      this.socketService.emitToDispatcher(dispatcherId, "booking:assigned", dispatcherPayload);
+    }
     this.socketService.emitToDriver(pickedDriver.id, "booking:assigned", booking);
     client.emit("booking:assigned", booking);
   }

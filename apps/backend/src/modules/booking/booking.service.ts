@@ -1,13 +1,17 @@
 import { Injectable } from "@nestjs/common";
-import { eq, ne, sql } from "drizzle-orm";
-import { ambulanceProviders, bookings, users } from "@/common/database/schema";
+import { eq, ne, sql, inArray } from "drizzle-orm";
+import { ambulanceProviders, bookings, hospitals, users } from "@/common/database/schema";
 import type { Booking, Hospital, User } from "@/common/database/schema";
 import { and } from "drizzle-orm";
 import { or } from "drizzle-orm";
 import { DbService } from "@/common/database/db.service";
 import { DispatcherService } from "../dispatcher/dispatcher.service";
 import { SocketService } from "@/common/socket/socket.service";
-import { DriverLocationUpdate } from "@/common/types/socket.types";
+import {
+  DriverLocationUpdate,
+  DispatcherBookingPayload,
+  DispatcherBookingUpdatePayload,
+} from "@/common/types/socket.types";
 
 @Injectable()
 export class BookingService {
@@ -24,9 +28,10 @@ export class BookingService {
     pickupAddr: string | null,
     hospital: Hospital,
     pickedDriver: User,
-    emergencyType: string | null
+    emergencyType: string | null,
+    dispatcherId?: string | null
   ) {
-    await this.dbService.db
+    const [createdBooking] = await this.dbService.db
       .insert(bookings)
       .values({
         patientId: patient.id,
@@ -38,6 +43,7 @@ export class BookingService {
         providerId: pickedDriver.providerId,
         driverId: pickedDriver.id,
         hospitalId: hospital.id,
+        dispatcherId: dispatcherId ?? null,
 
         emergencyType: emergencyType,
         fareEstimate: null,
@@ -55,15 +61,37 @@ export class BookingService {
       .from(ambulanceProviders)
       .where(eq(ambulanceProviders.id, pickedDriver.providerId));
 
-    return { patient, pickedDriver, provider, hospital };
+    return { patient, pickedDriver, provider, hospital, bookingId: createdBooking?.id ?? null };
   }
 
   async updateBooking(bookingId: string, booking: Partial<Booking>) {
+    const updateData: Partial<Booking> = { ...booking };
+
+    if (booking.status === "COMPLETED") {
+      updateData.ongoing = false;
+      updateData.completedAt = new Date();
+    }
+
+    if (booking.status === "CANCELLED") {
+      updateData.ongoing = false;
+    }
+
     const [updatedBooking] = await this.dbService.db
       .update(bookings)
-      .set(booking)
+      .set(updateData)
       .where(eq(bookings.id, bookingId))
       .returning();
+
+    if (updatedBooking?.dispatcherId) {
+      if (updatedBooking.status === "REQUESTED") {
+        return updatedBooking;
+      }
+      this.socketService.emitToDispatcher(updatedBooking.dispatcherId, "booking:update", {
+        bookingId: updatedBooking.id,
+        status: updatedBooking.status,
+        updatedAt: new Date().toISOString(),
+      } satisfies DispatcherBookingUpdatePayload);
+    }
 
     return updatedBooking;
   }
@@ -156,14 +184,32 @@ export class BookingService {
       this.socketService.dispatcherServer
         ?.to(`dispatcher:${dispatcherId}`)
         .timeout(30000)
-        .emit("booking:new", { requestId, driver, patient }, (err: any, response: any) => {
+        .emit(
+          "booking:new",
+          {
+            requestId,
+            driver: {
+              id: driver.id,
+              providerId: driver.providerId,
+              currentLocation: driver.currentLocation ?? null,
+            },
+            patient: {
+              id: patient.id,
+              fullName: patient.fullName ?? null,
+              phoneNumber: patient.phoneNumber ?? null,
+              email: patient.email ?? null,
+              currentLocation: patient.currentLocation ?? null,
+            },
+          },
+          (err: any, response: any) => {
           // response is a array
           if (err || !response[0]?.approved) {
             return reject("Dispatcher declined or ignored");
           }
 
           resolve({ dispatcherId: dispatcherId, pickedDriver: driver });
-        });
+          }
+        );
     });
   }
 
@@ -217,5 +263,102 @@ export class BookingService {
     }
     this.socketService.emitToDispatcher(dispatcherId, "driver:update", data);
     this.socketService.emitToPatient(patientId, "driver:update", data);
+  }
+
+  async getDispatcherActiveBookings(dispatcherId: string) {
+    return this.dbService.db
+      .select({
+        bookingId: bookings.id,
+        status: bookings.status,
+        pickupLocation: bookings.pickupLocation,
+        patientId: users.id,
+        patientName: users.fullName,
+        patientPhone: users.phoneNumber,
+        patientLocation: users.currentLocation,
+        driverId: sql<string | null>`${bookings.driverId}`,
+        driverName: sql<string | null>`driver_user.full_name`,
+        driverPhone: sql<string | null>`driver_user.phone_number`,
+        driverLocation: sql<any>`driver_user.current_location`,
+        providerId: sql<string | null>`${bookings.providerId}`,
+        providerName: sql<string | null>`${ambulanceProviders.name}`,
+        hospitalId: hospitals.id,
+        hospitalName: hospitals.name,
+        hospitalPhone: hospitals.phoneNumber,
+        hospitalLocation: hospitals.location,
+      })
+      .from(bookings)
+      .innerJoin(users, eq(users.id, bookings.patientId))
+      .leftJoin(sql`users as driver_user`, sql`driver_user.id = ${bookings.driverId}`)
+      .leftJoin(ambulanceProviders, eq(ambulanceProviders.id, bookings.providerId))
+      .leftJoin(hospitals, eq(hospitals.id, bookings.hospitalId))
+      .where(
+        and(
+          eq(bookings.dispatcherId, dispatcherId),
+          inArray(bookings.status, ["ASSIGNED", "ARRIVED", "PICKEDUP"])
+        )
+      );
+  }
+
+  async buildDispatcherBookingPayload(bookingId: string) {
+    const [row] = await this.dbService.db
+      .select({
+        bookingId: bookings.id,
+        status: bookings.status,
+        pickupLocation: bookings.pickupLocation,
+        patientId: users.id,
+        patientName: users.fullName,
+        patientPhone: users.phoneNumber,
+        patientLocation: users.currentLocation,
+        driverId: sql<string | null>`${bookings.driverId}`,
+        driverName: sql<string | null>`driver_user.full_name`,
+        driverPhone: sql<string | null>`driver_user.phone_number`,
+        driverLocation: sql<any>`driver_user.current_location`,
+        providerId: sql<string | null>`${bookings.providerId}`,
+        providerName: sql<string | null>`${ambulanceProviders.name}`,
+        hospitalId: hospitals.id,
+        hospitalName: hospitals.name,
+        hospitalPhone: hospitals.phoneNumber,
+        hospitalLocation: hospitals.location,
+      })
+      .from(bookings)
+      .innerJoin(users, eq(users.id, bookings.patientId))
+      .leftJoin(sql`users as driver_user`, sql`driver_user.id = ${bookings.driverId}`)
+      .leftJoin(ambulanceProviders, eq(ambulanceProviders.id, bookings.providerId))
+      .leftJoin(hospitals, eq(hospitals.id, bookings.hospitalId))
+      .where(eq(bookings.id, bookingId));
+
+    if (!row) return null;
+
+    return {
+      bookingId: row.bookingId,
+      status: row.status === "REQUESTED" ? "ASSIGNED" : row.status,
+      pickupLocation: row.pickupLocation ?? null,
+      patient: {
+        id: row.patientId,
+        fullName: row.patientName ?? null,
+        phoneNumber: row.patientPhone ?? null,
+        location: row.patientLocation ?? null,
+      },
+      driver: {
+        id: row.driverId ?? null,
+        fullName: row.driverName ?? null,
+        phoneNumber: row.driverPhone ?? null,
+        location: row.driverLocation ?? null,
+        provider:
+          row.providerId && row.providerName
+            ? { id: row.providerId, name: row.providerName }
+            : null,
+      },
+      hospital: {
+        id: row.hospitalId ?? null,
+        name: row.hospitalName ?? null,
+        phoneNumber: row.hospitalPhone ?? null,
+        location: row.hospitalLocation ?? null,
+      },
+      provider:
+        row.providerId && row.providerName
+          ? { id: row.providerId, name: row.providerName }
+          : null,
+    } satisfies DispatcherBookingPayload;
   }
 }
