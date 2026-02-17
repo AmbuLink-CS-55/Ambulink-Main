@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Text, Alert, View, ActivityIndicator } from "react-native";
 import UserMap from "@/components/patient/UserMap";
 import MapOptions from "../../components/patient/MapOptions";
@@ -14,18 +14,53 @@ export default function Map() {
 
   const [status, setStatus] = useState<BookingStatus>("COMPLETED");
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isBooking, setIsBooking] = useState(false);
+  const [completedAt, setCompletedAt] = useState<number | null>(null);
   const [booking, setBooking] = useState<{
     patient: User;
     pickedDriver: User;
     hospital: Hospital;
   } | null>(null);
 
-  usePatientEvents(setBooking, setStatus, setIsCancelling);
+  const bookingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  usePatientEvents(setBooking, setStatus, setIsCancelling, setIsBooking, setCompletedAt);
+
+  useEffect(() => {
+    return () => {
+      if (bookingTimeoutRef.current) {
+        clearTimeout(bookingTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isBooking && bookingTimeoutRef.current) {
+      clearTimeout(bookingTimeoutRef.current);
+      bookingTimeoutRef.current = null;
+    }
+  }, [isBooking]);
+
+  useEffect(() => {
+    if (completedAt === null) return;
+    const timer = setTimeout(() => {
+      setCompletedAt(null);
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, [completedAt]);
 
   const handleHelpRequest = async () => {
     // TODO: send this to server
     const patientSettings = await loadSettings();
     if (!locationState?.location || !socket?.connected) return;
+    setIsBooking(true);
+    if (bookingTimeoutRef.current) {
+      clearTimeout(bookingTimeoutRef.current);
+    }
+    bookingTimeoutRef.current = setTimeout(() => {
+      setIsBooking(false);
+      Alert.alert("Booking Timeout", "We couldn't confirm your request. Please try again.");
+    }, 20000);
     socket.emit("patient:help", {
       x: locationState.location.longitude,
       y: locationState.location.latitude,
@@ -91,6 +126,8 @@ export default function Map() {
         onHelpRequest={handleHelpRequest}
         cancelRequest={handleCancel}
         isCancelling={isCancelling}
+        isBooking={isBooking}
+        completedAt={completedAt}
       />
     </UserMap>
   );

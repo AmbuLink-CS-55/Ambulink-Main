@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { eq, ne, sql } from "drizzle-orm";
-import { ambulanceProviders, bookings } from "@/common/database/schema";
+import { ambulanceProviders, bookings, users } from "@/common/database/schema";
 import type { Booking, Hospital, User } from "@/common/database/schema";
 import { and } from "drizzle-orm";
 import { or } from "drizzle-orm";
@@ -104,21 +104,41 @@ export class BookingService {
   }
 
   async askDispatchers(nearByDrivers: User[], patient: User) {
-    const approvalPromises = nearByDrivers.map(async (driver) => {
-      const dispatcherId = await this.dispatcherService.findLiveDispatchersByProvider(
-        driver.providerId!
-      );
+    const requests = await Promise.all(
+      nearByDrivers.map(async (driver) => {
+        const dispatcherId = await this.dispatcherService.findLiveDispatchersByProvider(
+          driver.providerId!
+        );
 
-      return this.waitForDispatcherApproval(
-        dispatcherId,
-        driver,
-        patient,
-        `req_${Date.now()}_${driver.id}`
-      );
-    });
+        if (!dispatcherId) return null;
+
+        const requestId = `req_${Date.now()}_${driver.id}`;
+        return { dispatcherId, driver, requestId };
+      })
+    );
+
+    const activeRequests = requests.filter(
+      (request): request is { dispatcherId: string; driver: User; requestId: string } =>
+        Boolean(request)
+    );
+
+    if (activeRequests.length === 0) {
+      console.error("No available dispatchers for nearby drivers");
+      return null;
+    }
+
+    const approvalPromises = activeRequests.map(({ dispatcherId, driver, requestId }) =>
+      this.waitForDispatcherApproval(dispatcherId, driver, patient, requestId).then(
+        (result) => ({ ...result, requestId })
+      )
+    );
 
     try {
       const winningResponse = await Promise.any(approvalPromises);
+      await this.notifyDispatcherDecision(
+        activeRequests.map(({ dispatcherId, requestId }) => ({ dispatcherId, requestId })),
+        winningResponse.dispatcherId
+      );
       return winningResponse;
     } catch (_error) {
       console.error("All dispatchers rejected the request");
@@ -143,6 +163,39 @@ export class BookingService {
           }
 
           resolve({ dispatcherId: dispatcherId, pickedDriver: driver });
+        });
+    });
+  }
+
+  private async notifyDispatcherDecision(
+    dispatcherRequests: { dispatcherId: string; requestId: string }[],
+    winnerDispatcherId: string
+  ) {
+    if (!this.socketService.dispatcherServer) return;
+
+    const [winner] = await this.dbService.db
+      .select({
+        id: users.id,
+        name: users.fullName,
+        providerName: ambulanceProviders.name,
+      })
+      .from(users)
+      .leftJoin(ambulanceProviders, eq(users.providerId, ambulanceProviders.id))
+      .where(eq(users.id, winnerDispatcherId));
+
+    const winnerPayload = {
+      id: winnerDispatcherId,
+      name: winner?.name ?? null,
+      providerName: winner?.providerName ?? null,
+    };
+
+    dispatcherRequests.forEach(({ dispatcherId, requestId }) => {
+      this.socketService.dispatcherServer
+        ?.to(`dispatcher:${dispatcherId}`)
+        .emit("booking:decision", {
+          requestId,
+          isWinner: dispatcherId === winnerDispatcherId,
+          winner: winnerPayload,
         });
     });
   }

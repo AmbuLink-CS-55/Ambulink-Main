@@ -193,4 +193,13 @@ export interface ServerToDispatcherEvents {
     callback: (response: DispatcherApprovalResponse) => void
   ) => void;
   "booking:assigned": (data: BookingAssignedPayload) => void;
+  "booking:decision": (data: {
+    requestId: string;
+    isWinner: boolean;
+    winner: {
+      id: string;
+      name: string | null;
+      providerName: string | null;
+    };
+  }) => void;
 }

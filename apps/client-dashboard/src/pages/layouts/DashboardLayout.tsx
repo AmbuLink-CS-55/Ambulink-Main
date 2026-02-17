@@ -8,6 +8,7 @@ import type {
   BookingNewPayload,
   DispatcherApprovalResponse,
   BookingAssignedPayload,
+  BookingDecisionPayload,
 } from "@/lib/types";
 
 export function DashboardLayout() {
@@ -15,6 +16,7 @@ export function DashboardLayout() {
   const connect = useSocketStore((state) => state.connect);
   const disconnect = useSocketStore((state) => state.disconnect);
   const addBookingRequest = useSocketStore((state) => state.addBookingRequest);
+  const setBookingDecision = useSocketStore((state) => state.setBookingDecision);
 
   useEffect(() => {
     connect();
@@ -40,14 +42,20 @@ export function DashboardLayout() {
       // TODO: Add proper implementation to handle booking assignments
     };
 
+    const handleBookingDecision = (data: BookingDecisionPayload) => {
+      setBookingDecision(data);
+    };
+
     socket.on("booking:new", handleNewBooking);
     socket.on("booking:assigned", handleBookingAssigned);
+    socket.on("booking:decision", handleBookingDecision);
 
     return () => {
       socket.off("booking:new", handleNewBooking);
       socket.off("booking:assigned", handleBookingAssigned);
+      socket.off("booking:decision", handleBookingDecision);
     };
-  }, [socket, addBookingRequest]);
+  }, [socket, addBookingRequest, setBookingDecision]);
 
   return (
     <SidebarProvider>

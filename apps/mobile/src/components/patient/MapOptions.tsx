@@ -10,6 +10,8 @@ interface MapOptionsProps {
   onHelpRequest: () => void;
   cancelRequest: () => void;
   isCancelling?: boolean;
+  isBooking?: boolean;
+  completedAt?: number | null;
 }
 
 export default function MapOptions({
@@ -19,20 +21,27 @@ export default function MapOptions({
   onHelpRequest,
   cancelRequest,
   isCancelling = false,
+  isBooking = false,
+  completedAt = null,
 }: MapOptionsProps) {
-  // if (status === "COMPLETED") {
-  //   return (
-  //     <View className="bg-white p-4 w-full rounded-2xl shadow-lg items-center">
-  //       <Ionicons name="checkmark-circle" size={48} color="#22c55e" />
-  //       <Text className="text-green-600 font-bold text-xl mt-2">
-  //         Ride Completed
-  //       </Text>
-  //       <Text className="text-gray-500 mt-1">
-  //         You have arrived at {booking?.hospital.name}
-  //       </Text>
-  //     </View>
-  //   );
-  // }
+  const shouldShowCompleted =
+    status === "COMPLETED" &&
+    completedAt !== null &&
+    Date.now() - completedAt < 8000;
+
+  if (shouldShowCompleted) {
+    return (
+      <View className="bg-white p-4 w-full rounded-2xl shadow-lg items-center">
+        <Ionicons name="checkmark-circle" size={48} color="#22c55e" />
+        <Text className="text-green-600 font-bold text-xl mt-2">Trip Completed</Text>
+        <Text className="text-gray-500 mt-1">
+          {booking?.hospital?.name
+            ? `You have arrived at ${booking.hospital.name}`
+            : "You have arrived at your destination"}
+        </Text>
+      </View>
+    );
+  }
 
   if (status === "ARRIVED" && booking) {
     return (
@@ -98,11 +107,19 @@ export default function MapOptions({
   // idle state
   return (
     <TouchableOpacity
-      className="bg-white justify-center items-center p-4 w-full rounded-2xl shadow-lg"
+      className={`justify-center items-center p-4 w-full rounded-2xl shadow-lg ${isBooking ? "bg-gray-100" : "bg-white"}`}
       activeOpacity={0.9}
       onPress={onHelpRequest}
+      disabled={isBooking}
     >
-      <Text className="text-black font-bold text-xl uppercase">Book</Text>
+      {isBooking ? (
+        <View className="flex-row items-center">
+          <ActivityIndicator size="small" color="#ef4444" />
+          <Text className="text-gray-700 font-semibold ml-2">Requesting ambulance...</Text>
+        </View>
+      ) : (
+        <Text className="text-black font-bold text-xl uppercase">Book</Text>
+      )}
     </TouchableOpacity>
   );
 }

@@ -6,7 +6,9 @@ import { Alert } from "react-native";
 export const usePatientEvents = (
   setBooking: React.Dispatch<React.SetStateAction<any>>,
   setStatus: React.Dispatch<React.SetStateAction<BookingStatus>>,
-  setIsCancelling: React.Dispatch<React.SetStateAction<boolean>>
+  setIsCancelling: React.Dispatch<React.SetStateAction<boolean>>,
+  setIsBooking: React.Dispatch<React.SetStateAction<boolean>>,
+  setCompletedAt: React.Dispatch<React.SetStateAction<number | null>>
 ) => {
   useSocketEvent(
     "booking:assigned",
@@ -19,6 +21,8 @@ export const usePatientEvents = (
       if (!data) return;
       setBooking(data);
       setStatus("ASSIGNED");
+      setIsBooking(false);
+      setCompletedAt(null);
     }
   );
 
@@ -34,20 +38,30 @@ export const usePatientEvents = (
     );
   });
 
-  useSocketEvent("booking:arrived", () => setStatus("ARRIVED"));
+  useSocketEvent("booking:arrived", () => {
+    setStatus("ARRIVED");
+    setIsBooking(false);
+    setCompletedAt(null);
+  });
 
-  useSocketEvent("booking:completed", () => setStatus("COMPLETED"));
+  useSocketEvent("booking:completed", () => {
+    setStatus("COMPLETED");
+    setCompletedAt(Date.now());
+    setIsBooking(false);
+  });
 
   useSocketEvent("booking:cancelled", (data: { message: string }) => {
     if (!data) return;
     setBooking(null);
     setStatus("CANCELLED");
     setIsCancelling(false);
+    setIsBooking(false);
     Alert.alert("Cancelled", data.message);
   });
 
   useSocketEvent("booking:cancel:error", (data: { message: string }) => {
     setIsCancelling(false);
+    setIsBooking(false);
     Alert.alert("Error", data.message);
   });
 };

@@ -239,6 +239,16 @@ export interface DispatcherApprovalResponse {
   approved: boolean;
 }
 
+export interface BookingDecisionPayload {
+  requestId: string;
+  isWinner: boolean;
+  winner: {
+    id: string;
+    name: string | null;
+    providerName: string | null;
+  };
+}
+
 // ============================================================================
 // Socket Event Type Definitions
 // ============================================================================
@@ -282,4 +292,5 @@ export type ServerToDispatcherEvents = {
     callback: (response: DispatcherApprovalResponse) => void
   ) => void;
   "booking:assigned": (data: BookingAssignedPayload) => void;
+  "booking:decision": (data: BookingDecisionPayload) => void;
 };
