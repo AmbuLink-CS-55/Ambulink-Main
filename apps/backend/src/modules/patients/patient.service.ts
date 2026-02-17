@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq, and, inArray } from "drizzle-orm";
-import { bookings, NewUser, User, users, UserStatus } from "@/common/database/schema";
+import { bookings, User, users, UserStatus } from "@/common/database/schema";
 import { DbService } from "@/common/database/db.service";
+import type { CreatePatientDto, UpdatePatientDto } from "@/common/validation/schemas";
 
 @Injectable()
 export class PatientService {
@@ -30,7 +31,7 @@ export class PatientService {
     return booking[0];
   }
 
-  async create(createPatientDto: NewUser): Promise<User> {
+  async create(createPatientDto: CreatePatientDto): Promise<User> {
     const patientData = {
       ...createPatientDto,
       role: "PATIENT" as const,
@@ -60,12 +61,12 @@ export class PatientService {
       .where(and(eq(users.id, id), eq(users.role, "PATIENT")));
 
     if (result.length === 0) {
-      throw new Error(`Patient with id ${id} not found`);
+      throw new NotFoundException(`Patient with id ${id} not found`);
     }
     return result[0];
   }
 
-  async update(id: string, updatePatientDto: Partial<NewUser>): Promise<User> {
+  async update(id: string, updatePatientDto: UpdatePatientDto): Promise<User> {
     await this.findOne(id);
 
     const result = await this.dbService.db

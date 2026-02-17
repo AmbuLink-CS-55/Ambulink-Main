@@ -42,6 +42,9 @@ function HospitalMarkersLayer({ hospitals }: { hospitals: Hospital[] }) {
       setSelectedHospital(hospitals[e.features[0].properties.arrIdx]);
     };
     map.on("mouseover", layerId, handleClick);
+    map.on("mouseout", layerId, () => {
+      setSelectedHospital(null);
+    });
   }, [map, isLoaded, geoJsonData, sourceId, layerId, hospitals]);
 
   if (hospitals === undefined) return <></>;

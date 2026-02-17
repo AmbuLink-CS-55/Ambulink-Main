@@ -1,14 +1,15 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq, and, sql, isNotNull, asc } from "drizzle-orm";
-import { bookings, NewUser, User, users, UserStatus } from "@/common/database/schema";
+import { bookings, User, users, UserStatus } from "@/common/database/schema";
 import { DbService } from "@/common/database/db.service";
 import { or } from "drizzle-orm";
+import type { CreateDriverDto, UpdateDriverDto } from "@/common/validation/schemas";
 
 @Injectable()
 export class DriverService {
   constructor(private dbService: DbService) {}
 
-  async create(createDriverDto: NewUser): Promise<User> {
+  async create(createDriverDto: CreateDriverDto): Promise<User> {
     const result = await this.dbService.db
       .insert(users)
       .values({
@@ -52,7 +53,7 @@ export class DriverService {
     return result[0];
   }
 
-  async update(id: string, updateDriverDto: NewUser): Promise<User> {
+  async update(id: string, updateDriverDto: UpdateDriverDto): Promise<User> {
     await this.findOne(id);
 
     const updateData: Record<string, unknown> = {

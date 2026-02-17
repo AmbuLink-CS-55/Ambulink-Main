@@ -50,7 +50,7 @@ export class BookingService {
       throw new Error("Driver without provider");
     }
 
-    const provider = this.dbService.db
+    const provider = await this.dbService.db
       .select()
       .from(ambulanceProviders)
       .where(eq(ambulanceProviders.id, pickedDriver.providerId));
@@ -155,6 +155,9 @@ export class BookingService {
       })
       .from(bookings)
       .where(and(eq(bookings.ongoing, true), eq(bookings.driverId, driverId)));
+    if (!booking) {
+      return;
+    }
     const { patientId, dispatcherId } = booking;
     if (!patientId || !dispatcherId) {
       return;

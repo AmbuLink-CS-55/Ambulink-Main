@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useGetHospitals } from "@/services/hospital.service";
 import { Map, MapControls, MapEvents } from "@/components/ui/map";
 import HospitalMarkersLayer from "@/components/map/HospitalMarkerLayer";
@@ -8,9 +9,11 @@ export default function Dashboard() {
   const setMapView = useStore((state) => state.setMapView);
   const { error, data: hospitals } = useGetHospitals();
 
-  if (error) {
-    console.error("Error fetching hospitals");
-  }
+  useEffect(() => {
+    if (error) {
+      console.error("Error fetching hospitals", error);
+    }
+  }, [error]);
 
   return (
     <Map theme="dark" center={mapView.center} zoom={mapView.zoom}>

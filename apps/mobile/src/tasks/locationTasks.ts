@@ -11,8 +11,8 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }: any) => {
     if (location) {
       const socket = await SocketClientCreator.getSocket("DRIVER");
       socket.emit("driver:update", {
-        x: location.coords.latitude,
-        y: location.coords.longitude,
+        y: location.coords.latitude,
+        x: location.coords.longitude,
       });
     }
   }

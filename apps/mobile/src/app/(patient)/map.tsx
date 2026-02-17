@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Text, Alert } from "react-native";
+import { Text, Alert, View, ActivityIndicator } from "react-native";
 import UserMap from "@/components/patient/UserMap";
 import MapOptions from "../../components/patient/MapOptions";
 import { useLocation } from "@/hooks/useLocation";
@@ -49,7 +49,27 @@ export default function Map() {
     ]);
   };
 
-  if (!locationState?.location?.latitude) return <Text>Loading</Text>;
+  if (locationState?.loading) {
+    return (
+      <View className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" color="#ef4444" />
+        <Text className="mt-4 text-gray-500">Getting your location...</Text>
+      </View>
+    );
+  }
+
+  if (locationState?.error) {
+    return (
+      <View className="flex-1 items-center justify-center px-6">
+        <Text className="text-center text-red-500 font-semibold">Location Unavailable</Text>
+        <Text className="mt-2 text-center text-gray-500">
+          {locationState.error}
+        </Text>
+      </View>
+    );
+  }
+
+  if (!locationState?.location?.latitude) return <Text>Location unavailable</Text>;
 
   return (
     <UserMap

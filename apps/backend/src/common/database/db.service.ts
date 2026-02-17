@@ -20,29 +20,22 @@ export class DbService implements OnModuleInit {
     const retrys = 10;
     let delay = 1000;
 
-    for (let i = 1; i < retrys; i++) {
+    for (let i = 1; i <= retrys; i++) {
       try {
         await this.db.execute("SELECT 1");
         this.logger.log("Database connected");
         return;
       } catch (err) {
-        this.logger.log(`Database connection failed, retrying ${i} in ${delay}`);
-        if (i > retrys) {
-          this.logger.log(`all database connection attepts failed`);
-          process.exit(0);
+        if (i >= retrys) {
+          this.logger.error("All database connection attempts failed", err as Error);
+          process.exit(1);
         }
+        this.logger.warn(`Database connection failed, retrying ${i} in ${delay}`);
         await new Promise((res) => {
           setTimeout(res, delay);
         });
         delay *= 2;
       }
-    }
-    try {
-      await this.db.execute("SELECT 1");
-      this.logger.log("Database connected");
-    } catch (error) {
-      this.logger.error("Database connection failed with error:", error);
-      process.exit(1);
     }
   }
 }

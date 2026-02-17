@@ -1,6 +1,12 @@
-import { Controller, Get, Post, Patch, Param, Delete } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
 import { AmbulanceProviderService } from "./ambulance-provider.service";
-import type { AmbulanceProvider, NewAmbulanceProvider } from "@/common/database/schema";
+import { Validate } from "@/common/pipes/zod-validation.pipe";
+import {
+  createAmbulanceProviderSchema,
+  updateAmbulanceProviderSchema,
+  type CreateAmbulanceProviderDto,
+  type UpdateAmbulanceProviderDto,
+} from "@/common/validation/schemas";
 
 @Controller("api/ambulance-providers")
 export class AmbulanceProviderController {
@@ -8,8 +14,8 @@ export class AmbulanceProviderController {
 
   @Post()
   create(
-    // @Body(Validate(insertAmbulanceProviderSchema))
-    body: AmbulanceProvider
+    @Body(Validate(createAmbulanceProviderSchema))
+    body: CreateAmbulanceProviderDto
   ) {
     return this.ambulanceProviderService.create(body);
   }
@@ -27,8 +33,8 @@ export class AmbulanceProviderController {
   @Patch(":id")
   update(
     @Param("id") id: string,
-    // @Body(Validate(insertAmbulanceProviderSchema.partial()))
-    body: Partial<NewAmbulanceProvider>
+    @Body(Validate(updateAmbulanceProviderSchema))
+    body: UpdateAmbulanceProviderDto
   ) {
     return this.ambulanceProviderService.update(id, body);
   }

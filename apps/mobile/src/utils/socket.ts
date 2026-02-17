@@ -6,11 +6,12 @@ export class SocketClientCreator {
   static driverSocketUrl = `${env.EXPO_PUBLIC_WS_SERVER_URL}/driver`;
   static emtSocketUrl = `${env.EXPO_PUBLIC_WS_SERVER_URL}/emt`;
 
-  private static instance: Socket | null = null;
+  private static instances: Partial<Record<"PATIENT" | "DRIVER" | "EMT", Socket>> = {};
 
   static async getSocket(type: "PATIENT" | "DRIVER" | "EMT"): Promise<Socket> {
-    if (this.instance?.connected) {
-      return this.instance;
+    const existing = this.instances[type];
+    if (existing?.connected) {
+      return existing;
     }
 
     let url: string;
@@ -34,30 +35,33 @@ export class SocketClientCreator {
         throw Error("Socket type not defined");
     }
 
-    this.instance = io(url, {
+    const instance = io(url, {
       transports: ["websocket"],
       auth: authPayload,
       reconnection: true,
       reconnectionAttempts: Infinity,
       autoConnect: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 10000,
     });
 
-    this.instance.on("connect", () => {
+    instance.on("connect", () => {
       console.log("[socket] connected", {
         url,
         type,
       });
     });
 
-    this.instance.on("connect_error", (error) => {
+    instance.on("connect_error", (error) => {
       console.error("[socket] connect_error", {
+        error,
         url,
         type,
         message: error?.message,
       });
     });
 
-    this.instance.on("disconnect", (reason) => {
+    instance.on("disconnect", (reason) => {
       console.warn("[socket] disconnected", {
         url,
         type,
@@ -65,7 +69,7 @@ export class SocketClientCreator {
       });
     });
 
-    this.instance.io.on("reconnect_attempt", (attempt) => {
+    instance.io.on("reconnect_attempt", (attempt) => {
       console.info("[socket] reconnect_attempt", {
         url,
         type,
@@ -73,6 +77,7 @@ export class SocketClientCreator {
       });
     });
 
-    return this.instance;
+    this.instances[type] = instance;
+    return instance;
   }
 }

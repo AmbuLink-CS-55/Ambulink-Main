@@ -1,17 +1,19 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
-import {
-  AmbulanceProvider,
-  ambulanceProviders,
-  NewAmbulanceProvider,
-} from "@/common/database/schema";
+import { AmbulanceProvider, ambulanceProviders } from "@/common/database/schema";
 import { DbService } from "@/common/database/db.service";
+import type {
+  CreateAmbulanceProviderDto,
+  UpdateAmbulanceProviderDto,
+} from "@/common/validation/schemas";
 
 @Injectable()
 export class AmbulanceProviderService {
   constructor(private dbService: DbService) {}
 
-  async create(createAmbulanceProviderDto: NewAmbulanceProvider): Promise<NewAmbulanceProvider> {
+  async create(
+    createAmbulanceProviderDto: CreateAmbulanceProviderDto
+  ): Promise<AmbulanceProvider> {
     const result = await this.dbService.db
       .insert(ambulanceProviders)
       .values(createAmbulanceProviderDto)
@@ -36,7 +38,7 @@ export class AmbulanceProviderService {
 
   async update(
     id: string,
-    updateAmbulanceProviderDto: Partial<NewAmbulanceProvider>
+    updateAmbulanceProviderDto: UpdateAmbulanceProviderDto
   ): Promise<AmbulanceProvider> {
     const result = await this.dbService.db
       .update(ambulanceProviders)
