@@ -42,10 +42,7 @@ export function DriverMarkers({ ongoingBookings }: DriverMarkersProps) {
         return (
           <Fragment key={booking.bookingId}>
             {!isCompleted && booking.status === "ASSIGNED" && patientLocation && (
-              <OngoingPatientMarker
-                longitude={patientLocation.x}
-                latitude={patientLocation.y}
-              />
+              <OngoingPatientMarker longitude={patientLocation.x} latitude={patientLocation.y} />
             )}
             {driverLocation && (
               <DriverMarker

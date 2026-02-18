@@ -78,7 +78,11 @@ export class DriverGateway implements OnGatewayInit {
     const now = Date.now();
     const lastEmit = this.lastEmitTimes.get(driverId) || 0;
     if (now - lastEmit > 1000) {
-      this.socketService.emitToAllDispatchers("driver:update", { id: driverId, x: data.x, y: data.y });
+      this.socketService.emitToAllDispatchers("driver:update", {
+        id: driverId,
+        x: data.x,
+        y: data.y,
+      });
       this.lastEmitTimes.set(driverId, now);
     }
   }

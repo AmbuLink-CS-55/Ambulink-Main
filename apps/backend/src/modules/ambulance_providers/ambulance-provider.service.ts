@@ -11,9 +11,7 @@ import type {
 export class AmbulanceProviderService {
   constructor(private dbService: DbService) {}
 
-  async create(
-    createAmbulanceProviderDto: CreateAmbulanceProviderDto
-  ): Promise<AmbulanceProvider> {
+  async create(createAmbulanceProviderDto: CreateAmbulanceProviderDto): Promise<AmbulanceProvider> {
     const result = await this.dbService.db
       .insert(ambulanceProviders)
       .values(createAmbulanceProviderDto)

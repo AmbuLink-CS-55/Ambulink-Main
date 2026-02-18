@@ -9,10 +9,7 @@ export class AmbulanceService {
   constructor(private dbService: DbService) {}
 
   async create(createAmbulanceDto: CreateAmbulanceDto): Promise<Ambulance> {
-    const result = await this.dbService.db
-      .insert(ambulance)
-      .values(createAmbulanceDto)
-      .returning();
+    const result = await this.dbService.db.insert(ambulance).values(createAmbulanceDto).returning();
     return result[0];
   }
 

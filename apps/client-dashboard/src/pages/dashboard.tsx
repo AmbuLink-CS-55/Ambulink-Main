@@ -30,6 +30,7 @@ export default function Dashboard() {
   const bookingRequests = useSocketStore((state) => state.bookingRequests);
   const ongoingBookings = useSocketStore((state) => state.ongoingBookings);
   const [routes, setRoutes] = useState<Record<string, [number, number][]>>({});
+  // convert to array
   const ongoingList = useMemo(() => Object.values(ongoingBookings), [ongoingBookings]);
 
   useEffect(() => {
@@ -73,6 +74,8 @@ export default function Dashboard() {
 
         try {
           const coordinates = await fetchRoute(start, end);
+          console.log("route got:", routes[routeKey]);
+
           if (coordinates && coordinates.length >= 2) {
             routeCache.set(routeKey, { coordinates, updatedAt: Date.now() });
             nextRoutes[routeKey] = coordinates;
@@ -98,14 +101,19 @@ export default function Dashboard() {
 
   return (
     <MapView theme="dark" center={mapView.center} zoom={mapView.zoom}>
-      <MapEvents onChange={setMapView} />
+      {/*<MapEvents onChange={setMapView} />*/}
       <MapControls position="bottom-right" showZoom showLocate className="mb-4" />
+
       {hospitals && <HospitalMarkersLayer hospitals={hospitals} />}
+
       {bookingRequests.map((request) => (
         <PatientRequestMarker key={request.requestId} request={request} />
       ))}
+
       <DriverMarkers ongoingBookings={ongoingBookings} />
+
       {ongoingList.map((booking) => {
+        // For Routes
         const patientLocation = booking.pickupLocation ?? booking.patient.location;
         const driverLocation = booking.driver.location;
         const hospitalLocation = booking.hospital.location;
@@ -120,27 +128,27 @@ export default function Dashboard() {
               driverLocation &&
               patientLocation &&
               routes[routeKey] && (
-              <MapRoute
-                id={`route-${booking.bookingId}-patient`}
-                coordinates={routes[routeKey]}
-                color="#f59e0b"
-                width={4}
-                opacity={0.85}
-              />
-            )}
+                <MapRoute
+                  id={`route-${booking.bookingId}-patient`}
+                  coordinates={routes[routeKey]}
+                  color="#f59e0b"
+                  width={4}
+                  opacity={0.85}
+                />
+              )}
             {!isCompleted &&
               phase === "hospital" &&
               driverLocation &&
               hospitalLocation &&
               routes[routeKey] && (
-              <MapRoute
-                id={`route-${booking.bookingId}-hospital`}
-                coordinates={routes[routeKey]}
-                color="#ef4444"
-                width={4}
-                opacity={0.85}
-              />
-            )}
+                <MapRoute
+                  id={`route-${booking.bookingId}-hospital`}
+                  coordinates={routes[routeKey]}
+                  color="#ef4444"
+                  width={4}
+                  opacity={0.85}
+                />
+              )}
           </Fragment>
         );
       })}

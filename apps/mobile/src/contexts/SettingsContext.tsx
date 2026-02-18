@@ -6,11 +6,7 @@ const SettingsContext = createContext<UseSettingsLogicReturn | undefined>(undefi
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const settingsLogic = useSettingsLogic();
 
-  return (
-    <SettingsContext.Provider value={settingsLogic}>
-      {children}
-    </SettingsContext.Provider>
-  );
+  return <SettingsContext.Provider value={settingsLogic}>{children}</SettingsContext.Provider>;
 }
 
 export function useSettings() {

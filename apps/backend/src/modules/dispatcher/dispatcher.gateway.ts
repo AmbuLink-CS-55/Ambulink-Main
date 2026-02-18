@@ -43,38 +43,39 @@ export class DispatcherGateway implements OnGatewayInit {
     this.bookingService
       .getDispatcherActiveBookings(dispatcherId)
       .then((bookings) => {
-        const payloads = bookings.map((booking) =>
-          ({
-            bookingId: booking.bookingId,
-            status: booking.status === "REQUESTED" ? "ASSIGNED" : booking.status,
-            pickupLocation: booking.pickupLocation ?? null,
-            patient: {
-              id: booking.patientId,
-              fullName: booking.patientName ?? null,
-              phoneNumber: booking.patientPhone ?? null,
-              location: booking.patientLocation ?? null,
-            },
-            driver: {
-              id: booking.driverId ?? null,
-              fullName: booking.driverName ?? null,
-              phoneNumber: booking.driverPhone ?? null,
-              location: booking.driverLocation ?? null,
+        const payloads = bookings.map(
+          (booking) =>
+            ({
+              bookingId: booking.bookingId,
+              status: booking.status === "REQUESTED" ? "ASSIGNED" : booking.status,
+              pickupLocation: booking.pickupLocation ?? null,
+              patient: {
+                id: booking.patientId,
+                fullName: booking.patientName ?? null,
+                phoneNumber: booking.patientPhone ?? null,
+                location: booking.patientLocation ?? null,
+              },
+              driver: {
+                id: booking.driverId ?? null,
+                fullName: booking.driverName ?? null,
+                phoneNumber: booking.driverPhone ?? null,
+                location: booking.driverLocation ?? null,
+                provider:
+                  booking.providerId && booking.providerName
+                    ? { id: booking.providerId, name: booking.providerName }
+                    : null,
+              },
+              hospital: {
+                id: booking.hospitalId ?? null,
+                name: booking.hospitalName ?? null,
+                phoneNumber: booking.hospitalPhone ?? null,
+                location: booking.hospitalLocation ?? null,
+              },
               provider:
                 booking.providerId && booking.providerName
                   ? { id: booking.providerId, name: booking.providerName }
                   : null,
-            },
-            hospital: {
-              id: booking.hospitalId ?? null,
-              name: booking.hospitalName ?? null,
-              phoneNumber: booking.hospitalPhone ?? null,
-              location: booking.hospitalLocation ?? null,
-            },
-            provider:
-              booking.providerId && booking.providerName
-                ? { id: booking.providerId, name: booking.providerName }
-                : null,
-          }) satisfies DispatcherBookingPayload
+            }) satisfies DispatcherBookingPayload
         );
         this.socketService.emitToDispatcher(dispatcherId, "booking:sync", {
           bookings: payloads,

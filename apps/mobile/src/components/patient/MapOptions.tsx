@@ -25,9 +25,7 @@ export default function MapOptions({
   completedAt = null,
 }: MapOptionsProps) {
   const shouldShowCompleted =
-    status === "COMPLETED" &&
-    completedAt !== null &&
-    Date.now() - completedAt < 8000;
+    status === "COMPLETED" && completedAt !== null && Date.now() - completedAt < 8000;
 
   if (shouldShowCompleted) {
     return (

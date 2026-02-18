@@ -8,7 +8,9 @@ export default function AppSettingsSection() {
   const { settings, setActiveModal, updateSetting } = useSettings();
 
   const getLanguageLabel = () => {
-    return LANGUAGES.find((lang) => lang.id === settings.language)?.label || i18n.t("languages.english");
+    return (
+      LANGUAGES.find((lang) => lang.id === settings.language)?.label || i18n.t("languages.english")
+    );
   };
 
   return (

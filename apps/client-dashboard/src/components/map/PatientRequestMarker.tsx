@@ -25,8 +25,7 @@ export function PatientRequestMarker({ request }: PatientRequestMarkerProps) {
     return [request.data.driver.lng, request.data.driver.lat] as [number, number];
   }, [request]);
 
-  const hasValidCoordinates =
-    Number.isFinite(coordinates[0]) && Number.isFinite(coordinates[1]);
+  const hasValidCoordinates = Number.isFinite(coordinates[0]) && Number.isFinite(coordinates[1]);
 
   useEffect(() => {
     const start = performance.now();
@@ -63,7 +62,7 @@ export function PatientRequestMarker({ request }: PatientRequestMarkerProps) {
             top: -(ringSize / 2 - 6),
           }}
         />
-        <span className="relative block h-3 w-3 rounded-full bg-yellow-400 border-2 border-white shadow" />
+        <span className="relative block h-3 w-3 rounded-full bg-yellow-400 border-4 border-white shadow" />
       </MarkerContent>
     </MapMarker>
   );
