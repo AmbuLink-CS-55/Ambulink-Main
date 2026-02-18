@@ -156,9 +156,10 @@ export class BookingService {
     }
 
     const approvalPromises = activeRequests.map(({ dispatcherId, driver, requestId }) =>
-      this.waitForDispatcherApproval(dispatcherId, driver, patient, requestId).then(
-        (result) => ({ ...result, requestId })
-      )
+      this.waitForDispatcherApproval(dispatcherId, driver, patient, requestId).then((result) => ({
+        ...result,
+        requestId,
+      }))
     );
 
     try {
@@ -202,12 +203,12 @@ export class BookingService {
             },
           },
           (err: any, response: any) => {
-          // response is a array
-          if (err || !response[0]?.approved) {
-            return reject("Dispatcher declined or ignored");
-          }
+            // response is a array
+            if (err || !response[0]?.approved) {
+              return reject("Dispatcher declined or ignored");
+            }
 
-          resolve({ dispatcherId: dispatcherId, pickedDriver: driver });
+            resolve({ dispatcherId: dispatcherId, pickedDriver: driver });
           }
         );
     });
@@ -356,9 +357,7 @@ export class BookingService {
         location: row.hospitalLocation ?? null,
       },
       provider:
-        row.providerId && row.providerName
-          ? { id: row.providerId, name: row.providerName }
-          : null,
+        row.providerId && row.providerName ? { id: row.providerId, name: row.providerName } : null,
     } satisfies DispatcherBookingPayload;
   }
 }

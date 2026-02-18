@@ -15,6 +15,8 @@ export class DriverGateway implements OnGatewayInit {
   @WebSocketServer()
   server: Server;
 
+  private lastEmitTimes = new Map<string, number>();
+
   constructor(
     private driverService: DriverService,
     private bookingService: BookingService,
@@ -56,6 +58,7 @@ export class DriverGateway implements OnGatewayInit {
 
   handleDisconnect(client: Socket) {
     this.driverService.setStatus(client.data.driverId, "OFFLINE");
+    this.lastEmitTimes.delete(client.data.driverId); // Clean up
     console.log("[socket] disconnected", {
       namespace: "/driver",
       clientId: client.id,
@@ -67,7 +70,17 @@ export class DriverGateway implements OnGatewayInit {
   async updateDriverLocation(client: Socket, data: DriverLocationUpdate) {
     const driverId = client.data.driverId;
     this.driverService.setDriverLocation(driverId, data.y, data.x);
-    this.bookingService.sendDriverLocation(driverId, data);
+
+    // Send to specific dispatcher if booked
+    this.bookingService.sendDriverLocation(driverId, { id: driverId, x: data.x, y: data.y });
+
+    // Broadcast to all dispatchers if available (throttled to 1 update/sec per driver)
+    const now = Date.now();
+    const lastEmit = this.lastEmitTimes.get(driverId) || 0;
+    if (now - lastEmit > 1000) {
+      this.socketService.emitToAllDispatchers("driver:update", { id: driverId, x: data.x, y: data.y });
+      this.lastEmitTimes.set(driverId, now);
+    }
   }
 
   @SubscribeMessage("driver:arrived")
@@ -89,6 +102,7 @@ export class DriverGateway implements OnGatewayInit {
     const bookingData = await this.driverService.getDriverBooking(driverId);
     console.log(bookingData);
     this.bookingService.updateBooking(bookingData.id, { status: "COMPLETED" });
+    this.driverService.setStatus(driverId, "AVAILABLE");
     const { id, patientId } = bookingData;
     this.socketService.emitToPatient(patientId!, "booking:completed", {
       bookingId: id,

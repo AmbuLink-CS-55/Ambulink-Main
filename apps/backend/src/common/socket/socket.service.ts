@@ -31,4 +31,12 @@ export class SocketService {
     console.log("emited", dispatcherId, "events:", event, payload);
     this.dispatcherServer.to(`dispatcher:${dispatcherId}`).emit(event, payload);
   }
+
+  emitToAllDispatchers(event: string, payload: any) {
+    if (!this.dispatcherServer) {
+      console.warn(`[SocketService] dispatcherServer not initialized yet! Event ${event} dropped.`);
+      return;
+    }
+    this.dispatcherServer.emit(event, payload);
+  }
 }

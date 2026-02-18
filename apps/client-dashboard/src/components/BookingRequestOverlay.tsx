@@ -89,7 +89,11 @@ export function BookingRequestOverlay() {
                       Ongoing Bookings
                     </div>
                     {ongoingList.map((booking) => (
-                      <Alert key={booking.bookingId} variant="default" className="border-emerald-200">
+                      <Alert
+                        key={booking.bookingId}
+                        variant="default"
+                        className="border-emerald-200"
+                      >
                         <Truck className="h-4 w-4" />
                         <AlertTitle>Active Booking</AlertTitle>
                         <AlertDescription className="space-y-2">
@@ -217,7 +221,8 @@ export function BookingRequestOverlay() {
 
                       {bookingDecisions[request.requestId]?.status === "lost" && (
                         <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                          Another dispatcher got it: {bookingDecisions[request.requestId].winner.name ?? "Unknown"}
+                          Another dispatcher got it:{" "}
+                          {bookingDecisions[request.requestId].winner.name ?? "Unknown"}
                           {bookingDecisions[request.requestId].winner.providerName
                             ? ` (${bookingDecisions[request.requestId].winner.providerName})`
                             : ""}

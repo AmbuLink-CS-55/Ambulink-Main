@@ -93,18 +93,14 @@ export default function Map() {
     );
   }
 
-  if (locationState?.error) {
+  if (locationState?.error || !locationState?.location?.latitude) {
     return (
       <View className="flex-1 items-center justify-center px-6">
         <Text className="text-center text-red-500 font-semibold">Location Unavailable</Text>
-        <Text className="mt-2 text-center text-gray-500">
-          {locationState.error}
-        </Text>
+        <Text className="mt-2 text-center text-gray-500">{locationState.error}</Text>
       </View>
     );
   }
-
-  if (!locationState?.location?.latitude) return <Text>Location unavailable</Text>;
 
   return (
     <UserMap
