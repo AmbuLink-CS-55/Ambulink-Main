@@ -1,11 +1,12 @@
 import React from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { Image } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE, Region } from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE, Region, Polyline } from "react-native-maps";
 import { Ionicons } from "@expo/vector-icons";
 import { Point } from "@ambulink/types";
 import ambulanceIcon from "../../../assets/images/ambu.png";
 import Svg, { Path, Circle, Rect } from "react-native-svg";
+import { useFetchRoute } from "@/hooks/use-fetch-route";
 
 type Props = {
   userLocation: Point;
@@ -21,6 +22,8 @@ export default function UserMap({
   children,
 }: Props) {
   const mapRef = React.useRef<MapView>(null);
+  const patientDriverCord = useFetchRoute(userLocation, driverLocations[0]);
+  const patientHospitalCord = useFetchRoute(userLocation, hospitalLocation);
 
   const region: Region = {
     latitude: userLocation.y,
@@ -71,6 +74,18 @@ export default function UserMap({
             </View>
           </Marker>
         ))}
+
+        {hospitalLocation && driverLocations.length > 0 && (
+          <>
+            {patientDriverCord.length > 0 && (
+              <Polyline coordinates={patientDriverCord} strokeWidth={4} strokeColor="#007AFF" />
+            )}
+            {patientHospitalCord.length > 0 && (
+              <Polyline coordinates={patientHospitalCord} strokeWidth={4} strokeColor="#FF3B30" />
+            )}
+          </>
+        )}
+
         {hospitalLocation && (
           <Marker
             key={`${hospitalLocation.x}-${hospitalLocation.y}`}
