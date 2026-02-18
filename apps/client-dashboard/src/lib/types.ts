@@ -305,6 +305,13 @@ export interface DispatcherBookingUpdatePayload {
   updatedAt: string;
 }
 
+export interface DispatcherBookingLogPayload {
+  providerId: string;
+  bookingId: string;
+  status: "REQUESTED" | "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED";
+  updatedAt: string;
+}
+
 // ============================================================================
 // Socket Event Type Definitions
 // ============================================================================
@@ -351,5 +358,6 @@ export type ServerToDispatcherEvents = {
   "booking:sync": (data: { bookings: DispatcherBookingPayload[] }) => void;
   "booking:update": (data: DispatcherBookingUpdatePayload) => void;
   "booking:decision": (data: BookingDecisionPayload) => void;
+  "booking:log": (data: DispatcherBookingLogPayload) => void;
   "driver:update": (data: DriverLocationUpdate) => void;
 };

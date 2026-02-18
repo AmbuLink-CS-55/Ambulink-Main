@@ -34,6 +34,7 @@ interface SocketState {
   bookingRequests: BookingRequest[];
   bookingDecisions: Record<string, BookingDecisionState>;
   ongoingBookings: Record<string, OngoingBookingState>;
+  bookingLogUpdates: Record<string, { status: string; updatedAt: string; providerId?: string }>;
   connect: () => void;
   disconnect: () => void;
   addBookingRequest: (request: BookingRequest) => void;
@@ -47,6 +48,12 @@ interface SocketState {
   updateOngoingBooking: (payload: DispatcherBookingUpdatePayload) => void;
   updateDriverLocation: (payload: DriverLocationUpdate) => void;
   removeOngoingBooking: (bookingId: string) => void;
+  addBookingLogUpdate: (payload: {
+    bookingId: string;
+    status: string;
+    updatedAt: string;
+    providerId?: string;
+  }) => void;
 }
 
 export const useSocketStore = create<SocketState>((set, get) => ({
@@ -55,6 +62,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
   bookingRequests: [],
   bookingDecisions: {},
   ongoingBookings: {},
+  bookingLogUpdates: {},
 
   addBookingRequest: (request) =>
     set((state) => ({
@@ -163,6 +171,18 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       delete next[bookingId];
       return { ongoingBookings: next };
     }),
+
+  addBookingLogUpdate: (payload) =>
+    set((state) => ({
+      bookingLogUpdates: {
+        ...state.bookingLogUpdates,
+        [payload.bookingId]: {
+          status: payload.status,
+          updatedAt: payload.updatedAt,
+          providerId: payload.providerId,
+        },
+      },
+    })),
 
   connect: () => {
     if (get().socket?.connected) return;

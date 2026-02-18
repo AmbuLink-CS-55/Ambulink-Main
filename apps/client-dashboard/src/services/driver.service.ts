@@ -1,6 +1,6 @@
 import { api } from "@/lib/api";
 import type { User } from "@/lib/types";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 type DriverQueryParams = {
   providerId?: string;
@@ -15,6 +15,32 @@ export const useGetDrivers = (params?: DriverQueryParams) => {
     queryFn: async () => {
       const { data } = await api.get<User[]>("/drivers", { params });
       return data;
+    },
+  });
+};
+
+export const useCreateDriver = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: Partial<User>) => {
+      const { data } = await api.post<User>("/drivers", payload);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["drivers"] });
+    },
+  });
+};
+
+export const useUpdateDriver = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, payload }: { id: string; payload: Partial<User> }) => {
+      const { data } = await api.patch<User>(`/drivers/${id}`, payload);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["drivers"] });
     },
   });
 };

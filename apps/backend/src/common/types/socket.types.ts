@@ -162,6 +162,13 @@ export type DispatcherBookingUpdatePayload = {
   updatedAt: string;
 };
 
+export type DispatcherBookingLogPayload = {
+  providerId: string;
+  bookingId: string;
+  status: "REQUESTED" | "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED";
+  updatedAt: string;
+};
+
 /**
  * Booking request payload sent to dispatchers for approval
  * Used in booking:new event with callback acknowledgment
@@ -256,6 +263,17 @@ export interface ServerToDispatcherEvents {
       name: string | null;
       providerName: string | null;
     };
+  }) => void;
+  "booking:log": (data: DispatcherBookingLogPayload) => void;
+  "ambulance:update": (data: {
+    providerId: string;
+    ambulance: any;
+    action: "created" | "updated";
+  }) => void;
+  "driver:roster": (data: {
+    providerId: string | null;
+    driver: any;
+    action: "created" | "updated" | "removed";
   }) => void;
   "driver:update": (data: DriverLocationUpdate) => void;
 }

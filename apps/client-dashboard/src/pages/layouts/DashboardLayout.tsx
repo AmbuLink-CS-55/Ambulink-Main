@@ -12,6 +12,7 @@ import type {
   DispatcherBookingPayload,
   DispatcherBookingUpdatePayload,
   DriverLocationUpdate,
+  DispatcherBookingLogPayload,
 } from "@/lib/types";
 
 export function DashboardLayout() {
@@ -29,6 +30,7 @@ export function DashboardLayout() {
   const setDriverLocation = useDriverStore((state) => state.setDriverLocation);
   const removeBookingRequest = useSocketStore((state) => state.removeBookingRequest);
   const clearBookingDecision = useSocketStore((state) => state.clearBookingDecision);
+  const addBookingLogUpdate = useSocketStore((state) => state.addBookingLogUpdate);
 
   // handle websocket connection
   useEffect(() => {
@@ -89,12 +91,22 @@ export function DashboardLayout() {
       setDriverLocation(data.id, { x: data.x, y: data.y });
     });
 
+    socket.on("booking:log", (data: DispatcherBookingLogPayload) => {
+      addBookingLogUpdate({
+        bookingId: data.bookingId,
+        status: data.status,
+        updatedAt: data.updatedAt,
+        providerId: data.providerId,
+      });
+    });
+
     return () => {
       socket.off("booking:new");
       socket.off("booking:assigned");
       socket.off("booking:sync");
       socket.off("booking:update");
       socket.off("booking:decision");
+      socket.off("booking:log");
       socket.off("driver:update");
     };
   }, [socket]);

@@ -1,8 +1,7 @@
 import { Injectable } from "@nestjs/common";
-import { eq, ne, sql, inArray } from "drizzle-orm";
+import { desc, eq, ne, sql, inArray, and } from "drizzle-orm";
 import { ambulanceProviders, bookings, hospitals, users } from "@/common/database/schema";
 import type { Booking, Hospital, User } from "@/common/database/schema";
-import { and } from "drizzle-orm";
 import { or } from "drizzle-orm";
 import { DbService } from "@/common/database/db.service";
 import { DispatcherService } from "../dispatcher/dispatcher.service";
@@ -91,6 +90,15 @@ export class BookingService {
         status: updatedBooking.status,
         updatedAt: new Date().toISOString(),
       } satisfies DispatcherBookingUpdatePayload);
+    }
+
+    if (updatedBooking?.providerId) {
+      this.socketService.emitToAllDispatchers("booking:log", {
+        providerId: updatedBooking.providerId,
+        bookingId: updatedBooking.id,
+        status: updatedBooking.status,
+        updatedAt: new Date().toISOString(),
+      });
     }
 
     return updatedBooking;
@@ -359,5 +367,53 @@ export class BookingService {
       provider:
         row.providerId && row.providerName ? { id: row.providerId, name: row.providerName } : null,
     } satisfies DispatcherBookingPayload;
+  }
+
+  async getBookingLog(providerId?: string, status?: string) {
+    const conditions = [] as Array<ReturnType<typeof eq>>;
+
+    if (providerId) {
+      conditions.push(eq(bookings.providerId, providerId));
+    }
+
+    if (status) {
+      conditions.push(eq(bookings.status, status as any));
+    }
+
+    const whereClause = conditions.length ? and(...conditions) : undefined;
+
+    const baseQuery = this.dbService.db
+      .select({
+        bookingId: bookings.id,
+        status: bookings.status,
+        requestedAt: bookings.requestedAt,
+        assignedAt: bookings.assignedAt,
+        arrivedAt: bookings.arrivedAt,
+        pickedupAt: bookings.pickedupAt,
+        completedAt: bookings.completedAt,
+        fareEstimate: bookings.fareEstimate,
+        fareFinal: bookings.fareFinal,
+        cancellationReason: bookings.cancellationReason,
+        patientId: users.id,
+        patientName: users.fullName,
+        patientPhone: users.phoneNumber,
+        driverId: sql<string | null>`${bookings.driverId}`,
+        driverName: sql<string | null>`driver_user.full_name`,
+        driverPhone: sql<string | null>`driver_user.phone_number`,
+        ambulanceId: bookings.ambulanceId,
+        providerId: sql<string | null>`${bookings.providerId}`,
+        providerName: sql<string | null>`${ambulanceProviders.name}`,
+        hospitalId: hospitals.id,
+        hospitalName: hospitals.name,
+      })
+      .from(bookings)
+      .leftJoin(users, eq(users.id, bookings.patientId))
+      .leftJoin(sql`users as driver_user`, sql`driver_user.id = ${bookings.driverId}`)
+      .leftJoin(ambulanceProviders, eq(ambulanceProviders.id, bookings.providerId))
+      .leftJoin(hospitals, eq(hospitals.id, bookings.hospitalId));
+
+    const filteredQuery = whereClause ? baseQuery.where(whereClause) : baseQuery;
+
+    return filteredQuery.orderBy(desc(bookings.requestedAt));
   }
 }

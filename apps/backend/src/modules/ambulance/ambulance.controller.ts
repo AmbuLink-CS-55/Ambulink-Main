@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
 import { AmbulanceService } from "./ambulance.service";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
 import {
@@ -18,6 +18,11 @@ export class AmbulanceController {
     body: CreateAmbulanceDto
   ) {
     return this.ambulanceService.create(body);
+  }
+
+  @Get()
+  findAll(@Query("providerId") providerId?: string) {
+    return this.ambulanceService.findAll(providerId);
   }
 
   @Get(":id")

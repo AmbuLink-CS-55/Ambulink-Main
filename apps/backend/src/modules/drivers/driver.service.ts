@@ -2,12 +2,16 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { eq, and, sql, isNotNull, asc } from "drizzle-orm";
 import { bookings, User, users, UserStatus } from "@/common/database/schema";
 import { DbService } from "@/common/database/db.service";
+import { SocketService } from "@/common/socket/socket.service";
 import { or } from "drizzle-orm";
 import type { CreateDriverDto, UpdateDriverDto } from "@/common/validation/schemas";
 
 @Injectable()
 export class DriverService {
-  constructor(private dbService: DbService) {}
+  constructor(
+    private dbService: DbService,
+    private socketService: SocketService
+  ) {}
 
   async create(createDriverDto: CreateDriverDto): Promise<User> {
     const result = await this.dbService.db
@@ -21,7 +25,15 @@ export class DriverService {
         providerId: createDriverDto.providerId as string | null,
       })
       .returning();
-    return result[0];
+    const created = result[0];
+    if (created) {
+      this.socketService.emitToAllDispatchers("driver:roster", {
+        providerId: created.providerId,
+        driver: created,
+        action: "created",
+      });
+    }
+    return created;
   }
 
   async findAll(providerId?: string, isActive?: boolean, status?: UserStatus): Promise<User[]> {
@@ -82,7 +94,15 @@ export class DriverService {
     if (result.length === 0) {
       throw new NotFoundException(`Driver with id ${id} not found`);
     }
-    return result[0];
+    const updated = result[0];
+    if (updated) {
+      this.socketService.emitToAllDispatchers("driver:roster", {
+        providerId: updated.providerId,
+        driver: updated,
+        action: "updated",
+      });
+    }
+    return updated;
   }
 
   async remove(id: string): Promise<void> {
@@ -91,6 +111,11 @@ export class DriverService {
       .update(users)
       .set({ isActive: false, updatedAt: new Date() })
       .where(eq(users.id, id));
+    this.socketService.emitToAllDispatchers("driver:roster", {
+      providerId: null,
+      driver: { id },
+      action: "removed",
+    });
   }
 
   async setStatus(driverId: string, status: UserStatus) {
