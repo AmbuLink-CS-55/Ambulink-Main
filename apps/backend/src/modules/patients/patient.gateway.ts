@@ -107,14 +107,19 @@ export class PatientGateway implements OnGatewayInit {
         dispatcherId
       );
       console.log("Booking created:", booking);
+      const assignedPayload = booking.bookingId
+        ? await this.bookingService.buildAssignedBookingPayload(booking.bookingId)
+        : null;
       const dispatcherPayload = booking.bookingId
         ? await this.bookingService.buildDispatcherBookingPayload(booking.bookingId, requestId)
         : null;
       if (dispatcherPayload) {
         this.socketService.emitToDispatcher(dispatcherId, "booking:assigned", dispatcherPayload);
       }
-      this.socketService.emitToDriver(pickedDriver.id, "booking:assigned", booking);
-      client.emit("booking:assigned", booking);
+      if (assignedPayload) {
+        this.socketService.emitToDriver(pickedDriver.id, "booking:assigned", assignedPayload);
+        client.emit("booking:assigned", assignedPayload);
+      }
     } catch (error) {
       console.error("[patient] booking request failed", error);
       client.emit("booking:failed", { reason: "error" });

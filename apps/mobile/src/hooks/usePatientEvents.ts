@@ -1,5 +1,5 @@
 // hooks/usePatientEvents.ts
-import { BookingStatus, Point, User, Hospital, AmbulanceProvider } from "@ambulink/types";
+import { BookingStatus, Point, User, Hospital } from "@ambulink/types";
 import { useSocketEvent } from "./useSocketEvent";
 import { Alert } from "react-native";
 
@@ -13,14 +13,52 @@ export const usePatientEvents = (
   useSocketEvent(
     "booking:assigned",
     (data: {
-      patient: User;
-      pickedDriver: User;
-      provider: AmbulanceProvider;
-      hospital: Hospital;
+      bookingId: string | null;
+      status: "ASSIGNED" | "ARRIVED" | "PICKEDUP";
+      patient: {
+        id: string;
+        fullName: string | null;
+        phoneNumber: string | null;
+        location: Point | null;
+      };
+      driver: {
+        id: string;
+        fullName: string | null;
+        phoneNumber: string | null;
+        location: Point | null;
+        provider: { id: string; name: string } | null;
+      };
+      hospital: {
+        id: string;
+        name: string | null;
+        phoneNumber: string | null;
+        location: Point | null;
+      };
+      provider: { id: string; name: string } | null;
     }) => {
       if (!data) return;
-      setBooking(data);
-      setStatus("ASSIGNED");
+      setBooking({
+        patient: {
+          id: data.patient.id,
+          fullName: data.patient.fullName ?? undefined,
+          phoneNumber: data.patient.phoneNumber ?? undefined,
+          currentLocation: data.patient.location ?? undefined,
+        } as User,
+        pickedDriver: {
+          id: data.driver.id,
+          fullName: data.driver.fullName ?? undefined,
+          phoneNumber: data.driver.phoneNumber ?? undefined,
+          currentLocation: data.driver.location ?? undefined,
+          providerId: data.driver.provider?.id ?? undefined,
+        } as User,
+        hospital: {
+          id: data.hospital.id,
+          name: data.hospital.name ?? undefined,
+          phoneNumber: data.hospital.phoneNumber ?? undefined,
+          location: data.hospital.location ?? undefined,
+      } as Hospital,
+      });
+      setStatus(data.status);
       setIsBooking(false);
       setCompletedAt(null);
     }

@@ -47,14 +47,43 @@ export type BookingFailedPayload = {
  * Structure matches the response from booking.service.ts createBooking method
  */
 export type BookingAssignedPayload = {
-    patient: any;
-    pickedDriver: any;
-    provider: Array<{
+    bookingId: string | null;
+    status: "ASSIGNED" | "ARRIVED" | "PICKEDUP";
+    patient: {
+        id: string;
+        fullName: string | null;
+        phoneNumber: string | null;
+        location: {
+            x: number;
+            y: number;
+        } | null;
+    };
+    driver: {
+        id: string;
+        fullName: string | null;
+        phoneNumber: string | null;
+        location: {
+            x: number;
+            y: number;
+        } | null;
+        provider: {
+            id: string;
+            name: string;
+        } | null;
+    };
+    hospital: {
+        id: string;
+        name: string | null;
+        phoneNumber: string | null;
+        location: {
+            x: number;
+            y: number;
+        } | null;
+    };
+    provider: {
         id: string;
         name: string;
-    }>;
-    hospital: any;
-    bookingId: string | null;
+    } | null;
 };
 /**
  * Booking request payload sent to dispatchers for approval
@@ -80,6 +109,70 @@ export type BookingNewPayload = {
  */
 export type DispatcherApprovalResponse = {
     approved: boolean;
+};
+export type BookingDecisionPayload = {
+    requestId: string;
+    isWinner: boolean;
+    winner: {
+        id: string;
+        name: string | null;
+        providerName: string | null;
+    };
+};
+export type DispatcherBookingPayload = {
+    bookingId: string;
+    requestId?: string;
+    status: "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED";
+    pickupLocation: {
+        x: number;
+        y: number;
+    } | null;
+    patient: {
+        id: string;
+        fullName: string | null;
+        phoneNumber: string | null;
+        location: {
+            x: number;
+            y: number;
+        } | null;
+    };
+    driver: {
+        id: string;
+        fullName: string | null;
+        phoneNumber: string | null;
+        location: {
+            x: number;
+            y: number;
+        } | null;
+        provider: {
+            id: string;
+            name: string;
+        } | null;
+    };
+    hospital: {
+        id: string;
+        name: string | null;
+        phoneNumber: string | null;
+        location: {
+            x: number;
+            y: number;
+        } | null;
+    };
+    provider: {
+        id: string;
+        name: string;
+    } | null;
+};
+export type DispatcherBookingUpdatePayload = {
+    bookingId: string;
+    status: "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED";
+    updatedAt: string;
+};
+export type DispatcherBookingLogPayload = {
+    providerId: string;
+    bookingId: string;
+    status: "REQUESTED" | "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED";
+    updatedAt: string;
 };
 /**
  * Events that patients can send to the server
@@ -128,5 +221,12 @@ export interface DispatcherToServerEvents {
  */
 export interface ServerToDispatcherEvents {
     "booking:new": (data: BookingNewPayload, callback: (response: DispatcherApprovalResponse) => void) => void;
-    "booking:assigned": (data: BookingAssignedPayload) => void;
+    "booking:assigned": (data: DispatcherBookingPayload) => void;
+    "booking:sync": (data: {
+        bookings: DispatcherBookingPayload[];
+    }) => void;
+    "booking:update": (data: DispatcherBookingUpdatePayload) => void;
+    "booking:decision": (data: BookingDecisionPayload) => void;
+    "booking:log": (data: DispatcherBookingLogPayload) => void;
+    "driver:update": (data: DriverLocationUpdate) => void;
 }

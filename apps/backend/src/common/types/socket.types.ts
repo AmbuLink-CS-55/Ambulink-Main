@@ -1,5 +1,3 @@
-import { User } from "@/common/database/schema";
-
 export type BloodType = "O+" | "O-" | "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "";
 export type Allergie =
   | "Peanuts"
@@ -92,22 +90,34 @@ export type ErrorPayload = {
  * Structure matches the response from booking.service.ts createBooking method
  */
 export type BookingAssignedPayload = {
-  patient: User;
-  pickedDriver: User;
-  provider: Array<{
+  bookingId: string | null;
+  status: "ASSIGNED" | "ARRIVED" | "PICKEDUP";
+  patient: {
     id: string;
-    name: string;
-  }>;
+    fullName: string | null;
+    phoneNumber: string | null;
+    location: LocationPoint | null;
+  };
+  driver: {
+    id: string;
+    fullName: string | null;
+    phoneNumber: string | null;
+    location: LocationPoint | null;
+    provider: {
+      id: string;
+      name: string;
+    } | null;
+  };
   hospital: {
     id: string;
-    name: string;
-    hospitalType: string;
-    address?: string | null;
-    phoneNumber?: string | null;
-    location?: { x: number; y: number } | null;
-    isActive: boolean;
+    name: string | null;
+    phoneNumber: string | null;
+    location: LocationPoint | null;
   };
-  bookingId: string | null;
+  provider: {
+    id: string;
+    name: string;
+  } | null;
 };
 
 export type DispatcherBookingPayload = {
@@ -122,7 +132,7 @@ export type DispatcherBookingPayload = {
     location: LocationPoint | null;
   };
   driver: {
-    id: string | null;
+    id: string;
     fullName: string | null;
     phoneNumber: string | null;
     location: LocationPoint | null;
@@ -132,7 +142,7 @@ export type DispatcherBookingPayload = {
     } | null;
   };
   hospital: {
-    id: string | null;
+    id: string;
     name: string | null;
     phoneNumber: string | null;
     location: LocationPoint | null;

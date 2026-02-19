@@ -3,7 +3,7 @@ import { Alert, Linking, ScrollView, Text, TouchableOpacity, View } from "react-
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSocket } from "@/hooks/SocketContext";
-import type { BookingStatus, User, Hospital } from "@ambulink/types";
+import type { BookingStatus } from "@ambulink/types";
 
 const SRI_LANKA_REGION = {
   latitude: 7.8731,
@@ -15,9 +15,28 @@ const SRI_LANKA_REGION = {
 export default function Home() {
   const socket = useSocket();
   const [currentRide, setCurrentRide] = useState<{
-    patient: User;
-    pickedDriver: User;
-    hospital: Hospital;
+    bookingId: string | null;
+    status: "ASSIGNED" | "ARRIVED" | "PICKEDUP";
+    patient: {
+      id: string;
+      fullName: string | null;
+      phoneNumber: string | null;
+      location: { x: number; y: number } | null;
+    };
+    driver: {
+      id: string;
+      fullName: string | null;
+      phoneNumber: string | null;
+      location: { x: number; y: number } | null;
+      provider: { id: string; name: string } | null;
+    };
+    hospital: {
+      id: string;
+      name: string | null;
+      phoneNumber: string | null;
+      location: { x: number; y: number } | null;
+    };
+    provider: { id: string; name: string } | null;
   } | null>(null);
   const [rideStatus, setRideStatus] = useState<BookingStatus>("COMPLETED");
 
@@ -26,17 +45,14 @@ export default function Home() {
     socket.on("connect", () => {
       console.info("[driver] WebSocket connected");
     });
-    socket.on(
-      "booking:assigned",
-      (data: { patient: User; pickedDriver: User; hospital: Hospital }) => {
-        console.info("[driver] Booking assigned:", {
-          patientId: data.patient,
-          hospital: data.hospital,
-        });
-        setCurrentRide(data);
-        setRideStatus("ASSIGNED");
-      }
-    );
+    socket.on("booking:assigned", (data) => {
+      console.info("[driver] Booking assigned:", {
+        patientId: data.patient?.id,
+        hospital: data.hospital?.id,
+      });
+      setCurrentRide(data);
+      setRideStatus(data.status ?? "ASSIGNED");
+    });
     socket.on("booking:cancelled", () => {
       setCurrentRide(null);
       setRideStatus("CANCELLED");
@@ -68,7 +84,7 @@ export default function Home() {
   const handleOpenOnMap = () => {
     if (!currentRide) return;
 
-    if (!currentRide.patient.currentLocation) {
+    if (!currentRide.patient.location) {
       Alert.alert("Location Unavailable", "Patient location is not available yet.");
       return;
     }
@@ -76,13 +92,13 @@ export default function Home() {
     let url = "";
 
     if (rideStatus === "ASSIGNED") {
-      url = `https://www.google.com/maps/dir/?api=1&destination=${currentRide.patient.currentLocation.y},${currentRide.patient.currentLocation.x}`;
+      url = `https://www.google.com/maps/dir/?api=1&destination=${currentRide.patient.location.y},${currentRide.patient.location.x}`;
     } else if (rideStatus === "ARRIVED") {
       if (!currentRide.hospital.location) {
         Alert.alert("Location Unavailable", "Hospital location is not available.");
         return;
       }
-      url = `https://www.google.com/maps/dir/?api=1&origin=${currentRide.patient.currentLocation.y},${currentRide.patient.currentLocation.x}&destination=${currentRide.hospital.location.y},${currentRide.hospital.location.x}`;
+      url = `https://www.google.com/maps/dir/?api=1&origin=${currentRide.patient.location.y},${currentRide.patient.location.x}&destination=${currentRide.hospital.location.y},${currentRide.hospital.location.x}`;
     }
     console.info("[driver] Opening Maps:", url);
     if (url) {
@@ -103,10 +119,10 @@ export default function Home() {
                 style={{ flex: 1 }}
                 showsPointsOfInterest={false}
                 initialRegion={
-                  currentRide?.patient.currentLocation
+                  currentRide?.patient.location
                     ? {
-                        latitude: currentRide.patient.currentLocation.y,
-                        longitude: currentRide.patient.currentLocation.x,
+                        latitude: currentRide.patient.location.y,
+                        longitude: currentRide.patient.location.x,
                         latitudeDelta: 0.05,
                         longitudeDelta: 0.05,
                       }
@@ -124,11 +140,11 @@ export default function Home() {
                     strokeColor="#4ade80"
                   />*/}
 
-                    {currentRide.patient.currentLocation && (
+                    {currentRide.patient.location && (
                       <Marker
                         coordinate={{
-                          latitude: currentRide.patient.currentLocation.y,
-                          longitude: currentRide.patient.currentLocation.x,
+                          latitude: currentRide.patient.location.y,
+                          longitude: currentRide.patient.location.x,
                         }}
                         title="Patient"
                         pinColor="red"
@@ -168,7 +184,7 @@ export default function Home() {
 
           <View className="mt-3">
             <TouchableOpacity
-              onPress={() => handleCall(currentRide?.patient.phoneNumber)}
+              onPress={() => handleCall(currentRide?.patient.phoneNumber ?? undefined)}
               disabled={!currentRide}
               className={`p-4 mt-3 rounded-xl items-center ${currentRide ? "bg-white" : "bg-gray-200"}`}
             >

@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { desc, eq, ne, sql, inArray, and } from "drizzle-orm";
 import { ambulanceProviders, bookings, hospitals, users } from "@/common/database/schema";
-import type { AmbulanceProvider, Booking, Hospital, User } from "@/common/database/schema";
+import type { Booking, BookingStatus, Hospital, User } from "@/common/database/schema";
 import { or } from "drizzle-orm";
 import { DbService } from "@/common/database/db.service";
 import { DispatcherService } from "../dispatcher/dispatcher.service";
@@ -64,44 +64,79 @@ export class BookingService {
   }
 
   async buildAssignedBookingPayload(bookingId: string) {
-    const [booking] = await this.dbService.db
+    const [row] = await this.dbService.db
       .select({
-        id: bookings.id,
-        patientId: bookings.patientId,
-        driverId: bookings.driverId,
-        providerId: bookings.providerId,
-        hospitalId: bookings.hospitalId,
+        bookingId: bookings.id,
+        status: bookings.status,
+        patientId: users.id,
+        patientName: users.fullName,
+        patientPhone: users.phoneNumber,
+        patientLocationX: sql<number | null>`ST_X(${users.currentLocation})`,
+        patientLocationY: sql<number | null>`ST_Y(${users.currentLocation})`,
+        driverId: sql<string | null>`${bookings.driverId}`,
+        driverName: sql<string | null>`driver_user.full_name`,
+        driverPhone: sql<string | null>`driver_user.phone_number`,
+        driverLocationX: sql<number | null>`ST_X(driver_user.current_location)`,
+        driverLocationY: sql<number | null>`ST_Y(driver_user.current_location)`,
+        providerId: sql<string | null>`${bookings.providerId}`,
+        providerName: sql<string | null>`${ambulanceProviders.name}`,
+        hospitalId: hospitals.id,
+        hospitalName: hospitals.name,
+        hospitalPhone: hospitals.phoneNumber,
+        hospitalLocationX: sql<number | null>`ST_X(${hospitals.location})`,
+        hospitalLocationY: sql<number | null>`ST_Y(${hospitals.location})`,
       })
       .from(bookings)
+      .innerJoin(users, eq(users.id, bookings.patientId))
+      .leftJoin(sql`users as driver_user`, sql`driver_user.id = ${bookings.driverId}`)
+      .leftJoin(ambulanceProviders, eq(ambulanceProviders.id, bookings.providerId))
+      .leftJoin(hospitals, eq(hospitals.id, bookings.hospitalId))
       .where(eq(bookings.id, bookingId));
 
-    if (!booking?.patientId || !booking.driverId || !booking.hospitalId) {
+    if (!row || !row.driverId || !row.hospitalId) {
       return null;
     }
 
-    const [[patient], [pickedDriver], [hospital]] = await Promise.all([
-      this.dbService.db.select().from(users).where(eq(users.id, booking.patientId)),
-      this.dbService.db.select().from(users).where(eq(users.id, booking.driverId)),
-      this.dbService.db.select().from(hospitals).where(eq(hospitals.id, booking.hospitalId)),
-    ]);
-
-    if (!patient || !pickedDriver || !hospital) {
-      return null;
-    }
-
-    const provider: AmbulanceProvider[] = booking.providerId
-      ? await this.dbService.db
-          .select()
-          .from(ambulanceProviders)
-          .where(eq(ambulanceProviders.id, booking.providerId))
-      : [];
+    const patientLocation =
+      row.patientLocationX !== null && row.patientLocationY !== null
+        ? { x: row.patientLocationX, y: row.patientLocationY }
+        : null;
+    const driverLocation =
+      row.driverLocationX !== null && row.driverLocationY !== null
+        ? { x: row.driverLocationX, y: row.driverLocationY }
+        : null;
+    const hospitalLocation =
+      row.hospitalLocationX !== null && row.hospitalLocationY !== null
+        ? { x: row.hospitalLocationX, y: row.hospitalLocationY }
+        : null;
 
     return {
-      patient,
-      pickedDriver,
-      provider,
-      hospital,
-      bookingId: booking.id,
+      bookingId: row.bookingId,
+      status: row.status === "REQUESTED" ? "ASSIGNED" : row.status,
+      patient: {
+        id: row.patientId,
+        fullName: row.patientName ?? null,
+        phoneNumber: row.patientPhone ?? null,
+        location: patientLocation,
+      },
+      driver: {
+        id: row.driverId,
+        fullName: row.driverName ?? null,
+        phoneNumber: row.driverPhone ?? null,
+        location: driverLocation,
+        provider:
+          row.providerId && row.providerName
+            ? { id: row.providerId, name: row.providerName }
+            : null,
+      },
+      hospital: {
+        id: row.hospitalId,
+        name: row.hospitalName ?? null,
+        phoneNumber: row.hospitalPhone ?? null,
+        location: hospitalLocation,
+      },
+      provider:
+        row.providerId && row.providerName ? { id: row.providerId, name: row.providerName } : null,
     };
   }
 
@@ -349,26 +384,110 @@ export class BookingService {
     this.socketService.emitToPatient(patientId, "driver:update", data);
   }
 
+  private mapDispatcherBookingPayload(
+    row: {
+      bookingId: string;
+      status: BookingStatus;
+      pickupLocationX: number | null;
+      pickupLocationY: number | null;
+      patientId: string;
+      patientName: string | null;
+      patientPhone: string | null;
+      patientLocationX: number | null;
+      patientLocationY: number | null;
+      driverId: string | null;
+      driverName: string | null;
+      driverPhone: string | null;
+      driverLocationX: number | null;
+      driverLocationY: number | null;
+      providerId: string | null;
+      providerName: string | null;
+      hospitalId: string | null;
+      hospitalName: string | null;
+      hospitalPhone: string | null;
+      hospitalLocationX: number | null;
+      hospitalLocationY: number | null;
+    },
+    requestId?: string
+  ): DispatcherBookingPayload | null {
+    if (!row.driverId || !row.hospitalId) {
+      return null;
+    }
+
+    const status = row.status === "REQUESTED" ? "ASSIGNED" : row.status;
+    const pickupLocation =
+      row.pickupLocationX !== null && row.pickupLocationY !== null
+        ? { x: row.pickupLocationX, y: row.pickupLocationY }
+        : null;
+    const patientLocation =
+      row.patientLocationX !== null && row.patientLocationY !== null
+        ? { x: row.patientLocationX, y: row.patientLocationY }
+        : null;
+    const driverLocation =
+      row.driverLocationX !== null && row.driverLocationY !== null
+        ? { x: row.driverLocationX, y: row.driverLocationY }
+        : null;
+    const hospitalLocation =
+      row.hospitalLocationX !== null && row.hospitalLocationY !== null
+        ? { x: row.hospitalLocationX, y: row.hospitalLocationY }
+        : null;
+
+    return {
+      bookingId: row.bookingId,
+      requestId,
+      status,
+      pickupLocation,
+      patient: {
+        id: row.patientId,
+        fullName: row.patientName ?? null,
+        phoneNumber: row.patientPhone ?? null,
+        location: patientLocation,
+      },
+      driver: {
+        id: row.driverId,
+        fullName: row.driverName ?? null,
+        phoneNumber: row.driverPhone ?? null,
+        location: driverLocation,
+        provider:
+          row.providerId && row.providerName
+            ? { id: row.providerId, name: row.providerName }
+            : null,
+      },
+      hospital: {
+        id: row.hospitalId,
+        name: row.hospitalName ?? null,
+        phoneNumber: row.hospitalPhone ?? null,
+        location: hospitalLocation,
+      },
+      provider:
+        row.providerId && row.providerName ? { id: row.providerId, name: row.providerName } : null,
+    } satisfies DispatcherBookingPayload;
+  }
+
   async getDispatcherActiveBookings(dispatcherId: string) {
-    return this.dbService.db
+    const rows = await this.dbService.db
       .select({
         bookingId: bookings.id,
         status: bookings.status,
-        pickupLocation: bookings.pickupLocation,
+        pickupLocationX: sql<number | null>`ST_X(${bookings.pickupLocation})`,
+        pickupLocationY: sql<number | null>`ST_Y(${bookings.pickupLocation})`,
         patientId: users.id,
         patientName: users.fullName,
         patientPhone: users.phoneNumber,
-        patientLocation: users.currentLocation,
+        patientLocationX: sql<number | null>`ST_X(${users.currentLocation})`,
+        patientLocationY: sql<number | null>`ST_Y(${users.currentLocation})`,
         driverId: sql<string | null>`${bookings.driverId}`,
         driverName: sql<string | null>`driver_user.full_name`,
         driverPhone: sql<string | null>`driver_user.phone_number`,
-        driverLocation: sql<any>`driver_user.current_location`,
+        driverLocationX: sql<number | null>`ST_X(driver_user.current_location)`,
+        driverLocationY: sql<number | null>`ST_Y(driver_user.current_location)`,
         providerId: sql<string | null>`${bookings.providerId}`,
         providerName: sql<string | null>`${ambulanceProviders.name}`,
         hospitalId: hospitals.id,
         hospitalName: hospitals.name,
         hospitalPhone: hospitals.phoneNumber,
-        hospitalLocation: hospitals.location,
+        hospitalLocationX: sql<number | null>`ST_X(${hospitals.location})`,
+        hospitalLocationY: sql<number | null>`ST_Y(${hospitals.location})`,
       })
       .from(bookings)
       .innerJoin(users, eq(users.id, bookings.patientId))
@@ -381,6 +500,10 @@ export class BookingService {
           inArray(bookings.status, ["ASSIGNED", "ARRIVED", "PICKEDUP"])
         )
       );
+
+    return rows
+      .map((row) => this.mapDispatcherBookingPayload(row))
+      .filter((payload): payload is DispatcherBookingPayload => payload !== null);
   }
 
   async buildDispatcherBookingPayload(bookingId: string, requestId?: string) {
@@ -388,21 +511,25 @@ export class BookingService {
       .select({
         bookingId: bookings.id,
         status: bookings.status,
-        pickupLocation: bookings.pickupLocation,
+        pickupLocationX: sql<number | null>`ST_X(${bookings.pickupLocation})`,
+        pickupLocationY: sql<number | null>`ST_Y(${bookings.pickupLocation})`,
         patientId: users.id,
         patientName: users.fullName,
         patientPhone: users.phoneNumber,
-        patientLocation: users.currentLocation,
+        patientLocationX: sql<number | null>`ST_X(${users.currentLocation})`,
+        patientLocationY: sql<number | null>`ST_Y(${users.currentLocation})`,
         driverId: sql<string | null>`${bookings.driverId}`,
         driverName: sql<string | null>`driver_user.full_name`,
         driverPhone: sql<string | null>`driver_user.phone_number`,
-        driverLocation: sql<any>`driver_user.current_location`,
+        driverLocationX: sql<number | null>`ST_X(driver_user.current_location)`,
+        driverLocationY: sql<number | null>`ST_Y(driver_user.current_location)`,
         providerId: sql<string | null>`${bookings.providerId}`,
         providerName: sql<string | null>`${ambulanceProviders.name}`,
         hospitalId: hospitals.id,
         hospitalName: hospitals.name,
         hospitalPhone: hospitals.phoneNumber,
-        hospitalLocation: hospitals.location,
+        hospitalLocationX: sql<number | null>`ST_X(${hospitals.location})`,
+        hospitalLocationY: sql<number | null>`ST_Y(${hospitals.location})`,
       })
       .from(bookings)
       .innerJoin(users, eq(users.id, bookings.patientId))
@@ -413,36 +540,7 @@ export class BookingService {
 
     if (!row) return null;
 
-    return {
-      bookingId: row.bookingId,
-      requestId,
-      status: row.status === "REQUESTED" ? "ASSIGNED" : row.status,
-      pickupLocation: row.pickupLocation ?? null,
-      patient: {
-        id: row.patientId,
-        fullName: row.patientName ?? null,
-        phoneNumber: row.patientPhone ?? null,
-        location: row.patientLocation ?? null,
-      },
-      driver: {
-        id: row.driverId ?? null,
-        fullName: row.driverName ?? null,
-        phoneNumber: row.driverPhone ?? null,
-        location: row.driverLocation ?? null,
-        provider:
-          row.providerId && row.providerName
-            ? { id: row.providerId, name: row.providerName }
-            : null,
-      },
-      hospital: {
-        id: row.hospitalId ?? null,
-        name: row.hospitalName ?? null,
-        phoneNumber: row.hospitalPhone ?? null,
-        location: row.hospitalLocation ?? null,
-      },
-      provider:
-        row.providerId && row.providerName ? { id: row.providerId, name: row.providerName } : null,
-    } satisfies DispatcherBookingPayload;
+    return this.mapDispatcherBookingPayload(row, requestId);
   }
 
   async getBookingLog(providerId?: string, status?: string) {

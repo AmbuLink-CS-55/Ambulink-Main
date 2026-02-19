@@ -180,14 +180,34 @@ export interface BookingCancelledPayload {
  * Complete booking assignment payload sent when a booking is created
  */
 export interface BookingAssignedPayload {
-  patient: User;
-  pickedDriver: User;
-  provider: Array<{
+  bookingId: string | null;
+  status: "ASSIGNED" | "ARRIVED" | "PICKEDUP";
+  patient: {
+    id: string;
+    fullName: string | null;
+    phoneNumber: string | null;
+    location: Point | null;
+  };
+  driver: {
+    id: string;
+    fullName: string | null;
+    phoneNumber: string | null;
+    location: Point | null;
+    provider: {
+      id: string;
+      name: string;
+    } | null;
+  };
+  hospital: {
+    id: string;
+    name: string | null;
+    phoneNumber: string | null;
+    location: Point | null;
+  };
+  provider: {
     id: string;
     name: string;
-  }>;
-  hospital: Hospital;
-  bookingId: string | null;
+  } | null;
 }
 
 /**
@@ -262,7 +282,7 @@ export interface DispatcherBookingPayload {
     location: Point | null;
   };
   driver: {
-    id: string | null;
+    id: string;
     fullName: string | null;
     phoneNumber: string | null;
     location: Point | null;
@@ -272,7 +292,7 @@ export interface DispatcherBookingPayload {
     } | null;
   };
   hospital: {
-    id: string | null;
+    id: string;
     name: string | null;
     phoneNumber: string | null;
     location: Point | null;

@@ -50,7 +50,7 @@ export default function MapOptions({
         </View>
         <View className="border-t border-gray-100 pt-3">
           <Text className="text-gray-500 text-sm">Provider</Text>
-          <Text className="font-semibold">{booking?.pickedDriver.providerId}</Text>
+          <Text className="font-semibold">{booking?.pickedDriver.providerId ?? ""}</Text>
         </View>
         <View className="mt-2">
           <Text className="text-gray-500 text-sm">Destination</Text>
@@ -76,7 +76,7 @@ export default function MapOptions({
 
         <View className="border-t border-gray-100 pt-3">
           <Text className="text-gray-500 text-sm">Provider</Text>
-          <Text className="font-semibold">{booking.pickedDriver.providerId}</Text>
+          <Text className="font-semibold">{booking.pickedDriver.providerId ?? ""}</Text>
         </View>
 
         <View className="mt-2">
