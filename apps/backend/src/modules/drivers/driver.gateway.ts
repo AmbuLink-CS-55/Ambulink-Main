@@ -8,7 +8,8 @@ import {
 import { DriverService } from "../drivers/driver.service";
 import { BookingService } from "../booking/booking.service";
 import { SocketService } from "@/common/socket/socket.service";
-import type { DriverLocationUpdate } from "@/common/types/socket.types";
+import type { DriverLocationPayload, SocketErrorPayload } from "@ambulink/types";
+import { driverLocationPayloadSchema } from "@/common/validation/socket.schemas";
 
 @WebSocketGateway({ cors: { origin: "*" }, namespace: "/driver" })
 export class DriverGateway implements OnGatewayInit {
@@ -79,12 +80,21 @@ export class DriverGateway implements OnGatewayInit {
   }
 
   @SubscribeMessage("driver:update")
-  async updateDriverLocation(client: Socket, data: DriverLocationUpdate) {
+  async updateDriverLocation(client: Socket, data: DriverLocationPayload) {
+    const parsed = driverLocationPayloadSchema.safeParse(data);
+    if (!parsed.success) {
+      client.emit("socket:error", {
+        code: "VALIDATION_ERROR",
+        message: "Invalid driver location payload",
+      } satisfies SocketErrorPayload);
+      return;
+    }
+    const { x, y } = parsed.data;
     const driverId = client.data.driverId;
-    this.driverService.setDriverLocation(driverId, data.y, data.x);
+    this.driverService.setDriverLocation(driverId, y, x);
 
     // Send to specific dispatcher if booked
-    this.bookingService.sendDriverLocation(driverId, { id: driverId, x: data.x, y: data.y });
+    this.bookingService.sendDriverLocation(driverId, { id: driverId, x, y });
 
     // Broadcast to all dispatchers if available (throttled to 1 update/sec per driver)
     const now = Date.now();
@@ -92,8 +102,8 @@ export class DriverGateway implements OnGatewayInit {
     if (now - lastEmit > 1000) {
       this.socketService.emitToAllDispatchers("driver:update", {
         id: driverId,
-        x: data.x,
-        y: data.y,
+        x,
+        y,
       });
       this.lastEmitTimes.set(driverId, now);
     }
@@ -103,6 +113,13 @@ export class DriverGateway implements OnGatewayInit {
   async driverArrived(client: Socket) {
     const driverId = client.data.driverId;
     const bookingData = await this.driverService.getDriverBooking(driverId);
+    if (!bookingData) {
+      client.emit("socket:error", {
+        code: "NOT_FOUND",
+        message: "No active booking found",
+      } satisfies SocketErrorPayload);
+      return;
+    }
     this.bookingService.updateBooking(bookingData.id, { status: "ARRIVED" });
     const { id, patientId } = bookingData;
     this.socketService.emitToPatient(patientId!, "booking:arrived", {
@@ -116,6 +133,13 @@ export class DriverGateway implements OnGatewayInit {
     const driverId = client.data.driverId;
     console.log("completed from", driverId);
     const bookingData = await this.driverService.getDriverBooking(driverId);
+    if (!bookingData) {
+      client.emit("socket:error", {
+        code: "NOT_FOUND",
+        message: "No active booking found",
+      } satisfies SocketErrorPayload);
+      return;
+    }
     console.log(bookingData);
     this.bookingService.updateBooking(bookingData.id, { status: "COMPLETED" });
     this.driverService.setStatus(driverId, "AVAILABLE");

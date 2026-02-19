@@ -244,10 +244,8 @@ export function BookingRequestOverlay() {
                             <div className="flex items-center justify-between text-muted-foreground">
                               <span>Time remaining</span>
                               <span className="font-mono">
-                                {Math.max(
-                                  0,
-                                  Math.ceil((30000 - (now - request.timestamp)) / 1000)
-                                )}s
+                                {Math.max(0, Math.ceil((30000 - (now - request.timestamp)) / 1000))}
+                                s
                               </span>
                             </div>
                             <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">

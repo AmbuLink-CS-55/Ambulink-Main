@@ -72,7 +72,12 @@ export function VirtualizedTable<T>({
           {virtualItems.map((virtualRow) => {
             const row = rows[virtualRow.index];
             return (
-              <TableRow key={virtualRow.key} style={{ height: virtualRow.size }} ref={rowVirtualizer.measureElement} data-index={virtualRow.index}>
+              <TableRow
+                key={virtualRow.key}
+                style={{ height: virtualRow.size }}
+                ref={rowVirtualizer.measureElement}
+                data-index={virtualRow.index}
+              >
                 {columns.map((column, index) => (
                   <TableCell key={index}>{column.cell(row)}</TableCell>
                 ))}

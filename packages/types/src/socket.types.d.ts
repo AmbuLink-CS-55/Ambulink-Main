@@ -1,15 +1,34 @@
+export type PatientSettingsData = {
+    profileName: string;
+    profileMobile: string;
+    profileImage: string | null;
+    bloodType: string;
+    selectedAllergies: string[];
+    emergencyContacts: Array<{
+        id: number;
+        number: string;
+        name: string;
+    }>;
+    language: string;
+    notifications: boolean;
+    darkMode: boolean;
+};
 export type PatientPickupRequest = {
-    patientId: string;
-    lat: number;
-    lng: number;
+    x: number;
+    y: number;
+    patientSettings: PatientSettingsData;
+};
+export type DriverLocationPayload = {
+    x: number;
+    y: number;
 };
 /**
  * Driver location update data
  */
 export type DriverLocationUpdate = {
     id: string;
-    latitude: number;
-    longitude: number;
+    x: number;
+    y: number;
 };
 /**
  * Basic booking event payload with just the booking ID
@@ -34,6 +53,10 @@ export type PatientCancelRequest = {
  * Error payload
  */
 export type ErrorPayload = {
+    message: string;
+};
+export type SocketErrorPayload = {
+    code: string;
     message: string;
 };
 /**
@@ -195,12 +218,13 @@ export interface ServerToPatientEvents {
         message: string;
     }) => void;
     "booking:cancel:error": (data: ErrorPayload) => void;
+    "socket:error": (data: SocketErrorPayload) => void;
 }
 /**
  * Events that drivers can send to the server
  */
 export interface DriverToServerEvents {
-    "driver:update": (data: DriverLocationUpdate) => void;
+    "driver:update": (data: DriverLocationPayload) => void;
     "driver:arrived": () => void;
     "driver:completed": () => void;
 }
@@ -210,6 +234,7 @@ export interface DriverToServerEvents {
 export interface ServerToDriverEvents {
     "booking:assigned": (data: BookingAssignedPayload) => void;
     "booking:cancelled": (data: BookingCancelledPayload) => void;
+    "socket:error": (data: SocketErrorPayload) => void;
 }
 /**
  * Events that dispatchers can send to the server
@@ -230,4 +255,5 @@ export interface ServerToDispatcherEvents {
     "booking:decision": (data: BookingDecisionPayload) => void;
     "booking:log": (data: DispatcherBookingLogPayload) => void;
     "driver:update": (data: DriverLocationUpdate) => void;
+    "socket:error": (data: SocketErrorPayload) => void;
 }

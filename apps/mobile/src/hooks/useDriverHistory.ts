@@ -1,31 +1,7 @@
 import { useEffect } from "react";
 import { useSocket } from "@/hooks/SocketContext";
 import { addBookingHistory } from "@/utils/bookingHistory";
-
-type BookingAssignedPayload = {
-  bookingId: string | null;
-  status: "ASSIGNED" | "ARRIVED" | "PICKEDUP";
-  patient: {
-    id: string;
-    fullName: string | null;
-    phoneNumber: string | null;
-    location: { x: number; y: number } | null;
-  };
-  driver: {
-    id: string;
-    fullName: string | null;
-    phoneNumber: string | null;
-    location: { x: number; y: number } | null;
-    provider: { id: string; name: string } | null;
-  };
-  hospital: {
-    id: string;
-    name: string | null;
-    phoneNumber: string | null;
-    location: { x: number; y: number } | null;
-  };
-  provider: { id: string; name: string; hotlineNumber: string | null } | null;
-};
+import type { BookingAssignedPayload } from "@ambulink/types";
 
 export function useDriverHistory() {
   const socket = useSocket();

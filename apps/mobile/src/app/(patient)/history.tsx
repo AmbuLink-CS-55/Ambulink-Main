@@ -76,9 +76,7 @@ export default function History() {
                   Hospital: {item.hospitalName ?? "Unknown"}
                 </Text>
                 {item.providerName && (
-                  <Text className="text-sm text-gray-500 mt-1">
-                    Provider: {item.providerName}
-                  </Text>
+                  <Text className="text-sm text-gray-500 mt-1">Provider: {item.providerName}</Text>
                 )}
               </View>
             ))

@@ -133,10 +133,22 @@ export interface Booking {
 // WebSocket Types
 
 // Requests from Patient
+export interface PatientSettingsData {
+  profileName: string;
+  profileMobile: string;
+  profileImage: string | null;
+  bloodType: string;
+  selectedAllergies: string[];
+  emergencyContacts: Array<{ id: number; number: string; name: string }>;
+  language: string;
+  notifications: boolean;
+  darkMode: boolean;
+}
+
 export interface PatientPickupRequest {
-  patientId: string;
-  lat: number;
-  lng: number;
+  x: number;
+  y: number;
+  patientSettings: PatientSettingsData;
 }
 
 // Patient cancellation request
@@ -151,6 +163,11 @@ export interface DriverLocationUpdate {
   y: number;
 }
 
+export interface DriverLocationPayload {
+  x: number;
+  y: number;
+}
+
 // Responses to Patient/Driver (common booking event payload)
 export interface BookingEventPayload {
   bookingId: string;
@@ -158,6 +175,11 @@ export interface BookingEventPayload {
 
 // Error payload
 export interface ErrorPayload {
+  message: string;
+}
+
+export interface SocketErrorPayload {
+  code: string;
   message: string;
 }
 
@@ -335,11 +357,12 @@ export type ServerToPatientEvents = {
   "booking:completed": (data: BookingEventPayload) => void;
   "booking:cancelled": (data: { bookingId: string; message: string }) => void;
   "booking:cancel:error": (data: ErrorPayload) => void;
+  "socket:error": (data: SocketErrorPayload) => void;
 };
 
 // Driver to Server
 export type DriverToServerEvents = {
-  "driver:update": (data: DriverLocationUpdate) => void;
+  "driver:update": (data: DriverLocationPayload) => void;
   "driver:arrived": () => void;
   "driver:completed": () => void;
 };
@@ -348,6 +371,7 @@ export type DriverToServerEvents = {
 export type ServerToDriverEvents = {
   "booking:assigned": (data: BookingAssignedPayload) => void;
   "booking:cancelled": (data: BookingCancelledPayload) => void;
+  "socket:error": (data: SocketErrorPayload) => void;
 };
 
 // Dispatcher to Server (none currently - uses callbacks)
@@ -365,4 +389,5 @@ export type ServerToDispatcherEvents = {
   "booking:decision": (data: BookingDecisionPayload) => void;
   "booking:log": (data: DispatcherBookingLogPayload) => void;
   "driver:update": (data: DriverLocationUpdate) => void;
+  "socket:error": (data: SocketErrorPayload) => void;
 };

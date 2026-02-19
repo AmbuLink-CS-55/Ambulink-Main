@@ -11,7 +11,15 @@ import { PatientService } from "./patient.service";
 import { BookingService } from "../booking/booking.service";
 import { HospitalService } from "../hospital/hospital.service";
 import { SocketService } from "@/common/socket/socket.service";
-import type { PatientCancelRequest, PatientPickupRequest } from "@/common/types/socket.types";
+import type {
+  PatientCancelRequest,
+  PatientPickupRequest,
+  SocketErrorPayload,
+} from "@ambulink/types";
+import {
+  patientCancelRequestSchema,
+  patientPickupRequestSchema,
+} from "@/common/validation/socket.schemas";
 
 @WebSocketGateway({ cors: { origin: "*" }, namespace: "/patient" })
 export class PatientGateway implements OnGatewayInit {
@@ -52,7 +60,9 @@ export class PatientGateway implements OnGatewayInit {
     const activeBooking = await this.bookingService.getActiveBookingForPatient(patientId);
     // restate user activity to before when they logged out
     if (activeBooking) {
-      const bookingPayload = await this.bookingService.buildAssignedBookingPayload(activeBooking.id);
+      const bookingPayload = await this.bookingService.buildAssignedBookingPayload(
+        activeBooking.id
+      );
       if (bookingPayload) {
         client.emit("booking:assigned", bookingPayload);
       }
@@ -70,9 +80,17 @@ export class PatientGateway implements OnGatewayInit {
 
   @SubscribeMessage("patient:help")
   async findAmbulance(client: Socket, data: PatientPickupRequest) {
+    const parsed = patientPickupRequestSchema.safeParse(data);
+    if (!parsed.success) {
+      client.emit("socket:error", {
+        code: "VALIDATION_ERROR",
+        message: "Invalid patient help request",
+      } satisfies SocketErrorPayload);
+      return;
+    }
     try {
       console.log("help request");
-      const { x, y, patientSettings } = data;
+      const { x, y, patientSettings } = parsed.data;
       console.info("[patient] sent settings: ", patientSettings);
       const patientId = client.data.patientId;
       const patient = await this.patientService.findOne(patientId);
@@ -128,6 +146,14 @@ export class PatientGateway implements OnGatewayInit {
 
   @SubscribeMessage("patient:cancelled")
   async patientCancel(client: Socket, data?: PatientCancelRequest) {
+    const parsed = patientCancelRequestSchema.safeParse(data ?? {});
+    if (!parsed.success) {
+      client.emit("socket:error", {
+        code: "VALIDATION_ERROR",
+        message: "Invalid cancellation payload",
+      } satisfies SocketErrorPayload);
+      return;
+    }
     try {
       const patientId = client.data.patientId;
 
@@ -143,7 +169,7 @@ export class PatientGateway implements OnGatewayInit {
       }
 
       // Update booking status to CANCELLED
-      const cancellationReason = data?.reason || "Cancelled by patient";
+      const cancellationReason = parsed.data.reason || "Cancelled by patient";
       await this.bookingService.updateBooking(bookingData.id, {
         status: "CANCELLED",
         cancellationReason,

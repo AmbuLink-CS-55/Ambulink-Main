@@ -6,11 +6,11 @@ import { or } from "drizzle-orm";
 import { DbService } from "@/common/database/db.service";
 import { DispatcherService } from "../dispatcher/dispatcher.service";
 import { SocketService } from "@/common/socket/socket.service";
-import {
+import type {
   DriverLocationUpdate,
   DispatcherBookingPayload,
   DispatcherBookingUpdatePayload,
-} from "@/common/types/socket.types";
+} from "@ambulink/types";
 
 @Injectable()
 export class BookingService {
