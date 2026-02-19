@@ -39,6 +39,8 @@ export default function Home() {
     provider: { id: string; name: string } | null;
   } | null>(null);
   const [rideStatus, setRideStatus] = useState<BookingStatus>("COMPLETED");
+  const isValidPoint = (point?: { x: number; y: number } | null) =>
+    Boolean(point && Number.isFinite(point.x) && Number.isFinite(point.y));
 
   useEffect(() => {
     if (!socket) return;
@@ -84,21 +86,26 @@ export default function Home() {
   const handleOpenOnMap = () => {
     if (!currentRide) return;
 
-    if (!currentRide.patient.location) {
+    if (!isValidPoint(currentRide.patient.location ?? null)) {
       Alert.alert("Location Unavailable", "Patient location is not available yet.");
       return;
     }
 
     let url = "";
 
-    if (rideStatus === "ASSIGNED") {
+    if (rideStatus === "ASSIGNED" && currentRide.patient.location) {
       url = `https://www.google.com/maps/dir/?api=1&destination=${currentRide.patient.location.y},${currentRide.patient.location.x}`;
     } else if (rideStatus === "ARRIVED") {
-      if (!currentRide.hospital.location) {
+      if (!currentRide.patient.location || !isValidPoint(currentRide.hospital.location ?? null)) {
         Alert.alert("Location Unavailable", "Hospital location is not available.");
         return;
       }
-      url = `https://www.google.com/maps/dir/?api=1&origin=${currentRide.patient.location.y},${currentRide.patient.location.x}&destination=${currentRide.hospital.location.y},${currentRide.hospital.location.x}`;
+      const hospitalLocation = currentRide.hospital.location;
+      if (!hospitalLocation) {
+        Alert.alert("Location Unavailable", "Hospital location is not available.");
+        return;
+      }
+      url = `https://www.google.com/maps/dir/?api=1&origin=${currentRide.patient.location.y},${currentRide.patient.location.x}&destination=${hospitalLocation.y},${hospitalLocation.x}`;
     }
     console.info("[driver] Opening Maps:", url);
     if (url) {
@@ -119,7 +126,7 @@ export default function Home() {
                 style={{ flex: 1 }}
                 showsPointsOfInterest={false}
                 initialRegion={
-                  currentRide?.patient.location
+                  currentRide?.patient.location && isValidPoint(currentRide.patient.location)
                     ? {
                         latitude: currentRide.patient.location.y,
                         longitude: currentRide.patient.location.x,
@@ -140,7 +147,7 @@ export default function Home() {
                     strokeColor="#4ade80"
                   />*/}
 
-                    {currentRide.patient.location && (
+                    {currentRide.patient.location && isValidPoint(currentRide.patient.location) && (
                       <Marker
                         coordinate={{
                           latitude: currentRide.patient.location.y,
@@ -150,16 +157,17 @@ export default function Home() {
                         pinColor="red"
                       />
                     )}
-                    {currentRide.hospital.location && (
-                      <Marker
-                        coordinate={{
-                          latitude: currentRide.hospital.location.y,
-                          longitude: currentRide.hospital.location.x,
-                        }}
-                        title="Hospital"
-                        pinColor="blue"
-                      />
-                    )}
+                    {currentRide.hospital.location &&
+                      isValidPoint(currentRide.hospital.location) && (
+                        <Marker
+                          coordinate={{
+                            latitude: currentRide.hospital.location.y,
+                            longitude: currentRide.hospital.location.x,
+                          }}
+                          title="Hospital"
+                          pinColor="blue"
+                        />
+                      )}
                   </>
                 )}
               </MapView>

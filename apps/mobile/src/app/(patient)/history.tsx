@@ -1,31 +1,21 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  loadBookingHistory,
-  clearBookingHistory,
-  subscribeBookingHistory,
-} from "@/utils/bookingHistory";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
+import { useBookingHistory } from "@/hooks/useBookingHistory";
 
 export default function History() {
-  const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState<any[]>([]);
+  const { items, loading, reload, clear } = useBookingHistory("PATIENT");
 
-  const load = async () => {
-    setLoading(true);
-    const history = await loadBookingHistory("PATIENT");
-    setItems(history);
-    setLoading(false);
-  };
+  useFocusEffect(
+    useCallback(() => {
+      reload();
+      return () => undefined;
+    }, [reload])
+  );
 
-  useEffect(() => {
-    load();
-    const unsubscribe = subscribeBookingHistory("PATIENT", (next) => {
-      setItems(next);
-      setLoading(false);
-    });
-    return unsubscribe;
-  }, []);
+  const list = useMemo(() => items, [items]);
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
@@ -34,8 +24,8 @@ export default function History() {
         <TouchableOpacity
           className="px-3 py-2 rounded-lg bg-gray-200"
           onPress={async () => {
-            await clearBookingHistory("PATIENT");
-            load();
+            await clear();
+            reload();
           }}
         >
           <Text className="text-gray-700 font-semibold text-sm">Clear</Text>
@@ -49,12 +39,12 @@ export default function History() {
         </View>
       ) : (
         <ScrollView contentContainerStyle={{ padding: 16 }}>
-          {items.length === 0 ? (
+          {list.length === 0 ? (
             <View className="items-center justify-center mt-24">
               <Text className="text-gray-500">No past bookings yet.</Text>
             </View>
           ) : (
-            items.map((item) => (
+            list.map((item) => (
               <View
                 key={item.id}
                 className="mb-3 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm"

@@ -5,7 +5,6 @@ import MapView, { Marker, PROVIDER_GOOGLE, Region, Polyline } from "react-native
 import { Ionicons } from "@expo/vector-icons";
 import { Point } from "@ambulink/types";
 import ambulanceIcon from "../../../assets/images/ambu.png";
-import Svg, { Path, Circle, Rect } from "react-native-svg";
 import { useFetchRoute } from "@/hooks/use-fetch-route";
 
 type Props = {
@@ -22,12 +21,18 @@ export default function UserMap({
   children,
 }: Props) {
   const mapRef = React.useRef<MapView>(null);
-  const patientDriverCord = useFetchRoute(userLocation, driverLocations[0]);
-  const patientHospitalCord = useFetchRoute(userLocation, hospitalLocation);
+  const isValidPoint = (point?: Point) =>
+    Boolean(point && Number.isFinite(point.x) && Number.isFinite(point.y));
+  const safeUserLocation = isValidPoint(userLocation) ? userLocation : { x: 0, y: 0 };
+  const safeDriverLocation = driverLocations.find((point) => isValidPoint(point));
+  const safeHospitalLocation = isValidPoint(hospitalLocation) ? hospitalLocation : undefined;
+
+  const patientDriverCord = useFetchRoute(safeUserLocation, safeDriverLocation);
+  const patientHospitalCord = useFetchRoute(safeUserLocation, safeHospitalLocation);
 
   const region: Region = {
-    latitude: userLocation.y,
-    longitude: userLocation.x,
+    latitude: safeUserLocation.y,
+    longitude: safeUserLocation.x,
     latitudeDelta: 0.01,
     longitudeDelta: 0.01,
   };
@@ -49,7 +54,7 @@ export default function UserMap({
         customMapStyle={mapStyle}
         showsPointsOfInterest={false}
       >
-        {driverLocations.map((d, i) => (
+        {driverLocations.filter(isValidPoint).map((d, i) => (
           // <Marker
           //   key={`driver:marker${i}`}
           //   coordinate={{ latitude: d.y, longitude: d.x }}
@@ -75,7 +80,7 @@ export default function UserMap({
           </Marker>
         ))}
 
-        {hospitalLocation && driverLocations.length > 0 && (
+        {safeHospitalLocation && safeDriverLocation && (
           <>
             {patientDriverCord.length > 0 && (
               <Polyline coordinates={patientDriverCord} strokeWidth={4} strokeColor="#007AFF" />
@@ -86,12 +91,12 @@ export default function UserMap({
           </>
         )}
 
-        {hospitalLocation && (
+        {safeHospitalLocation && (
           <Marker
-            key={`${hospitalLocation.x}-${hospitalLocation.y}`}
+            key={`${safeHospitalLocation.x}-${safeHospitalLocation.y}`}
             coordinate={{
-              latitude: hospitalLocation.y,
-              longitude: hospitalLocation.x,
+              latitude: safeHospitalLocation.y,
+              longitude: safeHospitalLocation.x,
             }}
             anchor={{ x: 0.5, y: 1 }}
             tracksViewChanges={false}
