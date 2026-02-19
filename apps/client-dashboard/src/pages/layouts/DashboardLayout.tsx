@@ -63,15 +63,17 @@ export function DashboardLayout() {
           requestId: data.requestId,
           data,
           callback,
-          timestamp: new Date(),
+          timestamp: Date.now(),
         });
       }
     );
 
     socket.on("booking:assigned", (data: DispatcherBookingPayload) => {
       upsertOngoingBooking(data);
-      removeBookingRequest(data.bookingId);
-      clearBookingDecision(data.bookingId);
+      if (data.requestId) {
+        removeBookingRequest(data.requestId);
+        clearBookingDecision(data.requestId);
+      }
     });
 
     socket.on("booking:sync", (data: { bookings: DispatcherBookingPayload[] }) => {
@@ -84,6 +86,10 @@ export function DashboardLayout() {
 
     socket.on("booking:decision", (data: BookingDecisionPayload) => {
       setBookingDecision(data);
+      if (data.isWinner) {
+        removeBookingRequest(data.requestId);
+        clearBookingDecision(data.requestId);
+      }
     });
 
     socket.on("driver:update", (data: DriverLocationUpdate) => {
@@ -118,9 +124,9 @@ export function DashboardLayout() {
 
         <main className="flex-1 overflow-y-auto w-full">
           <SidebarTrigger className={"m-2"} size={"icon"} />
-          <div className="w-full h-screen">
-            <Outlet />
-          </div>
+          {/*<div className="w-full h-screen">*/}
+          <Outlet />
+          {/*</div>*/}
         </main>
 
         {/* Booking Request Overlay */}

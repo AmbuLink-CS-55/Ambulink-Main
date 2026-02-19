@@ -1,13 +1,14 @@
-import { useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import { useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   Table,
   TableBody,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
-  TableCell,
 } from "@/components/ui/table";
+import type { ReactNode } from "react";
 
 type Column<T> = {
   header: string;
@@ -18,85 +19,73 @@ type Column<T> = {
 type VirtualizedTableProps<T> = {
   columns: Column<T>[];
   rows: T[];
-  rowHeight?: number;
   height?: number;
-  keyFn: (row: T, index: number) => string;
+  rowHeight?: number;
 };
 
 export function VirtualizedTable<T>({
   columns,
   rows,
-  rowHeight = 52,
   height = 520,
-  keyFn,
+  rowHeight = 52,
 }: VirtualizedTableProps<T>) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [scrollTop, setScrollTop] = useState(0);
+  const parentRef = useRef<HTMLDivElement>(null);
 
-  const totalHeight = rows.length * rowHeight;
-  const overscan = 6;
-  const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan);
-  const visibleCount = Math.ceil(height / rowHeight) + overscan * 2;
-  const endIndex = Math.min(rows.length - 1, startIndex + visibleCount - 1);
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => rowHeight,
+    overscan: 5,
+  });
 
-  const visibleRows = useMemo(
-    () => rows.slice(startIndex, endIndex + 1),
-    [rows, startIndex, endIndex]
-  );
+  const virtualItems = rowVirtualizer.getVirtualItems();
 
-  const topSpacer = startIndex * rowHeight;
-  const bottomSpacer = Math.max(0, totalHeight - (endIndex + 1) * rowHeight);
+  // Calculate spacers to simulate total height
+  const paddingTop = virtualItems.length > 0 ? virtualItems[0].start : 0;
+  const paddingBottom =
+    virtualItems.length > 0
+      ? rowVirtualizer.getTotalSize() - virtualItems[virtualItems.length - 1].end
+      : 0;
 
   return (
-    <div className="rounded-lg border bg-card">
+    <div
+      ref={parentRef}
+      className="rounded-lg border bg-card overflow-auto relative"
+      style={{ height }}
+    >
       <Table>
-        <TableHeader>
+        <TableHeader className="sticky top-0 bg-card z-10 shadow-sm">
           <TableRow>
-            {columns.map((column) => (
-              <TableHead key={column.header} style={{ width: column.width }}>
+            {columns.map((column, index) => (
+              <TableHead key={index} style={{ width: column.width }}>
                 {column.header}
               </TableHead>
             ))}
           </TableRow>
         </TableHeader>
-      </Table>
-      <div
-        ref={containerRef}
-        className="overflow-auto"
-        style={{ maxHeight: height }}
-        onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
-      >
-        <Table>
-          <TableBody>
-            {topSpacer > 0 && (
-              <TableRow style={{ height: topSpacer }}>
-                <TableCell colSpan={columns.length} />
-              </TableRow>
-            )}
-            {visibleRows.map((row, index) => (
-              <TableRow key={keyFn(row, startIndex + index)} style={{ height: rowHeight }}>
-                {columns.map((column) => (
-                  <TableCell key={column.header}>{column.cell(row)}</TableCell>
+        <TableBody>
+          {paddingTop > 0 && (
+            <TableRow>
+              <TableCell style={{ height: paddingTop }} colSpan={columns.length} />
+            </TableRow>
+          )}
+          {virtualItems.map((virtualRow) => {
+            const row = rows[virtualRow.index];
+            return (
+              <TableRow key={virtualRow.key} style={{ height: virtualRow.size }} ref={rowVirtualizer.measureElement} data-index={virtualRow.index}>
+                {columns.map((column, index) => (
+                  <TableCell key={index}>{column.cell(row)}</TableCell>
                 ))}
               </TableRow>
-            ))}
-            {bottomSpacer > 0 && (
-              <TableRow style={{ height: bottomSpacer }}>
-                <TableCell colSpan={columns.length} />
-              </TableRow>
-            )}
-            {visibleRows.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={columns.length}>
-                  <div className="py-8 text-center text-sm text-muted-foreground">
-                    No records found.
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+            );
+          })}
+          {paddingBottom > 0 && (
+            <TableRow>
+              <TableCell style={{ height: paddingBottom }} colSpan={columns.length} />
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 }

@@ -16,7 +16,7 @@ export interface BookingRequest {
   requestId: string;
   data: BookingNewPayload;
   callback: (response: DispatcherApprovalResponse) => void;
-  timestamp: Date;
+  timestamp: number;
 }
 
 export interface BookingDecisionState {

@@ -18,17 +18,12 @@ export class PatientService {
       .returning();
   }
 
-  async lookupActiveBooking(patientId: string) {
-    const ACTIVE_STATUSES = ["REQUESTED", "ASSIGNED", "ARRIVED", "PICKEDUP"] as const;
-    const booking = await this.dbService.db
-      .select()
-      .from(bookings)
-      .where(and(eq(bookings.patientId, patientId), inArray(bookings.status, ACTIVE_STATUSES)));
-
-    if (booking.length != 0 && booking.length > 1) {
-      console.log(`patient ${patientId} has more than one active bookings`);
-    }
-    return booking[0];
+  async updateLocation(patientId: string, location: { x: number; y: number }) {
+    return await this.dbService.db
+      .update(users)
+      .set({ currentLocation: location, lastLocationUpdate: new Date(), updatedAt: new Date() })
+      .where(eq(users.id, patientId))
+      .returning();
   }
 
   async create(createPatientDto: CreatePatientDto): Promise<User> {

@@ -22,5 +22,6 @@ export default tseslint.config({ ignores: ["dist"] }, ...ambulinkConfig, {
   rules: {
     ...reactHooks.configs.recommended.rules,
     "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+    "@typescript-eslint/no-unused-vars": "warn",
   },
 });

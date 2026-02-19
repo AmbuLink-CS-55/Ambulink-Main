@@ -92,40 +92,27 @@ export type ErrorPayload = {
  * Structure matches the response from booking.service.ts createBooking method
  */
 export type BookingAssignedPayload = {
-  id: string;
-  patient: {
+  patient: User;
+  pickedDriver: User;
+  provider: Array<{
     id: string;
-    phone_number: string;
     name: string;
-    lat: number;
-    lng: number;
-  };
-  driver: {
-    id: string;
-    phone_number: string;
-    lat: number;
-    lng: number;
-    ambulance_provider: {
-      id: string;
-      name: string;
-    };
-  };
+  }>;
   hospital: {
     id: string;
     name: string;
-    phone_number: string;
-    lat: number;
-    lng: number;
+    hospitalType: string;
+    address?: string | null;
+    phoneNumber?: string | null;
+    location?: { x: number; y: number } | null;
+    isActive: boolean;
   };
-  dispatcherId?: string | null;
-  provider?: {
-    id: string;
-    name: string;
-  } | null;
+  bookingId: string | null;
 };
 
 export type DispatcherBookingPayload = {
   bookingId: string;
+  requestId?: string;
   status: "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED";
   pickupLocation: LocationPoint | null;
   patient: {
@@ -197,6 +184,13 @@ export type DispatcherApprovalResponse = {
   approved: boolean;
 };
 
+/**
+ * Booking failed payload
+ */
+export type BookingFailedPayload = {
+  reason: "no_drivers" | "no_dispatchers" | "all_rejected" | "error";
+};
+
 // ============================================================================
 // Socket Event Type Definitions
 // ============================================================================
@@ -213,7 +207,7 @@ export interface PatientToServerEvents {
  * Events that the server can send to patients
  */
 export interface ServerToPatientEvents {
-  die: () => void; // No dispatchers available
+  "booking:failed": (data: BookingFailedPayload) => void;
   "booking:assigned": (data: BookingAssignedPayload) => void;
   "booking:arrived": (data: BookingEventPayload) => void;
   "booking:completed": (data: BookingEventPayload) => void;

@@ -162,13 +162,7 @@ export default function DriversDashboard() {
         <Button onClick={() => setIsOpen(true)}>Add Driver</Button>
       </div>
 
-      <VirtualizedTable
-        columns={columns}
-        rows={rows}
-        keyFn={(row) => row.id}
-        height={640}
-        rowHeight={56}
-      />
+      <VirtualizedTable columns={columns} rows={rows} height={640} rowHeight={56} />
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent>

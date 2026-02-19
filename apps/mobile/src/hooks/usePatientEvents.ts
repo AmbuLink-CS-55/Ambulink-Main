@@ -64,4 +64,25 @@ export const usePatientEvents = (
     setIsBooking(false);
     Alert.alert("Error", data.message);
   });
+
+  useSocketEvent(
+    "booking:failed",
+    (data: { reason: "no_drivers" | "no_dispatchers" | "all_rejected" | "error" }) => {
+      setIsBooking(false);
+      setBooking(null);
+      setCompletedAt(null);
+      const message = (() => {
+        switch (data?.reason) {
+          case "no_drivers":
+            return "No ambulances are available nearby. Please try again shortly.";
+          case "no_dispatchers":
+          case "all_rejected":
+            return "No dispatchers are available to handle your request right now. Please try again.";
+          default:
+            return "Something went wrong. Please try again.";
+        }
+      })();
+      Alert.alert("Request Unavailable", message);
+    }
+  );
 };

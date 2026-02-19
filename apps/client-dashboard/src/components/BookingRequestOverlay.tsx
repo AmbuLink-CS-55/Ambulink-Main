@@ -13,6 +13,7 @@ export function BookingRequestOverlay() {
   const setBookingDecisionPending = useSocketStore((state) => state.setBookingDecisionPending);
   const clearBookingDecision = useSocketStore((state) => state.clearBookingDecision);
   const [isOpen, setIsOpen] = useState(true);
+  const [now, setNow] = useState(() => Date.now());
 
   const ongoingList = Object.values(ongoingBookings);
 
@@ -28,19 +29,43 @@ export function BookingRequestOverlay() {
   };
 
   useEffect(() => {
-    const timeouts = Object.entries(bookingDecisions)
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const expiry = 30000;
+    const decisionHold = 5000;
+
+    const requestTimeouts = bookingRequests.map((request) => {
+      const remaining = Math.max(expiry - (now - request.timestamp), 0);
+      if (remaining === 0) {
+        removeBookingRequest(request.requestId);
+        clearBookingDecision(request.requestId);
+        return null;
+      }
+      return setTimeout(() => {
+        removeBookingRequest(request.requestId);
+        clearBookingDecision(request.requestId);
+      }, remaining);
+    });
+
+    const decisionTimeouts = Object.entries(bookingDecisions)
       .filter(([, decision]) => ["won", "lost"].includes(decision.status))
       .map(([requestId]) =>
         setTimeout(() => {
           removeBookingRequest(requestId);
           clearBookingDecision(requestId);
-        }, 5000)
+        }, decisionHold)
       );
 
     return () => {
-      timeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+      requestTimeouts.forEach((timeoutId) => {
+        if (timeoutId) clearTimeout(timeoutId);
+      });
+      decisionTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
     };
-  }, [bookingDecisions, clearBookingDecision, removeBookingRequest]);
+  }, [bookingRequests, bookingDecisions, now, clearBookingDecision, removeBookingRequest]);
 
   return (
     <>
@@ -212,6 +237,32 @@ export function BookingRequestOverlay() {
                           Waiting for decision...
                         </div>
                       )}
+
+                      {bookingDecisions[request.requestId]?.status !== "pending" &&
+                        bookingDecisions[request.requestId]?.status !== "won" && (
+                          <div className="mt-3 rounded-md border border-muted/60 bg-muted/30 px-3 py-2 text-xs">
+                            <div className="flex items-center justify-between text-muted-foreground">
+                              <span>Time remaining</span>
+                              <span className="font-mono">
+                                {Math.max(
+                                  0,
+                                  Math.ceil((30000 - (now - request.timestamp)) / 1000)
+                                )}s
+                              </span>
+                            </div>
+                            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                              <div
+                                className="h-full rounded-full bg-emerald-500 transition-all"
+                                style={{
+                                  width: `${Math.max(
+                                    0,
+                                    ((30000 - (now - request.timestamp)) / 30000) * 100
+                                  )}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )}
 
                       {bookingDecisions[request.requestId]?.status === "won" && (
                         <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">

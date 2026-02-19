@@ -161,6 +161,11 @@ export interface ErrorPayload {
   message: string;
 }
 
+// Booking failed payload
+export interface BookingFailedPayload {
+  reason: "no_drivers" | "no_dispatchers" | "all_rejected" | "error";
+}
+
 // Booking cancellation payload
 export interface BookingCancelledPayload {
   bookingId: string;
@@ -175,36 +180,14 @@ export interface BookingCancelledPayload {
  * Complete booking assignment payload sent when a booking is created
  */
 export interface BookingAssignedPayload {
-  id: string;
-  patient: {
-    id: string;
-    phone_number: string;
-    name: string;
-    lat: number;
-    lng: number;
-  };
-  driver: {
-    id: string;
-    phone_number: string;
-    lat: number;
-    lng: number;
-    ambulance_provider: {
-      id: string;
-      name: string;
-    };
-  };
-  hospital: {
+  patient: User;
+  pickedDriver: User;
+  provider: Array<{
     id: string;
     name: string;
-    phone_number: string;
-    lat: number;
-    lng: number;
-  };
-  dispatcherId?: string | null;
-  provider?: {
-    id: string;
-    name: string;
-  } | null;
+  }>;
+  hospital: Hospital;
+  bookingId: string | null;
 }
 
 /**
@@ -269,6 +252,7 @@ export interface BookingDecisionPayload {
 
 export interface DispatcherBookingPayload {
   bookingId: string;
+  requestId?: string;
   status: "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED";
   pickupLocation: Point | null;
   patient: {
@@ -324,7 +308,7 @@ export type PatientToServerEvents = {
 
 // Server to Patient
 export type ServerToPatientEvents = {
-  die: () => void;
+  "booking:failed": (data: BookingFailedPayload) => void;
   "booking:assigned": (data: BookingAssignedPayload) => void;
   "booking:arrived": (data: BookingEventPayload) => void;
   "booking:completed": (data: BookingEventPayload) => void;

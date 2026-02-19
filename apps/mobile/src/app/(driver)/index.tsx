@@ -68,12 +68,21 @@ export default function Home() {
   const handleOpenOnMap = () => {
     if (!currentRide) return;
 
+    if (!currentRide.patient.currentLocation) {
+      Alert.alert("Location Unavailable", "Patient location is not available yet.");
+      return;
+    }
+
     let url = "";
 
     if (rideStatus === "ASSIGNED") {
-      url = `https://www.google.com/maps/dir/?api=1&destination=${currentRide.patient.currentLocation!.y},${currentRide.patient.currentLocation!.x}`;
+      url = `https://www.google.com/maps/dir/?api=1&destination=${currentRide.patient.currentLocation.y},${currentRide.patient.currentLocation.x}`;
     } else if (rideStatus === "ARRIVED") {
-      url = `https://www.google.com/maps/dir/?api=1&origin=${currentRide.patient.currentLocation!.y},${currentRide.patient.currentLocation!.x}&destination=${currentRide.hospital.location!.y},${currentRide.hospital.location!.x}`;
+      if (!currentRide.hospital.location) {
+        Alert.alert("Location Unavailable", "Hospital location is not available.");
+        return;
+      }
+      url = `https://www.google.com/maps/dir/?api=1&origin=${currentRide.patient.currentLocation.y},${currentRide.patient.currentLocation.x}&destination=${currentRide.hospital.location.y},${currentRide.hospital.location.x}`;
     }
     console.info("[driver] Opening Maps:", url);
     if (url) {
@@ -94,10 +103,10 @@ export default function Home() {
                 style={{ flex: 1 }}
                 showsPointsOfInterest={false}
                 initialRegion={
-                  currentRide
+                  currentRide?.patient.currentLocation
                     ? {
-                        latitude: currentRide.patient.currentLocation!.y,
-                        longitude: currentRide.patient.currentLocation!.x,
+                        latitude: currentRide.patient.currentLocation.y,
+                        longitude: currentRide.patient.currentLocation.x,
                         latitudeDelta: 0.05,
                         longitudeDelta: 0.05,
                       }
@@ -115,22 +124,26 @@ export default function Home() {
                     strokeColor="#4ade80"
                   />*/}
 
-                    <Marker
-                      coordinate={{
-                        latitude: currentRide.patient.currentLocation!.y,
-                        longitude: currentRide.patient.currentLocation!.x,
-                      }}
-                      title="Patient"
-                      pinColor="red"
-                    />
-                    <Marker
-                      coordinate={{
-                        latitude: currentRide.hospital.location!.y,
-                        longitude: currentRide.hospital.location!.x,
-                      }}
-                      title="Hospital"
-                      pinColor="blue"
-                    />
+                    {currentRide.patient.currentLocation && (
+                      <Marker
+                        coordinate={{
+                          latitude: currentRide.patient.currentLocation.y,
+                          longitude: currentRide.patient.currentLocation.x,
+                        }}
+                        title="Patient"
+                        pinColor="red"
+                      />
+                    )}
+                    {currentRide.hospital.location && (
+                      <Marker
+                        coordinate={{
+                          latitude: currentRide.hospital.location.y,
+                          longitude: currentRide.hospital.location.x,
+                        }}
+                        title="Hospital"
+                        pinColor="blue"
+                      />
+                    )}
                   </>
                 )}
               </MapView>

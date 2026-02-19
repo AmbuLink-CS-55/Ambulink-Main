@@ -110,13 +110,7 @@ export default function BookingLogPage() {
         </div>
       </div>
 
-      <VirtualizedTable
-        columns={columns}
-        rows={rows}
-        keyFn={(row) => row.bookingId}
-        height={640}
-        rowHeight={56}
-      />
+      <VirtualizedTable columns={columns} rows={rows} height={640} rowHeight={56} />
     </div>
   );
 }

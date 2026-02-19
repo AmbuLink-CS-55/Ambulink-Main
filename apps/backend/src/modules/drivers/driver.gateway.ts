@@ -30,7 +30,7 @@ export class DriverGateway implements OnGatewayInit {
     });
   }
 
-  handleConnection(client: Socket) {
+  async handleConnection(client: Socket) {
     console.log("[socket] connection_attempt", {
       namespace: "/driver",
       clientId: client.id,
@@ -46,8 +46,20 @@ export class DriverGateway implements OnGatewayInit {
     client.data.driverId = driverId;
 
     client.join(`driver:${driverId}`);
-
     this.driverService.setStatus(driverId, "AVAILABLE");
+
+    const activeBooking = await this.bookingService.getActiveBookingForDriver(driverId);
+
+    if (activeBooking) {
+      if (activeBooking.status === "ASSIGNED" || activeBooking.status === "ARRIVED") {
+        const bookingPayload = await this.bookingService.buildAssignedBookingPayload(
+          activeBooking.id
+        );
+        if (bookingPayload) {
+          client.emit("booking:assigned", bookingPayload);
+        }
+      }
+    }
 
     console.log("[socket] connected", {
       namespace: "/driver",

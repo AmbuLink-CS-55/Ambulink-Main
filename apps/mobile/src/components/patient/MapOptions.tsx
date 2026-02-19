@@ -61,6 +61,7 @@ export default function MapOptions({
   }
 
   if (status === "ASSIGNED" && booking) {
+    console.log(booking);
     return (
       <View className="bg-white p-4 w-full rounded-2xl shadow-lg">
         <View className="flex-row items-center mb-3">

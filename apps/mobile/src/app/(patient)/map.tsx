@@ -6,6 +6,7 @@ import { useLocation } from "@/hooks/useLocation";
 import { useSocket } from "@/hooks/SocketContext";
 import { usePatientEvents } from "@/hooks/usePatientEvents";
 import type { BookingStatus, User, Hospital } from "@ambulink/types";
+const PATIENT_BOOKING_TIMEOUT_MS = 40000;
 import { loadSettings } from "@/utils/settingsStorage";
 
 export default function Map() {
@@ -59,8 +60,11 @@ export default function Map() {
     }
     bookingTimeoutRef.current = setTimeout(() => {
       setIsBooking(false);
-      Alert.alert("Booking Timeout", "We couldn't confirm your request. Please try again.");
-    }, 20000);
+      Alert.alert(
+        "Request Taking Longer",
+        "Your request is taking longer than expected. Please check your connection and try again."
+      );
+    }, PATIENT_BOOKING_TIMEOUT_MS);
     socket.emit("patient:help", {
       x: locationState.location.longitude,
       y: locationState.location.latitude,

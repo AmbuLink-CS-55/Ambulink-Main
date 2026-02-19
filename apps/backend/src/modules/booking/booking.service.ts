@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { desc, eq, ne, sql, inArray, and } from "drizzle-orm";
 import { ambulanceProviders, bookings, hospitals, users } from "@/common/database/schema";
-import type { Booking, Hospital, User } from "@/common/database/schema";
+import type { AmbulanceProvider, Booking, Hospital, User } from "@/common/database/schema";
 import { or } from "drizzle-orm";
 import { DbService } from "@/common/database/db.service";
 import { DispatcherService } from "../dispatcher/dispatcher.service";
@@ -63,6 +63,48 @@ export class BookingService {
     return { patient, pickedDriver, provider, hospital, bookingId: createdBooking?.id ?? null };
   }
 
+  async buildAssignedBookingPayload(bookingId: string) {
+    const [booking] = await this.dbService.db
+      .select({
+        id: bookings.id,
+        patientId: bookings.patientId,
+        driverId: bookings.driverId,
+        providerId: bookings.providerId,
+        hospitalId: bookings.hospitalId,
+      })
+      .from(bookings)
+      .where(eq(bookings.id, bookingId));
+
+    if (!booking?.patientId || !booking.driverId || !booking.hospitalId) {
+      return null;
+    }
+
+    const [[patient], [pickedDriver], [hospital]] = await Promise.all([
+      this.dbService.db.select().from(users).where(eq(users.id, booking.patientId)),
+      this.dbService.db.select().from(users).where(eq(users.id, booking.driverId)),
+      this.dbService.db.select().from(hospitals).where(eq(hospitals.id, booking.hospitalId)),
+    ]);
+
+    if (!patient || !pickedDriver || !hospital) {
+      return null;
+    }
+
+    const provider: AmbulanceProvider[] = booking.providerId
+      ? await this.dbService.db
+          .select()
+          .from(ambulanceProviders)
+          .where(eq(ambulanceProviders.id, booking.providerId))
+      : [];
+
+    return {
+      patient,
+      pickedDriver,
+      provider,
+      hospital,
+      bookingId: booking.id,
+    };
+  }
+
   async updateBooking(bookingId: string, booking: Partial<Booking>) {
     const updateData: Partial<Booking> = { ...booking };
 
@@ -104,6 +146,33 @@ export class BookingService {
     return updatedBooking;
   }
 
+  async getActiveBookingForPatient(patientId: string) {
+    const ACTIVE_STATUSES = ["REQUESTED", "ASSIGNED", "ARRIVED", "PICKEDUP"] as const;
+    const booking = await this.dbService.db
+      .select()
+      .from(bookings)
+      .where(and(eq(bookings.patientId, patientId), inArray(bookings.status, ACTIVE_STATUSES)));
+
+    if (booking.length > 1) {
+      console.log(`patient ${patientId} has more than one active bookings`);
+    }
+    return booking[0];
+  }
+
+  async getActiveBookingForDriver(driverId: string) {
+    const ACTIVE_STATUSES = ["REQUESTED", "ASSIGNED", "ARRIVED", "PICKEDUP"] as const;
+    const booking = await this.dbService.db
+      .select()
+      .from(bookings)
+      .where(and(eq(bookings.driverId, driverId), inArray(bookings.status, ACTIVE_STATUSES)));
+
+    if (booking.length > 1) {
+      console.log(`driver ${driverId} has more than one active bookings`);
+    }
+    return booking[0];
+  }
+
+  // TODO: remove
   async getOngoingBookingByUserId(userId: string) {
     const data = await this.dbService.db
       .select({
@@ -139,7 +208,13 @@ export class BookingService {
     return booking;
   }
 
-  async askDispatchers(nearByDrivers: User[], patient: User) {
+  async askDispatchers(
+    nearByDrivers: User[],
+    patient: User
+  ): Promise<
+    | { status: "approved"; dispatcherId: string; pickedDriver: User; requestId: string }
+    | { status: "failed"; reason: "no_dispatchers" | "all_rejected" }
+  > {
     const requests = await Promise.all(
       nearByDrivers.map(async (driver) => {
         const dispatcherId = await this.dispatcherService.findLiveDispatchersByProvider(
@@ -160,7 +235,7 @@ export class BookingService {
 
     if (activeRequests.length === 0) {
       console.error("No available dispatchers for nearby drivers");
-      return null;
+      return { status: "failed", reason: "no_dispatchers" };
     }
 
     const approvalPromises = activeRequests.map(({ dispatcherId, driver, requestId }) =>
@@ -176,10 +251,10 @@ export class BookingService {
         activeRequests.map(({ dispatcherId, requestId }) => ({ dispatcherId, requestId })),
         winningResponse.dispatcherId
       );
-      return winningResponse;
+      return { status: "approved", ...winningResponse };
     } catch (_error) {
       console.error("All dispatchers rejected the request");
-      return null;
+      return { status: "failed", reason: "all_rejected" };
     }
   }
 
@@ -308,7 +383,7 @@ export class BookingService {
       );
   }
 
-  async buildDispatcherBookingPayload(bookingId: string) {
+  async buildDispatcherBookingPayload(bookingId: string, requestId?: string) {
     const [row] = await this.dbService.db
       .select({
         bookingId: bookings.id,
@@ -340,6 +415,7 @@ export class BookingService {
 
     return {
       bookingId: row.bookingId,
+      requestId,
       status: row.status === "REQUESTED" ? "ASSIGNED" : row.status,
       pickupLocation: row.pickupLocation ?? null,
       patient: {

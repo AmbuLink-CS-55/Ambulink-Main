@@ -37,35 +37,24 @@ export type ErrorPayload = {
     message: string;
 };
 /**
+ * Booking failed payload
+ */
+export type BookingFailedPayload = {
+    reason: "no_drivers" | "no_dispatchers" | "all_rejected" | "error";
+};
+/**
  * Complete booking assignment payload sent when a booking is created
  * Structure matches the response from booking.service.ts createBooking method
  */
 export type BookingAssignedPayload = {
-    id: string;
-    patient: {
-        id: string;
-        phone_number: string;
-        name: string;
-        lat: number;
-        lng: number;
-    };
-    driver: {
-        id: string;
-        phone_number: string;
-        lat: number;
-        lng: number;
-        ambulance_provider: {
-            id: string;
-            name: string;
-        };
-    };
-    hospital: {
+    patient: any;
+    pickedDriver: any;
+    provider: Array<{
         id: string;
         name: string;
-        phone_number: string;
-        lat: number;
-        lng: number;
-    };
+    }>;
+    hospital: any;
+    bookingId: string | null;
 };
 /**
  * Booking request payload sent to dispatchers for approval
@@ -103,7 +92,7 @@ export interface PatientToServerEvents {
  * Events that the server can send to patients
  */
 export interface ServerToPatientEvents {
-    die: () => void;
+    "booking:failed": (data: BookingFailedPayload) => void;
     "booking:assigned": (data: BookingAssignedPayload) => void;
     "booking:arrived": (data: BookingEventPayload) => void;
     "booking:completed": (data: BookingEventPayload) => void;
