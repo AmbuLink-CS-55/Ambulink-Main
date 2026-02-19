@@ -13,7 +13,8 @@ import type {
   DispatcherBookingUpdatePayload,
   DriverLocationUpdate,
   DispatcherBookingLogPayload,
-} from "@/lib/types";
+  SocketErrorPayload,
+} from "@/lib/socket-types";
 
 export function DashboardLayout() {
   const socket = useSocketStore((state) => state.socket);
@@ -97,6 +98,10 @@ export function DashboardLayout() {
       setDriverLocation(data.id, { x: data.x, y: data.y });
     });
 
+    socket.on("socket:error", (data: SocketErrorPayload) => {
+      console.warn("[socket] error", data);
+    });
+
     socket.on("booking:log", (data: DispatcherBookingLogPayload) => {
       addBookingLogUpdate({
         bookingId: data.bookingId,
@@ -114,6 +119,7 @@ export function DashboardLayout() {
       socket.off("booking:decision");
       socket.off("booking:log");
       socket.off("driver:update");
+      socket.off("socket:error");
     };
   }, [socket]);
 

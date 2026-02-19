@@ -1,4 +1,5 @@
-import type { BookingAssignedPayload, BookingNewPayload, Hospital } from "@/lib/types";
+import type { BookingAssignedPayload, BookingNewPayload } from "@/lib/socket-types";
+import type { Hospital } from "@/lib/types";
 
 import { create } from "zustand";
 

@@ -2,7 +2,7 @@ import { Fragment, useMemo } from "react";
 import { DriverMarker } from "@/components/map/DriverMarker";
 import { OngoingPatientMarker } from "@/components/map/OngoingPatientMarker";
 import { useDriverStore } from "@/hooks/use-driver-store";
-import type { DispatcherBookingPayload } from "@/lib/types";
+import type { DispatcherBookingPayload } from "@/lib/socket-types";
 
 interface DriverMarkersProps {
   ongoingBookings: Record<string, DispatcherBookingPayload>;

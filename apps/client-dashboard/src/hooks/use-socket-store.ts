@@ -10,7 +10,7 @@ import type {
   DispatcherBookingPayload,
   DispatcherBookingUpdatePayload,
   DriverLocationUpdate,
-} from "@/lib/types";
+} from "@/lib/socket-types";
 
 export interface BookingRequest {
   requestId: string;

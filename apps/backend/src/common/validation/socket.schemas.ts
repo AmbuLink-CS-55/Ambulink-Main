@@ -45,3 +45,99 @@ export const driverLocationPayloadSchema = z
     y: z.number(),
   })
   .passthrough();
+
+const locationSchema = z
+  .object({
+    x: z.number(),
+    y: z.number(),
+  })
+  .nullable();
+
+export const bookingAssignedPayloadSchema = z
+  .object({
+    bookingId: z.string().nullable(),
+    status: z.enum(["ASSIGNED", "ARRIVED", "PICKEDUP"]),
+    patient: z
+      .object({
+        id: z.string(),
+        fullName: z.string().nullable(),
+        phoneNumber: z.string().nullable(),
+        location: locationSchema,
+      })
+      .passthrough(),
+    driver: z
+      .object({
+        id: z.string(),
+        fullName: z.string().nullable(),
+        phoneNumber: z.string().nullable(),
+        location: locationSchema,
+        provider: z
+          .object({
+            id: z.string(),
+            name: z.string(),
+          })
+          .nullable(),
+      })
+      .passthrough(),
+    hospital: z
+      .object({
+        id: z.string(),
+        name: z.string().nullable(),
+        phoneNumber: z.string().nullable(),
+        location: locationSchema,
+      })
+      .passthrough(),
+    provider: z
+      .object({
+        id: z.string(),
+        name: z.string(),
+        hotlineNumber: z.string().nullable(),
+      })
+      .nullable(),
+  })
+  .passthrough();
+
+export const dispatcherBookingPayloadSchema = z
+  .object({
+    bookingId: z.string(),
+    requestId: z.string().optional(),
+    status: z.enum(["ASSIGNED", "ARRIVED", "PICKEDUP", "COMPLETED", "CANCELLED"]),
+    pickupLocation: locationSchema,
+    patient: z
+      .object({
+        id: z.string(),
+        fullName: z.string().nullable(),
+        phoneNumber: z.string().nullable(),
+        location: locationSchema,
+      })
+      .passthrough(),
+    driver: z
+      .object({
+        id: z.string(),
+        fullName: z.string().nullable(),
+        phoneNumber: z.string().nullable(),
+        location: locationSchema,
+        provider: z
+          .object({
+            id: z.string(),
+            name: z.string(),
+          })
+          .nullable(),
+      })
+      .passthrough(),
+    hospital: z
+      .object({
+        id: z.string(),
+        name: z.string().nullable(),
+        phoneNumber: z.string().nullable(),
+        location: locationSchema,
+      })
+      .passthrough(),
+    provider: z
+      .object({
+        id: z.string(),
+        name: z.string(),
+      })
+      .nullable(),
+  })
+  .passthrough();

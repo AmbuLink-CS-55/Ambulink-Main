@@ -11,6 +11,10 @@ import type {
   DispatcherBookingPayload,
   DispatcherBookingUpdatePayload,
 } from "@ambulink/types";
+import {
+  bookingAssignedPayloadSchema,
+  dispatcherBookingPayloadSchema,
+} from "@/common/validation/socket.schemas";
 
 @Injectable()
 export class BookingService {
@@ -111,7 +115,7 @@ export class BookingService {
         ? { x: row.hospitalLocationX, y: row.hospitalLocationY }
         : null;
 
-    return {
+    const payload = {
       bookingId: row.bookingId,
       status: row.status === "REQUESTED" ? "ASSIGNED" : row.status,
       patient: {
@@ -145,6 +149,14 @@ export class BookingService {
             }
           : null,
     };
+
+    const parsed = bookingAssignedPayloadSchema.safeParse(payload);
+    if (!parsed.success) {
+      console.error("[booking] invalid assigned payload", parsed.error.flatten());
+      return null;
+    }
+
+    return parsed.data;
   }
 
   async updateBooking(bookingId: string, booking: Partial<Booking>) {
@@ -439,7 +451,7 @@ export class BookingService {
         ? { x: row.hospitalLocationX, y: row.hospitalLocationY }
         : null;
 
-    return {
+    const payload = {
       bookingId: row.bookingId,
       requestId,
       status,
@@ -469,6 +481,14 @@ export class BookingService {
       provider:
         row.providerId && row.providerName ? { id: row.providerId, name: row.providerName } : null,
     } satisfies DispatcherBookingPayload;
+
+    const parsed = dispatcherBookingPayloadSchema.safeParse(payload);
+    if (!parsed.success) {
+      console.error("[booking] invalid dispatcher payload", parsed.error.flatten());
+      return null;
+    }
+
+    return parsed.data;
   }
 
   async getDispatcherActiveBookings(dispatcherId: string) {
