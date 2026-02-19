@@ -1,9 +1,14 @@
 import { useMemo } from "react";
 import { MapMarker, MarkerContent } from "@/components/ui/map";
-import type { BookingRequest } from "@/hooks/use-socket-store";
+import type { BookingNewPayload, DispatcherApprovalResponse } from "@/lib/socket-types";
 
 type PatientRequestMarkerProps = {
-  request: BookingRequest;
+  request: {
+    requestId: string;
+    data: BookingNewPayload;
+    callback: (response: DispatcherApprovalResponse) => void;
+    timestamp: number;
+  };
 };
 
 export function PatientRequestMarker({ request }: PatientRequestMarkerProps) {

@@ -1,9 +1,7 @@
-import { useMemo, useEffect } from "react";
+import { useMemo } from "react";
 import { type BookingLogEntry, useGetBookingLog } from "@/services/booking.service";
 import { VirtualizedTable } from "@/components/VirtualizedTable";
 import { Badge } from "@/components/ui/badge";
-import { useSocketStore } from "@/hooks/use-socket-store";
-import { useQueryClient } from "@tanstack/react-query";
 import env from "@/../env";
 
 type Status = "REQUESTED" | "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED";
@@ -16,21 +14,7 @@ function statusVariant(status: Status) {
 }
 
 export default function BookingLogPage() {
-  const queryClient = useQueryClient();
   const bookingLog = useGetBookingLog({ providerId: env.VITE_PROVIDER_ID });
-  const socketConnected = useSocketStore((state) => state.isConnected);
-  const bookingLogUpdates = useSocketStore((state) => state.bookingLogUpdates);
-
-  useEffect(() => {
-    const values = Object.values(bookingLogUpdates);
-    if (values.length === 0) return;
-    if (!env.VITE_PROVIDER_ID) return;
-    const matchesProvider = values.some((update) =>
-      update.providerId ? update.providerId === env.VITE_PROVIDER_ID : false
-    );
-    if (!matchesProvider) return;
-    queryClient.invalidateQueries({ queryKey: ["booking-log"] });
-  }, [bookingLogUpdates, queryClient]);
 
   const rows = useMemo(() => bookingLog.data ?? [], [bookingLog.data]);
 
@@ -104,9 +88,7 @@ export default function BookingLogPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Booking Log</h1>
-          <p className="text-sm text-muted-foreground">
-            All booking history across statuses. Live updates: {socketConnected ? "on" : "off"}.
-          </p>
+          <p className="text-sm text-muted-foreground">All booking history across statuses.</p>
         </div>
       </div>
 

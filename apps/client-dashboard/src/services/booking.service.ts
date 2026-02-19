@@ -1,5 +1,6 @@
 import { api } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 
 export type BookingLogEntry = {
   bookingId: string;
@@ -32,7 +33,7 @@ type BookingLogParams = {
 
 export const useGetBookingLog = (params?: BookingLogParams) => {
   return useQuery({
-    queryKey: ["booking-log", params],
+    queryKey: queryKeys.bookingLog(params?.providerId ?? null),
     staleTime: 1000 * 30,
     queryFn: async () => {
       const { data } = await api.get<BookingLogEntry[]>("/booking", { params });

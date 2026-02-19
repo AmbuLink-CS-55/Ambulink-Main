@@ -11,8 +11,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useSocketStore } from "@/hooks/use-socket-store";
-import { useDriverStore } from "@/hooks/use-driver-store";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 import { useCreateDriver, useGetDrivers, useUpdateDriver } from "@/services/driver.service";
 import type { User, UserStatus } from "@/lib/types";
 import env from "@/../env";
@@ -40,8 +40,11 @@ export default function DriversDashboard() {
     passwordHash: "",
   });
 
-  const socketConnected = useSocketStore((state) => state.isConnected);
-  const driverLocations = useDriverStore((state) => state.driverLocations);
+  const queryClient = useQueryClient();
+  const driverLocations =
+    queryClient.getQueryData<Record<string, { x: number; y: number }>>(
+      queryKeys.driverLocations()
+    ) ?? {};
 
   const drivers = useGetDrivers({ providerId: env.VITE_PROVIDER_ID });
   const createDriver = useCreateDriver();
@@ -155,9 +158,7 @@ export default function DriversDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Drivers</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage your roster. Live updates: {socketConnected ? "on" : "off"}.
-          </p>
+          <p className="text-sm text-muted-foreground">Manage your roster.</p>
         </div>
         <Button onClick={() => setIsOpen(true)}>Add Driver</Button>
       </div>

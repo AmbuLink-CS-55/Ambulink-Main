@@ -1,6 +1,7 @@
 import { api } from "@/lib/api";
 import type { Ambulance } from "@/lib/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 
 type AmbulanceQueryParams = {
   providerId?: string;
@@ -8,7 +9,7 @@ type AmbulanceQueryParams = {
 
 export const useGetAmbulances = (params?: AmbulanceQueryParams) => {
   return useQuery({
-    queryKey: ["ambulances", params],
+    queryKey: queryKeys.ambulances(params),
     staleTime: 1000 * 30,
     queryFn: async () => {
       const { data } = await api.get<Ambulance[]>("/ambulances", { params });
@@ -25,7 +26,7 @@ export const useCreateAmbulance = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ambulances"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.ambulances() });
     },
   });
 };
@@ -38,7 +39,7 @@ export const useUpdateAmbulance = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ambulances"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.ambulances() });
     },
   });
 };

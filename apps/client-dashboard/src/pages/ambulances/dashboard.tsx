@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { useSocketStore } from "@/hooks/use-socket-store";
 import type { Ambulance, AmbulanceStatus } from "@/lib/types";
 import env from "@/../env";
 
@@ -39,7 +38,6 @@ export default function AmbulancesDashboard() {
   const [vehicleNumber, setVehicleNumber] = useState("");
   const [equipmentLevel, setEquipmentLevel] = useState("");
   const [status, setStatus] = useState<AmbulanceStatus>("AVAILABLE");
-  const socketConnected = useSocketStore((state) => state.isConnected);
 
   const ambulances = useGetAmbulances({ providerId: env.VITE_PROVIDER_ID });
   const createAmbulance = useCreateAmbulance();
@@ -125,9 +123,7 @@ export default function AmbulancesDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Ambulances</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage your fleet. Live updates: {socketConnected ? "on" : "off"}.
-          </p>
+          <p className="text-sm text-muted-foreground">Manage your fleet.</p>
         </div>
         <Button onClick={() => setIsOpen(true)} disabled={!env.VITE_PROVIDER_ID}>
           Add Ambulance

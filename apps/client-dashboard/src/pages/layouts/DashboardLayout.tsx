@@ -1,124 +1,29 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Outlet } from "react-router-dom";
-import { useSocketStore } from "@/hooks/use-socket-store";
-import { useDriverStore } from "@/hooks/use-driver-store";
+import { useDispatcherSocketSync } from "@/hooks/use-dispatcher-socket-sync";
 import { useEffect } from "react";
 import { BookingRequestOverlay } from "@/components/BookingRequestOverlay";
-import type {
-  BookingNewPayload,
-  DispatcherApprovalResponse,
-  BookingDecisionPayload,
-  DispatcherBookingPayload,
-  DispatcherBookingUpdatePayload,
-  DriverLocationUpdate,
-  DispatcherBookingLogPayload,
-  SocketErrorPayload,
-} from "@/lib/socket-types";
+import type { SocketErrorPayload } from "@/lib/socket-types";
 
 export function DashboardLayout() {
-  const socket = useSocketStore((state) => state.socket);
-  const connect = useSocketStore((state) => state.connect);
-  const disconnect = useSocketStore((state) => state.disconnect);
-
-  const addBookingRequest = useSocketStore((state) => state.addBookingRequest);
-  const setBookingDecision = useSocketStore((state) => state.setBookingDecision);
-  const clearBookingRequests = useSocketStore((state) => state.clearBookingRequests);
-  const syncOngoingBookings = useSocketStore((state) => state.syncOngoingBookings);
-  const upsertOngoingBooking = useSocketStore((state) => state.upsertOngoingBooking);
-  const updateOngoingBooking = useSocketStore((state) => state.updateOngoingBooking);
-  const updateDriverLocation = useSocketStore((state) => state.updateDriverLocation);
-  const setDriverLocation = useDriverStore((state) => state.setDriverLocation);
-  const removeBookingRequest = useSocketStore((state) => state.removeBookingRequest);
-  const clearBookingDecision = useSocketStore((state) => state.clearBookingDecision);
-  const addBookingLogUpdate = useSocketStore((state) => state.addBookingLogUpdate);
-
-  // handle websocket connection
   useEffect(() => {
-    connect();
-    return () => disconnect();
-  }, [connect, disconnect]);
-
-  // clear booking requests
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleDisconnect = () => {
-      clearBookingRequests();
-    };
-
-    socket.on("disconnect", handleDisconnect);
+    console.info("[dashboard] mount");
     return () => {
-      socket.off("disconnect", handleDisconnect);
+      console.info("[dashboard] unmount");
     };
-  }, [socket, clearBookingRequests]);
+  }, []);
 
-  // setup events
+  const { socket, connected } = useDispatcherSocketSync();
+
+  // socket error logging
   useEffect(() => {
     if (!socket) return;
-
-    socket.on(
-      "booking:new",
-      (data: BookingNewPayload, callback: (res: DispatcherApprovalResponse) => void) => {
-        addBookingRequest({
-          requestId: data.requestId,
-          data,
-          callback,
-          timestamp: Date.now(),
-        });
-      }
-    );
-
-    socket.on("booking:assigned", (data: DispatcherBookingPayload) => {
-      upsertOngoingBooking(data);
-      if (data.requestId) {
-        removeBookingRequest(data.requestId);
-        clearBookingDecision(data.requestId);
-      }
-    });
-
-    socket.on("booking:sync", (data: { bookings: DispatcherBookingPayload[] }) => {
-      syncOngoingBookings(data.bookings);
-    });
-
-    socket.on("booking:update", (data: DispatcherBookingUpdatePayload) => {
-      updateOngoingBooking(data);
-    });
-
-    socket.on("booking:decision", (data: BookingDecisionPayload) => {
-      setBookingDecision(data);
-      if (data.isWinner) {
-        removeBookingRequest(data.requestId);
-        clearBookingDecision(data.requestId);
-      }
-    });
-
-    socket.on("driver:update", (data: DriverLocationUpdate) => {
-      updateDriverLocation(data);
-      setDriverLocation(data.id, { x: data.x, y: data.y });
-    });
-
     socket.on("socket:error", (data: SocketErrorPayload) => {
       console.warn("[socket] error", data);
     });
 
-    socket.on("booking:log", (data: DispatcherBookingLogPayload) => {
-      addBookingLogUpdate({
-        bookingId: data.bookingId,
-        status: data.status,
-        updatedAt: data.updatedAt,
-        providerId: data.providerId,
-      });
-    });
-
     return () => {
-      socket.off("booking:new");
-      socket.off("booking:assigned");
-      socket.off("booking:sync");
-      socket.off("booking:update");
-      socket.off("booking:decision");
-      socket.off("booking:log");
-      socket.off("driver:update");
       socket.off("socket:error");
     };
   }, [socket]);
@@ -136,7 +41,7 @@ export function DashboardLayout() {
         </main>
 
         {/* Booking Request Overlay */}
-        <BookingRequestOverlay />
+        <BookingRequestOverlay socketConnected={connected} />
       </div>
     </SidebarProvider>
   );

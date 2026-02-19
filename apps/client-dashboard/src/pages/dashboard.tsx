@@ -4,8 +4,10 @@ import { Map as MapView, MapControls, MapEvents, MapRoute } from "@/components/u
 import HospitalMarkersLayer from "@/components/map/HospitalMarkerLayer";
 import { PatientRequestMarker } from "@/components/map/PatientRequestMarker";
 import { DriverMarkers } from "@/components/map/DriverMarkers";
-import { useStore } from "@/hooks/use-store";
-import { useSocketStore } from "@/hooks/use-socket-store";
+import { useMapView } from "@/hooks/use-map-view";
+import { useQuery } from "@tanstack/react-query";
+import type { BookingNewPayload, DispatcherBookingPayload } from "@/lib/socket-types";
+import { queryKeys } from "@/lib/queryKeys";
 
 const routeCache = new globalThis.Map<
   string,
@@ -24,11 +26,26 @@ async function fetchRoute(start: [number, number], end: [number, number]) {
 }
 
 export default function Dashboard() {
-  const mapView = useStore((state) => state.mapView);
-  const setMapView = useStore((state) => state.setMapView);
+  const { mapView, setMapView } = useMapView();
   const { error, data: hospitals } = useGetHospitals();
-  const bookingRequests = useSocketStore((state) => state.bookingRequests);
-  const ongoingBookings = useSocketStore((state) => state.ongoingBookings);
+  const bookingRequestsQuery = useQuery<
+    Array<{ requestId: string; data: BookingNewPayload; callback: any; timestamp: number }>
+  >({
+    queryKey: queryKeys.bookingRequests(),
+    queryFn: async () => [],
+    initialData: [],
+    staleTime: Infinity,
+    enabled: false,
+  });
+  const ongoingBookingsQuery = useQuery<Record<string, DispatcherBookingPayload>>({
+    queryKey: queryKeys.ongoingBookings(),
+    queryFn: async () => ({}),
+    initialData: {},
+    staleTime: Infinity,
+    enabled: false,
+  });
+  const bookingRequests = bookingRequestsQuery.data ?? [];
+  const ongoingBookings = ongoingBookingsQuery.data ?? {};
   const [routes, setRoutes] = useState<Record<string, [number, number][]>>({});
   // convert to array
   const ongoingList = useMemo(() => Object.values(ongoingBookings), [ongoingBookings]);

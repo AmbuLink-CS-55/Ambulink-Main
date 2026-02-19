@@ -1,31 +1,87 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Bell, X, Check, XCircle, Truck, Phone, User2 } from "lucide-react";
-import { useSocketStore } from "@/hooks/use-socket-store";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
+import type {
+  BookingDecisionPayload,
+  BookingNewPayload,
+  DispatcherApprovalResponse,
+  DispatcherBookingPayload,
+} from "@/lib/socket-types";
 import { cn } from "@/lib/utils";
 
-export function BookingRequestOverlay() {
-  const bookingRequests = useSocketStore((state) => state.bookingRequests);
-  const ongoingBookings = useSocketStore((state) => state.ongoingBookings);
-  const removeBookingRequest = useSocketStore((state) => state.removeBookingRequest);
-  const bookingDecisions = useSocketStore((state) => state.bookingDecisions);
-  const setBookingDecisionPending = useSocketStore((state) => state.setBookingDecisionPending);
-  const clearBookingDecision = useSocketStore((state) => state.clearBookingDecision);
+type BookingRequest = {
+  requestId: string;
+  data: BookingNewPayload;
+  callback: (response: DispatcherApprovalResponse) => void;
+  timestamp: number;
+};
+
+type BookingDecisionState = {
+  status: "pending" | "won" | "lost";
+  winner: BookingDecisionPayload["winner"];
+};
+
+export function BookingRequestOverlay({ socketConnected }: { socketConnected?: boolean }) {
+  const queryClient = useQueryClient();
+  const bookingRequestsQuery = useQuery<BookingRequest[]>({
+    queryKey: queryKeys.bookingRequests(),
+    queryFn: async () => [],
+    initialData: [],
+    staleTime: Infinity,
+    enabled: false,
+  });
+  const ongoingBookingsQuery = useQuery<Record<string, DispatcherBookingPayload>>({
+    queryKey: queryKeys.ongoingBookings(),
+    queryFn: async () => ({}),
+    initialData: {},
+    staleTime: Infinity,
+    enabled: false,
+  });
+  const bookingDecisionsQuery = useQuery<Record<string, BookingDecisionState>>({
+    queryKey: queryKeys.bookingDecisions(),
+    queryFn: async () => ({}),
+    initialData: {},
+    staleTime: Infinity,
+    enabled: false,
+  });
+  const bookingRequests = bookingRequestsQuery.data ?? [];
+  const ongoingBookings = ongoingBookingsQuery.data ?? {};
+  const bookingDecisions = bookingDecisionsQuery.data ?? {};
   const [isOpen, setIsOpen] = useState(true);
   const [now, setNow] = useState(() => Date.now());
 
-  const ongoingList = Object.values(ongoingBookings);
+  const ongoingList = useMemo(() => Object.values(ongoingBookings), [ongoingBookings]);
 
   const handleAccept = (requestId: string, callback: (response: { approved: boolean }) => void) => {
     callback({ approved: true });
-    setBookingDecisionPending(requestId);
+    queryClient.setQueryData<Record<string, BookingDecisionState>>(
+      queryKeys.bookingDecisions(),
+      (prev = {}) => ({
+        ...prev,
+        [requestId]: {
+          status: "pending",
+          winner: { id: "", name: null, providerName: null },
+        },
+      })
+    );
   };
 
   const handleReject = (requestId: string, callback: (response: { approved: boolean }) => void) => {
     callback({ approved: false });
-    removeBookingRequest(requestId);
-    clearBookingDecision(requestId);
+    queryClient.setQueryData<BookingRequest[]>(queryKeys.bookingRequests(), (prev = []) =>
+      prev.filter((req) => req.requestId !== requestId)
+    );
+    queryClient.setQueryData<Record<string, BookingDecisionState>>(
+      queryKeys.bookingDecisions(),
+      (prev = {}) => {
+        const next = { ...prev };
+        delete next[requestId];
+        return next;
+      }
+    );
   };
 
   useEffect(() => {
@@ -35,28 +91,58 @@ export function BookingRequestOverlay() {
 
   useEffect(() => {
     const expiry = 30000;
-    const decisionHold = 5000;
+    const decisionHoldLost = 5000;
 
     const requestTimeouts = bookingRequests.map((request) => {
       const remaining = Math.max(expiry - (now - request.timestamp), 0);
       if (remaining === 0) {
-        removeBookingRequest(request.requestId);
-        clearBookingDecision(request.requestId);
+        queryClient.setQueryData<BookingRequest[]>(queryKeys.bookingRequests(), (prev = []) =>
+          prev.filter((req) => req.requestId !== request.requestId)
+        );
+        queryClient.setQueryData<Record<string, BookingDecisionState>>(
+          queryKeys.bookingDecisions(),
+          (prev = {}) => {
+            const next = { ...prev };
+            delete next[request.requestId];
+            return next;
+          }
+        );
         return null;
       }
       return setTimeout(() => {
-        removeBookingRequest(request.requestId);
-        clearBookingDecision(request.requestId);
+        queryClient.setQueryData<BookingRequest[]>(queryKeys.bookingRequests(), (prev = []) =>
+          prev.filter((req) => req.requestId !== request.requestId)
+        );
+        queryClient.setQueryData<Record<string, BookingDecisionState>>(
+          queryKeys.bookingDecisions(),
+          (prev = {}) => {
+            const next = { ...prev };
+            delete next[request.requestId];
+            return next;
+          }
+        );
       }, remaining);
     });
 
     const decisionTimeouts = Object.entries(bookingDecisions)
       .filter(([, decision]) => ["won", "lost"].includes(decision.status))
-      .map(([requestId]) =>
-        setTimeout(() => {
-          removeBookingRequest(requestId);
-          clearBookingDecision(requestId);
-        }, decisionHold)
+      .map(([requestId, decision]) =>
+        setTimeout(
+          () => {
+          queryClient.setQueryData<BookingRequest[]>(queryKeys.bookingRequests(), (prev = []) =>
+            prev.filter((req) => req.requestId !== requestId)
+          );
+          queryClient.setQueryData<Record<string, BookingDecisionState>>(
+            queryKeys.bookingDecisions(),
+            (prev = {}) => {
+              const next = { ...prev };
+              delete next[requestId];
+              return next;
+            }
+          );
+          },
+          decision.status === "won" ? 0 : decisionHoldLost
+        )
       );
 
     return () => {
@@ -65,7 +151,7 @@ export function BookingRequestOverlay() {
       });
       decisionTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
     };
-  }, [bookingRequests, bookingDecisions, now, clearBookingDecision, removeBookingRequest]);
+  }, [bookingRequests, bookingDecisions, now, queryClient]);
 
   return (
     <>
@@ -104,7 +190,9 @@ export function BookingRequestOverlay() {
             {bookingRequests.length === 0 && ongoingList.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                 <Bell className="h-12 w-12 mb-2 opacity-20" />
-                <p className="text-sm">No pending requests</p>
+                <p className="text-sm">
+                  {socketConnected === false ? "Disconnected" : "No pending requests"}
+                </p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">

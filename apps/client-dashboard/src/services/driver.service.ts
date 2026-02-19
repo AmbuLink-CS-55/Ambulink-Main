@@ -1,6 +1,7 @@
 import { api } from "@/lib/api";
 import type { User } from "@/lib/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 
 type DriverQueryParams = {
   providerId?: string;
@@ -10,7 +11,7 @@ type DriverQueryParams = {
 
 export const useGetDrivers = (params?: DriverQueryParams) => {
   return useQuery({
-    queryKey: ["drivers", params],
+    queryKey: queryKeys.drivers(params),
     staleTime: 1000 * 30,
     queryFn: async () => {
       const { data } = await api.get<User[]>("/drivers", { params });
@@ -27,7 +28,7 @@ export const useCreateDriver = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.drivers() });
     },
   });
 };
@@ -40,7 +41,7 @@ export const useUpdateDriver = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.drivers() });
     },
   });
 };

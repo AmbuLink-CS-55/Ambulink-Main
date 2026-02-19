@@ -30,6 +30,12 @@ export class DispatcherService {
           eq(users.role, "DISPATCHER")
         )
       );
-    return dispatcher[0].dispatcherId;
+    if (dispatcher.length === 0) {
+      console.warn("[DispatcherService] No AVAILABLE dispatcher found", {
+        providerId,
+      });
+      return null;
+    }
+    return dispatcher[0]?.dispatcherId ?? null;
   }
 }

@@ -1,7 +1,8 @@
 import { Fragment, useMemo } from "react";
 import { DriverMarker } from "@/components/map/DriverMarker";
 import { OngoingPatientMarker } from "@/components/map/OngoingPatientMarker";
-import { useDriverStore } from "@/hooks/use-driver-store";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 import type { DispatcherBookingPayload } from "@/lib/socket-types";
 
 interface DriverMarkersProps {
@@ -9,7 +10,14 @@ interface DriverMarkersProps {
 }
 
 export function DriverMarkers({ ongoingBookings }: DriverMarkersProps) {
-  const driverLocations = useDriverStore((state) => state.driverLocations);
+  const driverLocationsQuery = useQuery<Record<string, { x: number; y: number }>>({
+    queryKey: queryKeys.driverLocations(),
+    queryFn: async () => ({}),
+    initialData: {},
+    staleTime: Infinity,
+    enabled: false,
+  });
+  const driverLocations = driverLocationsQuery.data ?? {};
   const ongoingList = useMemo(() => Object.values(ongoingBookings), [ongoingBookings]);
 
   const activeDriverIds = useMemo(
