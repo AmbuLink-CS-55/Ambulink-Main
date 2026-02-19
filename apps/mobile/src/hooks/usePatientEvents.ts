@@ -2,6 +2,7 @@
 import { BookingStatus, Point, User, Hospital } from "@ambulink/types";
 import { useSocketEvent } from "./useSocketEvent";
 import { Alert } from "react-native";
+import { addBookingHistory } from "@/utils/bookingHistory";
 
 export const usePatientEvents = (
   setBooking: React.Dispatch<React.SetStateAction<any>>,
@@ -38,6 +39,7 @@ export const usePatientEvents = (
     }) => {
       if (!data) return;
       setBooking({
+        bookingId: data.bookingId ?? null,
         patient: {
           id: data.patient.id,
           fullName: data.patient.fullName ?? undefined,
@@ -91,14 +93,46 @@ export const usePatientEvents = (
 
   useSocketEvent("booking:completed", () => {
     setStatus("COMPLETED");
-    setBooking(null);
+    setBooking((prev: any) => {
+      if (prev) {
+        addBookingHistory("PATIENT", {
+          id: `${Date.now()}:${prev.patient?.id ?? "patient"}`,
+          bookingId: prev.bookingId ?? null,
+          role: "PATIENT",
+          status: "COMPLETED",
+          patientName: prev.patient?.fullName ?? null,
+          driverName: prev.pickedDriver?.fullName ?? null,
+          hospitalName: prev.hospital?.name ?? null,
+          providerName: prev.provider?.name ?? null,
+          providerHotline: prev.provider?.hotlineNumber ?? null,
+          createdAt: new Date().toISOString(),
+        });
+      }
+      return null;
+    });
     setCompletedAt(Date.now());
     setIsBooking(false);
   });
 
   useSocketEvent("booking:cancelled", (data: { message: string }) => {
     if (!data) return;
-    setBooking(null);
+    setBooking((prev: any) => {
+      if (prev) {
+        addBookingHistory("PATIENT", {
+          id: `${Date.now()}:${prev.patient?.id ?? "patient"}`,
+          bookingId: prev.bookingId ?? null,
+          role: "PATIENT",
+          status: "CANCELLED",
+          patientName: prev.patient?.fullName ?? null,
+          driverName: prev.pickedDriver?.fullName ?? null,
+          hospitalName: prev.hospital?.name ?? null,
+          providerName: prev.provider?.name ?? null,
+          providerHotline: prev.provider?.hotlineNumber ?? null,
+          createdAt: new Date().toISOString(),
+        });
+      }
+      return null;
+    });
     setStatus("CANCELLED");
     setIsCancelling(false);
     setIsBooking(false);

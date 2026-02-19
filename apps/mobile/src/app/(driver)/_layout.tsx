@@ -2,7 +2,13 @@ import { Tabs, Redirect } from "expo-router";
 import { useAuthStore } from "@/hooks/AuthContext";
 import { SocketProvider } from "@/hooks/SocketContext";
 import { useDriverTracking } from "@/hooks/useDriverTracking";
+import { useDriverHistory } from "@/hooks/useDriverHistory";
 import Ionicons from "@expo/vector-icons/build/Ionicons";
+
+function DriverHistoryListener() {
+  useDriverHistory();
+  return null;
+}
 
 export default function TabLayout() {
   const { user } = useAuthStore();
@@ -12,6 +18,7 @@ export default function TabLayout() {
 
   return (
     <SocketProvider type="DRIVER">
+      <DriverHistoryListener />
       <Tabs screenOptions={{ headerShown: false }}>
         <Tabs.Screen
           name="index"
@@ -21,7 +28,7 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="log"
+          name="logs"
           options={{
             title: "Log",
             tabBarIcon: ({ color, size }) => (

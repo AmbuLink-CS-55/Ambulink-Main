@@ -123,6 +123,9 @@ export class DriverGateway implements OnGatewayInit {
     this.socketService.emitToPatient(patientId!, "booking:completed", {
       bookingId: id,
     });
+    this.socketService.emitToDriver(driverId, "booking:completed", {
+      bookingId: id,
+    });
     console.log("patient:completed", patientId);
   }
 }

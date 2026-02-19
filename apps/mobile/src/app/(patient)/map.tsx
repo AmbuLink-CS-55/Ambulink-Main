@@ -18,6 +18,7 @@ export default function Map() {
   const [isBooking, setIsBooking] = useState(false);
   const [completedAt, setCompletedAt] = useState<number | null>(null);
   const [booking, setBooking] = useState<{
+    bookingId?: string | null;
     patient: User;
     pickedDriver: User;
     hospital: Hospital;

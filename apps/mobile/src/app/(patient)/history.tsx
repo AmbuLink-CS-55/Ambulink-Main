@@ -7,20 +7,20 @@ import {
   subscribeBookingHistory,
 } from "@/utils/bookingHistory";
 
-export default function Logs() {
+export default function History() {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<any[]>([]);
 
   const load = async () => {
     setLoading(true);
-    const history = await loadBookingHistory("DRIVER");
+    const history = await loadBookingHistory("PATIENT");
     setItems(history);
     setLoading(false);
   };
 
   useEffect(() => {
     load();
-    const unsubscribe = subscribeBookingHistory("DRIVER", (next) => {
+    const unsubscribe = subscribeBookingHistory("PATIENT", (next) => {
       setItems(next);
       setLoading(false);
     });
@@ -34,7 +34,7 @@ export default function Logs() {
         <TouchableOpacity
           className="px-3 py-2 rounded-lg bg-gray-200"
           onPress={async () => {
-            await clearBookingHistory("DRIVER");
+            await clearBookingHistory("PATIENT");
             load();
           }}
         >
@@ -70,7 +70,7 @@ export default function Logs() {
                   </Text>
                 </View>
                 <Text className="text-base font-semibold text-gray-900 mt-2">
-                  {item.patientName ?? "Unknown Patient"}
+                  {item.driverName ?? "Unknown Driver"}
                 </Text>
                 <Text className="text-sm text-gray-500 mt-1">
                   Hospital: {item.hospitalName ?? "Unknown"}
