@@ -34,7 +34,7 @@ export const usePatientEvents = (
         phoneNumber: string | null;
         location: Point | null;
       };
-      provider: { id: string; name: string } | null;
+      provider: { id: string; name: string; hotlineNumber: string | null } | null;
     }) => {
       if (!data) return;
       setBooking({
@@ -56,7 +56,14 @@ export const usePatientEvents = (
           name: data.hospital.name ?? undefined,
           phoneNumber: data.hospital.phoneNumber ?? undefined,
           location: data.hospital.location ?? undefined,
-      } as Hospital,
+        } as Hospital,
+        provider: data.provider
+          ? {
+              id: data.provider.id,
+              name: data.provider.name,
+              hotlineNumber: data.provider.hotlineNumber ?? undefined,
+            }
+          : null,
       });
       setStatus(data.status);
       setIsBooking(false);
@@ -84,6 +91,7 @@ export const usePatientEvents = (
 
   useSocketEvent("booking:completed", () => {
     setStatus("COMPLETED");
+    setBooking(null);
     setCompletedAt(Date.now());
     setIsBooking(false);
   });

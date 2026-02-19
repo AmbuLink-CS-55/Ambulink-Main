@@ -207,6 +207,7 @@ export interface BookingAssignedPayload {
   provider: {
     id: string;
     name: string;
+    hotlineNumber: string | null;
   } | null;
 }
 

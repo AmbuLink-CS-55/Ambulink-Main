@@ -21,6 +21,7 @@ export default function Map() {
     patient: User;
     pickedDriver: User;
     hospital: Hospital;
+    provider?: { id: string; name: string; hotlineNumber?: string } | null;
   } | null>(null);
 
   const bookingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);

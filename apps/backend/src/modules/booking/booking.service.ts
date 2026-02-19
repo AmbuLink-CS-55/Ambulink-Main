@@ -80,6 +80,7 @@ export class BookingService {
         driverLocationY: sql<number | null>`ST_Y(driver_user.current_location)`,
         providerId: sql<string | null>`${bookings.providerId}`,
         providerName: sql<string | null>`${ambulanceProviders.name}`,
+        providerHotline: sql<string | null>`${ambulanceProviders.hotlineNumber}`,
         hospitalId: hospitals.id,
         hospitalName: hospitals.name,
         hospitalPhone: hospitals.phoneNumber,
@@ -136,7 +137,13 @@ export class BookingService {
         location: hospitalLocation,
       },
       provider:
-        row.providerId && row.providerName ? { id: row.providerId, name: row.providerName } : null,
+        row.providerId && row.providerName
+          ? {
+              id: row.providerId,
+              name: row.providerName,
+              hotlineNumber: row.providerHotline ?? null,
+            }
+          : null,
     };
   }
 

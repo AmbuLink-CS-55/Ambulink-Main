@@ -117,6 +117,7 @@ export type BookingAssignedPayload = {
   provider: {
     id: string;
     name: string;
+    hotlineNumber: string | null;
   } | null;
 };
 

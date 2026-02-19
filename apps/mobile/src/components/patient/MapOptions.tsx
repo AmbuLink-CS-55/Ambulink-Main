@@ -1,4 +1,4 @@
-import { View, TouchableOpacity, Text, ActivityIndicator } from "react-native";
+import { View, TouchableOpacity, Text, ActivityIndicator, Alert, Linking } from "react-native";
 import React from "react";
 import { Ionicons } from "@expo/vector-icons";
 import type { BookingStatus, User, Hospital } from "@ambulink/types";
@@ -6,7 +6,12 @@ import type { BookingStatus, User, Hospital } from "@ambulink/types";
 interface MapOptionsProps {
   bookingAssigned: boolean;
   status: BookingStatus;
-  booking: { patient: User; pickedDriver: User; hospital: Hospital } | null;
+  booking: {
+    patient: User;
+    pickedDriver: User;
+    hospital: Hospital;
+    provider?: { id: string; name: string; hotlineNumber?: string } | null;
+  } | null;
   onHelpRequest: () => void;
   cancelRequest: () => void;
   isCancelling?: boolean;
@@ -24,6 +29,12 @@ export default function MapOptions({
   isBooking = false,
   completedAt = null,
 }: MapOptionsProps) {
+  const handleCall = (phone?: string) => {
+    if (!phone) return Alert.alert("Error", "No phone number available");
+    Linking.openURL(`tel:${phone}`).catch(() =>
+      Alert.alert("Error", "Could not open phone dialer")
+    );
+  };
   const shouldShowCompleted =
     status === "COMPLETED" && completedAt !== null && Date.now() - completedAt < 8000;
 
@@ -62,6 +73,8 @@ export default function MapOptions({
 
   if (status === "ASSIGNED" && booking) {
     console.log(booking);
+    const driverPhone = booking.pickedDriver.phoneNumber;
+    const providerPhone = booking.provider?.hotlineNumber;
     return (
       <View className="bg-white p-4 w-full rounded-2xl shadow-lg">
         <View className="flex-row items-center mb-3">
@@ -82,6 +95,25 @@ export default function MapOptions({
         <View className="mt-2">
           <Text className="text-gray-500 text-sm">Destination Hospital</Text>
           <Text className="font-semibold">{booking.hospital.name}</Text>
+        </View>
+
+        <View className="flex-row gap-2 mt-4">
+          <TouchableOpacity
+            className={`flex-1 items-center justify-center p-3 rounded-xl ${driverPhone ? "bg-emerald-500" : "bg-emerald-200"}`}
+            activeOpacity={0.8}
+            onPress={() => handleCall(driverPhone)}
+            disabled={!driverPhone}
+          >
+            <Text className="text-white font-bold">Call Driver</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className={`flex-1 items-center justify-center p-3 rounded-xl ${providerPhone ? "bg-blue-500" : "bg-blue-200"}`}
+            activeOpacity={0.8}
+            onPress={() => handleCall(providerPhone)}
+            disabled={!providerPhone}
+          >
+            <Text className="text-white font-bold">Call Provider</Text>
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity
