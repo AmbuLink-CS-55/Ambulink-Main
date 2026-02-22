@@ -1,12 +1,12 @@
-import { eq, and, sql, isNotNull, asc } from "drizzle-orm";
-import { users } from "@/common/database/schema";
+import { eq, and, sql, isNotNull, asc, or } from "drizzle-orm";
+import { users, bookings } from "@/common/database/schema";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import type * as schema from "@/common/database/schema";
 import type { NewUser, UserStatus } from "@/common/database/schema";
 
 type Db = PostgresJsDatabase<typeof schema>;
 
-export const createDriver = (db: Db, driver: NewUser) =>
+export const createDriver = (db: Db, driver: Omit<NewUser, "role">) =>
   db
     .insert(users)
     .values({
@@ -19,7 +19,12 @@ export const createDriver = (db: Db, driver: NewUser) =>
     })
     .returning();
 
-export const findAllDrivers = (db: Db, providerId?: string, isActive?: boolean) => {
+export const findAllDrivers = (
+  db: Db,
+  providerId?: string,
+  isActive?: boolean,
+  status?: UserStatus
+) => {
   const conditions = [eq(users.role, "DRIVER" as const)];
 
   if (providerId) {
@@ -28,6 +33,10 @@ export const findAllDrivers = (db: Db, providerId?: string, isActive?: boolean) 
 
   if (isActive !== undefined) {
     conditions.push(eq(users.isActive, isActive));
+  }
+
+  if (status) {
+    conditions.push(eq(users.status, status));
   }
 
   return db
@@ -116,8 +125,20 @@ export const findDriversByLocation = (db: Db, lat: number, lng: number) => {
     .limit(3);
 };
 
+export const getDriverBooking = (db: Db, driverId: string) =>
+  db
+    .select()
+    .from(bookings)
+    .where(
+      and(
+        eq(bookings.driverId, driverId),
+        or(eq(bookings.status, "ASSIGNED"), eq(bookings.status, "ARRIVED"))
+      )
+    );
+
 export type CreateDriverResult = Awaited<ReturnType<typeof createDriver>>;
 export type FindAllDriversResult = Awaited<ReturnType<typeof findAllDrivers>>;
 export type FindDriverByIdResult = Awaited<ReturnType<typeof findDriverById>>;
 export type UpdateDriverResult = Awaited<ReturnType<typeof updateDriver>>;
 export type FindDriversByLocationResult = Awaited<ReturnType<typeof findDriversByLocation>>;
+export type GetDriverBookingResult = Awaited<ReturnType<typeof getDriverBooking>>;

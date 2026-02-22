@@ -1,12 +1,13 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useGetHospitals } from "@/services/hospital.service";
-import { Map as MapView, MapControls, MapEvents, MapRoute } from "@/components/ui/map";
+import { Map as MapView, MapControls, MapRoute } from "@/components/ui/map";
 import HospitalMarkersLayer from "@/components/map/HospitalMarkerLayer";
 import { PatientRequestMarker } from "@/components/map/PatientRequestMarker";
 import { DriverMarkers } from "@/components/map/DriverMarkers";
+import { useBookingRequests } from "@/hooks/use-booking-requests";
 import { useMapView } from "@/hooks/use-map-view";
 import { useQuery } from "@tanstack/react-query";
-import type { BookingNewPayload, DispatcherBookingPayload } from "@/lib/socket-types";
+import type { DispatcherBookingPayload } from "@/lib/socket-types";
 import { queryKeys } from "@/lib/queryKeys";
 
 const routeCache = new globalThis.Map<
@@ -28,15 +29,7 @@ async function fetchRoute(start: [number, number], end: [number, number]) {
 export default function Dashboard() {
   const { mapView, setMapView } = useMapView();
   const { error, data: hospitals } = useGetHospitals();
-  const bookingRequestsQuery = useQuery<
-    Array<{ requestId: string; data: BookingNewPayload; callback: any; timestamp: number }>
-  >({
-    queryKey: queryKeys.bookingRequests(),
-    queryFn: async () => [],
-    initialData: [],
-    staleTime: Infinity,
-    enabled: false,
-  });
+  const { bookingRequestIds } = useBookingRequests();
   const ongoingBookingsQuery = useQuery<Record<string, DispatcherBookingPayload>>({
     queryKey: queryKeys.ongoingBookings(),
     queryFn: async () => ({}),
@@ -44,7 +37,6 @@ export default function Dashboard() {
     staleTime: Infinity,
     enabled: false,
   });
-  const bookingRequests = bookingRequestsQuery.data ?? [];
   const ongoingBookings = ongoingBookingsQuery.data ?? {};
   const [routes, setRoutes] = useState<Record<string, [number, number][]>>({});
   // convert to array
@@ -123,8 +115,8 @@ export default function Dashboard() {
 
       {hospitals && <HospitalMarkersLayer hospitals={hospitals} />}
 
-      {bookingRequests.map((request) => (
-        <PatientRequestMarker key={request.requestId} request={request} />
+      {bookingRequestIds.map((id) => (
+        <PatientRequestMarker key={id} id={id} />
       ))}
 
       <DriverMarkers ongoingBookings={ongoingBookings} />

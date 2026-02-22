@@ -1,59 +1,40 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { eq, and, inArray } from "drizzle-orm";
-import { bookings, User, users, UserStatus } from "@/common/database/schema";
+import { User, UserStatus } from "@/common/database/schema";
 import { DbService } from "@/common/database/db.service";
 import type { CreatePatientDto, UpdatePatientDto } from "@/common/validation/schemas";
+import {
+  createPatient,
+  findAllPatients,
+  findPatientById,
+  updatePatient,
+  removePatient,
+  updateUserStatus,
+  updateUserLocation,
+} from "@/common/queries";
 
 @Injectable()
 export class PatientService {
-  // patientID : socketID
-
   constructor(private dbService: DbService) {}
 
   async updateStatus(patientId: string, status: UserStatus) {
-    return await this.dbService.db
-      .update(users)
-      .set({ status: status, updatedAt: new Date() })
-      .where(eq(users.id, patientId))
-      .returning();
+    return await updateUserStatus(this.dbService.db, patientId, status);
   }
 
   async updateLocation(patientId: string, location: { x: number; y: number }) {
-    return await this.dbService.db
-      .update(users)
-      .set({ currentLocation: location, lastLocationUpdate: new Date(), updatedAt: new Date() })
-      .where(eq(users.id, patientId))
-      .returning();
+    return await updateUserLocation(this.dbService.db, patientId, location);
   }
 
-  async create(createPatientDto: CreatePatientDto): Promise<User> {
-    const patientData = {
-      ...createPatientDto,
-      role: "PATIENT" as const,
-    };
-
-    const result = await this.dbService.db.insert(users).values(patientData).returning();
+  async create(createPatientDto: CreatePatientDto) {
+    const result = await createPatient(this.dbService.db, createPatientDto);
     return result[0];
   }
 
-  async findAll(isActive?: boolean): Promise<User[]> {
-    const conditions = [eq(users.role, "PATIENT" as const)];
-
-    if (isActive !== undefined) {
-      conditions.push(eq(users.isActive, isActive));
-    }
-
-    return this.dbService.db
-      .select()
-      .from(users)
-      .where(and(...conditions));
+  async findAll(isActive?: boolean) {
+    return findAllPatients(this.dbService.db, isActive);
   }
 
-  async findOne(id: string): Promise<User> {
-    const result = await this.dbService.db
-      .select()
-      .from(users)
-      .where(and(eq(users.id, id), eq(users.role, "PATIENT")));
+  async findOne(id: string) {
+    const result = await findPatientById(this.dbService.db, id);
 
     if (result.length === 0) {
       throw new NotFoundException(`Patient with id ${id} not found`);
@@ -61,17 +42,10 @@ export class PatientService {
     return result[0];
   }
 
-  async update(id: string, updatePatientDto: UpdatePatientDto): Promise<User> {
+  async update(id: string, updatePatientDto: UpdatePatientDto) {
     await this.findOne(id);
 
-    const result = await this.dbService.db
-      .update(users)
-      .set({
-        ...updatePatientDto,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, id))
-      .returning();
+    const result = await updatePatient(this.dbService.db, id, updatePatientDto);
 
     if (result.length === 0) {
       throw new NotFoundException(`Patient with id ${id} not found`);
@@ -79,11 +53,8 @@ export class PatientService {
     return result[0];
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string) {
     await this.findOne(id);
-    await this.dbService.db
-      .update(users)
-      .set({ isActive: false, updatedAt: new Date() })
-      .where(eq(users.id, id));
+    await removePatient(this.dbService.db, id);
   }
 }

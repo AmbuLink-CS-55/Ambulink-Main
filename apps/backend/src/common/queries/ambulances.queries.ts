@@ -9,7 +9,12 @@ type Db = PostgresJsDatabase<typeof schema>;
 export const createAmbulance = (db: Db, ambulanceData: NewAmbulance) =>
   db.insert(ambulance).values(ambulanceData).returning();
 
-export const getAllAmbulances = (db: Db) => db.select().from(ambulance);
+export const getAllAmbulances = (db: Db, providerId?: string) => {
+  if (!providerId) {
+    return db.select().from(ambulance);
+  }
+  return db.select().from(ambulance).where(eq(ambulance.providerId, providerId));
+};
 
 export const getAmbulanceById = (db: Db, id: string) =>
   db.select().from(ambulance).where(eq(ambulance.id, id));

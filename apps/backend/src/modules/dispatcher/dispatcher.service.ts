@@ -1,35 +1,18 @@
 import { Injectable } from "@nestjs/common";
 import { DbService } from "@/common/database/db.service";
-import { users, UserStatus } from "@/common/database/schema";
-import { and } from "drizzle-orm";
-import { eq } from "drizzle-orm";
+import { UserStatus } from "@/common/database/schema";
+import { setDispatcherStatus, findLiveDispatchersByProvider } from "@/common/queries";
 
 @Injectable()
 export class DispatcherService {
   constructor(private dbService: DbService) {}
 
   async setStatus(dispatcherId: string, status: UserStatus) {
-    await this.dbService.db
-      .update(users)
-      .set({
-        status: status,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, dispatcherId))
-      .returning();
+    await setDispatcherStatus(this.dbService.db, dispatcherId, status);
   }
 
   async findLiveDispatchersByProvider(providerId: string) {
-    const dispatcher = await this.dbService.db
-      .select({ dispatcherId: users.id })
-      .from(users)
-      .where(
-        and(
-          eq(users.status, "AVAILABLE"),
-          eq(users.providerId, providerId),
-          eq(users.role, "DISPATCHER")
-        )
-      );
+    const dispatcher = await findLiveDispatchersByProvider(this.dbService.db, providerId);
     if (dispatcher.length === 0) {
       console.warn("[DispatcherService] No AVAILABLE dispatcher found", {
         providerId,

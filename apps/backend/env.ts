@@ -26,9 +26,10 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 
   // Test seeds
-  PATIENT_ID: z.string().uuid("PATIENT_ID must be a valid UUID"),
-  DRIVER_ID: z.string().uuid("DRIVER_ID must be a valid UUID"),
-  EMT_ID: z.string().uuid("EMT_ID must be a valid UUID"),
+  PROVIDER_ID: z.uuidv4(),
+  PATIENT_ID: z.uuidv4("PATIENT_ID must be a valid UUID"),
+  DRIVER_ID: z.uuidv4("DRIVER_ID must be a valid UUID"),
+  EMT_ID: z.uuidv4("EMT_ID must be a valid UUID"),
   DISPATCHER_ID: z.string().uuid("DISPATCHER_ID must be a valid UUID"),
 });
 

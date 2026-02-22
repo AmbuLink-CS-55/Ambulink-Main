@@ -21,7 +21,7 @@ import { X, Minus, Plus, Locate, Maximize, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Check document class for theme (works with next-themes, etc.)
-function getDocumentTheme(): Theme | null {
+function getDocumentTheme() {
   if (typeof document === "undefined") return null;
   if (document.documentElement.classList.contains("dark")) return "dark";
   if (document.documentElement.classList.contains("light")) return "light";
@@ -29,12 +29,12 @@ function getDocumentTheme(): Theme | null {
 }
 
 // Get system preference
-function getSystemTheme(): Theme {
+function getSystemTheme() {
   if (typeof window === "undefined") return "light";
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-function useResolvedTheme(themeProp?: "light" | "dark"): "light" | "dark" {
+function useResolvedTheme(themeProp?: "light" | "dark") {
   const [detectedTheme, setDetectedTheme] = useState<"light" | "dark">(
     () => getDocumentTheme() ?? getSystemTheme()
   );

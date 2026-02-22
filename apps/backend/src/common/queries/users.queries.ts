@@ -1,14 +1,12 @@
-import { eq, and, inArray } from "drizzle-orm";
-import { users, bookings } from "@/common/database/schema";
+import { eq, and } from "drizzle-orm";
+import { users } from "@/common/database/schema";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import type * as schema from "@/common/database/schema";
 import type { NewUser, UserStatus } from "@/common/database/schema";
 
 type Db = PostgresJsDatabase<typeof schema>;
 
-const ACTIVE_BOOKING_STATUSES = ["REQUESTED", "ASSIGNED", "ARRIVED", "PICKEDUP"] as const;
-
-export const createPatient = (db: Db, patient: NewUser) =>
+export const createPatient = (db: Db, patient: Omit<NewUser, "role">) =>
   db
     .insert(users)
     .values({
@@ -56,19 +54,16 @@ export const updateUserStatus = (db: Db, userId: string, status: UserStatus) =>
     .where(eq(users.id, userId))
     .returning();
 
-export const findActiveBookingByPatient = (db: Db, patientId: string) =>
+export const updateUserLocation = (db: Db, userId: string, location: { x: number; y: number }) =>
   db
-    .select()
-    .from(bookings)
-    .where(
-      and(eq(bookings.patientId, patientId), inArray(bookings.status, ACTIVE_BOOKING_STATUSES))
-    );
+    .update(users)
+    .set({ currentLocation: location, lastLocationUpdate: new Date(), updatedAt: new Date() })
+    .where(eq(users.id, userId))
+    .returning();
 
 export type CreatePatientResult = Awaited<ReturnType<typeof createPatient>>;
 export type FindAllPatientsResult = Awaited<ReturnType<typeof findAllPatients>>;
 export type FindPatientByIdResult = Awaited<ReturnType<typeof findPatientById>>;
 export type UpdatePatientResult = Awaited<ReturnType<typeof updatePatient>>;
-export type FindActiveBookingByPatientResult = Awaited<
-  ReturnType<typeof findActiveBookingByPatient>
->;
 export type UpdateUserStatusResult = Awaited<ReturnType<typeof updateUserStatus>>;
+export type UpdateUserLocationResult = Awaited<ReturnType<typeof updateUserLocation>>;

@@ -1,38 +1,39 @@
 import { useEffect, useMemo, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { LocationMiniMap } from "@/components/booking/LocationMiniMap";
 import { Bell, X, Check, XCircle, Truck, Phone, User2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  clearBookingDecision,
+  removeBookingRequest,
+  setPendingBookingDecision,
+} from "@/lib/booking-cache-ops";
+import { resolveBookingRequestCallback } from "@/lib/booking-request-callbacks";
+import { useBookingRequests } from "@/hooks/use-booking-requests";
+import type { BookingDecisionState } from "@/lib/booking-types";
+import { getBookingActionErrorMessage } from "@/lib/booking-ui-errors";
 import { queryKeys } from "@/lib/queryKeys";
-import type {
-  BookingDecisionPayload,
-  BookingNewPayload,
-  DispatcherApprovalResponse,
-  DispatcherBookingPayload,
-} from "@/lib/socket-types";
+import type { DispatcherBookingPayload } from "@/lib/socket-types";
+import { useGetDrivers } from "@/services/driver.service";
+import { useGetHospitals } from "@/services/hospital.service";
+import { useReassignBooking } from "@/services/booking.service";
 import { cn } from "@/lib/utils";
-
-type BookingRequest = {
-  requestId: string;
-  data: BookingNewPayload;
-  callback: (response: DispatcherApprovalResponse) => void;
-  timestamp: number;
-};
-
-type BookingDecisionState = {
-  status: "pending" | "won" | "lost";
-  winner: BookingDecisionPayload["winner"];
-};
+import env from "@/../env";
 
 export function BookingRequestOverlay({ socketConnected }: { socketConnected?: boolean }) {
   const queryClient = useQueryClient();
-  const bookingRequestsQuery = useQuery<BookingRequest[]>({
-    queryKey: queryKeys.bookingRequests(),
-    queryFn: async () => [],
-    initialData: [],
-    staleTime: Infinity,
-    enabled: false,
-  });
+  const { bookingRequests } = useBookingRequests();
   const ongoingBookingsQuery = useQuery<Record<string, DispatcherBookingPayload>>({
     queryKey: queryKeys.ongoingBookings(),
     queryFn: async () => ({}),
@@ -47,41 +48,134 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
     staleTime: Infinity,
     enabled: false,
   });
-  const bookingRequests = bookingRequestsQuery.data ?? [];
   const ongoingBookings = ongoingBookingsQuery.data ?? {};
   const bookingDecisions = bookingDecisionsQuery.data ?? {};
   const [isOpen, setIsOpen] = useState(true);
   const [now, setNow] = useState(() => Date.now());
+  const [isReassignOpen, setIsReassignOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<DispatcherBookingPayload | null>(null);
+  const [reassignDriverId, setReassignDriverId] = useState("");
+  const [reassignHospitalId, setReassignHospitalId] = useState("");
+  const [reassignPickupX, setReassignPickupX] = useState("");
+  const [reassignPickupY, setReassignPickupY] = useState("");
+  const [reassignPickupAddress, setReassignPickupAddress] = useState("");
+  const [reassignError, setReassignError] = useState<string | null>(null);
+
+  const drivers = useGetDrivers({ providerId: env.VITE_PROVIDER_ID, isActive: true });
+  const hospitals = useGetHospitals();
+  const reassignBooking = useReassignBooking();
 
   const ongoingList = useMemo(() => Object.values(ongoingBookings), [ongoingBookings]);
+  const driverOptions = useMemo(
+    () =>
+      [...(drivers.data ?? [])]
+        .sort((a, b) => {
+          const aRank = a.status === "AVAILABLE" ? 0 : 1;
+          const bRank = b.status === "AVAILABLE" ? 0 : 1;
+          if (aRank !== bRank) return aRank - bRank;
+          return (a.fullName ?? "").localeCompare(b.fullName ?? "");
+        })
+        .map((driver) => ({
+          value: driver.id,
+          label: `${driver.fullName ?? "Unknown"} (${driver.status ?? "N/A"})`,
+        })),
+    [drivers.data]
+  );
+  const hospitalOptions = useMemo(
+    () =>
+      (hospitals.data ?? []).map((hospital) => ({
+        value: hospital.id,
+        label: hospital.name,
+      })),
+    [hospitals.data]
+  );
 
-  const handleAccept = (requestId: string, callback: (response: { approved: boolean }) => void) => {
-    callback({ approved: true });
-    queryClient.setQueryData<Record<string, BookingDecisionState>>(
-      queryKeys.bookingDecisions(),
-      (prev = {}) => ({
-        ...prev,
-        [requestId]: {
-          status: "pending",
-          winner: { id: "", name: null, providerName: null },
-        },
-      })
-    );
+  const openReassignDialog = (booking: DispatcherBookingPayload) => {
+    setSelectedBooking(booking);
+    setReassignDriverId(booking.driver.id);
+    setReassignHospitalId(booking.hospital.id);
+    const sourceLocation = booking.pickupLocation ?? booking.patient.location;
+    setReassignPickupX(sourceLocation?.x?.toString() ?? "");
+    setReassignPickupY(sourceLocation?.y?.toString() ?? "");
+    setReassignPickupAddress("");
+    setReassignError(null);
+    setIsReassignOpen(true);
   };
 
-  const handleReject = (requestId: string, callback: (response: { approved: boolean }) => void) => {
-    callback({ approved: false });
-    queryClient.setQueryData<BookingRequest[]>(queryKeys.bookingRequests(), (prev = []) =>
-      prev.filter((req) => req.requestId !== requestId)
-    );
-    queryClient.setQueryData<Record<string, BookingDecisionState>>(
-      queryKeys.bookingDecisions(),
-      (prev = {}) => {
-        const next = { ...prev };
-        delete next[requestId];
-        return next;
-      }
-    );
+  const closeReassignDialog = () => {
+    setIsReassignOpen(false);
+    setSelectedBooking(null);
+    setReassignError(null);
+  };
+
+  const handleReassign = async () => {
+    if (!selectedBooking) return;
+
+    setReassignError(null);
+
+    const payload: {
+      dispatcherId: string;
+      driverId?: string;
+      hospitalId?: string;
+      pickupLocation?: { x: number; y: number };
+      pickupAddress?: string | null;
+    } = {
+      dispatcherId: env.VITE_DISPATCHER_ID,
+    };
+
+    if (reassignDriverId && reassignDriverId !== selectedBooking.driver.id) {
+      payload.driverId = reassignDriverId;
+    }
+
+    if (reassignHospitalId && reassignHospitalId !== selectedBooking.hospital.id) {
+      payload.hospitalId = reassignHospitalId;
+    }
+
+    const currentPickup = selectedBooking.pickupLocation ?? selectedBooking.patient.location;
+    const x = Number.parseFloat(reassignPickupX);
+    const y = Number.parseFloat(reassignPickupY);
+    const pickupChanged =
+      Number.isFinite(x) &&
+      Number.isFinite(y) &&
+      (x !== currentPickup?.x || y !== currentPickup?.y);
+
+    if (pickupChanged) {
+      payload.pickupLocation = { x, y };
+    }
+
+    if (reassignPickupAddress.trim()) {
+      payload.pickupAddress = reassignPickupAddress.trim();
+    }
+
+    if (Object.keys(payload).length === 1) {
+      setReassignError("No changes detected. Update at least one field.");
+      return;
+    }
+
+    try {
+      await reassignBooking.mutateAsync({ bookingId: selectedBooking.bookingId, payload });
+      closeReassignDialog();
+    } catch (error) {
+      setReassignError(getBookingActionErrorMessage(error));
+    }
+  };
+
+  const currentReassignPoint = (() => {
+    const x = Number.parseFloat(reassignPickupX);
+    const y = Number.parseFloat(reassignPickupY);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    return { x, y };
+  })();
+
+  const handleAccept = (requestId: string) => {
+    resolveBookingRequestCallback(requestId, true);
+    setPendingBookingDecision(queryClient, requestId);
+  };
+
+  const handleReject = (requestId: string) => {
+    resolveBookingRequestCallback(requestId, false);
+    removeBookingRequest(queryClient, requestId);
+    clearBookingDecision(queryClient, requestId);
   };
 
   useEffect(() => {
@@ -96,31 +190,13 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
     const requestTimeouts = bookingRequests.map((request) => {
       const remaining = Math.max(expiry - (now - request.timestamp), 0);
       if (remaining === 0) {
-        queryClient.setQueryData<BookingRequest[]>(queryKeys.bookingRequests(), (prev = []) =>
-          prev.filter((req) => req.requestId !== request.requestId)
-        );
-        queryClient.setQueryData<Record<string, BookingDecisionState>>(
-          queryKeys.bookingDecisions(),
-          (prev = {}) => {
-            const next = { ...prev };
-            delete next[request.requestId];
-            return next;
-          }
-        );
+        removeBookingRequest(queryClient, request.requestId);
+        clearBookingDecision(queryClient, request.requestId);
         return null;
       }
       return setTimeout(() => {
-        queryClient.setQueryData<BookingRequest[]>(queryKeys.bookingRequests(), (prev = []) =>
-          prev.filter((req) => req.requestId !== request.requestId)
-        );
-        queryClient.setQueryData<Record<string, BookingDecisionState>>(
-          queryKeys.bookingDecisions(),
-          (prev = {}) => {
-            const next = { ...prev };
-            delete next[request.requestId];
-            return next;
-          }
-        );
+        removeBookingRequest(queryClient, request.requestId);
+        clearBookingDecision(queryClient, request.requestId);
       }, remaining);
     });
 
@@ -129,17 +205,8 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
       .map(([requestId, decision]) =>
         setTimeout(
           () => {
-          queryClient.setQueryData<BookingRequest[]>(queryKeys.bookingRequests(), (prev = []) =>
-            prev.filter((req) => req.requestId !== requestId)
-          );
-          queryClient.setQueryData<Record<string, BookingDecisionState>>(
-            queryKeys.bookingDecisions(),
-            (prev = {}) => {
-              const next = { ...prev };
-              delete next[requestId];
-              return next;
-            }
-          );
+            removeBookingRequest(queryClient, requestId);
+            clearBookingDecision(queryClient, requestId);
           },
           decision.status === "won" ? 0 : decisionHoldLost
         )
@@ -262,6 +329,16 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
                               <span>Status</span>
                               <span className="font-mono">{booking.status}</span>
                             </div>
+                            <div className="pt-1">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openReassignDialog(booking)}
+                                className="w-full"
+                              >
+                                Reassign Booking
+                              </Button>
+                            </div>
                           </div>
                         </AlertDescription>
                       </Alert>
@@ -372,7 +449,7 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
                           <div className="flex gap-2 mt-3">
                             <Button
                               size="sm"
-                              onClick={() => handleAccept(request.requestId, request.callback)}
+                              onClick={() => handleAccept(request.requestId)}
                               className="flex-1 bg-green-600 hover:bg-green-700"
                               disabled={bookingDecisions[request.requestId]?.status === "pending"}
                             >
@@ -382,7 +459,7 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
                             <Button
                               size="sm"
                               variant="destructive"
-                              onClick={() => handleReject(request.requestId, request.callback)}
+                              onClick={() => handleReject(request.requestId)}
                               className="flex-1"
                               disabled={bookingDecisions[request.requestId]?.status === "pending"}
                             >
@@ -407,6 +484,100 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
           onClick={() => setIsOpen(false)}
         />
       )}
+
+      <Dialog
+        open={isReassignOpen}
+        onOpenChange={(open) => {
+          if (!open) closeReassignDialog();
+          else setIsReassignOpen(true);
+        }}
+      >
+        <DialogContent className="flex max-h-[90vh] flex-col overflow-hidden p-0">
+          <DialogHeader>
+            <DialogTitle>Reassign Booking</DialogTitle>
+            <DialogDescription>
+              Change driver, hospital, or pickup location for this active booking.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid flex-1 gap-4 overflow-y-auto px-6 pb-6 min-h-0">
+            {reassignError && (
+              <Alert variant="destructive">
+                <AlertTitle>Could not reassign booking</AlertTitle>
+                <AlertDescription>{reassignError}</AlertDescription>
+              </Alert>
+            )}
+
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Driver</label>
+              <Select
+                value={reassignDriverId}
+                onChange={(e) => setReassignDriverId(e.target.value)}
+                options={driverOptions}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Hospital</label>
+              <Select
+                value={reassignHospitalId}
+                onChange={(e) => setReassignHospitalId(e.target.value)}
+                options={hospitalOptions}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Pickup Longitude (x)</label>
+                <Input
+                  value={reassignPickupX}
+                  onChange={(e) => setReassignPickupX(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Pickup Latitude (y)</label>
+                <Input
+                  value={reassignPickupY}
+                  onChange={(e) => setReassignPickupY(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Pick Location on Map</label>
+              <LocationMiniMap
+                className="h-40 sm:h-52 w-full overflow-hidden rounded-md border"
+                value={currentReassignPoint}
+                onChange={(point) => {
+                  setReassignPickupX(point.x.toFixed(6));
+                  setReassignPickupY(point.y.toFixed(6));
+                }}
+              />
+              <p className="text-xs text-muted-foreground">
+                Click map or drag marker to update pickup location.
+              </p>
+            </div>
+
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Pickup Address (optional)</label>
+              <Input
+                value={reassignPickupAddress}
+                onChange={(e) => setReassignPickupAddress(e.target.value)}
+                placeholder="Only send if changed"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closeReassignDialog}>
+              Cancel
+            </Button>
+            <Button onClick={handleReassign} disabled={reassignBooking.isPending}>
+              {reassignBooking.isPending ? "Saving..." : "Apply Reassignment"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

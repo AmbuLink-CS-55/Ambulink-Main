@@ -5,7 +5,6 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { get, set, del } from "idb-keyval";
 import { DashboardLayout } from "./pages/layouts/DashboardLayout";
-import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = lazy(() => import("./pages/dashboard"));
 const LoginPage = lazy(() => import("./pages/login"));
@@ -35,15 +34,7 @@ const persister = createAsyncStoragePersister({
 });
 
 function PageLoader() {
-  return (
-    <div className="flex h-screen items-center justify-center p-8">
-      <div className="space-y-4 w-full max-w-md">
-        <Skeleton className="h-8 w-3/4" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
-      </div>
-    </div>
-  );
+  return <></>;
 }
 
 export function App() {

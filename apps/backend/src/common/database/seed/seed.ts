@@ -36,6 +36,7 @@ async function main() {
   const [ambulinkProvider] = await db
     .insert(schema.ambulanceProviders)
     .values({
+      id: env.PROVIDER_ID,
       name: "AMBULINK AMBULANCE PROVIDERS",
       providerType: "PRIVATE",
       hotlineNumber: "+94112345678",

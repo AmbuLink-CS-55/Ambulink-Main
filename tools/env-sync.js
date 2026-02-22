@@ -7,6 +7,7 @@ const ROOT_ENV_PATH = path.join(ROOT_DIR, ".env");
 const REQUIRED_KEYS = [
   "API_SERVER_URL",
   "WS_SERVER_URL",
+  "PROVIDER_ID",
   "DISPATCHER_ID",
   "PATIENT_ID",
   "DRIVER_ID",
@@ -73,6 +74,7 @@ function main() {
     ["VITE_API_SERVER_URL", rootEnv.API_SERVER_URL],
     ["VITE_WS_SERVER_URL", rootEnv.WS_SERVER_URL],
     ["VITE_DISPATCHER_ID", rootEnv.DISPATCHER_ID],
+    ["VITE_PROVIDER_ID", rootEnv.PROVIDER_ID],
   ]);
 
   writeEnvFile("./apps/mobile/.env", [
@@ -91,6 +93,7 @@ function main() {
     ["EMT_ID", rootEnv.EMT_ID],
     ["DISPATCHER_ID", rootEnv.DISPATCHER_ID],
     ["APP_STAGE", rootEnv.APP_STAGE],
+    ["PROVIDER_ID", rootEnv.PROVIDER_ID],
   ]);
 }
 

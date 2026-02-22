@@ -3,11 +3,7 @@ import type { Ambulance } from "@/lib/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 
-type AmbulanceQueryParams = {
-  providerId?: string;
-};
-
-export const useGetAmbulances = (params?: AmbulanceQueryParams) => {
+export const useGetAmbulances = (params?: { providerId?: string }) => {
   return useQuery({
     queryKey: queryKeys.ambulances(params),
     staleTime: 1000 * 30,

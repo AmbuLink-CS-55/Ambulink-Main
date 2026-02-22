@@ -2,53 +2,25 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import env from "../../env";
 import { queryKeys } from "@/lib/queryKeys";
+import {
+  clearBookingDecisions,
+  clearBookingRequests,
+  setBookingDecision,
+  upsertBookingRequest,
+} from "@/lib/booking-cache-ops";
+import { setBookingRequestCallback } from "@/lib/booking-request-callbacks";
 import type {
-  BookingDecisionPayload,
   BookingNewPayload,
   DispatcherApprovalResponse,
   DispatcherBookingPayload,
   DispatcherBookingUpdatePayload,
+  DispatcherBookingLogPayload,
   DispatcherToServerEvents,
   DriverLocationUpdate,
   ServerToDispatcherEvents,
 } from "@/lib/socket-types";
 import { dispatcherSocket } from "@/lib/dispatcher-socket";
-
-type BookingRequest = {
-  requestId: string;
-  data: BookingNewPayload;
-  callback: (response: DispatcherApprovalResponse) => void;
-  timestamp: number;
-};
-
-type BookingDecisionState = {
-  status: "pending" | "won" | "lost";
-  winner: BookingDecisionPayload["winner"];
-};
-
-type BookingLogEntry = {
-  bookingId: string;
-  status: "REQUESTED" | "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED";
-  requestedAt: string | null;
-  assignedAt: string | null;
-  arrivedAt: string | null;
-  pickedupAt: string | null;
-  completedAt: string | null;
-  fareEstimate: string | null;
-  fareFinal: string | null;
-  cancellationReason: string | null;
-  patientId: string | null;
-  patientName: string | null;
-  patientPhone: string | null;
-  driverId: string | null;
-  driverName: string | null;
-  driverPhone: string | null;
-  ambulanceId: string | null;
-  providerId: string | null;
-  providerName: string | null;
-  hospitalId: string | null;
-  hospitalName: string | null;
-};
+import type { BookingLogEntry } from "@/services/booking.service";
 
 export function useDispatcherSocketSync() {
   const queryClient = useQueryClient();
@@ -60,7 +32,11 @@ export function useDispatcherSocketSync() {
 
   useEffect(() => {
     console.info("[dispatcher-socket] hook_mount");
-    socket.on("connect", () => setConnected(true));
+    socket.on("connect", () => {
+      setConnected(true);
+      clearBookingRequests(queryClient);
+      clearBookingDecisions(queryClient);
+    });
     socket.on("disconnect", () => setConnected(false));
     socket.on("connect_error", (error) => {
       console.error("[socket] Connection failed:", {
@@ -72,25 +48,16 @@ export function useDispatcherSocketSync() {
     socket.on(
       "booking:new",
       (data: BookingNewPayload, callback: (res: DispatcherApprovalResponse) => void) => {
-        queryClient.setQueryData<BookingRequest[]>(queryKeys.bookingRequests(), (prev = []) => [
-          ...prev,
-          { requestId: data.requestId, data, callback, timestamp: Date.now() },
-        ]);
+        setBookingRequestCallback(data.requestId, callback);
+        upsertBookingRequest(queryClient, {
+          requestId: data.requestId,
+          data: data,
+          timestamp: Date.now(),
+        });
       }
     );
 
-    socket.on("booking:decision", (payload: BookingDecisionPayload) => {
-      queryClient.setQueryData<Record<string, BookingDecisionState>>(
-        queryKeys.bookingDecisions(),
-        (prev = {}) => ({
-          ...prev,
-          [payload.requestId]: {
-            status: payload.isWinner ? "won" : "lost",
-            winner: payload.winner,
-          },
-        })
-      );
-    });
+    socket.on("booking:decision", (payload) => setBookingDecision(queryClient, payload));
 
     socket.on("booking:sync", (data: { bookings: DispatcherBookingPayload[] }) => {
       const next: Record<string, DispatcherBookingPayload> = {};
@@ -143,7 +110,7 @@ export function useDispatcherSocketSync() {
       );
     });
 
-    socket.on("booking:log", (payload) => {
+    socket.on("booking:log", (payload: DispatcherBookingLogPayload) => {
       if (env.VITE_PROVIDER_ID && payload.providerId !== env.VITE_PROVIDER_ID) return;
       queryClient.setQueryData<BookingLogEntry[]>(
         queryKeys.bookingLog(env.VITE_PROVIDER_ID ?? null),
@@ -154,6 +121,7 @@ export function useDispatcherSocketSync() {
               {
                 bookingId: payload.bookingId,
                 status: payload.status,
+                updatedAt: payload.updatedAt,
                 requestedAt: null,
                 assignedAt: null,
                 arrivedAt: null,
@@ -173,7 +141,7 @@ export function useDispatcherSocketSync() {
                 providerName: null,
                 hospitalId: null,
                 hospitalName: null,
-              } as BookingLogEntry,
+              },
               ...prev,
             ];
           }
@@ -182,7 +150,7 @@ export function useDispatcherSocketSync() {
             ...next[index],
             status: payload.status,
             updatedAt: payload.updatedAt,
-          } as BookingLogEntry;
+          };
           return next;
         }
       );

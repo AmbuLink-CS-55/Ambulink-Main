@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { hospitals } from "@/common/database/schema";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import type * as schema from "@/common/database/schema";
@@ -8,10 +8,7 @@ type Db = PostgresJsDatabase<typeof schema>;
 export const getAllHospitals = (db: Db) => db.select().from(hospitals);
 
 export const getHospitalById = (db: Db, id: string) =>
-  db
-    .select()
-    .from(hospitals)
-    .where(sql`${hospitals.id} = ${id}`);
+  db.select().from(hospitals).where(eq(hospitals.id, id));
 
 export const getNearestHospital = (db: Db, lat: number, lng: number) =>
   db
