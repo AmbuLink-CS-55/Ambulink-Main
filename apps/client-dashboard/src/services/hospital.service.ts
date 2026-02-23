@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 
 export const useGetHospitals = () => {
+  console.log("fetchign hospitals");
   //NOTE: check if we have it sotred localy
   return useQuery({
     queryKey: queryKeys.hospitals(),

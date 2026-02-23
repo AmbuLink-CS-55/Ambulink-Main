@@ -135,10 +135,3 @@ export const getDriverBooking = (db: Db, driverId: string) =>
         or(eq(bookings.status, "ASSIGNED"), eq(bookings.status, "ARRIVED"))
       )
     );
-
-export type CreateDriverResult = Awaited<ReturnType<typeof createDriver>>;
-export type FindAllDriversResult = Awaited<ReturnType<typeof findAllDrivers>>;
-export type FindDriverByIdResult = Awaited<ReturnType<typeof findDriverById>>;
-export type UpdateDriverResult = Awaited<ReturnType<typeof updateDriver>>;
-export type FindDriversByLocationResult = Awaited<ReturnType<typeof findDriversByLocation>>;
-export type GetDriverBookingResult = Awaited<ReturnType<typeof getDriverBooking>>;

@@ -255,26 +255,3 @@ export const getDispatcherWinnerInfo = (db: Db, winnerDispatcherId: string) =>
     .from(users)
     .leftJoin(ambulanceProviders, eq(users.providerId, ambulanceProviders.id))
     .where(eq(users.id, winnerDispatcherId));
-
-export type CreateBookingResult = Awaited<ReturnType<typeof createBooking>>;
-export type UpdateBookingResult = Awaited<ReturnType<typeof updateBooking>>;
-export type GetActiveBookingForPatientResult = Awaited<
-  ReturnType<typeof getActiveBookingForPatient>
->;
-export type GetOngoingBookingByUserIdResult = Awaited<ReturnType<typeof getOngoingBookingByUserId>>;
-export type CancelBookingByPatientResult = Awaited<ReturnType<typeof cancelBookingByPatient>>;
-export type GetDriverActiveBookingResult = Awaited<ReturnType<typeof getDriverActiveBooking>>;
-export type GetOngoingBookingDispatchInfoForDriverResult = Awaited<
-  ReturnType<typeof getOngoingBookingDispatchInfoForDriver>
->;
-export type GetAssignedBookingPayloadRowResult = Awaited<
-  ReturnType<typeof getAssignedBookingPayloadRow>
->;
-export type GetDispatcherBookingPayloadRowResult = Awaited<
-  ReturnType<typeof getDispatcherBookingPayloadRow>
->;
-export type GetDispatcherActiveBookingRowsResult = Awaited<
-  ReturnType<typeof getDispatcherActiveBookingRows>
->;
-export type GetBookingLogRowsResult = Awaited<ReturnType<typeof getBookingLogRows>>;
-export type GetDispatcherWinnerInfoResult = Awaited<ReturnType<typeof getDispatcherWinnerInfo>>;

@@ -9,6 +9,7 @@ import { SocketModule } from "./common/socket/socket.module";
 import { DispatcherModule } from "./modules/dispatcher/dispatcher.module";
 import { HealthController } from "./common/health/health.controller";
 import { HospitalModule } from "./modules/hospital/hospital.module";
+import { EventEmitterModule } from "@nestjs/event-emitter";
 // import { WebsocketModule } from "./services/websocket-session.module";
 
 @Module({
@@ -22,6 +23,7 @@ import { HospitalModule } from "./modules/hospital/hospital.module";
     BookingModule,
     DispatcherModule,
     HospitalModule,
+    EventEmitterModule.forRoot(),
   ],
   controllers: [HealthController],
 })

@@ -24,9 +24,3 @@ export const updateAmbulance = (db: Db, id: string, ambulanceData: Partial<NewAm
 
 export const deleteAmbulance = (db: Db, id: string) =>
   db.delete(ambulance).where(eq(ambulance.id, id));
-
-export type CreateAmbulanceResult = Awaited<ReturnType<typeof createAmbulance>>;
-export type GetAllAmbulancesResult = Awaited<ReturnType<typeof getAllAmbulances>>;
-export type GetAmbulanceByIdResult = Awaited<ReturnType<typeof getAmbulanceById>>;
-export type UpdateAmbulanceResult = Awaited<ReturnType<typeof updateAmbulance>>;
-export type DeleteAmbulanceResult = Awaited<ReturnType<typeof deleteAmbulance>>;

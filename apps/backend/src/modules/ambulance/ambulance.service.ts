@@ -10,6 +10,7 @@ import {
   updateAmbulance,
   deleteAmbulance,
 } from "@/common/queries";
+import { OnEvent } from "@nestjs/event-emitter";
 
 @Injectable()
 export class AmbulanceService {

@@ -19,7 +19,3 @@ export const getNearestHospital = (db: Db, lat: number, lng: number) =>
     .from(hospitals)
     .orderBy(sql`${hospitals.location} <-> ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)`)
     .limit(1);
-
-export type GetAllHospitalsResult = Awaited<ReturnType<typeof getAllHospitals>>;
-export type GetHospitalByIdResult = Awaited<ReturnType<typeof getHospitalById>>;
-export type GetNearestHospitalResult = Awaited<ReturnType<typeof getNearestHospital>>;

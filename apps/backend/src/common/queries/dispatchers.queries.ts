@@ -27,8 +27,3 @@ export const findLiveDispatchersByProvider = (db: Db, providerId: string) =>
         eq(users.role, "DISPATCHER")
       )
     );
-
-export type SetDispatcherStatusResult = Awaited<ReturnType<typeof setDispatcherStatus>>;
-export type FindLiveDispatchersByProviderResult = Awaited<
-  ReturnType<typeof findLiveDispatchersByProvider>
->;

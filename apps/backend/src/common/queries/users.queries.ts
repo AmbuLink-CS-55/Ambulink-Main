@@ -60,10 +60,3 @@ export const updateUserLocation = (db: Db, userId: string, location: { x: number
     .set({ currentLocation: location, lastLocationUpdate: new Date(), updatedAt: new Date() })
     .where(eq(users.id, userId))
     .returning();
-
-export type CreatePatientResult = Awaited<ReturnType<typeof createPatient>>;
-export type FindAllPatientsResult = Awaited<ReturnType<typeof findAllPatients>>;
-export type FindPatientByIdResult = Awaited<ReturnType<typeof findPatientById>>;
-export type UpdatePatientResult = Awaited<ReturnType<typeof updatePatient>>;
-export type UpdateUserStatusResult = Awaited<ReturnType<typeof updateUserStatus>>;
-export type UpdateUserLocationResult = Awaited<ReturnType<typeof updateUserLocation>>;

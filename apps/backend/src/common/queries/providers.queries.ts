@@ -22,9 +22,3 @@ export const updateAmbulanceProvider = (
 
 export const deleteAmbulanceProvider = (db: Db, id: string) =>
   db.delete(ambulanceProviders).where(eq(ambulanceProviders.id, id));
-
-export type CreateAmbulanceProviderResult = Awaited<ReturnType<typeof createAmbulanceProvider>>;
-export type GetAllAmbulanceProvidersResult = Awaited<ReturnType<typeof getAllAmbulanceProviders>>;
-export type GetAmbulanceProviderByIdResult = Awaited<ReturnType<typeof getAmbulanceProviderById>>;
-export type UpdateAmbulanceProviderResult = Awaited<ReturnType<typeof updateAmbulanceProvider>>;
-export type DeleteAmbulanceProviderResult = Awaited<ReturnType<typeof deleteAmbulanceProvider>>;
