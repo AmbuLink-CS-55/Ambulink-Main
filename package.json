@@ -16,6 +16,7 @@
     "format:check": "turbo run format:check",
     "test": "turbo run test",
     "migrate": "npm run migrate --prefix apps/backend",
+    "seed": "npm run seed --prefix apps/backend",
     "loco": "npm run lint & npm run format & npm run build"
   },
   "devDependencies": {

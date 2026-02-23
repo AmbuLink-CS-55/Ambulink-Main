@@ -316,10 +316,7 @@ export class BookingService {
     return booking;
   }
 
-  async askDispatchers(
-    nearByDrivers: User[],
-    patient: User
-  ) {
+  async askDispatchers(nearByDrivers: User[], patient: User) {
     const requests = await Promise.all(
       nearByDrivers.map(async (driver) => {
         const dispatcherId = await this.dispatcherService.findLiveDispatchersByProvider(
@@ -494,7 +491,9 @@ export class BookingService {
   }
 
   private async getHospitalOrThrow(hospitalId: string) {
+    console.log("Hospital got", hospitalId);
     const [hospital] = await getHospitalById(this.dbService.db, hospitalId);
+    console.log("Hospital found", hospital);
     if (!hospital) {
       throw new NotFoundException("Hospital not found");
     }

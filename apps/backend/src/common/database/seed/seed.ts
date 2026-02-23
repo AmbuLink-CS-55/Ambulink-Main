@@ -61,18 +61,6 @@ async function main() {
       providerId: ambulinkProvider.id,
     },
     {
-      id: env.EMT_ID,
-      fullName: "Joe EMT",
-      phoneNumber: "+94777654329",
-      email: "emt@example.com",
-      passwordHash: "pw123",
-      role: "EMT",
-      isActive: true,
-      status: "OFFLINE",
-      currentLocation: sql`ST_SetSRID(ST_MakePoint(79.85369529731564, 6.901523549363248), 4326)`,
-      providerId: ambulinkProvider.id,
-    },
-    {
       id: env.DISPATCHER_ID,
       fullName: "Joe Dispatcher",
       phoneNumber: "+94777654391",

@@ -29,7 +29,6 @@ const envSchema = z.object({
   PROVIDER_ID: z.uuidv4(),
   PATIENT_ID: z.uuidv4("PATIENT_ID must be a valid UUID"),
   DRIVER_ID: z.uuidv4("DRIVER_ID must be a valid UUID"),
-  EMT_ID: z.uuidv4("EMT_ID must be a valid UUID"),
   DISPATCHER_ID: z.string().uuid("DISPATCHER_ID must be a valid UUID"),
 });
 

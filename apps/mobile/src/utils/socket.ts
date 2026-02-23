@@ -28,8 +28,6 @@ export class SocketClientCreator {
         authPayload = { driverId: env.EXPO_PUBLIC_DRIVER_ID };
         break;
       case "EMT":
-        url = this.emtSocketUrl;
-        authPayload = { emtId: env.EXPO_PUBLIC_EMT_ID };
         break;
       default:
         throw Error("Socket type not defined");
