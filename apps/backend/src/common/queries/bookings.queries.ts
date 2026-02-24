@@ -102,6 +102,8 @@ export const getAssignedBookingPayloadRow = (db: Db, bookingId: string) =>
     .select({
       bookingId: bookings.id,
       status: bookings.status,
+      pickupLocationX: sql<number | null>`ST_X(${bookings.pickupLocation})`,
+      pickupLocationY: sql<number | null>`ST_Y(${bookings.pickupLocation})`,
       patientId: users.id,
       patientName: users.fullName,
       patientPhone: users.phoneNumber,

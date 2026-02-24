@@ -17,6 +17,7 @@ export default function Home() {
   const [currentRide, setCurrentRide] = useState<{
     bookingId: string | null;
     status: "ASSIGNED" | "ARRIVED" | "PICKEDUP";
+    pickupLocation: { x: number; y: number } | null;
     patient: {
       id: string;
       fullName: string | null;
@@ -85,18 +86,19 @@ export default function Home() {
 
   const handleOpenOnMap = () => {
     if (!currentRide) return;
+    const targetPickup = currentRide.pickupLocation ?? currentRide.patient.location;
 
-    if (!isValidPoint(currentRide.patient.location ?? null)) {
+    if (!isValidPoint(targetPickup ?? null)) {
       Alert.alert("Location Unavailable", "Patient location is not available yet.");
       return;
     }
 
     let url = "";
 
-    if (rideStatus === "ASSIGNED" && currentRide.patient.location) {
-      url = `https://www.google.com/maps/dir/?api=1&destination=${currentRide.patient.location.y},${currentRide.patient.location.x}`;
+    if (rideStatus === "ASSIGNED" && targetPickup) {
+      url = `https://www.google.com/maps/dir/?api=1&destination=${targetPickup.y},${targetPickup.x}`;
     } else if (rideStatus === "ARRIVED") {
-      if (!currentRide.patient.location || !isValidPoint(currentRide.hospital.location ?? null)) {
+      if (!targetPickup || !isValidPoint(currentRide.hospital.location ?? null)) {
         Alert.alert("Location Unavailable", "Hospital location is not available.");
         return;
       }
@@ -105,7 +107,7 @@ export default function Home() {
         Alert.alert("Location Unavailable", "Hospital location is not available.");
         return;
       }
-      url = `https://www.google.com/maps/dir/?api=1&origin=${currentRide.patient.location.y},${currentRide.patient.location.x}&destination=${hospitalLocation.y},${hospitalLocation.x}`;
+      url = `https://www.google.com/maps/dir/?api=1&origin=${targetPickup.y},${targetPickup.x}&destination=${hospitalLocation.y},${hospitalLocation.x}`;
     }
     console.info("[driver] Opening Maps:", url);
     if (url) {
@@ -126,10 +128,11 @@ export default function Home() {
                 style={{ flex: 1 }}
                 showsPointsOfInterest={false}
                 initialRegion={
-                  currentRide?.patient.location && isValidPoint(currentRide.patient.location)
+                  (currentRide?.pickupLocation && isValidPoint(currentRide.pickupLocation)) ||
+                  (currentRide?.patient.location && isValidPoint(currentRide.patient.location))
                     ? {
-                        latitude: currentRide.patient.location.y,
-                        longitude: currentRide.patient.location.x,
+                        latitude: (currentRide.pickupLocation ?? currentRide.patient.location)!.y,
+                        longitude: (currentRide.pickupLocation ?? currentRide.patient.location)!.x,
                         latitudeDelta: 0.05,
                         longitudeDelta: 0.05,
                       }
@@ -147,13 +150,14 @@ export default function Home() {
                     strokeColor="#4ade80"
                   />*/}
 
-                    {currentRide.patient.location && isValidPoint(currentRide.patient.location) && (
+                    {(currentRide.pickupLocation || currentRide.patient.location) &&
+                      isValidPoint(currentRide.pickupLocation ?? currentRide.patient.location) && (
                       <Marker
                         coordinate={{
-                          latitude: currentRide.patient.location.y,
-                          longitude: currentRide.patient.location.x,
+                          latitude: (currentRide.pickupLocation ?? currentRide.patient.location)!.y,
+                          longitude: (currentRide.pickupLocation ?? currentRide.patient.location)!.x,
                         }}
-                        title="Patient"
+                        title="Pickup"
                         pinColor="red"
                       />
                     )}

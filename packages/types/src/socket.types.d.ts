@@ -72,6 +72,10 @@ export type BookingFailedPayload = {
 export type BookingAssignedPayload = {
   bookingId: string | null;
   status: "ASSIGNED" | "ARRIVED" | "PICKEDUP";
+  pickupLocation: {
+    x: number;
+    y: number;
+  } | null;
   patient: {
     id: string;
     fullName: string | null;
