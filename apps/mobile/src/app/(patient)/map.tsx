@@ -5,13 +5,26 @@ import MapOptions from "../../components/patient/MapOptions";
 import { useLocation } from "@/hooks/useLocation";
 import { useSocket } from "@/hooks/SocketContext";
 import { usePatientEvents } from "@/hooks/usePatientEvents";
+import { useNearbyHospitals } from "@/hooks/useNearbyHospitals";
+import { useNearbyDrivers } from "@/hooks/useNearbyDrivers";
+import { loadSettings } from "@/utils/settingsStorage";
 import type { BookingStatus, User, Hospital } from "@ambulink/types";
 const PATIENT_BOOKING_TIMEOUT_MS = 40000;
-import { loadSettings } from "@/utils/settingsStorage";
 
 export default function Map() {
   const socket = useSocket();
   const locationState = useLocation();
+  const { hospitals: nearbyHospitals } = useNearbyHospitals({
+    latitude: locationState.location?.latitude,
+    longitude: locationState.location?.longitude,
+    limit: 6,
+    radiusKm: 12,
+  });
+  const { drivers: nearbyDrivers } = useNearbyDrivers({
+    latitude: locationState.location?.latitude,
+    longitude: locationState.location?.longitude,
+    limit: 6,
+  });
 
   const [status, setStatus] = useState<BookingStatus>("COMPLETED");
   const [isCancelling, setIsCancelling] = useState(false);
@@ -114,6 +127,8 @@ export default function Map() {
         booking?.pickedDriver?.currentLocation ? [booking.pickedDriver.currentLocation] : []
       }
       hospitalLocation={booking?.hospital?.location}
+      nearbyHospitals={nearbyHospitals}
+      nearbyDrivers={nearbyDrivers}
       userLocation={
         booking?.patient?.currentLocation ?? {
           x: locationState.location.longitude,

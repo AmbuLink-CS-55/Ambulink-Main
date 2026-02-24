@@ -14,6 +14,7 @@ import {
   removeDriverStatus,
   setDriverLocation,
   findDriversByLocation,
+  findNearbyDriversForMap,
   getDriverBooking,
 } from "@/common/queries";
 
@@ -105,6 +106,24 @@ export class DriverService {
   async findDriverByLocation(lat: number, lng: number) {
     const nearbyDrivers = await findDriversByLocation(this.dbService.db, lat, lng);
     return nearbyDrivers;
+  }
+
+  async findNearby(lat: number, lng: number, limit: number) {
+    const rows = await findNearbyDriversForMap(this.dbService.db, lat, lng, limit);
+
+    return rows.map((row) => ({
+      id: row.id,
+      fullName: row.fullName,
+      phoneNumber: row.phoneNumber,
+      providerId: row.providerId,
+      status: row.status,
+      location:
+        row.locationX !== null && row.locationY !== null
+          ? { x: row.locationX, y: row.locationY }
+          : null,
+      distanceMeters: Number(row.distanceMeters),
+      distanceKm: Number((Number(row.distanceMeters) / 1000).toFixed(2)),
+    }));
   }
 
   async getDriverBooking(driverId: string) {
