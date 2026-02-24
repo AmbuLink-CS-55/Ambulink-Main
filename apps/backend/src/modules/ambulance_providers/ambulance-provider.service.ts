@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { AmbulanceProvider } from "@/common/database/schema";
 import { DbService } from "@/common/database/db.service";
 import type {
   CreateAmbulanceProviderDto,

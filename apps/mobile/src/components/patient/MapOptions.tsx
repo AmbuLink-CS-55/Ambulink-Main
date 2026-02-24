@@ -72,7 +72,6 @@ export default function MapOptions({
   }
 
   if (status === "ASSIGNED" && booking) {
-    console.log(booking);
     const driverPhone = booking.pickedDriver.phoneNumber;
     const providerPhone = booking.provider?.hotlineNumber;
     return (

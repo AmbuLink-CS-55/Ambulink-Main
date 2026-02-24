@@ -7,7 +7,6 @@ export class HospitalService {
   constructor(private dbService: DbService) {}
 
   async getAll() {
-    console.log("nfjskjfs");
     return getAllHospitals(this.dbService.db);
   }
 

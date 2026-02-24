@@ -44,7 +44,6 @@ export default function UserMap({
 
   const handleLocate = () => {
     mapRef.current?.animateToRegion(region, 1000);
-    console.log(driverLocations);
   };
 
   return (

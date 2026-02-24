@@ -8,9 +8,7 @@ type Db = PostgresJsDatabase<typeof schema>;
 export const getAllHospitals = (db: Db) => db.select().from(hospitals);
 
 export const getHospitalById = async (db: Db, id: string) => {
-  const hospital = await db.select().from(hospitals).where(eq(hospitals.id, id));
-  console.log(hospital);
-  return hospital;
+  return db.select().from(hospitals).where(eq(hospitals.id, id));
 };
 
 export const getNearestHospital = (db: Db, lat: number, lng: number) =>

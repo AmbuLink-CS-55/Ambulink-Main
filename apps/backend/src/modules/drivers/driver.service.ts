@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { User, UserStatus } from "@/common/database/schema";
+import { UserStatus } from "@/common/database/schema";
 import { DbService } from "@/common/database/db.service";
 import { SocketService } from "@/common/socket/socket.service";
 import type { CreateDriverDto, UpdateDriverDto } from "@/common/validation/schemas";
@@ -82,7 +82,6 @@ export class DriverService {
 
   async setStatus(driverId: string, status: UserStatus) {
     await setDriverStatus(this.dbService.db, driverId, status);
-    console.log(driverId, "to", status);
   }
 
   async isAvailable(driverId: string) {
@@ -100,7 +99,6 @@ export class DriverService {
     if (lat === undefined || lng === undefined) return;
 
     await setDriverLocation(this.dbService.db, driverId, lat, lng);
-    console.info("[driver] location set", lat, lng);
   }
 
   async findDriverByLocation(lat: number, lng: number) {
