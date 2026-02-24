@@ -26,7 +26,8 @@ npm run env:sync
 - in root folder run `docker build -t postgres-postgis .`
 - start the container `docker run --name postgres-db -e POSTGRES_PASSWORD=123 -p 5432:5432 -d postgres-postgis`
 - to start the container if you restart your computer or shuts down docker run `docker start postgres-db`
-- run `npm run migrate` to seed the database or when ever you change the schema
+- run `npm run migrate` to setup the tables on the database or when ever you change the schema
+- run `npm run seed` to seed the database (fill it up with data)
 
 Run all apps in parallel:
 
