@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import * as Location from "expo-location";
-import { LatLng } from "react-native-maps";
+import type { Point } from "@ambulink/types";
 
-type LocationData = LatLng & {
+type LocationData = Point & {
   accuracy: number | null;
 };
 
@@ -23,8 +23,8 @@ export const useLocation = () => {
         const cached = await Location.getLastKnownPositionAsync();
         if (cached)
           setLocation({
-            latitude: cached.coords.latitude,
-            longitude: cached.coords.longitude,
+            x: cached.coords.longitude,
+            y: cached.coords.latitude,
             accuracy: cached.coords.accuracy,
           });
 
@@ -35,8 +35,8 @@ export const useLocation = () => {
         });
 
         setLocation({
-          latitude: currentLocation.coords.latitude,
-          longitude: currentLocation.coords.longitude,
+          x: currentLocation.coords.longitude,
+          y: currentLocation.coords.latitude,
           accuracy: currentLocation.coords.accuracy,
         });
       } catch (err) {

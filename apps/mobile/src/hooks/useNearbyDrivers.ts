@@ -3,23 +3,23 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchNearbyDrivers, type NearbyDriver } from "@/lib/drivers";
 
 type Params = {
-  latitude?: number;
-  longitude?: number;
+  x?: number;
+  y?: number;
   limit?: number;
 };
 
-export function useNearbyDrivers({ latitude, longitude, limit = 6 }: Params) {
+export function useNearbyDrivers({ x, y, limit = 6 }: Params) {
   const [drivers, setDrivers] = useState<NearbyDriver[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const canFetch = useMemo(
-    () => Number.isFinite(latitude) && Number.isFinite(longitude),
-    [latitude, longitude]
+    () => Number.isFinite(x) && Number.isFinite(y),
+    [x, y]
   );
 
   useEffect(() => {
-    if (!canFetch || latitude === undefined || longitude === undefined) {
+    if (!canFetch || x === undefined || y === undefined) {
       setDrivers([]);
       return;
     }
@@ -28,7 +28,7 @@ export function useNearbyDrivers({ latitude, longitude, limit = 6 }: Params) {
     setLoading(true);
     setError(null);
 
-    fetchNearbyDrivers(latitude, longitude, { limit })
+    fetchNearbyDrivers(x, y, { limit })
       .then((data) => {
         if (!cancelled) {
           setDrivers(data);
@@ -49,7 +49,7 @@ export function useNearbyDrivers({ latitude, longitude, limit = 6 }: Params) {
     return () => {
       cancelled = true;
     };
-  }, [canFetch, latitude, longitude, limit]);
+  }, [canFetch, x, y, limit]);
 
   return { drivers, loading, error };
 }

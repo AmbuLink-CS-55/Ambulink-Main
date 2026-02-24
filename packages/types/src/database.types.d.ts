@@ -19,8 +19,8 @@ export interface AmbulanceProvider {
   initialPrice?: string;
   pricePerKm?: string;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 export interface NewAmbulanceProvider {
   name: string;
@@ -30,8 +30,8 @@ export interface NewAmbulanceProvider {
   initialPrice?: string;
   pricePerKm?: string;
   isActive?: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt?: string;
+  updatedAt?: string;
 }
 export interface User {
   id: string;
@@ -39,14 +39,14 @@ export interface User {
   phoneNumber?: string;
   email?: string;
   passwordHash: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   isActive: boolean;
-  lastLoginAt?: Date;
+  lastLoginAt?: string;
   role: UserRole;
   providerId?: string;
   currentLocation?: Point;
-  lastLocationUpdate?: Date;
+  lastLocationUpdate?: string;
   status?: UserStatus;
 }
 export interface NewUser {
@@ -54,14 +54,14 @@ export interface NewUser {
   phoneNumber?: string;
   email?: string;
   passwordHash: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt?: string;
+  updatedAt?: string;
   isActive?: boolean;
-  lastLoginAt?: Date;
+  lastLoginAt?: string;
   role: UserRole;
   providerId?: string;
   currentLocation?: Point;
-  lastLocationUpdate?: Date;
+  lastLocationUpdate?: string;
   status?: UserStatus;
 }
 export interface Ambulance {
@@ -70,9 +70,9 @@ export interface Ambulance {
   vehicleNumber: string;
   equipmentLevel?: string;
   status: AmbulanceStatus;
-  createdAt: Date;
-  updatedAt: Date;
-  lastUpdateTime?: Date;
+  createdAt: string;
+  updatedAt: string;
+  lastUpdateTime?: string;
   currentLocation?: Point;
 }
 export interface NewAmbulance {
@@ -80,9 +80,9 @@ export interface NewAmbulance {
   vehicleNumber: string;
   equipmentLevel?: string;
   status?: AmbulanceStatus;
-  createdAt?: Date;
-  updatedAt?: Date;
-  lastUpdateTime?: Date;
+  createdAt?: string;
+  updatedAt?: string;
+  lastUpdateTime?: string;
   currentLocation?: Point;
 }
 export interface Hospital {
@@ -129,11 +129,11 @@ export interface Booking {
   dispatcherId?: string;
   hospitalId?: string;
   emergencyType?: string;
-  requestedAt: Date;
-  assignedAt?: Date;
-  pickedupAt?: Date;
-  arrivedAt?: Date;
-  completedAt?: Date;
+  requestedAt: string;
+  assignedAt?: string;
+  pickedupAt?: string;
+  arrivedAt?: string;
+  completedAt?: string;
   fareEstimate?: string;
   fareFinal?: string;
   cancellationReason?: string;
@@ -150,11 +150,11 @@ export interface NewBooking {
   dispatcherId?: string;
   hospitalId?: string;
   emergencyType?: string;
-  requestedAt?: Date;
-  assignedAt?: Date;
-  pickedupAt?: Date;
-  arrivedAt?: Date;
-  completedAt?: Date;
+  requestedAt?: string;
+  assignedAt?: string;
+  pickedupAt?: string;
+  arrivedAt?: string;
+  completedAt?: string;
   fareEstimate?: string;
   fareFinal?: string;
   cancellationReason?: string;

@@ -141,15 +141,6 @@ export default function Home() {
               >
                 {currentRide && (
                   <>
-                    {/*when rich
-                  <MapViewDirections
-                    origin={{ latitude: currentRide.patient.lat, longitude: currentRide.patient.lng }}
-                    destination={{ latitude: currentRide.hospital.lat, longitude: currentRide.hospital.lng }}
-                    apikey={GOOGLE_MAPS_APIKEY}
-                    strokeWidth={4}
-                    strokeColor="#4ade80"
-                  />*/}
-
                     {(currentRide.pickupLocation || currentRide.patient.location) &&
                       isValidPoint(currentRide.pickupLocation ?? currentRide.patient.location) && (
                       <Marker

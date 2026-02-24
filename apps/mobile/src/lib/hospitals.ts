@@ -9,13 +9,13 @@ export type NearbyHospital = Omit<Hospital, "location"> & {
 };
 
 export async function fetchNearbyHospitals(
-  lat: number,
-  lng: number,
+  x: number,
+  y: number,
   options?: { limit?: number; radiusKm?: number }
 ): Promise<NearbyHospital[]> {
   return apiGet<NearbyHospital[]>("/api/hospitals/nearby", {
-    lat,
-    lng,
+    lat: y,
+    lng: x,
     limit: options?.limit ?? 6,
     radiusKm: options?.radiusKm ?? 10,
   });

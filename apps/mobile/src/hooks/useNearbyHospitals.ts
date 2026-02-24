@@ -3,24 +3,24 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchNearbyHospitals, type NearbyHospital } from "@/lib/hospitals";
 
 type Params = {
-  latitude?: number;
-  longitude?: number;
+  x?: number;
+  y?: number;
   limit?: number;
   radiusKm?: number;
 };
 
-export function useNearbyHospitals({ latitude, longitude, limit = 6, radiusKm = 10 }: Params) {
+export function useNearbyHospitals({ x, y, limit = 6, radiusKm = 10 }: Params) {
   const [hospitals, setHospitals] = useState<NearbyHospital[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const canFetch = useMemo(
-    () => Number.isFinite(latitude) && Number.isFinite(longitude),
-    [latitude, longitude]
+    () => Number.isFinite(x) && Number.isFinite(y),
+    [x, y]
   );
 
   useEffect(() => {
-    if (!canFetch || latitude === undefined || longitude === undefined) {
+    if (!canFetch || x === undefined || y === undefined) {
       setHospitals([]);
       return;
     }
@@ -29,7 +29,7 @@ export function useNearbyHospitals({ latitude, longitude, limit = 6, radiusKm = 
     setLoading(true);
     setError(null);
 
-    fetchNearbyHospitals(latitude, longitude, { limit, radiusKm })
+    fetchNearbyHospitals(x, y, { limit, radiusKm })
       .then((data) => {
         if (!cancelled) {
           setHospitals(data);
@@ -50,7 +50,7 @@ export function useNearbyHospitals({ latitude, longitude, limit = 6, radiusKm = 
     return () => {
       cancelled = true;
     };
-  }, [canFetch, latitude, longitude, limit, radiusKm]);
+  }, [canFetch, x, y, limit, radiusKm]);
 
   return { hospitals, loading, error };
 }

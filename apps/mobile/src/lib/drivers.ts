@@ -14,13 +14,13 @@ export type NearbyDriver = {
 };
 
 export async function fetchNearbyDrivers(
-  lat: number,
-  lng: number,
+  x: number,
+  y: number,
   options?: { limit?: number }
 ): Promise<NearbyDriver[]> {
   return apiGet<NearbyDriver[]>("/api/drivers/nearby", {
-    lat,
-    lng,
+    lat: y,
+    lng: x,
     limit: options?.limit ?? 6,
   });
 }

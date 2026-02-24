@@ -17,19 +17,23 @@ export class DbService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    const retrys = 10;
+    const retries = 10;
     let delay = 1000;
+    let lastError: unknown;
 
-    for (let i = 1; i <= retrys; i++) {
+    for (let i = 1; i <= retries; i++) {
       try {
         await this.db.execute("SELECT 1");
         this.logger.log("Database connected");
         return;
       } catch (err) {
-        if (i >= retrys) {
+        lastError = err;
+
+        if (i >= retries) {
           this.logger.error("All database connection attempts failed", err as Error);
-          process.exit(1);
+          throw (err instanceof Error ? err : new Error("Database connection failed"));
         }
+
         this.logger.warn(`Database connection failed, retrying ${i} in ${delay}`);
         await new Promise((res) => {
           setTimeout(res, delay);
@@ -37,5 +41,9 @@ export class DbService implements OnModuleInit {
         delay *= 2;
       }
     }
+
+    throw (
+      lastError instanceof Error ? lastError : new Error("Database connection failed after retries")
+    );
   }
 }
