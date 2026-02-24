@@ -1,50 +1,29 @@
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { VirtualizedTable } from "@/components/VirtualizedTable";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { useCreateDriver, useGetDrivers, useUpdateDriver } from "@/services/driver.service";
-import type { User, UserStatus } from "@/lib/types";
+import type { User } from "@/lib/types";
+import { createDriverColumns } from "@/pages/drivers/driver-columns";
+import { DriverFormDialog, type DriverFormState } from "@/pages/drivers/DriverFormDialog";
 import env from "@/../env";
 
-type DriverFormState = {
-  fullName: string;
-  phoneNumber: string;
-  email: string;
-  passwordHash: string;
+const initialForm: DriverFormState = {
+  fullName: "",
+  phoneNumber: "",
+  email: "",
+  passwordHash: "",
 };
-
-function onlineBadge(status: UserStatus | null | undefined) {
-  if (status === "AVAILABLE") return { label: "Online", variant: "success" as const };
-  if (status === "BUSY") return { label: "Busy", variant: "secondary" as const };
-  return { label: "Offline", variant: "outline" as const };
-}
 
 export default function DriversDashboard() {
   const [isOpen, setIsOpen] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
-  const [form, setForm] = useState<DriverFormState>({
-    fullName: "",
-    phoneNumber: "",
-    email: "",
-    passwordHash: "",
-  });
+  const [form, setForm] = useState<DriverFormState>(initialForm);
 
   const queryClient = useQueryClient();
   const driverLocations =
-    queryClient.getQueryData<Record<string, { x: number; y: number }>>(
-      queryKeys.driverLocations()
-    ) ?? {};
+    queryClient.getQueryData<Record<string, { x: number; y: number }>>(queryKeys.driverLocations()) ?? {};
 
   const drivers = useGetDrivers({ providerId: env.VITE_PROVIDER_ID });
   const createDriver = useCreateDriver();
@@ -53,76 +32,20 @@ export default function DriversDashboard() {
   const rows = useMemo(() => drivers.data ?? [], [drivers.data]);
 
   const columns = useMemo(
-    () => [
-      {
-        header: "Driver",
-        width: "220px",
-        cell: (row: User) => (
-          <div>
-            <div className="font-medium">{row.fullName ?? "Unnamed"}</div>
-            <div className="text-xs text-muted-foreground">{row.id}</div>
-          </div>
-        ),
-      },
-      {
-        header: "Contact",
-        width: "220px",
-        cell: (row: User) => (
-          <div>
-            <div>{row.phoneNumber ?? "-"}</div>
-            <div className="text-xs text-muted-foreground">{row.email ?? "-"}</div>
-          </div>
-        ),
-      },
-      {
-        header: "Status",
-        width: "160px",
-        cell: (row: User) => {
-          const badge = onlineBadge(row.status ?? null);
-          return <Badge variant={badge.variant}>{badge.label}</Badge>;
+    () =>
+      createDriverColumns({
+        driverLocations,
+        onEdit: (driver) => {
+          setEditing(driver);
+          setForm({
+            fullName: driver.fullName ?? "",
+            phoneNumber: driver.phoneNumber ?? "",
+            email: driver.email ?? "",
+            passwordHash: "",
+          });
+          setIsOpen(true);
         },
-      },
-      {
-        header: "Location",
-        width: "180px",
-        cell: (row: User) => {
-          const location = driverLocations[row.id];
-          if (!location) return <span className="text-muted-foreground">-</span>;
-          return (
-            <div className="text-xs text-muted-foreground">
-              {location.x.toFixed(4)}, {location.y.toFixed(4)}
-            </div>
-          );
-        },
-      },
-      {
-        header: "Updated",
-        width: "180px",
-        cell: (row: User) => (row.updatedAt ? new Date(row.updatedAt).toLocaleString() : "-"),
-      },
-      {
-        header: "Actions",
-        width: "120px",
-        cell: (row: User) => (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setEditing(row);
-              setForm({
-                fullName: row.fullName ?? "",
-                phoneNumber: row.phoneNumber ?? "",
-                email: row.email ?? "",
-                passwordHash: "",
-              });
-              setIsOpen(true);
-            }}
-          >
-            Edit
-          </Button>
-        ),
-      },
-    ],
+      }),
     [driverLocations]
   );
 
@@ -136,13 +59,15 @@ export default function DriversDashboard() {
     } satisfies Partial<User>;
 
     if (editing) {
-      const updatePayload = {
-        fullName: payload.fullName,
-        phoneNumber: payload.phoneNumber,
-        email: payload.email,
-        passwordHash: payload.passwordHash || undefined,
-      } satisfies Partial<User>;
-      await updateDriver.mutateAsync({ id: editing.id, payload: updatePayload });
+      await updateDriver.mutateAsync({
+        id: editing.id,
+        payload: {
+          fullName: payload.fullName,
+          phoneNumber: payload.phoneNumber,
+          email: payload.email,
+          passwordHash: payload.passwordHash || undefined,
+        },
+      });
     } else {
       if (!env.VITE_PROVIDER_ID) return;
       await createDriver.mutateAsync(payload);
@@ -150,7 +75,7 @@ export default function DriversDashboard() {
 
     setIsOpen(false);
     setEditing(null);
-    setForm({ fullName: "", phoneNumber: "", email: "", passwordHash: "" });
+    setForm(initialForm);
   };
 
   return (
@@ -165,65 +90,21 @@ export default function DriversDashboard() {
 
       <VirtualizedTable columns={columns} rows={rows} height={640} rowHeight={56} />
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editing ? "Edit Driver" : "Add Driver"}</DialogTitle>
-            <DialogDescription>Provider cannot be changed.</DialogDescription>
-          </DialogHeader>
-
-          <div className="grid gap-4 px-6">
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">Full Name</label>
-              <Input
-                value={form.fullName}
-                onChange={(e) => setForm((prev) => ({ ...prev, fullName: e.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">Phone Number</label>
-              <Input
-                value={form.phoneNumber}
-                onChange={(e) => setForm((prev) => ({ ...prev, phoneNumber: e.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">Email</label>
-              <Input
-                value={form.email}
-                onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
-              />
-            </div>
-            {!editing && (
-              <div className="grid gap-2">
-                <label className="text-sm font-medium">Password</label>
-                <Input
-                  type="password"
-                  value={form.passwordHash}
-                  onChange={(e) => setForm((prev) => ({ ...prev, passwordHash: e.target.value }))}
-                />
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={
-                !form.fullName.trim() ||
-                !form.phoneNumber.trim() ||
-                (!editing && !form.passwordHash.trim()) ||
-                (!editing && !env.VITE_PROVIDER_ID)
-              }
-            >
-              {editing ? "Save Changes" : "Create Driver"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DriverFormDialog
+        open={isOpen}
+        editing={editing !== null}
+        form={form}
+        providerAvailable={Boolean(env.VITE_PROVIDER_ID)}
+        onOpenChange={(open) => {
+          setIsOpen(open);
+          if (!open) {
+            setEditing(null);
+            setForm(initialForm);
+          }
+        }}
+        onChange={(field, value) => setForm((prev) => ({ ...prev, [field]: value }))}
+        onSubmit={handleSubmit}
+      />
     </div>
   );
 }

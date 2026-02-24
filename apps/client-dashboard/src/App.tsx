@@ -2,8 +2,7 @@ import { Suspense, lazy } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
-import { get, set, del } from "idb-keyval";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { DashboardLayout } from "./pages/layouts/DashboardLayout";
 
 const Dashboard = lazy(() => import("./pages/dashboard"));
@@ -25,12 +24,8 @@ const queryClient = new QueryClient({
   },
 });
 
-const persister = createAsyncStoragePersister({
-  storage: {
-    getItem: async (key) => get(key),
-    setItem: async (key, value) => set(key, value),
-    removeItem: async (key) => del(key),
-  },
+const persister = createSyncStoragePersister({
+  storage: globalThis.localStorage,
 });
 
 function PageLoader() {
@@ -39,7 +34,13 @@ function PageLoader() {
 
 export function App() {
   return (
-    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{
+        persister,
+        maxAge: DAY_IN_MS,
+      }}
+    >
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
