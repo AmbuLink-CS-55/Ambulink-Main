@@ -3,6 +3,7 @@ import { UserStatus } from "@/common/database/schema";
 import { DbService } from "@/common/database/db.service";
 import { SocketService } from "@/common/socket/socket.service";
 import type { CreateDriverDto, UpdateDriverDto } from "@/common/validation/schemas";
+import type { NearbyDriver } from "@ambulink/types";
 import {
   createDriver,
   findAllDrivers,
@@ -106,7 +107,7 @@ export class DriverService {
     return nearbyDrivers;
   }
 
-  async findNearby(lat: number, lng: number, limit: number) {
+  async findNearby(lat: number, lng: number, limit: number): Promise<NearbyDriver[]> {
     const rows = await findNearbyDriversForMap(this.dbService.db, lat, lng, limit);
 
     return rows.map((row) => ({

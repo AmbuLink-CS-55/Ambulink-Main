@@ -10,11 +10,14 @@ import { DispatcherModule } from "./modules/dispatcher/dispatcher.module";
 import { HealthController } from "./common/health/health.controller";
 import { HospitalModule } from "./modules/hospital/hospital.module";
 import { EventEmitterModule } from "@nestjs/event-emitter";
+import { EventsModule } from "./common/events/events.module";
+import { PatientStreamModule } from "./modules/patient-stream/patient-stream.module";
 // import { WebsocketModule } from "./services/websocket-session.module";
 
 @Module({
   imports: [
     DbModule,
+    EventsModule,
     SocketModule,
     AmbulanceProviderModule,
     PatientModule,
@@ -23,6 +26,7 @@ import { EventEmitterModule } from "@nestjs/event-emitter";
     BookingModule,
     DispatcherModule,
     HospitalModule,
+    PatientStreamModule,
     EventEmitterModule.forRoot(),
   ],
   controllers: [HealthController],

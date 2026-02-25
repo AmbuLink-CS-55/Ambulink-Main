@@ -9,8 +9,9 @@ import { ambulanceProviders, bookings, users } from "@/common/database/schema";
 import type { Booking, Hospital, User } from "@/common/database/schema";
 import { DbService } from "@/common/database/db.service";
 import { DispatcherService } from "../dispatcher/dispatcher.service";
-import { SocketService } from "@/common/socket/socket.service";
+import { RealtimeNotifierService } from "@/common/events/realtime-notifier.service";
 import type {
+  BookingLogEntry,
   DriverLocationUpdate,
   DispatcherBookingPayload,
   DispatcherBookingUpdatePayload,
@@ -31,17 +32,18 @@ import {
   getDispatcherActiveBookingRows,
   getBookingLogRows,
   getOngoingBookingDispatchInfoForDriver,
-  getDispatcherWinnerInfo,
   setDriverStatus,
 } from "@/common/queries";
 import type { ManualAssignBookingDto, ReassignBookingDto } from "@/common/validation/schemas";
+import { DispatcherApprovalService } from "../dispatcher/dispatcher-approval.service";
 
 @Injectable()
 export class BookingService {
   constructor(
     private dbService: DbService,
     private dispatcherService: DispatcherService,
-    private socketService: SocketService
+    private realtimeNotifier: RealtimeNotifierService,
+    private dispatcherApprovalService: DispatcherApprovalService
   ) {}
 
   async createBooking(
@@ -124,13 +126,13 @@ export class BookingService {
       throw new BadRequestException("Failed to build booking payload");
     }
 
-    this.socketService.emitToDispatcher(
+    this.realtimeNotifier.notifyDispatcher(
       payload.dispatcherId,
       "booking:assigned",
       dispatcherPayload
     );
-    this.socketService.emitToDriver(driver.id, "booking:assigned", assignedPayload);
-    this.socketService.emitToPatient(patient.id, "booking:assigned", assignedPayload);
+    this.realtimeNotifier.notifyDriver(driver.id, "booking:assigned", assignedPayload);
+    this.realtimeNotifier.notifyPatient(patient.id, "booking:assigned", assignedPayload);
 
     return {
       bookingId: booking.bookingId,
@@ -211,7 +213,7 @@ export class BookingService {
       if (oldDriverBookings.length === 0) {
         await setDriverStatus(this.dbService.db, previousDriverId, "AVAILABLE");
       }
-      this.socketService.emitToDriver(previousDriverId, "booking:cancelled", {
+      this.realtimeNotifier.notifyDriver(previousDriverId, "booking:cancelled", {
         bookingId,
         reason: "Reassigned by dispatcher",
       });
@@ -225,12 +227,12 @@ export class BookingService {
     }
 
     if (nextDriverId) {
-      this.socketService.emitToDriver(nextDriverId, "booking:assigned", assignedPayload);
+      this.realtimeNotifier.notifyDriver(nextDriverId, "booking:assigned", assignedPayload);
     }
     if (booking.patientId) {
-      this.socketService.emitToPatient(booking.patientId, "booking:assigned", assignedPayload);
+      this.realtimeNotifier.notifyPatient(booking.patientId, "booking:assigned", assignedPayload);
     }
-    this.socketService.emitToDispatcher(
+    this.realtimeNotifier.notifyDispatcher(
       payload.dispatcherId,
       "booking:assigned",
       dispatcherPayload
@@ -261,7 +263,7 @@ export class BookingService {
       if (updatedBooking.status === "REQUESTED") {
         return updatedBooking;
       }
-      this.socketService.emitToDispatcher(updatedBooking.dispatcherId, "booking:update", {
+      this.realtimeNotifier.notifyDispatcher(updatedBooking.dispatcherId, "booking:update", {
         bookingId: updatedBooking.id,
         status: updatedBooking.status,
         updatedAt: new Date().toISOString(),
@@ -269,7 +271,7 @@ export class BookingService {
     }
 
     if (updatedBooking?.providerId) {
-      this.socketService.emitToAllDispatchers("booking:log", {
+      this.realtimeNotifier.notifyAllDispatchers("booking:log", {
         providerId: updatedBooking.providerId,
         bookingId: updatedBooking.id,
         status: updatedBooking.status,
@@ -321,15 +323,23 @@ export class BookingService {
     }
 
     const approvalPromises = activeRequests.map(({ dispatcherId, driver, requestId }) =>
-      this.waitForDispatcherApproval(dispatcherId, driver, patient, requestId).then((result) => ({
-        ...result,
-        requestId,
-      }))
+      this.dispatcherApprovalService
+        .requestApproval(dispatcherId, driver, patient, requestId)
+        .then((approved) => {
+          if (!approved) {
+            throw new Error("Dispatcher declined or ignored");
+          }
+          return {
+            dispatcherId,
+            pickedDriver: driver,
+            requestId,
+          };
+        })
     );
 
     try {
       const winningResponse = await Promise.any(approvalPromises);
-      await this.notifyDispatcherDecision(
+      await this.dispatcherApprovalService.notifyDecision(
         activeRequests.map(({ dispatcherId, requestId }) => ({ dispatcherId, requestId })),
         winningResponse.dispatcherId
       );
@@ -338,70 +348,6 @@ export class BookingService {
       console.error("All dispatchers rejected the request");
       return { status: "failed" as const, reason: "all_rejected" as const };
     }
-  }
-
-  private async waitForDispatcherApproval(
-    dispatcherId: string,
-    driver: User,
-    patient: User,
-    requestId: string
-  ) {
-    return new Promise<{ dispatcherId: string; pickedDriver: User }>((resolve, reject) => {
-      this.socketService.dispatcherServer
-        ?.to(`dispatcher:${dispatcherId}`)
-        .timeout(30000)
-        .emit(
-          "booking:new",
-          {
-            requestId,
-            driver: {
-              id: driver.id,
-              providerId: driver.providerId,
-              currentLocation: driver.currentLocation ?? null,
-            },
-            patient: {
-              id: patient.id,
-              fullName: patient.fullName ?? null,
-              phoneNumber: patient.phoneNumber ?? null,
-              email: patient.email ?? null,
-              currentLocation: patient.currentLocation ?? null,
-            },
-          },
-          (err: any, response: any) => {
-            // response is a array
-            if (err || !response[0]?.approved) {
-              return reject("Dispatcher declined or ignored");
-            }
-
-            resolve({ dispatcherId: dispatcherId, pickedDriver: driver });
-          }
-        );
-    });
-  }
-
-  private async notifyDispatcherDecision(
-    dispatcherRequests: { dispatcherId: string; requestId: string }[],
-    winnerDispatcherId: string
-  ) {
-    if (!this.socketService.dispatcherServer) return;
-
-    const [winner] = await getDispatcherWinnerInfo(this.dbService.db, winnerDispatcherId);
-
-    const winnerPayload = {
-      id: winnerDispatcherId,
-      name: winner?.name ?? null,
-      providerName: winner?.providerName ?? null,
-    };
-
-    dispatcherRequests.forEach(({ dispatcherId, requestId }) => {
-      this.socketService.dispatcherServer
-        ?.to(`dispatcher:${dispatcherId}`)
-        .emit("booking:decision", {
-          requestId,
-          isWinner: dispatcherId === winnerDispatcherId,
-          winner: winnerPayload,
-        });
-    });
   }
 
   async sendDriverLocation(driverId: string, data: DriverLocationUpdate) {
@@ -413,8 +359,8 @@ export class BookingService {
     if (!patientId || !dispatcherId) {
       return;
     }
-    this.socketService.emitToDispatcher(dispatcherId, "driver:update", data);
-    this.socketService.emitToPatient(patientId, "driver:update", data);
+    this.realtimeNotifier.notifyDispatcher(dispatcherId, "driver:update", data);
+    this.realtimeNotifier.notifyPatient(patientId, "driver:update", data);
   }
 
   async getDispatcherActiveBookings(dispatcherId: string) {
@@ -433,8 +379,16 @@ export class BookingService {
     return mapDispatcherBookingPayload(row, requestId);
   }
 
-  async getBookingLog(providerId?: string, status?: string) {
-    return getBookingLogRows(this.dbService.db, providerId, status);
+  async getBookingLog(providerId?: string, status?: string): Promise<BookingLogEntry[]> {
+    const rows = await getBookingLogRows(this.dbService.db, providerId, status);
+    return rows.map((row) => ({
+      ...row,
+      requestedAt: row.requestedAt ? row.requestedAt.toISOString() : null,
+      assignedAt: row.assignedAt ? row.assignedAt.toISOString() : null,
+      arrivedAt: row.arrivedAt ? row.arrivedAt.toISOString() : null,
+      pickedupAt: row.pickedupAt ? row.pickedupAt.toISOString() : null,
+      completedAt: row.completedAt ? row.completedAt.toISOString() : null,
+    }));
   }
 
   private async getDispatcherOrThrow(dispatcherId: string) {

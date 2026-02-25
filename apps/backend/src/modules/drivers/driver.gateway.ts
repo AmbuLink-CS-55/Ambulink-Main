@@ -10,18 +10,18 @@ import { BookingService } from "../booking/booking.service";
 import { SocketService } from "@/common/socket/socket.service";
 import type { DriverLocationPayload, SocketErrorPayload } from "@ambulink/types";
 import { driverLocationPayloadSchema } from "@/common/validation/socket.schemas";
+import { DriverCommandService } from "./driver-command.service";
 
 @WebSocketGateway({ cors: { origin: "*" }, namespace: "/driver" })
 export class DriverGateway implements OnGatewayInit {
   @WebSocketServer()
   server: Server;
 
-  private lastEmitTimes = new Map<string, number>();
-
   constructor(
     private driverService: DriverService,
     private bookingService: BookingService,
-    private socketService: SocketService
+    private socketService: SocketService,
+    private driverCommandService: DriverCommandService
   ) {}
 
   afterInit() {
@@ -71,7 +71,6 @@ export class DriverGateway implements OnGatewayInit {
 
   handleDisconnect(client: Socket) {
     this.driverService.setStatus(client.data.driverId, "OFFLINE");
-    this.lastEmitTimes.delete(client.data.driverId); // Clean up
     console.log("[socket] disconnected", {
       namespace: "/driver",
       clientId: client.id,
@@ -89,67 +88,33 @@ export class DriverGateway implements OnGatewayInit {
       } satisfies SocketErrorPayload);
       return;
     }
-    const { x, y } = parsed.data;
     const driverId = client.data.driverId;
-    this.driverService.setDriverLocation(driverId, y, x);
-
-    // Send to specific dispatcher if booked
-    this.bookingService.sendDriverLocation(driverId, { id: driverId, x, y });
-
-    // Broadcast to all dispatchers if available (throttled to 1 update/sec per driver)
-    const now = Date.now();
-    const lastEmit = this.lastEmitTimes.get(driverId) || 0;
-    if (now - lastEmit > 1000) {
-      this.socketService.emitToAllDispatchers("driver:update", {
-        id: driverId,
-        x,
-        y,
-      });
-      this.lastEmitTimes.set(driverId, now);
-    }
+    await this.driverCommandService.updateLocation(driverId, parsed.data);
   }
 
   @SubscribeMessage("driver:arrived")
   async driverArrived(client: Socket) {
     const driverId = client.data.driverId;
-    const bookingData = await this.driverService.getDriverBooking(driverId);
-    if (!bookingData) {
+    try {
+      await this.driverCommandService.arrived(driverId);
+    } catch (_error) {
       client.emit("socket:error", {
         code: "NOT_FOUND",
         message: "No active booking found",
       } satisfies SocketErrorPayload);
-      return;
     }
-    this.bookingService.updateBooking(bookingData.id, { status: "ARRIVED" });
-    const { id, patientId } = bookingData;
-    this.socketService.emitToPatient(patientId!, "booking:arrived", {
-      bookingId: id,
-    });
-    console.log("patient:arrived", patientId);
   }
 
   @SubscribeMessage("driver:completed")
   async driverCompleted(client: Socket) {
     const driverId = client.data.driverId;
-    console.log("completed from", driverId);
-    const bookingData = await this.driverService.getDriverBooking(driverId);
-    if (!bookingData) {
+    try {
+      await this.driverCommandService.completed(driverId);
+    } catch (_error) {
       client.emit("socket:error", {
         code: "NOT_FOUND",
         message: "No active booking found",
       } satisfies SocketErrorPayload);
-      return;
     }
-    console.log(bookingData);
-    this.bookingService.updateBooking(bookingData.id, { status: "COMPLETED" });
-    this.driverService.setStatus(driverId, "AVAILABLE");
-    const { id, patientId } = bookingData;
-    this.socketService.emitToPatient(patientId!, "booking:completed", {
-      bookingId: id,
-    });
-    this.socketService.emitToDriver(driverId, "booking:completed", {
-      bookingId: id,
-    });
-    console.log("patient:completed", patientId);
   }
 }

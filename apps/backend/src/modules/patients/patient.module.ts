@@ -1,24 +1,16 @@
 import { Module } from "@nestjs/common";
 import { PatientController } from "./patient.controller";
 import { PatientService } from "./patient.service";
-
-import { DriverService } from "../drivers/driver.service";
 import { PatientGateway } from "./patient.gateway";
-import { BookingService } from "../booking/booking.service";
-import { HospitalService } from "../hospital/hospital.service";
-import { DispatcherService } from "../dispatcher/dispatcher.service";
+import { PatientCommandService } from "./patient-command.service";
+import { DriverModule } from "../drivers/driver.module";
+import { BookingModule } from "../booking/booking.module";
+import { HospitalModule } from "../hospital/hospital.module";
 
 @Module({
   controllers: [PatientController],
-  providers: [
-    PatientService,
-    DriverService,
-    PatientGateway,
-    BookingService,
-    HospitalService,
-    DispatcherService,
-  ],
-  imports: [],
+  providers: [PatientService, PatientGateway, PatientCommandService],
+  imports: [DriverModule, BookingModule, HospitalModule],
   exports: [PatientService, PatientGateway],
 })
 export class PatientModule {}

@@ -1,11 +1,14 @@
 import { Injectable } from "@nestjs/common";
 import { Server } from "socket.io";
+import { DomainEventsService } from "@/common/events/domain-events.service";
 
 @Injectable()
 export class SocketService {
   public driverServer: Server | null = null;
   public patientServer: Server | null = null;
   public dispatcherServer: Server | null = null;
+
+  constructor(private domainEventsService: DomainEventsService) {}
 
   emitToDriver(driverId: string, event: string, payload: unknown) {
     if (!this.driverServer) {
@@ -16,8 +19,13 @@ export class SocketService {
   }
 
   emitToPatient(patientId: string, event: string, payload: unknown) {
+    this.domainEventsService.publishPatientStreamEvent({
+      patientId,
+      event,
+      data: payload,
+    });
+
     if (!this.patientServer) {
-      console.warn(`[SocketService] PatientServer not initialized yet! Event ${event} dropped.`);
       return;
     }
     this.patientServer.to(`patient:${patientId}`).emit(event, payload);

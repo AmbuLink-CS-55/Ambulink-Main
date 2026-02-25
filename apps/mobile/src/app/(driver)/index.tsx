@@ -4,6 +4,8 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSocket } from "@/hooks/SocketContext";
 import type { BookingStatus } from "@ambulink/types";
+import { env } from "../../../env";
+import { postDriverArrived, postDriverCompleted } from "@/lib/driverEvents";
 
 const SRI_LANKA_REGION = {
   latitude: 7.8731,
@@ -67,16 +69,24 @@ export default function Home() {
   }, [socket]);
 
   const handleArrived = async () => {
-    if (!socket || !currentRide) return;
-    socket.emit("driver:arrived");
-    setRideStatus("ARRIVED");
+    if (!currentRide) return;
+    try {
+      await postDriverArrived({ driverId: env.EXPO_PUBLIC_DRIVER_ID });
+      setRideStatus("ARRIVED");
+    } catch (error) {
+      Alert.alert("Error", error instanceof Error ? error.message : "Failed to update ride status");
+    }
   };
 
   const handleCompleted = async () => {
-    if (!socket || !currentRide) return;
-    socket.emit("driver:completed");
-    setCurrentRide(null);
-    setRideStatus("COMPLETED");
+    if (!currentRide) return;
+    try {
+      await postDriverCompleted({ driverId: env.EXPO_PUBLIC_DRIVER_ID });
+      setCurrentRide(null);
+      setRideStatus("COMPLETED");
+    } catch (error) {
+      Alert.alert("Error", error instanceof Error ? error.message : "Failed to complete ride");
+    }
   };
 
   const handleCall = (phone?: string) => {

@@ -8,10 +8,19 @@ import {
   type UpdateDriverDto,
 } from "@/common/validation/schemas";
 import type { UserStatus } from "@/common/database/schema";
+import {
+  driverEventDriverIdSchema,
+  driverLocationCommandSchema,
+} from "@/common/validation/socket.schemas";
+import { DriverCommandService } from "./driver-command.service";
+import type { DriverCommand, DriverLocationCommand } from "@ambulink/types";
 
 @Controller("api/drivers")
 export class DriverController {
-  constructor(private readonly driverService: DriverService) {}
+  constructor(
+    private readonly driverService: DriverService,
+    private readonly driverCommandService: DriverCommandService
+  ) {}
 
   @Post()
   create(
@@ -60,5 +69,23 @@ export class DriverController {
   @Delete(":id")
   remove(@Param("id") id: string) {
     return this.driverService.remove(id);
+  }
+
+  @Post("events/location")
+  async updateLocation(@Body(Validate(driverLocationCommandSchema)) body: DriverLocationCommand) {
+    await this.driverCommandService.updateLocation(body.driverId, { x: body.x, y: body.y });
+    return { ok: true };
+  }
+
+  @Post("events/arrived")
+  async arrived(@Body(Validate(driverEventDriverIdSchema)) body: DriverCommand) {
+    await this.driverCommandService.arrived(body.driverId);
+    return { ok: true };
+  }
+
+  @Post("events/completed")
+  async completed(@Body(Validate(driverEventDriverIdSchema)) body: DriverCommand) {
+    await this.driverCommandService.completed(body.driverId);
+    return { ok: true };
   }
 }

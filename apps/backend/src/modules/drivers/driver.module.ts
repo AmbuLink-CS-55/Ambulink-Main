@@ -1,14 +1,14 @@
 import { Module } from "@nestjs/common";
 import { DriverController } from "./driver.controller";
 import { DriverService } from "./driver.service";
-import { BookingService } from "../booking/booking.service";
 import { DriverGateway } from "./driver.gateway";
-import { DispatcherModule } from "../dispatcher/dispatcher.module";
+import { DriverCommandService } from "./driver-command.service";
+import { BookingModule } from "../booking/booking.module";
 
 @Module({
   controllers: [DriverController],
-  providers: [DriverService, BookingService, DriverGateway],
-  imports: [DispatcherModule],
+  providers: [DriverService, DriverGateway, DriverCommandService],
+  imports: [BookingModule],
   exports: [DriverService, DriverGateway],
 })
 export class DriverModule {}

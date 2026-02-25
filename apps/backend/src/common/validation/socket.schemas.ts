@@ -46,6 +46,22 @@ export const driverLocationPayloadSchema = z
   })
   .passthrough();
 
+export const driverEventDriverIdSchema = z
+  .object({
+    driverId: z.string().uuid(),
+  })
+  .passthrough();
+
+export const patientEventPatientIdSchema = z
+  .object({
+    patientId: z.string().uuid(),
+  })
+  .passthrough();
+
+export const patientHelpCommandSchema = patientEventPatientIdSchema.merge(patientPickupRequestSchema);
+export const patientCancelCommandSchema = patientEventPatientIdSchema.merge(patientCancelRequestSchema);
+export const driverLocationCommandSchema = driverEventDriverIdSchema.merge(driverLocationPayloadSchema);
+
 const locationSchema = z
   .object({
     x: z.number(),

@@ -1,5 +1,6 @@
 import * as TaskManager from "expo-task-manager";
-import { SocketClientCreator } from "@/utils/socket";
+import { env } from "../../env";
+import { postDriverLocation } from "@/lib/driverEvents";
 
 export const LOCATION_TASK_NAME = "background-location-task";
 
@@ -9,8 +10,8 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }: any) => {
     const { locations } = data;
     const location = locations[0];
     if (location) {
-      const socket = await SocketClientCreator.getSocket("DRIVER");
-      socket.emit("driver:update", {
+      await postDriverLocation({
+        driverId: env.EXPO_PUBLIC_DRIVER_ID,
         y: location.coords.latitude,
         x: location.coords.longitude,
       });

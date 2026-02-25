@@ -3,16 +3,16 @@ import { Text, Alert, View, ActivityIndicator } from "react-native";
 import UserMap from "@/components/patient/UserMap";
 import MapOptions from "../../components/patient/MapOptions";
 import { useLocation } from "@/hooks/useLocation";
-import { useSocket } from "@/hooks/SocketContext";
 import { usePatientEvents } from "@/hooks/usePatientEvents";
 import { useNearbyHospitals } from "@/hooks/useNearbyHospitals";
 import { useNearbyDrivers } from "@/hooks/useNearbyDrivers";
 import { loadSettings } from "@/utils/settingsStorage";
-import type { BookingStatus, User, Hospital } from "@ambulink/types";
+import type { BookingStatus, User, Hospital, PatientSettingsData } from "@ambulink/types";
+import { sendPatientCancel, sendPatientHelp } from "@/lib/patientEvents";
+import { env } from "../../../env";
 const PATIENT_BOOKING_TIMEOUT_MS = 40000;
 
 export default function Map() {
-  const socket = useSocket();
   const locationState = useLocation();
   const { hospitals: nearbyHospitals } = useNearbyHospitals({
     x: locationState.location?.x,
@@ -67,9 +67,9 @@ export default function Map() {
   }, [completedAt]);
 
   const handleHelpRequest = async () => {
-    // TODO: send this to server
-    const patientSettings = await loadSettings();
-    if (!locationState?.location || !socket?.connected) return;
+    const patientSettings = (await loadSettings()) as unknown as PatientSettingsData;
+    if (!locationState?.location) return;
+
     setIsBooking(true);
     if (bookingTimeoutRef.current) {
       clearTimeout(bookingTimeoutRef.current);
@@ -81,24 +81,40 @@ export default function Map() {
         "Your request is taking longer than expected. Please check your connection and try again."
       );
     }, PATIENT_BOOKING_TIMEOUT_MS);
-    socket.emit("patient:help", {
-      x: locationState.location.x,
-      y: locationState.location.y,
-      patientSettings: patientSettings,
-    });
+    try {
+      await sendPatientHelp({
+        patientId: env.EXPO_PUBLIC_PATIENT_ID,
+        x: locationState.location.x,
+        y: locationState.location.y,
+        patientSettings,
+      });
+    } catch (error) {
+      setIsBooking(false);
+      if (bookingTimeoutRef.current) {
+        clearTimeout(bookingTimeoutRef.current);
+        bookingTimeoutRef.current = null;
+      }
+      Alert.alert("Request Failed", error instanceof Error ? error.message : "Please try again.");
+    }
   };
 
   const handleCancel = () => {
-    if (!socket?.connected) return Alert.alert("Error", "Not connected");
-
     Alert.alert("Cancel Booking", "Are you sure?", [
       { text: "No", style: "cancel" },
       {
         text: "Yes, Cancel",
         style: "destructive",
-        onPress: () => {
+        onPress: async () => {
           setIsCancelling(true);
-          socket.emit("patient:cancelled", { reason: "Cancelled by patient" });
+          try {
+            await sendPatientCancel({
+              patientId: env.EXPO_PUBLIC_PATIENT_ID,
+              reason: "Cancelled by patient",
+            });
+          } catch (error) {
+            setIsCancelling(false);
+            Alert.alert("Cancel Failed", error instanceof Error ? error.message : "Please try again.");
+          }
         },
       },
     ]);
