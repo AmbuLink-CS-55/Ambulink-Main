@@ -17,10 +17,10 @@ export function PatientRequestMarker({ id }: PatientRequestMarkerProps) {
     if (typeof patient.currentLocation?.x === "number") {
       return [patient.currentLocation.x, patient.currentLocation.y] as [number, number];
     }
-    if (typeof patient.lat === "number" && typeof patient.lng === "number") {
-      return [patient.lng, patient.lat] as [number, number];
+    if (typeof driver.currentLocation?.x === "number") {
+      return [driver.currentLocation.x, driver.currentLocation.y] as [number, number];
     }
-    return [driver.lng, driver.lat] as [number, number];
+    return null;
   }, [request]);
 
   if (!request || !coordinates) return null;

@@ -57,6 +57,7 @@ export const bookingAssignedPayloadSchema = z
   .object({
     bookingId: z.string().nullable(),
     status: z.enum(["ASSIGNED", "ARRIVED", "PICKEDUP"]),
+    pickupLocation: locationSchema,
     patient: z
       .object({
         id: z.string(),

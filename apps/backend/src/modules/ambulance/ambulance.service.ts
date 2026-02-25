@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { Ambulance } from "@/common/database/schema";
 import { DbService } from "@/common/database/db.service";
 import { SocketService } from "@/common/socket/socket.service";
 import type { CreateAmbulanceDto, UpdateAmbulanceDto } from "@/common/validation/schemas";
@@ -10,7 +9,6 @@ import {
   updateAmbulance,
   deleteAmbulance,
 } from "@/common/queries";
-import { OnEvent } from "@nestjs/event-emitter";
 
 @Injectable()
 export class AmbulanceService {

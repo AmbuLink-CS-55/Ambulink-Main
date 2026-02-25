@@ -5,11 +5,7 @@ import { useEffect } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocation } from "@/hooks/useLocation";
-
-type LatLng = {
-  lat: number;
-  lng: number;
-};
+import type { Point } from "@ambulink/types";
 
 const LocationCard = ({
   title,
@@ -51,10 +47,10 @@ export default function Navigation() {
   const socket = useSocket();
   const { location } = useLocation();
 
-  const drivers: LatLng[] = [
-    { lat: 6.898356108714619, lng: 79.85389578706928 },
-    { lat: 6.895353174577009, lng: 79.85387845284518 },
-    { lat: 6.893795771439718, lng: 79.85671259848431 },
+  const drivers: Point[] = [
+    { x: 79.85389578706928, y: 6.898356108714619 },
+    { x: 79.85387845284518, y: 6.895353174577009 },
+    { x: 79.85671259848431, y: 6.893795771439718 },
   ];
 
   useEffect(() => {
@@ -76,15 +72,10 @@ export default function Navigation() {
       <UserMap
         driverLocations={drivers}
         userLocation={
-          location
-            ? {
-                lat: location.latitude,
-                lng: location.longitude,
-              }
-            : {
-                lat: 6.898527830579406,
-                lng: 79.85385178316076,
-              }
+          location ?? {
+            x: 79.85385178316076,
+            y: 6.898527830579406,
+          }
         }
       />
       <View className="absolute top-16 left-4 right-4 items-center">

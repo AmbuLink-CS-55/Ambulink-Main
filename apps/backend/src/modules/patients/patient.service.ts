@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { User, users, UserStatus } from "@/common/database/schema";
+import { UserStatus } from "@/common/database/schema";
 import { DbService } from "@/common/database/db.service";
 import type { CreatePatientDto, UpdatePatientDto } from "@/common/validation/schemas";
 import {

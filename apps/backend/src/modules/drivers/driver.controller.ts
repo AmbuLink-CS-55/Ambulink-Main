@@ -31,6 +31,18 @@ export class DriverController {
     return this.driverService.findAll(providerId, isActiveBool, status as UserStatus | undefined);
   }
 
+  @Get("nearby")
+  findNearby(
+    @Query("lat") latQuery?: string,
+    @Query("lng") lngQuery?: string,
+    @Query("limit") limitQuery?: string
+  ) {
+    const lat = Number(latQuery ?? 0);
+    const lng = Number(lngQuery ?? 0);
+    const limit = Number(limitQuery ?? 6);
+    return this.driverService.findNearby(lat, lng, limit);
+  }
+
   @Get(":id")
   findOne(@Param("id") id: string) {
     return this.driverService.findOne(id);

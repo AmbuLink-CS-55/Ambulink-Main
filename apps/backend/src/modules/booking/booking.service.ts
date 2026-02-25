@@ -27,7 +27,6 @@ import {
   updateBooking as updateBookingQuery,
   getActiveBookingForPatient,
   cancelBookingByPatient,
-  getOngoingBookingByUserId,
   getDispatcherBookingPayloadRow,
   getDispatcherActiveBookingRows,
   getBookingLogRows,
@@ -90,7 +89,6 @@ export class BookingService {
       payload.driverId,
       dispatcher.providerId
     );
-    console.log(payload.hospitalId);
     const hospital = await this.getHospitalOrThrow(payload.hospitalId);
 
     const activeDriverBookings = await getDriverActiveBooking(this.dbService.db, payload.driverId);
@@ -284,30 +282,12 @@ export class BookingService {
 
   async getActiveBookingForPatient(patientId: string) {
     const booking = await getActiveBookingForPatient(this.dbService.db, patientId);
-
-    if (booking.length > 1) {
-      console.log(`patient ${patientId} has more than one active bookings`);
-    }
     return booking[0];
   }
 
   async getActiveBookingForDriver(driverId: string) {
     const booking = await getDriverActiveBooking(this.dbService.db, driverId);
-
-    if (booking.length > 1) {
-      console.log(`driver ${driverId} has more than one active bookings`);
-    }
     return booking[0];
-  }
-
-  // TODO: remove
-  async getOngoingBookingByUserId(userId: string) {
-    const data = await getOngoingBookingByUserId(this.dbService.db, userId);
-
-    if (data.length > 1) {
-      console.log("Something is wrong, users cannot have multiple uncompleted bookings");
-    }
-    return data[0];
   }
 
   async cancelByPatient(patientId: string, reason: string) {
@@ -491,9 +471,7 @@ export class BookingService {
   }
 
   private async getHospitalOrThrow(hospitalId: string) {
-    console.log("Hospital got", hospitalId);
     const [hospital] = await getHospitalById(this.dbService.db, hospitalId);
-    console.log("Hospital found", hospital);
     if (!hospital) {
       throw new NotFoundException("Hospital not found");
     }

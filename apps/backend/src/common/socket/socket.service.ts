@@ -7,7 +7,7 @@ export class SocketService {
   public patientServer: Server | null = null;
   public dispatcherServer: Server | null = null;
 
-  emitToDriver(driverId: string, event: string, payload: any) {
+  emitToDriver(driverId: string, event: string, payload: unknown) {
     if (!this.driverServer) {
       console.warn(`[SocketService] DriverServer not initialized yet! Event ${event} dropped.`);
       return;
@@ -15,7 +15,7 @@ export class SocketService {
     this.driverServer.to(`driver:${driverId}`).emit(event, payload);
   }
 
-  emitToPatient(patientId: string, event: string, payload: any) {
+  emitToPatient(patientId: string, event: string, payload: unknown) {
     if (!this.patientServer) {
       console.warn(`[SocketService] PatientServer not initialized yet! Event ${event} dropped.`);
       return;
@@ -23,16 +23,15 @@ export class SocketService {
     this.patientServer.to(`patient:${patientId}`).emit(event, payload);
   }
 
-  emitToDispatcher(dispatcherId: string, event: string, payload: any) {
+  emitToDispatcher(dispatcherId: string, event: string, payload: unknown) {
     if (!this.dispatcherServer) {
       console.warn(`[SocketService] dispatcherServer not initialized yet! Event ${event} dropped.`);
       return;
     }
-    console.log("emited", dispatcherId, "events:", event, payload);
     this.dispatcherServer.to(`dispatcher:${dispatcherId}`).emit(event, payload);
   }
 
-  emitToAllDispatchers(event: string, payload: any) {
+  emitToAllDispatchers(event: string, payload: unknown) {
     if (!this.dispatcherServer) {
       console.warn(`[SocketService] dispatcherServer not initialized yet! Event ${event} dropped.`);
       return;

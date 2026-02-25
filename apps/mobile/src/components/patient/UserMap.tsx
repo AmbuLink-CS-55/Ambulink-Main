@@ -1,16 +1,19 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
-import { Image } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Image } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE, Region, Polyline } from "react-native-maps";
 import { Ionicons } from "@expo/vector-icons";
 import { Point } from "@ambulink/types";
 import ambulanceIcon from "../../../assets/images/ambu.png";
 import { useFetchRoute } from "@/hooks/use-fetch-route";
+import type { NearbyHospital } from "@/lib/hospitals";
+import type { NearbyDriver } from "@/lib/drivers";
 
 type Props = {
   userLocation: Point;
   driverLocations?: Point[];
   hospitalLocation?: Point;
+  nearbyHospitals?: NearbyHospital[];
+  nearbyDrivers?: NearbyDriver[];
   children?: React.ReactNode;
 };
 
@@ -18,6 +21,8 @@ export default function UserMap({
   userLocation,
   driverLocations = [],
   hospitalLocation,
+  nearbyHospitals = [],
+  nearbyDrivers = [],
   children,
 }: Props) {
   const mapRef = React.useRef<MapView>(null);
@@ -39,7 +44,6 @@ export default function UserMap({
 
   const handleLocate = () => {
     mapRef.current?.animateToRegion(region, 1000);
-    console.log(driverLocations);
   };
 
   return (
@@ -80,6 +84,22 @@ export default function UserMap({
           </Marker>
         ))}
 
+        {nearbyDrivers
+          .filter((driver) => isValidPoint(driver.location ?? undefined))
+          .map((driver) => (
+            <Marker
+              key={`nearby-driver-${driver.id}`}
+              coordinate={{
+                latitude: driver.location!.y,
+                longitude: driver.location!.x,
+              }}
+              pinColor="#2563eb"
+              title={driver.fullName ?? "Nearby Driver"}
+              description={`${driver.distanceKm.toFixed(1)} km away`}
+              tracksViewChanges={false}
+            />
+          ))}
+
         {safeHospitalLocation && safeDriverLocation && (
           <>
             {patientDriverCord.length > 0 && (
@@ -106,6 +126,22 @@ export default function UserMap({
             ></View>
           </Marker>
         )}
+
+        {nearbyHospitals
+          .filter((hospital) => isValidPoint(hospital.location ?? undefined))
+          .map((hospital) => (
+            <Marker
+              key={`nearby-hospital-${hospital.id}`}
+              coordinate={{
+                latitude: hospital.location!.y,
+                longitude: hospital.location!.x,
+              }}
+              pinColor="#dc2626"
+              title={hospital.name}
+              description={`${hospital.distanceKm.toFixed(1)} km away`}
+              tracksViewChanges={false}
+            />
+          ))}
       </MapView>
       <View className="items-center flex-1 justify-end my-5 mx-10">
         <TouchableOpacity

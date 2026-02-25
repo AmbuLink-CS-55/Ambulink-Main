@@ -125,6 +125,34 @@ export const findDriversByLocation = (db: Db, lat: number, lng: number) => {
     .limit(3);
 };
 
+export const findNearbyDriversForMap = (db: Db, lat: number, lng: number, limit: number) => {
+  const point = sql`ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)`;
+  const distanceExpr = sql<number>`ST_DistanceSphere(${users.currentLocation}, ${point})`;
+
+  return db
+    .select({
+      id: users.id,
+      fullName: users.fullName,
+      phoneNumber: users.phoneNumber,
+      providerId: users.providerId,
+      status: users.status,
+      locationX: sql<number | null>`ST_X(${users.currentLocation})`,
+      locationY: sql<number | null>`ST_Y(${users.currentLocation})`,
+      distanceMeters: distanceExpr,
+    })
+    .from(users)
+    .where(
+      and(
+        eq(users.role, "DRIVER"),
+        eq(users.isActive, true),
+        eq(users.status, "AVAILABLE"),
+        isNotNull(users.currentLocation)
+      )
+    )
+    .orderBy(asc(distanceExpr))
+    .limit(limit);
+};
+
 export const getDriverBooking = (db: Db, driverId: string) =>
   db
     .select()

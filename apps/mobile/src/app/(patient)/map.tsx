@@ -5,13 +5,26 @@ import MapOptions from "../../components/patient/MapOptions";
 import { useLocation } from "@/hooks/useLocation";
 import { useSocket } from "@/hooks/SocketContext";
 import { usePatientEvents } from "@/hooks/usePatientEvents";
+import { useNearbyHospitals } from "@/hooks/useNearbyHospitals";
+import { useNearbyDrivers } from "@/hooks/useNearbyDrivers";
+import { loadSettings } from "@/utils/settingsStorage";
 import type { BookingStatus, User, Hospital } from "@ambulink/types";
 const PATIENT_BOOKING_TIMEOUT_MS = 40000;
-import { loadSettings } from "@/utils/settingsStorage";
 
 export default function Map() {
   const socket = useSocket();
   const locationState = useLocation();
+  const { hospitals: nearbyHospitals } = useNearbyHospitals({
+    x: locationState.location?.x,
+    y: locationState.location?.y,
+    limit: 6,
+    radiusKm: 12,
+  });
+  const { drivers: nearbyDrivers } = useNearbyDrivers({
+    x: locationState.location?.x,
+    y: locationState.location?.y,
+    limit: 6,
+  });
 
   const [status, setStatus] = useState<BookingStatus>("COMPLETED");
   const [isCancelling, setIsCancelling] = useState(false);
@@ -24,6 +37,7 @@ export default function Map() {
     hospital: Hospital;
     provider?: { id: string; name: string; hotlineNumber?: string } | null;
   } | null>(null);
+  const shouldShowNearbyMarkers = booking === null;
 
   const bookingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -68,8 +82,8 @@ export default function Map() {
       );
     }, PATIENT_BOOKING_TIMEOUT_MS);
     socket.emit("patient:help", {
-      x: locationState.location.longitude,
-      y: locationState.location.latitude,
+      x: locationState.location.x,
+      y: locationState.location.y,
       patientSettings: patientSettings,
     });
   };
@@ -99,7 +113,7 @@ export default function Map() {
     );
   }
 
-  if (locationState?.error || !locationState?.location?.latitude) {
+  if (locationState?.error || !locationState?.location) {
     return (
       <View className="flex-1 items-center justify-center px-6">
         <Text className="text-center text-red-500 font-semibold">Location Unavailable</Text>
@@ -114,10 +128,12 @@ export default function Map() {
         booking?.pickedDriver?.currentLocation ? [booking.pickedDriver.currentLocation] : []
       }
       hospitalLocation={booking?.hospital?.location}
+      nearbyHospitals={shouldShowNearbyMarkers ? nearbyHospitals : []}
+      nearbyDrivers={shouldShowNearbyMarkers ? nearbyDrivers : []}
       userLocation={
         booking?.patient?.currentLocation ?? {
-          x: locationState.location.longitude,
-          y: locationState.location.latitude,
+          x: locationState.location.x,
+          y: locationState.location.y,
         }
       }
     >

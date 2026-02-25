@@ -39,8 +39,11 @@ export class SocketClientCreator {
       reconnection: true,
       reconnectionAttempts: Infinity,
       autoConnect: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 10000,
+      timeout: 10000,
+      // Enable exponential backoff retry with jitter.
+      reconnectionDelay: 500,
+      reconnectionDelayMax: 30000,
+      randomizationFactor: 0.5,
     });
 
     instance.on("connect", () => {
@@ -68,10 +71,15 @@ export class SocketClientCreator {
     });
 
     instance.io.on("reconnect_attempt", (attempt) => {
+      const nextDelay = Math.min(
+        500 * Math.pow(2, Math.max(attempt - 1, 0)),
+        30000
+      );
       console.info("[socket] reconnect_attempt", {
         url,
         type,
         attempt,
+        nextDelayMs: nextDelay,
       });
     });
 

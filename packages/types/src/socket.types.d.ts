@@ -72,6 +72,10 @@ export type BookingFailedPayload = {
 export type BookingAssignedPayload = {
   bookingId: string | null;
   status: "ASSIGNED" | "ARRIVED" | "PICKEDUP";
+  pickupLocation: {
+    x: number;
+    y: number;
+  } | null;
   patient: {
     id: string;
     fullName: string | null;
@@ -118,14 +122,25 @@ export type BookingNewPayload = {
   driver: {
     id: string;
     phoneNumber: string | null;
-    [key: string]: any;
+    fullName?: string | null;
+    currentLocation?: {
+      x: number;
+      y: number;
+    } | null;
+    ambulance_provider?: {
+      id?: string;
+      name?: string | null;
+    } | null;
   };
   patient: {
     id: string;
     fullName: string | null;
     phoneNumber: string | null;
     email: string | null;
-    [key: string]: any;
+    currentLocation?: {
+      x: number;
+      y: number;
+    } | null;
   };
 };
 /**

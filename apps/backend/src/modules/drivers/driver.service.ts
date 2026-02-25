@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { User, UserStatus } from "@/common/database/schema";
+import { UserStatus } from "@/common/database/schema";
 import { DbService } from "@/common/database/db.service";
 import { SocketService } from "@/common/socket/socket.service";
 import type { CreateDriverDto, UpdateDriverDto } from "@/common/validation/schemas";
@@ -14,6 +14,7 @@ import {
   removeDriverStatus,
   setDriverLocation,
   findDriversByLocation,
+  findNearbyDriversForMap,
   getDriverBooking,
 } from "@/common/queries";
 
@@ -81,7 +82,6 @@ export class DriverService {
 
   async setStatus(driverId: string, status: UserStatus) {
     await setDriverStatus(this.dbService.db, driverId, status);
-    console.log(driverId, "to", status);
   }
 
   async isAvailable(driverId: string) {
@@ -99,12 +99,29 @@ export class DriverService {
     if (lat === undefined || lng === undefined) return;
 
     await setDriverLocation(this.dbService.db, driverId, lat, lng);
-    console.info("[driver] location set", lat, lng);
   }
 
   async findDriverByLocation(lat: number, lng: number) {
     const nearbyDrivers = await findDriversByLocation(this.dbService.db, lat, lng);
     return nearbyDrivers;
+  }
+
+  async findNearby(lat: number, lng: number, limit: number) {
+    const rows = await findNearbyDriversForMap(this.dbService.db, lat, lng, limit);
+
+    return rows.map((row) => ({
+      id: row.id,
+      fullName: row.fullName,
+      phoneNumber: row.phoneNumber,
+      providerId: row.providerId,
+      status: row.status,
+      location:
+        row.locationX !== null && row.locationY !== null
+          ? { x: row.locationX, y: row.locationY }
+          : null,
+      distanceMeters: Number(row.distanceMeters),
+      distanceKm: Number((Number(row.distanceMeters) / 1000).toFixed(2)),
+    }));
   }
 
   async getDriverBooking(driverId: string) {

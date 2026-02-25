@@ -8,6 +8,8 @@ import {
 type AssignedBookingRow = {
   bookingId: string;
   status: BookingStatus;
+  pickupLocationX: number | null;
+  pickupLocationY: number | null;
   patientId: string;
   patientName: string | null;
   patientPhone: string | null;
@@ -57,6 +59,10 @@ export const mapAssignedBookingPayload = (row: AssignedBookingRow | null) => {
     return null;
   }
 
+  const pickupLocation =
+    row.pickupLocationX !== null && row.pickupLocationY !== null
+      ? { x: row.pickupLocationX, y: row.pickupLocationY }
+      : null;
   const patientLocation =
     row.patientLocationX !== null && row.patientLocationY !== null
       ? { x: row.patientLocationX, y: row.patientLocationY }
@@ -73,6 +79,7 @@ export const mapAssignedBookingPayload = (row: AssignedBookingRow | null) => {
   const payload = {
     bookingId: row.bookingId,
     status: row.status === "REQUESTED" ? "ASSIGNED" : row.status,
+    pickupLocation,
     patient: {
       id: row.patientId,
       fullName: row.patientName ?? null,
