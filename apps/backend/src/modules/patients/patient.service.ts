@@ -1,40 +1,31 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { UserStatus } from "@/common/database/schema";
-import { DbService } from "@/common/database/db.service";
 import type { CreatePatientDto, UpdatePatientDto } from "@/common/validation/schemas";
-import {
-  createPatient,
-  findAllPatients,
-  findPatientById,
-  updatePatient,
-  removePatient,
-  updateUserStatus,
-  updateUserLocation,
-} from "@/common/queries";
+import { PatientRepository } from "./patient.repository";
 
 @Injectable()
 export class PatientService {
-  constructor(private dbService: DbService) {}
+  constructor(private patientRepository: PatientRepository) {}
 
   async updateStatus(patientId: string, status: UserStatus) {
-    return await updateUserStatus(this.dbService.db, patientId, status);
+    return await this.patientRepository.updateUserStatus(patientId, status);
   }
 
   async updateLocation(patientId: string, location: { x: number; y: number }) {
-    return await updateUserLocation(this.dbService.db, patientId, location);
+    return await this.patientRepository.updateUserLocation(patientId, location);
   }
 
   async create(createPatientDto: CreatePatientDto) {
-    const result = await createPatient(this.dbService.db, createPatientDto);
+    const result = await this.patientRepository.createPatient(createPatientDto);
     return result[0];
   }
 
   async findAll(isActive?: boolean) {
-    return findAllPatients(this.dbService.db, isActive);
+    return this.patientRepository.findAllPatients(isActive);
   }
 
   async findOne(id: string) {
-    const result = await findPatientById(this.dbService.db, id);
+    const result = await this.patientRepository.findPatientById(id);
 
     if (result.length === 0) {
       throw new NotFoundException(`Patient with id ${id} not found`);
@@ -45,7 +36,7 @@ export class PatientService {
   async update(id: string, updatePatientDto: UpdatePatientDto) {
     await this.findOne(id);
 
-    const result = await updatePatient(this.dbService.db, id, updatePatientDto);
+    const result = await this.patientRepository.updatePatient(id, updatePatientDto);
 
     if (result.length === 0) {
       throw new NotFoundException(`Patient with id ${id} not found`);
@@ -55,6 +46,6 @@ export class PatientService {
 
   async remove(id: string) {
     await this.findOne(id);
-    await removePatient(this.dbService.db, id);
+    await this.patientRepository.removePatient(id);
   }
 }

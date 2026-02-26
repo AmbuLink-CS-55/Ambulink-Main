@@ -4,10 +4,11 @@ import { DriverService } from "./driver.service";
 import { DriverGateway } from "./driver.gateway";
 import { DriverCommandService } from "./driver-command.service";
 import { BookingModule } from "../booking/booking.module";
+import { DriverRepository } from "./driver.repository";
 
 @Module({
   controllers: [DriverController],
-  providers: [DriverService, DriverGateway, DriverCommandService],
+  providers: [DriverService, DriverGateway, DriverCommandService, DriverRepository],
   imports: [BookingModule],
   exports: [DriverService, DriverGateway],
 })

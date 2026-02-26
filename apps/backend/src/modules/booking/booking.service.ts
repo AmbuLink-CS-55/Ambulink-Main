@@ -17,25 +17,12 @@ import type {
   DispatcherBookingUpdatePayload,
 } from "@ambulink/types";
 import { mapAssignedBookingPayload, mapDispatcherBookingPayload } from "@/mappers";
-import {
-  createPatient,
-  createBooking,
-  findDriverById,
-  findPatientById,
-  getDriverActiveBooking,
-  getHospitalById,
-  getAssignedBookingPayloadRow,
-  updateBooking as updateBookingQuery,
-  getActiveBookingForPatient,
-  cancelBookingByPatient,
-  getDispatcherBookingPayloadRow,
-  getDispatcherActiveBookingRows,
-  getBookingLogRows,
-  getOngoingBookingDispatchInfoForDriver,
-  setDriverStatus,
-} from "@/common/queries";
 import type { ManualAssignBookingDto, ReassignBookingDto } from "@/common/validation/schemas";
 import { DispatcherApprovalService } from "../dispatcher/dispatcher-approval.service";
+import { BookingRepository } from "./booking.repository";
+import { DriverRepository } from "../drivers/driver.repository";
+import { PatientRepository } from "../patients/patient.repository";
+import { HospitalRepository } from "../hospital/hospital.repository";
 
 @Injectable()
 export class BookingService {
@@ -43,7 +30,11 @@ export class BookingService {
     private dbService: DbService,
     private dispatcherService: DispatcherService,
     private realtimeNotifier: RealtimeNotifierService,
-    private dispatcherApprovalService: DispatcherApprovalService
+    private dispatcherApprovalService: DispatcherApprovalService,
+    private bookingRepository: BookingRepository,
+    private driverRepository: DriverRepository,
+    private patientRepository: PatientRepository,
+    private hospitalRepository: HospitalRepository
   ) {}
 
   async createBooking(
@@ -56,7 +47,7 @@ export class BookingService {
     emergencyType: string | null,
     dispatcherId?: string | null
   ) {
-    const [createdBooking] = await createBooking(this.dbService.db, {
+    const [createdBooking] = await this.bookingRepository.createBooking({
       patientId: patient.id,
       pickupAddress: pickupAddr,
       pickupLocation: { x: _patientLng, y: _patientLat },
@@ -81,7 +72,7 @@ export class BookingService {
   }
 
   async buildAssignedBookingPayload(bookingId: string) {
-    const [row] = await getAssignedBookingPayloadRow(this.dbService.db, bookingId);
+    const [row] = await this.bookingRepository.getAssignedBookingPayloadRow(bookingId);
     return mapAssignedBookingPayload(row);
   }
 
@@ -93,7 +84,9 @@ export class BookingService {
     );
     const hospital = await this.getHospitalOrThrow(payload.hospitalId);
 
-    const activeDriverBookings = await getDriverActiveBooking(this.dbService.db, payload.driverId);
+    const activeDriverBookings = await this.bookingRepository.getDriverActiveBooking(
+      payload.driverId
+    );
     if (activeDriverBookings.length > 0) {
       throw new BadRequestException("Selected driver already has an active booking");
     }
@@ -117,7 +110,7 @@ export class BookingService {
       throw new BadRequestException("Booking creation failed");
     }
 
-    await setDriverStatus(this.dbService.db, driver.id, "BUSY");
+    await this.driverRepository.setDriverStatus(driver.id, "BUSY");
 
     const assignedPayload = await this.buildAssignedBookingPayload(booking.bookingId);
     const dispatcherPayload = await this.buildDispatcherBookingPayload(booking.bookingId);
@@ -183,8 +176,7 @@ export class BookingService {
         payload.driverId,
         dispatcher.providerId
       );
-      const activeTargetBookings = await getDriverActiveBooking(
-        this.dbService.db,
+      const activeTargetBookings = await this.bookingRepository.getDriverActiveBooking(
         payload.driverId
       );
       if (activeTargetBookings.length > 0) {
@@ -192,11 +184,11 @@ export class BookingService {
       }
       updateData.driverId = nextDriver.id;
       nextDriverId = nextDriver.id;
-      await setDriverStatus(this.dbService.db, nextDriver.id, "BUSY");
+      await this.driverRepository.setDriverStatus(nextDriver.id, "BUSY");
     }
 
     if (Object.keys(updateData).length > 0) {
-      await updateBookingQuery(this.dbService.db, bookingId, updateData);
+      await this.bookingRepository.updateBooking(bookingId, updateData);
     }
 
     if (payload.pickupLocation) {
@@ -209,9 +201,11 @@ export class BookingService {
     }
 
     if (previousDriverId && nextDriverId && previousDriverId !== nextDriverId) {
-      const oldDriverBookings = await getDriverActiveBooking(this.dbService.db, previousDriverId);
+      const oldDriverBookings = await this.bookingRepository.getDriverActiveBooking(
+        previousDriverId
+      );
       if (oldDriverBookings.length === 0) {
-        await setDriverStatus(this.dbService.db, previousDriverId, "AVAILABLE");
+        await this.driverRepository.setDriverStatus(previousDriverId, "AVAILABLE");
       }
       this.realtimeNotifier.notifyDriver(previousDriverId, "booking:cancelled", {
         bookingId,
@@ -257,7 +251,7 @@ export class BookingService {
       updateData.ongoing = false;
     }
 
-    const [updatedBooking] = await updateBookingQuery(this.dbService.db, bookingId, updateData);
+    const [updatedBooking] = await this.bookingRepository.updateBooking(bookingId, updateData);
 
     if (updatedBooking?.dispatcherId) {
       if (updatedBooking.status === "REQUESTED") {
@@ -283,17 +277,17 @@ export class BookingService {
   }
 
   async getActiveBookingForPatient(patientId: string) {
-    const booking = await getActiveBookingForPatient(this.dbService.db, patientId);
+    const booking = await this.bookingRepository.getActiveBookingForPatient(patientId);
     return booking[0];
   }
 
   async getActiveBookingForDriver(driverId: string) {
-    const booking = await getDriverActiveBooking(this.dbService.db, driverId);
+    const booking = await this.bookingRepository.getDriverActiveBooking(driverId);
     return booking[0];
   }
 
   async cancelByPatient(patientId: string, reason: string) {
-    const [booking] = await cancelBookingByPatient(this.dbService.db, patientId, reason);
+    const [booking] = await this.bookingRepository.cancelBookingByPatient(patientId, reason);
 
     return booking;
   }
@@ -351,7 +345,7 @@ export class BookingService {
   }
 
   async sendDriverLocation(driverId: string, data: DriverLocationUpdate) {
-    const [booking] = await getOngoingBookingDispatchInfoForDriver(this.dbService.db, driverId);
+    const [booking] = await this.bookingRepository.getOngoingBookingDispatchInfoForDriver(driverId);
     if (!booking) {
       return;
     }
@@ -364,7 +358,7 @@ export class BookingService {
   }
 
   async getDispatcherActiveBookings(dispatcherId: string) {
-    const rows = await getDispatcherActiveBookingRows(this.dbService.db, dispatcherId);
+    const rows = await this.bookingRepository.getDispatcherActiveBookingRows(dispatcherId);
 
     return rows
       .map((row) => mapDispatcherBookingPayload(row))
@@ -372,7 +366,7 @@ export class BookingService {
   }
 
   async buildDispatcherBookingPayload(bookingId: string, requestId?: string) {
-    const [row] = await getDispatcherBookingPayloadRow(this.dbService.db, bookingId);
+    const [row] = await this.bookingRepository.getDispatcherBookingPayloadRow(bookingId);
 
     if (!row) return null;
 
@@ -380,7 +374,7 @@ export class BookingService {
   }
 
   async getBookingLog(providerId?: string, status?: string): Promise<BookingLogEntry[]> {
-    const rows = await getBookingLogRows(this.dbService.db, providerId, status);
+    const rows = await this.bookingRepository.getBookingLogRows(providerId, status);
     return rows.map((row) => ({
       ...row,
       requestedAt: row.requestedAt ? row.requestedAt.toISOString() : null,
@@ -412,7 +406,7 @@ export class BookingService {
   }
 
   private async getDriverForDispatcherOrThrow(driverId: string, providerId: string) {
-    const [driver] = await findDriverById(this.dbService.db, driverId);
+    const [driver] = await this.driverRepository.findDriverById(driverId);
     if (!driver || !driver.isActive) {
       throw new NotFoundException("Driver not found");
     }
@@ -425,7 +419,7 @@ export class BookingService {
   }
 
   private async getHospitalOrThrow(hospitalId: string) {
-    const [hospital] = await getHospitalById(this.dbService.db, hospitalId);
+    const [hospital] = await this.hospitalRepository.getHospitalById(hospitalId);
     if (!hospital) {
       throw new NotFoundException("Hospital not found");
     }
@@ -434,7 +428,7 @@ export class BookingService {
 
   private async resolvePatientForManualAssignment(payload: ManualAssignBookingDto) {
     if (payload.patientId) {
-      const [patient] = await findPatientById(this.dbService.db, payload.patientId);
+      const [patient] = await this.patientRepository.findPatientById(payload.patientId);
       if (patient) {
         return patient;
       }
@@ -457,7 +451,7 @@ export class BookingService {
       }
     }
 
-    const [guest] = await createPatient(this.dbService.db, {
+    const [guest] = await this.patientRepository.createPatient({
       fullName: "Guest",
       phoneNumber: payload.patientPhoneNumber ?? null,
       email: payload.patientEmail ?? null,

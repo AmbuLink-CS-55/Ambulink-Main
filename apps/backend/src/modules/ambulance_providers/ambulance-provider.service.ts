@@ -1,32 +1,27 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { DbService } from "@/common/database/db.service";
 import type {
   CreateAmbulanceProviderDto,
   UpdateAmbulanceProviderDto,
 } from "@/common/validation/schemas";
-import {
-  createAmbulanceProvider,
-  getAllAmbulanceProviders,
-  getAmbulanceProviderById,
-  updateAmbulanceProvider,
-  deleteAmbulanceProvider,
-} from "@/common/queries";
+import { AmbulanceProviderRepository } from "./ambulance-provider.repository";
 
 @Injectable()
 export class AmbulanceProviderService {
-  constructor(private dbService: DbService) {}
+  constructor(private ambulanceProviderRepository: AmbulanceProviderRepository) {}
 
   async create(createAmbulanceProviderDto: CreateAmbulanceProviderDto) {
-    const result = await createAmbulanceProvider(this.dbService.db, createAmbulanceProviderDto);
+    const result = await this.ambulanceProviderRepository.createAmbulanceProvider(
+      createAmbulanceProviderDto
+    );
     return result[0];
   }
 
   async findAll() {
-    return getAllAmbulanceProviders(this.dbService.db);
+    return this.ambulanceProviderRepository.getAllAmbulanceProviders();
   }
 
   async findOne(id: string) {
-    const result = await getAmbulanceProviderById(this.dbService.db, id);
+    const result = await this.ambulanceProviderRepository.getAmbulanceProviderById(id);
     if (result.length === 0) {
       throw new NotFoundException(`AmbulanceProvider with id ${id} not found`);
     }
@@ -37,7 +32,10 @@ export class AmbulanceProviderService {
     id: string,
     updateAmbulanceProviderDto: UpdateAmbulanceProviderDto
   ) {
-    const result = await updateAmbulanceProvider(this.dbService.db, id, updateAmbulanceProviderDto);
+    const result = await this.ambulanceProviderRepository.updateAmbulanceProvider(
+      id,
+      updateAmbulanceProviderDto
+    );
     if (result.length === 0) {
       throw new NotFoundException(`AmbulanceProvider with id ${id} not found`);
     }
@@ -46,6 +44,6 @@ export class AmbulanceProviderService {
 
   async remove(id: string) {
     await this.findOne(id);
-    await deleteAmbulanceProvider(this.dbService.db, id);
+    await this.ambulanceProviderRepository.deleteAmbulanceProvider(id);
   }
 }

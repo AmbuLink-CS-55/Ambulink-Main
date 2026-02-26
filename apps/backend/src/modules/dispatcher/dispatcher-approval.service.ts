@@ -1,14 +1,13 @@
 import { Injectable } from "@nestjs/common";
-import { getDispatcherWinnerInfo } from "@/common/queries";
-import { DbService } from "@/common/database/db.service";
 import { SocketService } from "@/common/socket/socket.service";
 import type { User } from "@/common/database/schema";
+import { DispatcherRepository } from "./dispatcher.repository";
 
 @Injectable()
 export class DispatcherApprovalService {
   constructor(
     private socketService: SocketService,
-    private dbService: DbService
+    private dispatcherRepository: DispatcherRepository
   ) {}
 
   async requestApproval(dispatcherId: string, driver: User, patient: User, requestId: string) {
@@ -50,7 +49,7 @@ export class DispatcherApprovalService {
   ) {
     if (!this.socketService.dispatcherServer) return;
 
-    const [winner] = await getDispatcherWinnerInfo(this.dbService.db, winnerDispatcherId);
+    const [winner] = await this.dispatcherRepository.getDispatcherWinnerInfo(winnerDispatcherId);
     const winnerPayload = {
       id: winnerDispatcherId,
       name: winner?.name ?? null,
