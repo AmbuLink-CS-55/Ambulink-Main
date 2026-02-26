@@ -1,8 +1,8 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity, Image } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Image, Text } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE, Region, Polyline } from "react-native-maps";
 import { Ionicons } from "@expo/vector-icons";
-import { Point } from "@ambulink/types";
+import { BookingStatus, Point } from "@ambulink/types";
 import ambulanceIcon from "../../../assets/images/ambu.png";
 import { useFetchRoute } from "@/hooks/use-fetch-route";
 import type { NearbyHospital } from "@/lib/hospitals";
@@ -12,6 +12,7 @@ type Props = {
   userLocation: Point;
   driverLocations?: Point[];
   hospitalLocation?: Point;
+  bookingStatus?: BookingStatus;
   nearbyHospitals?: NearbyHospital[];
   nearbyDrivers?: NearbyDriver[];
   children?: React.ReactNode;
@@ -21,6 +22,7 @@ export default function UserMap({
   userLocation,
   driverLocations = [],
   hospitalLocation,
+  bookingStatus,
   nearbyHospitals = [],
   nearbyDrivers = [],
   children,
@@ -31,9 +33,21 @@ export default function UserMap({
   const safeUserLocation = isValidPoint(userLocation) ? userLocation : { x: 0, y: 0 };
   const safeDriverLocation = driverLocations.find((point) => isValidPoint(point));
   const safeHospitalLocation = isValidPoint(hospitalLocation) ? hospitalLocation : undefined;
+  const showDriverEta = bookingStatus !== "ARRIVED" && bookingStatus !== "PICKEDUP";
 
-  const patientDriverCord = useFetchRoute(safeUserLocation, safeDriverLocation);
-  const patientHospitalCord = useFetchRoute(safeUserLocation, safeHospitalLocation);
+  const { routeCoords: patientDriverCord, durationSeconds: patientDriverEtaSeconds } = useFetchRoute(
+    safeUserLocation,
+    showDriverEta ? safeDriverLocation : undefined
+  );
+  const { routeCoords: patientHospitalCord, durationSeconds: patientHospitalEtaSeconds } =
+    useFetchRoute(safeUserLocation, safeHospitalLocation);
+
+  const formatEta = (durationSeconds?: number | null) => {
+    if (!Number.isFinite(durationSeconds) || (durationSeconds ?? 0) <= 0) return "Calculating...";
+    const minutes = Math.round((durationSeconds ?? 0) / 60);
+    if (minutes <= 1) return "<1 min";
+    return `${minutes} min`;
+  };
 
   const region: Region = {
     latitude: safeUserLocation.y,
@@ -102,7 +116,7 @@ export default function UserMap({
 
         {safeHospitalLocation && safeDriverLocation && (
           <>
-            {patientDriverCord.length > 0 && (
+            {showDriverEta && patientDriverCord.length > 0 && (
               <Polyline coordinates={patientDriverCord} strokeWidth={4} strokeColor="#007AFF" />
             )}
             {patientHospitalCord.length > 0 && (
@@ -150,6 +164,31 @@ export default function UserMap({
         >
           <Ionicons name="locate" size={24} color="#000000" />
         </TouchableOpacity>
+
+        {safeHospitalLocation && safeDriverLocation && (
+          <View className="w-full rounded-xl bg-white px-4 py-3 shadow-lg mb-3">
+            <View className="flex-row items-center justify-between">
+                <View>
+                  <View className="flex-row items-center">
+                    <View className="h-2 w-2 rounded-full bg-[#007AFF] mr-2" />
+                    <Text className="text-xs text-gray-500">Driver ETA</Text>
+                  </View>
+                  <Text className="text-base font-semibold text-gray-900">
+                    {showDriverEta ? formatEta(patientDriverEtaSeconds) : "Arrived"}
+                  </Text>
+                </View>
+              <View>
+                <View className="flex-row items-center">
+                  <View className="h-2 w-2 rounded-full bg-[#FF3B30] mr-2" />
+                  <Text className="text-xs text-gray-500">Hospital ETA</Text>
+                </View>
+                <Text className="text-base font-semibold text-gray-900">
+                  {formatEta(patientHospitalEtaSeconds)}
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {children}
       </View>

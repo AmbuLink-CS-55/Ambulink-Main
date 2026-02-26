@@ -3,6 +3,7 @@ import { useAuthStore } from "@/hooks/AuthContext";
 import { SocketProvider } from "@/hooks/SocketContext";
 import { useDriverTracking } from "@/hooks/useDriverTracking";
 import { useDriverHistory } from "@/hooks/useDriverHistory";
+import { useDriverShift } from "@/hooks/useDriverShift";
 import Ionicons from "@expo/vector-icons/build/Ionicons";
 
 function DriverHistoryListener() {
@@ -12,12 +13,13 @@ function DriverHistoryListener() {
 
 export default function TabLayout() {
   const { user } = useAuthStore();
-  useDriverTracking(true);
+  const isOnShift = useDriverShift((state) => state.isOnShift);
+  useDriverTracking(isOnShift);
   if (!user) return <Redirect href="/(public)/login" />;
   if (user.role !== "driver") return <Redirect href="/login" />;
 
   return (
-    <SocketProvider type="DRIVER">
+    <SocketProvider type="DRIVER" enabled={isOnShift}>
       <DriverHistoryListener />
       <Tabs screenOptions={{ headerShown: false }}>
         <Tabs.Screen

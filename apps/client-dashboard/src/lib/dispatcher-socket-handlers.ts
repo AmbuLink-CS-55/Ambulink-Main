@@ -13,6 +13,7 @@ import type {
   DispatcherBookingUpdatePayload,
   DispatcherToServerEvents,
   DriverLocationUpdate,
+  DriverRosterPayload,
   ServerToDispatcherEvents,
 } from "@/lib/socket-types";
 import type { BookingLogEntry } from "@/services/booking.service";
@@ -96,6 +97,34 @@ export function registerDispatcherSocketHandlers({
     );
   });
 
+  socket.on("driver:roster", (payload: DriverRosterPayload) => {
+    queryClient.invalidateQueries({ queryKey: ["drivers"] });
+
+    const driverId = payload?.driver?.id;
+    if (!driverId) return;
+    const status = payload.driver.status ?? null;
+    const location = payload.driver.currentLocation ?? null;
+
+    queryClient.setQueryData<Record<string, { x: number; y: number }>>(
+      queryKeys.driverLocations(),
+      (prev = {}) => {
+        const next = { ...prev };
+        if (
+          payload.action === "removed" ||
+          status !== "AVAILABLE" ||
+          !location ||
+          !Number.isFinite(location.x) ||
+          !Number.isFinite(location.y)
+        ) {
+          delete next[driverId];
+          return next;
+        }
+        next[driverId] = { x: location.x, y: location.y };
+        return next;
+      }
+    );
+  });
+
   socket.on("booking:log", (payload: DispatcherBookingLogPayload) => {
     if (providerId && payload.providerId !== providerId) return;
 
@@ -148,6 +177,7 @@ export function registerDispatcherSocketHandlers({
     socket.off("booking:assigned");
     socket.off("booking:update");
     socket.off("driver:update");
+    socket.off("driver:roster");
     socket.off("booking:log");
   };
 }

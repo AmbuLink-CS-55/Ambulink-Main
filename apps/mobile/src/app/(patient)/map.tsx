@@ -144,6 +144,7 @@ export default function Map() {
         booking?.pickedDriver?.currentLocation ? [booking.pickedDriver.currentLocation] : []
       }
       hospitalLocation={booking?.hospital?.location}
+      bookingStatus={status}
       nearbyHospitals={shouldShowNearbyMarkers ? nearbyHospitals : []}
       nearbyDrivers={shouldShowNearbyMarkers ? nearbyDrivers : []}
       userLocation={

@@ -61,6 +61,11 @@ export const patientEventPatientIdSchema = z
 export const patientHelpCommandSchema = patientEventPatientIdSchema.merge(patientPickupRequestSchema);
 export const patientCancelCommandSchema = patientEventPatientIdSchema.merge(patientCancelRequestSchema);
 export const driverLocationCommandSchema = driverEventDriverIdSchema.merge(driverLocationPayloadSchema);
+export const driverShiftCommandSchema = driverEventDriverIdSchema.merge(
+  z.object({
+    onShift: z.boolean(),
+  })
+);
 
 const locationSchema = z
   .object({

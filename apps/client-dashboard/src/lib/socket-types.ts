@@ -12,6 +12,7 @@ export type {
   DispatcherToServerEvents,
   DriverLocationPayload,
   DriverLocationUpdate,
+  DriverRosterPayload,
   DriverToServerEvents,
   ErrorPayload,
   PatientCancelRequest,

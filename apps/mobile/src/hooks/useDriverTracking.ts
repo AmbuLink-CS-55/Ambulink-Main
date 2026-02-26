@@ -4,8 +4,19 @@ import { LOCATION_TASK_NAME } from "@/tasks/locationTasks";
 
 export const useDriverTracking = (isDriver: boolean) => {
   useEffect(() => {
+    const stopTracking = async () => {
+      const isRunning = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
+      if (isRunning) {
+        await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
+        console.info("[driver] Location tracking stopped");
+      }
+    };
+
     const startTracking = async () => {
-      if (!isDriver) return;
+      if (!isDriver) {
+        await stopTracking();
+        return;
+      }
 
       const { status: fg } = await Location.requestForegroundPermissionsAsync();
       const { status: bg } = await Location.requestBackgroundPermissionsAsync();
@@ -28,12 +39,7 @@ export const useDriverTracking = (isDriver: boolean) => {
     startTracking();
 
     return () => {
-      Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME).then((isRunning) => {
-        if (isRunning) {
-          Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
-          console.info("[driver] Location tracking stopped");
-        }
-      });
+      stopTracking();
     };
   }, [isDriver]);
 };

@@ -47,7 +47,6 @@ export class DriverGateway implements OnGatewayInit {
     client.data.driverId = driverId;
 
     client.join(`driver:${driverId}`);
-    this.driverService.setStatus(driverId, "AVAILABLE");
 
     const activeBooking = await this.bookingService.getActiveBookingForDriver(driverId);
 

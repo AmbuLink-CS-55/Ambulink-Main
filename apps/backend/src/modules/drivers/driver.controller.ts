@@ -11,9 +11,10 @@ import type { UserStatus } from "@/common/database/schema";
 import {
   driverEventDriverIdSchema,
   driverLocationCommandSchema,
+  driverShiftCommandSchema,
 } from "@/common/validation/socket.schemas";
 import { DriverCommandService } from "./driver-command.service";
-import type { DriverCommand, DriverLocationCommand } from "@ambulink/types";
+import type { DriverCommand, DriverLocationCommand, DriverShiftCommand } from "@ambulink/types";
 
 @Controller("api/drivers")
 export class DriverController {
@@ -87,5 +88,10 @@ export class DriverController {
   async completed(@Body(Validate(driverEventDriverIdSchema)) body: DriverCommand) {
     await this.driverCommandService.completed(body.driverId);
     return { ok: true };
+  }
+
+  @Post("events/shift")
+  async setShift(@Body(Validate(driverShiftCommandSchema)) body: DriverShiftCommand) {
+    return this.driverCommandService.setShift(body.driverId, body.onShift);
   }
 }

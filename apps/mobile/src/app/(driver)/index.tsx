@@ -3,9 +3,10 @@ import { Alert, Linking, ScrollView, Text, TouchableOpacity, View } from "react-
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSocket } from "@/hooks/SocketContext";
-import type { BookingStatus } from "@ambulink/types";
+import type { BookingAssignedPayload, BookingStatus } from "@ambulink/types";
 import { env } from "../../../env";
-import { postDriverArrived, postDriverCompleted } from "@/lib/driverEvents";
+import { postDriverArrived, postDriverCompleted, postDriverShift } from "@/lib/driverEvents";
+import { useDriverShift } from "@/hooks/useDriverShift";
 
 const SRI_LANKA_REGION = {
   latitude: 7.8731,
@@ -16,6 +17,9 @@ const SRI_LANKA_REGION = {
 
 export default function Home() {
   const socket = useSocket();
+  const isOnShift = useDriverShift((state) => state.isOnShift);
+  const setOnShift = useDriverShift((state) => state.setOnShift);
+  const [isShiftUpdating, setIsShiftUpdating] = useState(false);
   const [currentRide, setCurrentRide] = useState<{
     bookingId: string | null;
     status: "ASSIGNED" | "ARRIVED" | "PICKEDUP";
@@ -46,27 +50,58 @@ export default function Home() {
     Boolean(point && Number.isFinite(point.x) && Number.isFinite(point.y));
 
   useEffect(() => {
-    if (!socket) return;
-    socket.on("connect", () => {
+    if (!socket || !isOnShift) return;
+    const onConnect = () => {
       console.info("[driver] WebSocket connected");
-    });
-    socket.on("booking:assigned", (data) => {
+    };
+    const onAssigned = (data: BookingAssignedPayload) => {
       console.info("[driver] Booking assigned:", {
         patientId: data.patient?.id,
         hospital: data.hospital?.id,
       });
       setCurrentRide(data);
       setRideStatus(data.status ?? "ASSIGNED");
-    });
-    socket.on("booking:cancelled", () => {
+    };
+    const onCancelled = () => {
       setCurrentRide(null);
       setRideStatus("CANCELLED");
-    });
+    };
+
+    socket.on("connect", onConnect);
+    socket.on("booking:assigned", onAssigned);
+    socket.on("booking:cancelled", onCancelled);
 
     return () => {
-      socket?.disconnect();
+      socket.off("connect", onConnect);
+      socket.off("booking:assigned", onAssigned);
+      socket.off("booking:cancelled", onCancelled);
     };
-  }, [socket]);
+  }, [isOnShift, socket]);
+
+  const handleToggleShift = async () => {
+    if (isOnShift && currentRide) {
+      Alert.alert("Active Booking", "Complete or cancel the active booking before clocking out.");
+      return;
+    }
+
+    const nextOnShift = !isOnShift;
+    setIsShiftUpdating(true);
+    try {
+      await postDriverShift({
+        driverId: env.EXPO_PUBLIC_DRIVER_ID,
+        onShift: nextOnShift,
+      });
+      setOnShift(nextOnShift);
+      if (!nextOnShift) {
+        setCurrentRide(null);
+        setRideStatus("COMPLETED");
+      }
+    } catch (error) {
+      Alert.alert("Shift Update Failed", error instanceof Error ? error.message : "Please try again.");
+    } finally {
+      setIsShiftUpdating(false);
+    }
+  };
 
   const handleArrived = async () => {
     if (!currentRide) return;
@@ -130,6 +165,28 @@ export default function Home() {
       <ScrollView contentContainerStyle={{}} showsVerticalScrollIndicator={false}>
         <View className="p-4">
           <Text className="text-2xl font-bold text-gray-800 mb-4">Current Activity</Text>
+          <View className="mb-4 rounded-2xl bg-white p-4 border border-gray-100 shadow-sm">
+            <Text className="text-xs font-bold text-gray-400 uppercase">Shift</Text>
+            <Text className="mt-1 text-lg font-semibold text-gray-900">
+              {isOnShift ? "On Shift" : "Off Shift"}
+            </Text>
+            <Text className="mt-1 text-xs text-gray-500">
+              {isOnShift
+                ? "Location sharing is active for dispatch."
+                : "Clock in to receive bookings and share location."}
+            </Text>
+            <TouchableOpacity
+              className={`mt-3 rounded-xl p-3 items-center ${
+                isOnShift ? "bg-red-500" : "bg-emerald-500"
+              } ${isShiftUpdating ? "opacity-60" : ""}`}
+              onPress={handleToggleShift}
+              disabled={isShiftUpdating}
+            >
+              <Text className="text-white font-bold">
+                {isShiftUpdating ? "Updating..." : isOnShift ? "Clock Out" : "Clock In"}
+              </Text>
+            </TouchableOpacity>
+          </View>
 
           <View className="rounded-2xl overflow-hidden shadow-sm bg-white border border-gray-100">
             <View style={{ height: 220, width: "100%" }}>
@@ -180,9 +237,9 @@ export default function Home() {
 
             <TouchableOpacity
               activeOpacity={0.8}
-              className={`p-4 items-center justify-center ${currentRide ? "bg-green-500" : "bg-gray-300"}`}
+              className={`p-4 items-center justify-center ${currentRide && isOnShift ? "bg-green-500" : "bg-gray-300"}`}
               onPress={handleOpenOnMap}
-              disabled={!currentRide}
+              disabled={!currentRide || !isOnShift}
             >
               <Text className="text-white font-bold text-lg">Open in Navigation</Text>
             </TouchableOpacity>
@@ -198,8 +255,8 @@ export default function Home() {
           <View className="mt-3">
             <TouchableOpacity
               onPress={() => handleCall(currentRide?.patient.phoneNumber ?? undefined)}
-              disabled={!currentRide}
-              className={`p-4 mt-3 rounded-xl items-center ${currentRide ? "bg-white" : "bg-gray-200"}`}
+              disabled={!currentRide || !isOnShift}
+              className={`p-4 mt-3 rounded-xl items-center ${currentRide && isOnShift ? "bg-white" : "bg-gray-200"}`}
             >
               <Text className="text-black font-bold">📞 Call Patient</Text>
             </TouchableOpacity>

@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import type { DispatcherBookingPayload } from "@/lib/socket-types";
 
-const routeCache = new globalThis.Map<string, { coordinates: [number, number][]; updatedAt: number }>();
+type RouteData = {
+  coordinates: [number, number][];
+  durationSeconds: number;
+};
+
+const routeCache = new globalThis.Map<
+  string,
+  { coordinates: [number, number][]; durationSeconds: number; updatedAt: number }
+>();
+const inflightRequests = new globalThis.Map<string, Promise<RouteData | null>>();
 const ROUTE_TTL = 1000 * 30;
 
 async function fetchRoute(start: [number, number], end: [number, number]) {
@@ -11,11 +20,18 @@ async function fetchRoute(start: [number, number], end: [number, number]) {
     throw new Error("Failed to fetch route");
   }
   const data = await response.json();
-  return data.routes?.[0]?.geometry?.coordinates as [number, number][];
+  const route = data.routes?.[0];
+  const coordinates = route?.geometry?.coordinates as [number, number][] | undefined;
+  const durationSeconds = route?.duration;
+  if (!coordinates || coordinates.length < 2 || !Number.isFinite(durationSeconds)) {
+    return null;
+  }
+  return { coordinates, durationSeconds };
 }
 
 export function useOngoingBookingRoutes(ongoingBookings: Record<string, DispatcherBookingPayload>) {
   const [routes, setRoutes] = useState<Record<string, [number, number][]>>({});
+  const [durations, setDurations] = useState<Record<string, number>>({});
   const ongoingList = useMemo(() => Object.values(ongoingBookings), [ongoingBookings]);
 
   useEffect(() => {
@@ -23,6 +39,7 @@ export function useOngoingBookingRoutes(ongoingBookings: Record<string, Dispatch
 
     const loadRoutes = async () => {
       const nextRoutes: Record<string, [number, number][]> = {};
+      const nextDurations: Record<string, number> = {};
 
       for (const booking of ongoingList) {
         const patientLocation = booking.pickupLocation ?? booking.patient.location;
@@ -48,14 +65,29 @@ export function useOngoingBookingRoutes(ongoingBookings: Record<string, Dispatch
         const cached = routeCache.get(routeKey);
         if (cached && Date.now() - cached.updatedAt < ROUTE_TTL) {
           nextRoutes[routeKey] = cached.coordinates;
+          nextDurations[routeKey] = cached.durationSeconds;
           continue;
         }
 
         try {
-          const coordinates = await fetchRoute(start, end);
-          if (coordinates && coordinates.length >= 2) {
-            routeCache.set(routeKey, { coordinates, updatedAt: Date.now() });
-            nextRoutes[routeKey] = coordinates;
+          const routePromise =
+            inflightRequests.get(routeKey) ??
+            fetchRoute(start, end).finally(() => {
+              inflightRequests.delete(routeKey);
+            });
+          if (!inflightRequests.has(routeKey)) {
+            inflightRequests.set(routeKey, routePromise);
+          }
+
+          const routeData = await routePromise;
+          if (routeData) {
+            routeCache.set(routeKey, {
+              coordinates: routeData.coordinates,
+              durationSeconds: routeData.durationSeconds,
+              updatedAt: Date.now(),
+            });
+            nextRoutes[routeKey] = routeData.coordinates;
+            nextDurations[routeKey] = routeData.durationSeconds;
           }
         } catch (routeError) {
           console.error("Route fetch failed", routeError);
@@ -64,6 +96,7 @@ export function useOngoingBookingRoutes(ongoingBookings: Record<string, Dispatch
 
       if (isMounted) {
         setRoutes((prev) => ({ ...prev, ...nextRoutes }));
+        setDurations((prev) => ({ ...prev, ...nextDurations }));
       }
     };
 
@@ -76,5 +109,5 @@ export function useOngoingBookingRoutes(ongoingBookings: Record<string, Dispatch
     };
   }, [ongoingList]);
 
-  return { routes, ongoingList };
+  return { routes, durations, ongoingList };
 }

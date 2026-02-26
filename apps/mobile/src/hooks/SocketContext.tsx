@@ -6,14 +6,22 @@ const SocketContext = createContext<Socket | null>(null);
 
 export const SocketProvider = ({
   type,
+  enabled = true,
   children,
 }: {
   type: "PATIENT" | "DRIVER" | "EMT";
+  enabled?: boolean;
   children: React.ReactNode;
 }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
+    if (!enabled) {
+      SocketClientCreator.disconnect(type);
+      setSocket(null);
+      return;
+    }
+
     let isMounted = true;
 
     const init = async () => {
@@ -30,7 +38,7 @@ export const SocketProvider = ({
       isMounted = false;
       // socket.disconnect(); kill when leaving the group
     };
-  }, [type]);
+  }, [enabled, type]);
 
   return <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>;
 };

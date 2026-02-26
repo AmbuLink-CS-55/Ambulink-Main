@@ -60,6 +60,11 @@ export type DriverCommand = {
   driverId: string;
 };
 
+export type DriverShiftCommand = {
+  driverId: string;
+  onShift: boolean;
+};
+
 export type PatientHelpCommand = {
   patientId: string;
   x: number;

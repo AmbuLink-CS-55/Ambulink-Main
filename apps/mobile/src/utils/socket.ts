@@ -10,7 +10,10 @@ export class SocketClientCreator {
 
   static async getSocket(type: "PATIENT" | "DRIVER" | "EMT"): Promise<Socket> {
     const existing = this.instances[type];
-    if (existing?.connected) {
+    if (existing) {
+      if (!existing.connected) {
+        existing.connect();
+      }
       return existing;
     }
 
@@ -85,5 +88,12 @@ export class SocketClientCreator {
 
     this.instances[type] = instance;
     return instance;
+  }
+
+  static disconnect(type: "PATIENT" | "DRIVER" | "EMT") {
+    const instance = this.instances[type];
+    if (instance) {
+      instance.disconnect();
+    }
   }
 }

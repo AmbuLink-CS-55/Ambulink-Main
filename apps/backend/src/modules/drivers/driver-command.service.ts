@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import type { DriverLocationPayload } from "@ambulink/types";
 import { BookingService } from "../booking/booking.service";
 import { DriverService } from "./driver.service";
@@ -13,6 +13,25 @@ export class DriverCommandService {
     private bookingService: BookingService,
     private socketService: SocketService
   ) {}
+
+  async setShift(driverId: string, onShift: boolean) {
+    if (!onShift) {
+      const activeBooking = await this.bookingService.getActiveBookingForDriver(driverId);
+      if (activeBooking) {
+        throw new BadRequestException("Cannot clock out while handling an active booking");
+      }
+      await this.driverService.clearDriverLocation(driverId);
+    }
+
+    await this.driverService.setStatus(driverId, onShift ? "AVAILABLE" : "OFFLINE");
+
+    return {
+      ok: true,
+      driverId,
+      onShift,
+      status: onShift ? "AVAILABLE" : "OFFLINE",
+    };
+  }
 
   async updateLocation(driverId: string, data: DriverLocationPayload) {
     const { x, y } = data;

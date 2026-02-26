@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Bell, Truck, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useBookingRequests } from "@/hooks/use-booking-requests";
 import { useBookingOverlayTimers } from "@/hooks/use-booking-overlay-timers";
+import { useOngoingBookingRoutes } from "@/hooks/use-ongoing-booking-routes";
 import {
   clearBookingDecision,
   removeBookingRequest,
@@ -43,7 +44,7 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
   const [now, setNow] = useState(() => Date.now());
   const [selectedBooking, setSelectedBooking] = useState<DispatcherBookingPayload | null>(null);
 
-  const ongoingList = useMemo(() => Object.values(ongoingBookings), [ongoingBookings]);
+  const { ongoingList, durations } = useOngoingBookingRoutes(ongoingBookings);
 
   useBookingOverlayTimers({
     bookingRequests,
@@ -108,6 +109,7 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
               <div className="flex flex-col gap-3">
                 <OngoingBookingsSection
                   ongoingList={ongoingList}
+                  etaDurations={durations}
                   onReassign={(booking) => setSelectedBooking(booking)}
                 />
                 <BookingRequestsSection
