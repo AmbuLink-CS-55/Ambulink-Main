@@ -3,10 +3,10 @@ import { BookingStatus, Point, User, Hospital } from "@ambulink/types";
 import { Alert } from "react-native";
 import { addBookingHistory } from "@/utils/bookingHistory";
 import { useCallback, useEffect } from "react";
-import { env } from "../../env";
-import EventSource, { type EventSourceEvent } from "react-native-sse";
+import type { Socket } from "socket.io-client";
 
 export const usePatientEvents = (
+  socket: Socket | null,
   setBooking: React.Dispatch<React.SetStateAction<any>>,
   setStatus: React.Dispatch<React.SetStateAction<BookingStatus>>,
   setIsCancelling: React.Dispatch<React.SetStateAction<boolean>>,
@@ -165,44 +165,26 @@ export const usePatientEvents = (
   }, [setIsBooking, setBooking, setCompletedAt]);
 
   useEffect(() => {
-    const streamUrl = new URL("/api/patient-stream", env.EXPO_PUBLIC_API_SERVER_URL);
-    streamUrl.searchParams.set("patientId", env.EXPO_PUBLIC_PATIENT_ID);
-    const eventSource = new EventSource(streamUrl.toString());
+    if (!socket) return;
 
-    const safeParse = (raw: string | null) => {
-      if (!raw) return null;
-      try {
-        return JSON.parse(raw);
-      } catch {
-        return null;
-      }
-    };
-
-    const addListener = (eventName: string, handler: (data: unknown) => void) => {
-      eventSource.addEventListener(eventName, (event: EventSourceEvent<string>) => {
-        const parsed = safeParse("data" in event ? event.data : null);
-        if (parsed !== null) {
-          handler(parsed);
-        }
-      });
-    };
-
-    addListener("booking:assigned", onBookingAssigned);
-    addListener("driver:update", onDriverUpdate);
-    addListener("booking:arrived", onBookingArrived);
-    addListener("booking:completed", onBookingCompleted);
-    addListener("booking:cancelled", onBookingCancelled);
-    addListener("booking:cancel:error", onBookingCancelError);
-    addListener("booking:failed", onBookingFailed);
-
-    eventSource.addEventListener("error", () => {
-      console.warn("[patient-sse] connection error");
-    });
+    socket.on("booking:assigned", onBookingAssigned);
+    socket.on("driver:update", onDriverUpdate);
+    socket.on("booking:arrived", onBookingArrived);
+    socket.on("booking:completed", onBookingCompleted);
+    socket.on("booking:cancelled", onBookingCancelled);
+    socket.on("booking:cancel:error", onBookingCancelError);
+    socket.on("booking:failed", onBookingFailed);
 
     return () => {
-      eventSource.close();
+      socket.off("booking:assigned", onBookingAssigned);
+      socket.off("driver:update", onDriverUpdate);
+      socket.off("booking:arrived", onBookingArrived);
+      socket.off("booking:completed", onBookingCompleted);
+      socket.off("booking:cancelled", onBookingCancelled);
+      socket.off("booking:cancel:error", onBookingCancelError);
+      socket.off("booking:failed", onBookingFailed);
     };
-  }, [
+  }, [socket,
     onBookingArrived,
     onBookingAssigned,
     onBookingCancelError,

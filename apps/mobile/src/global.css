@@ -1,4 +1,5 @@
 @import "tailwindcss";
 @import "uniwind";
+@import "./styles/design-system.css";
 @source './app';
 @source './components';

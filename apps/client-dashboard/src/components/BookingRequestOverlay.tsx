@@ -75,11 +75,12 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
           variant="default"
           size="icon"
           onClick={() => setIsOpen(!isOpen)}
-          className="relative shadow-lg"
+          aria-label={isOpen ? "Collapse booking activity panel" : "Open booking activity panel"}
+          className="relative shadow-[var(--amb-shadow-medium)]"
         >
           {isOpen ? <X className="h-4 w-4" /> : <Truck />}
           {bookingRequests.length > 0 && (
-            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center font-semibold">
+            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-[color:var(--amb-critical)] text-[color:var(--amb-surface)] text-xs flex items-center justify-center font-semibold">
               {bookingRequests.length}
             </span>
           )}
@@ -88,12 +89,12 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
 
       <div
         className={cn(
-          "fixed top-0 right-0 h-full w-96 bg-background border-l shadow-2xl z-40 transition-transform duration-300 ease-in-out",
+          "fixed top-2 bottom-2 right-2 h-auto w-96 rounded-2xl border border-[color:var(--amb-border)] bg-[color:var(--amb-surface)]/85 shadow-[var(--amb-shadow-high)] backdrop-blur-md z-40 transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
         <div className="flex flex-col h-full">
-          <div className="items-center w-full justify-between p-2 border-b">
+          <div className="items-center w-full justify-between p-3 border-b border-[color:var(--amb-border)]">
             <h1 className="font-bold text-xl items-center text-center ">Activity</h1>
           </div>
 

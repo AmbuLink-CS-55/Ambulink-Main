@@ -1,5 +1,3 @@
-import { sql } from "drizzle-orm";
-
 import * as schema from "@/common/database/schema";
 
 import { PROVIDER_SEED_IDS, USER_SEED_IDS } from "../seed-ids";
@@ -36,8 +34,7 @@ export async function seedUsers(db: SeedDb) {
       role: "DRIVER",
       providerId: PROVIDER_SEED_IDS.ambulinkPrivate,
       isActive: true,
-      status: "AVAILABLE",
-      currentLocation: sql`ST_SetSRID(ST_MakePoint(79.8612, 6.9271), 4326)`,
+      status: "OFFLINE",
     },
     {
       id: USER_SEED_IDS.driverTwo,
@@ -48,8 +45,7 @@ export async function seedUsers(db: SeedDb) {
       role: "DRIVER",
       providerId: PROVIDER_SEED_IDS.suwaSeriyaColomboCentral,
       isActive: true,
-      status: "AVAILABLE",
-      currentLocation: sql`ST_SetSRID(ST_MakePoint(79.8847, 6.8528), 4326)`,
+      status: "OFFLINE",
     },
     {
       id: USER_SEED_IDS.emtOne,

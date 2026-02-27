@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import type { BadgeVariant } from "@/components/ui/badge";
 import type { Ambulance } from "@/lib/types";
 
-function statusVariant(status: string) {
+function statusVariant(status: string): BadgeVariant {
   if (status === "AVAILABLE") return "success";
-  if (status === "BUSY") return "secondary";
-  return "outline";
+  if (status === "BUSY") return "warning";
+  return "default";
 }
 
 export function createAmbulanceColumns({ onEdit }: { onEdit: (ambulance: Ambulance) => void }) {

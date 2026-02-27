@@ -9,6 +9,7 @@ import { DispatcherService } from "./dispatcher.service";
 @WebSocketGateway({ cors: { origin: "*" }, namespace: "/dispatcher" })
 export class DispatcherGateway implements OnGatewayInit {
   @WebSocketServer() server: Server;
+  private readonly offlineTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
   constructor(
     private dispatcherServise: DispatcherService,
@@ -37,6 +38,7 @@ export class DispatcherGateway implements OnGatewayInit {
       return client.disconnect(true);
     }
     client.data.dispatcherId = dispatcherId;
+    this.clearPendingOffline(dispatcherId);
     this.dispatcherServise.setStatus(dispatcherId, "AVAILABLE");
     client.join(`dispatcher:${dispatcherId}`);
     this.bookingService
@@ -57,11 +59,40 @@ export class DispatcherGateway implements OnGatewayInit {
   }
 
   handleDisconnect(client: Socket) {
-    this.dispatcherServise.setStatus(client.data.dispatcherId, "OFFLINE");
+    const dispatcherId = client.data.dispatcherId as string | undefined;
+    if (dispatcherId) {
+      this.scheduleOfflineIfStillDisconnected(dispatcherId);
+    }
     console.log("[socket] disconnected", {
       namespace: "/dispatcher",
       clientId: client.id,
-      dispatcherId: client.data.dispatcherId,
+      dispatcherId,
     });
+  }
+
+  private clearPendingOffline(dispatcherId: string) {
+    const timer = this.offlineTimers.get(dispatcherId);
+    if (timer) {
+      clearTimeout(timer);
+      this.offlineTimers.delete(dispatcherId);
+    }
+  }
+
+  private scheduleOfflineIfStillDisconnected(dispatcherId: string) {
+    this.clearPendingOffline(dispatcherId);
+
+    // Grace period avoids flapping status during short network drops.
+    const timer = setTimeout(async () => {
+      try {
+        const activeSockets = await this.server.in(`dispatcher:${dispatcherId}`).fetchSockets();
+        if (activeSockets.length === 0) {
+          this.dispatcherServise.setStatus(dispatcherId, "OFFLINE");
+        }
+      } finally {
+        this.offlineTimers.delete(dispatcherId);
+      }
+    }, 10000);
+
+    this.offlineTimers.set(dispatcherId, timer);
   }
 }

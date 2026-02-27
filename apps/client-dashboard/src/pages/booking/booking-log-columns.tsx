@@ -1,13 +1,14 @@
 import { Badge } from "@/components/ui/badge";
+import type { BadgeVariant } from "@/components/ui/badge";
 import type { BookingLogEntry } from "@/services/booking.service";
 
 type Status = "REQUESTED" | "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED";
 
-function statusVariant(status: Status) {
+function statusVariant(status: Status): BadgeVariant {
   if (status === "COMPLETED") return "success";
-  if (status === "CANCELLED") return "destructive";
-  if (status === "REQUESTED") return "outline";
-  return "secondary";
+  if (status === "CANCELLED") return "critical";
+  if (status === "REQUESTED") return "default";
+  return "info";
 }
 
 export const bookingLogColumns = [

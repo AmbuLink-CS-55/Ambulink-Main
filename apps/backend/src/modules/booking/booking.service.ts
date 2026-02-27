@@ -293,6 +293,12 @@ export class BookingService {
   }
 
   async askDispatchers(nearByDrivers: User[], patient: User) {
+    console.info("[booking] ask_dispatchers_start", {
+      patientId: patient.id,
+      nearbyDriverCount: nearByDrivers.length,
+      nearbyDriverIds: nearByDrivers.map((driver) => driver.id),
+    });
+
     const requests = await Promise.all(
       nearByDrivers.map(async (driver) => {
         const dispatcherId = await this.dispatcherService.findLiveDispatchersByProvider(
@@ -312,7 +318,11 @@ export class BookingService {
     );
 
     if (activeRequests.length === 0) {
-      console.error("No available dispatchers for nearby drivers");
+      console.warn("[booking] ask_dispatchers_failed", {
+        patientId: patient.id,
+        reason: "no_dispatchers",
+        nearbyDriverCount: nearByDrivers.length,
+      });
       return { status: "failed" as const, reason: "no_dispatchers" as const };
     }
 
@@ -333,13 +343,23 @@ export class BookingService {
 
     try {
       const winningResponse = await Promise.any(approvalPromises);
+      console.info("[booking] dispatcher_approval_won", {
+        patientId: patient.id,
+        dispatcherId: winningResponse.dispatcherId,
+        driverId: winningResponse.pickedDriver.id,
+        requestId: winningResponse.requestId,
+      });
       await this.dispatcherApprovalService.notifyDecision(
         activeRequests.map(({ dispatcherId, requestId }) => ({ dispatcherId, requestId })),
         winningResponse.dispatcherId
       );
       return { ...winningResponse, status: "approved" as const };
     } catch (_error) {
-      console.error("All dispatchers rejected the request");
+      console.warn("[booking] ask_dispatchers_failed", {
+        patientId: patient.id,
+        reason: "all_rejected",
+        activeRequestCount: activeRequests.length,
+      });
       return { status: "failed" as const, reason: "all_rejected" as const };
     }
   }

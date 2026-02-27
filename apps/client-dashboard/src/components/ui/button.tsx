@@ -3,36 +3,44 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
+const focusRingClass =
+  "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--amb-background)] focus-visible:ring-[color:var(--amb-brand-primary)]";
+
 const buttonVariants = cva(
-  "focus-visible:border-ring focus-visible:ring-ring/30 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 rounded-md border border-transparent bg-clip-padding text-xs/relaxed font-medium focus-visible:ring-[2px] aria-invalid:ring-[2px] [&_svg:not([class*='size-'])]:size-4 inline-flex items-center justify-center whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none shrink-0 [&_svg]:shrink-0 outline-none group/button select-none",
+  cn(
+    "group/button inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg border transition-all disabled:pointer-events-none disabled:opacity-60",
+    focusRingClass
+  ),
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/80",
-        outline:
-          "border-border dark:bg-input/30 hover:bg-input/50 hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
+        default:
+          "bg-[color:var(--amb-brand-primary)] text-[color:var(--amb-surface)] hover:brightness-110 focus-visible:ring-offset-[color:var(--amb-background)]",
+        primary:
+          "bg-[color:var(--amb-brand-primary)] text-[color:var(--amb-surface)] hover:brightness-110 focus-visible:ring-offset-[color:var(--amb-background)]",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
-        ghost:
-          "hover:bg-muted hover:text-foreground dark:hover:bg-muted/50 aria-expanded:bg-muted aria-expanded:text-foreground",
+          "border border-[color:var(--amb-border)] bg-[color:var(--amb-surface-elevated)] text-[color:var(--amb-foreground)] hover:border-[color:var(--amb-brand-accent)]",
         destructive:
-          "bg-destructive/10 hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/20 text-destructive focus-visible:border-destructive/40 dark:hover:bg-destructive/30",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-[color:var(--amb-critical)] text-[color:var(--amb-surface)] hover:brightness-105",
+        ghost:
+          "bg-transparent text-[color:var(--amb-foreground)] hover:bg-[color:var(--amb-surface-elevated)]",
+        outline:
+          "border border-[color:var(--amb-border)] bg-transparent text-[color:var(--amb-foreground)] hover:border-[color:var(--amb-brand-accent)] focus-visible:ring-offset-[color:var(--amb-background)]",
+        link: "bg-transparent px-0 text-[color:var(--amb-brand-primary)] underline-offset-4 hover:underline",
       },
       size: {
-        default:
-          "h-7 gap-1 px-2 text-xs/relaxed has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
-        xs: "h-5 gap-1 rounded-sm px-2 text-[0.625rem] has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-2.5",
-        sm: "h-6 gap-1 px-2 text-xs/relaxed has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
-        lg: "h-8 gap-1 px-2.5 text-xs/relaxed has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-4",
-        icon: "size-7 [&_svg:not([class*='size-'])]:size-3.5",
-        "icon-xs": "size-5 rounded-sm [&_svg:not([class*='size-'])]:size-2.5",
-        "icon-sm": "size-6 [&_svg:not([class*='size-'])]:size-3",
-        "icon-lg": "size-8 [&_svg:not([class*='size-'])]:size-4",
+        default: "h-10 px-5 text-sm font-semibold",
+        xs: "h-8 px-4 text-xs font-semibold",
+        sm: "h-9 px-4 text-sm font-semibold",
+        lg: "h-12 px-6 text-base font-semibold",
+        icon: "h-10 w-10 rounded-full p-0",
+        "icon-xs": "h-8 w-8 rounded-full p-0.5",
+        "icon-sm": "h-9 w-9 rounded-full p-1.5",
+        "icon-lg": "h-12 w-12 rounded-full p-2",
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: "primary",
       size: "default",
     },
   }
@@ -40,10 +48,12 @@ const buttonVariants = cva(
 
 function Button({
   className,
-  variant = "default",
+  variant = "primary",
   size = "default",
   ...props
 }: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+  // The underlying primitive already sets role="button" and keyboard handling; we provide
+  // custom focus-visible styling for WCAG while keeping the ring offset against the background.
   return (
     <ButtonPrimitive
       data-slot="button"

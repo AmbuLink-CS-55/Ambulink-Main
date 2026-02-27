@@ -10,9 +10,11 @@ import { loadSettings } from "@/utils/settingsStorage";
 import type { BookingStatus, User, Hospital, PatientSettingsData } from "@ambulink/types";
 import { sendPatientCancel, sendPatientHelp } from "@/lib/patientEvents";
 import { env } from "../../../env";
+import { useSocket } from "@/hooks/SocketContext";
 const PATIENT_BOOKING_TIMEOUT_MS = 40000;
 
 export default function Map() {
+  const socket = useSocket();
   const locationState = useLocation();
   const { hospitals: nearbyHospitals } = useNearbyHospitals({
     x: locationState.location?.x,
@@ -41,7 +43,7 @@ export default function Map() {
 
   const bookingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  usePatientEvents(setBooking, setStatus, setIsCancelling, setIsBooking, setCompletedAt);
+  usePatientEvents(socket, setBooking, setStatus, setIsCancelling, setIsBooking, setCompletedAt);
 
   useEffect(() => {
     return () => {

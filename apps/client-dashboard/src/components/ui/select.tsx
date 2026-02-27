@@ -13,8 +13,10 @@ type SelectProps = React.ComponentProps<"select"> & {
 export function Select({ className, options, placeholder, ...props }: SelectProps) {
   return (
     <select
+      // Native select retains full keyboard navigation; explicit focus ring keeps it visible for keyboard users.
       className={cn(
-        "flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+        "flex h-10 w-full rounded-[var(--amb-radius)] border border-[color:var(--amb-border)] bg-[color:var(--amb-surface)] px-3 text-sm text-[color:var(--amb-foreground)] transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--amb-brand-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--amb-background)]",
         className
       )}
       {...props}

@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import type { BadgeVariant } from "@/components/ui/badge";
 import type { User, UserStatus } from "@/lib/types";
 
-function onlineBadge(status: UserStatus | null | undefined) {
-  if (status === "AVAILABLE") return { label: "Online", variant: "success" as const };
-  if (status === "BUSY") return { label: "Busy", variant: "secondary" as const };
-  return { label: "Offline", variant: "outline" as const };
+function onlineBadge(status: UserStatus | null | undefined): { label: string; variant: BadgeVariant } {
+  if (status === "AVAILABLE") return { label: "Online", variant: "success" };
+  if (status === "BUSY") return { label: "Busy", variant: "warning" };
+  return { label: "Offline", variant: "default" };
 }
 
 export function createDriverColumns({

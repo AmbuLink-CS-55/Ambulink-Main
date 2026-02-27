@@ -12,6 +12,7 @@ import { SocketService } from "@/common/socket/socket.service";
 @WebSocketGateway({ cors: { origin: "*" }, namespace: "/patient" })
 export class PatientGateway implements OnGatewayInit {
   @WebSocketServer() server: Server;
+  private readonly offlineTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
   constructor(
     private patientService: PatientService,
@@ -40,6 +41,7 @@ export class PatientGateway implements OnGatewayInit {
       return client.disconnect(true);
     }
     client.data.patientId = patientId;
+    this.clearPendingOffline(patientId);
     client.join(`patient:${patientId}`);
     this.patientService.updateStatus(patientId, "AVAILABLE");
 
@@ -65,10 +67,40 @@ export class PatientGateway implements OnGatewayInit {
   }
 
   handleDisconnect(client: Socket) {
+    const patientId = client.data.patientId as string | undefined;
+    if (patientId) {
+      this.scheduleOfflineIfStillDisconnected(patientId);
+    }
     console.log("[socket] disconnected", {
       namespace: "/patient",
       clientId: client.id,
-      patientId: client.data.patientId,
+      patientId,
     });
+  }
+
+  private clearPendingOffline(patientId: string) {
+    const timer = this.offlineTimers.get(patientId);
+    if (timer) {
+      clearTimeout(timer);
+      this.offlineTimers.delete(patientId);
+    }
+  }
+
+  private scheduleOfflineIfStillDisconnected(patientId: string) {
+    this.clearPendingOffline(patientId);
+
+    // Keep availability stable through transient reconnects.
+    const timer = setTimeout(async () => {
+      try {
+        const activeSockets = await this.server.in(`patient:${patientId}`).fetchSockets();
+        if (activeSockets.length === 0) {
+          this.patientService.updateStatus(patientId, "OFFLINE");
+        }
+      } finally {
+        this.offlineTimers.delete(patientId);
+      }
+    }, 10000);
+
+    this.offlineTimers.set(patientId, timer);
   }
 }

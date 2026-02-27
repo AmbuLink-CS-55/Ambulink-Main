@@ -1,4 +1,5 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Phone, Truck, User2 } from "lucide-react";
 import type { DispatcherBookingPayload } from "@/lib/socket-types";
@@ -28,9 +29,14 @@ export function OngoingBookingsSection({
         const phase = booking.status === "ASSIGNED" ? "patient" : "hospital";
         const routeKey = `${booking.bookingId}:${phase}`;
         const eta = formatEta(etaDurations[routeKey]);
+        const statusVariant = booking.status === "ARRIVED" ? "warning" : "info";
 
         return (
-          <Alert key={booking.bookingId} variant="default" className="border-emerald-200">
+          <Alert
+            key={booking.bookingId}
+            variant="default"
+            className="border-[color:var(--amb-border)] bg-[color:var(--amb-surface)]"
+          >
             <Truck className="h-4 w-4" />
             <AlertTitle>Active Booking</AlertTitle>
             <AlertDescription className="space-y-2">
@@ -70,14 +76,19 @@ export function OngoingBookingsSection({
 
                 <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                   <span>Status</span>
-                  <span className="font-mono">{booking.status}</span>
+                  <Badge variant={statusVariant}>{booking.status}</Badge>
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                   <span>ETA</span>
                   <span className="font-semibold text-foreground">{eta ?? "Calculating..."}</span>
                 </div>
                 <div className="pt-1">
-                  <Button size="sm" variant="outline" onClick={() => onReassign(booking)} className="w-full">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onReassign(booking)}
+                    className="w-full"
+                  >
                     Reassign Booking
                   </Button>
                 </div>

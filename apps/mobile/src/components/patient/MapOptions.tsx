@@ -40,7 +40,10 @@ export default function MapOptions({
 
   if (shouldShowCompleted) {
     return (
-      <View className="bg-white p-4 w-full rounded-2xl shadow-lg items-center">
+      <View
+        accessibilityRole="summary"
+        className="bg-white p-4 w-full rounded-2xl shadow-lg items-center border border-slate-100"
+      >
         <Ionicons name="checkmark-circle" size={48} color="#22c55e" />
         <Text className="text-green-600 font-bold text-xl mt-2">Trip Completed</Text>
         <Text className="text-gray-500 mt-1">
@@ -54,7 +57,10 @@ export default function MapOptions({
 
   if (status === "ARRIVED" && booking) {
     return (
-      <View className="bg-white p-4 w-full rounded-2xl shadow-lg">
+      <View
+        accessibilityRole="summary"
+        className="bg-white p-4 w-full rounded-2xl shadow-lg border border-slate-100"
+      >
         <View className="items-center mb-3">
           <Ionicons name="car" size={32} color="#f59e0b" />
           <Text className="text-amber-600 font-bold text-lg mt-1">Ambulance Arrived!</Text>
@@ -74,8 +80,9 @@ export default function MapOptions({
   if (status === "ASSIGNED" && booking) {
     const driverPhone = booking.pickedDriver.phoneNumber;
     const providerPhone = booking.provider?.hotlineNumber;
+    const providerName = booking.provider?.name ?? "Provider";
     return (
-      <View className="bg-white p-4 w-full rounded-2xl shadow-lg">
+      <View className="bg-white p-5 w-full rounded-2xl shadow-lg border border-slate-100">
         <View className="flex-row items-center mb-3">
           <View className="bg-green-100 p-2 rounded-full mr-3">
             <Ionicons name="car" size={24} color="#22c55e" />
@@ -88,7 +95,7 @@ export default function MapOptions({
 
         <View className="border-t border-gray-100 pt-3">
           <Text className="text-gray-500 text-sm">Provider</Text>
-          <Text className="font-semibold">{booking.pickedDriver.providerId ?? ""}</Text>
+          <Text className="font-semibold">{providerName}</Text>
         </View>
 
         <View className="mt-2">
@@ -96,9 +103,13 @@ export default function MapOptions({
           <Text className="font-semibold">{booking.hospital.name}</Text>
         </View>
 
-        <View className="flex-row gap-2 mt-4">
+        {/* High-stakes actions expose role/label/hint so screen readers can disambiguate who will be called. */}
+        <View className="flex-row gap-3 mt-4">
           <TouchableOpacity
-            className={`flex-1 items-center justify-center p-3 rounded-xl ${driverPhone ? "bg-emerald-500" : "bg-emerald-200"}`}
+            accessibilityRole="button"
+            accessibilityLabel="Call assigned driver"
+            accessibilityHint="Calls the assigned driver for this booking."
+            className={`flex-1 min-h-12 items-center justify-center p-3 rounded-xl ${driverPhone ? "bg-emerald-500" : "bg-emerald-200"}`}
             activeOpacity={0.8}
             onPress={() => handleCall(driverPhone)}
             disabled={!driverPhone}
@@ -106,7 +117,10 @@ export default function MapOptions({
             <Text className="text-white font-bold">Call Driver</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            className={`flex-1 items-center justify-center p-3 rounded-xl ${providerPhone ? "bg-blue-500" : "bg-blue-200"}`}
+            accessibilityRole="button"
+            accessibilityLabel="Call provider hotline"
+            accessibilityHint="Calls the ambulance provider emergency hotline."
+            className={`flex-1 min-h-12 items-center justify-center p-3 rounded-xl ${providerPhone ? "bg-blue-500" : "bg-blue-200"}`}
             activeOpacity={0.8}
             onPress={() => handleCall(providerPhone)}
             disabled={!providerPhone}
@@ -116,7 +130,11 @@ export default function MapOptions({
         </View>
 
         <TouchableOpacity
-          className={`justify-center items-center p-3 mt-4 rounded-xl ${isCancelling ? "bg-red-300" : "bg-red-500"}`}
+          // Destructive action is explicitly labeled and iconized so users do not rely on red color alone.
+          accessibilityRole="button"
+          accessibilityLabel="Cancel booking"
+          accessibilityHint="Cancels the currently assigned booking."
+          className={`justify-center items-center min-h-12 p-3 mt-5 rounded-xl border ${isCancelling ? "bg-red-300 border-red-300" : "bg-red-500 border-red-600"}`}
           activeOpacity={0.8}
           onPress={cancelRequest}
           disabled={isCancelling}
@@ -127,7 +145,10 @@ export default function MapOptions({
               <Text className="text-white font-bold uppercase ml-2">Cancelling...</Text>
             </View>
           ) : (
-            <Text className="text-white font-bold uppercase">Cancel</Text>
+            <View className="flex-row items-center">
+              <Ionicons name="warning-outline" size={16} color="white" />
+              <Text className="text-white font-bold uppercase ml-2">Cancel Booking</Text>
+            </View>
           )}
         </TouchableOpacity>
       </View>
@@ -137,7 +158,11 @@ export default function MapOptions({
   // idle state
   return (
     <TouchableOpacity
-      className={`justify-center items-center p-4 w-full rounded-2xl shadow-lg ${isBooking ? "bg-gray-100" : "bg-white"}`}
+      // Primary emergency CTA uses explicit accessibility metadata for assistive tech.
+      accessibilityRole="button"
+      accessibilityLabel="Request ambulance"
+      accessibilityHint="Sends a new emergency pickup request."
+      className={`justify-center items-center min-h-12 p-4 w-full rounded-2xl shadow-lg border border-slate-100 ${isBooking ? "bg-gray-100" : "bg-white"}`}
       activeOpacity={0.9}
       onPress={onHelpRequest}
       disabled={isBooking}

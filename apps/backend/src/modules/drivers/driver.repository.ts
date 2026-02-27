@@ -136,7 +136,9 @@ export class DriverRepository {
           eq(users.role, "DRIVER"),
           eq(users.isActive, true),
           eq(users.status, "AVAILABLE"),
-          isNotNull(users.currentLocation)
+          isNotNull(users.currentLocation),
+          isNotNull(users.lastLocationUpdate),
+          sql`${users.lastLocationUpdate} > NOW() - INTERVAL '60 seconds'`
         )
       )
       .orderBy(asc(distanceExpr))
@@ -164,7 +166,9 @@ export class DriverRepository {
           eq(users.role, "DRIVER"),
           eq(users.isActive, true),
           eq(users.status, "AVAILABLE"),
-          isNotNull(users.currentLocation)
+          isNotNull(users.currentLocation),
+          isNotNull(users.lastLocationUpdate),
+          sql`${users.lastLocationUpdate} > NOW() - INTERVAL '60 seconds'`
         )
       )
       .orderBy(asc(distanceExpr))

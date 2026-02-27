@@ -4,13 +4,13 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const alertVariants = cva(
-  "grid gap-0.5 rounded-lg border px-2 py-1.5 text-left text-xs/relaxed has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-1.5 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg]:text-current *:[svg:not([class*='size-'])]:size-3.5 w-full relative group/alert",
+  "grid w-full gap-0.5 rounded-[var(--amb-radius)] border px-3 py-2 text-left text-xs/relaxed has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-1.5 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg]:text-current *:[svg:not([class*='size-'])]:size-3.5 relative group/alert",
   {
     variants: {
       variant: {
-        default: "bg-card text-card-foreground",
+        default: "border-[color:var(--amb-border)] bg-[color:var(--amb-surface)] text-[color:var(--amb-foreground)]",
         destructive:
-          "text-destructive bg-card *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current",
+          "border-[color:var(--amb-critical)]/40 bg-[color:var(--amb-critical)]/10 text-[color:var(--amb-foreground)] *:data-[slot=alert-description]:text-[color:var(--amb-foreground)] *:[svg]:text-[color:var(--amb-critical)]",
       },
     },
     defaultVariants: {

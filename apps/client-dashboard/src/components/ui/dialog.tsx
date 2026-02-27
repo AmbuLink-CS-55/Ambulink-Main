@@ -28,7 +28,7 @@ function DialogOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) 
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 bg-black/80 duration-100 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs fixed inset-0 z-50",
+        "data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 bg-[color:var(--amb-background)]/80 duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs fixed inset-0 z-[var(--amb-overlay)]",
         className
       )}
       {...props}
@@ -42,13 +42,14 @@ function DialogContent({
   showCloseButton = true,
   ...props
 }: DialogPrimitive.Popup.Props & { showCloseButton?: boolean }) {
+  // DialogPrimitive already sets role="dialog" and traps focus; overlay/backdrop follow WCAG 2.1 guidance.
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "bg-background data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 fixed left-1/2 top-1/2 z-50 w-[95vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-lg border shadow-lg duration-200",
+          "bg-[color:var(--amb-surface)] data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 fixed left-1/2 top-1/2 z-[var(--amb-dialog)] w-[95vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-[var(--amb-radius)] border border-[color:var(--amb-border)] shadow-[var(--amb-shadow-medium)] duration-200",
           className
         )}
         {...props}

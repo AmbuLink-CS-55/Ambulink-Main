@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,28 +28,19 @@ export function ReassignBookingDialog({
   open: boolean;
   onClose: () => void;
 }) {
-  const [reassignDriverId, setReassignDriverId] = useState("");
-  const [reassignHospitalId, setReassignHospitalId] = useState("");
-  const [reassignPickupX, setReassignPickupX] = useState("");
-  const [reassignPickupY, setReassignPickupY] = useState("");
+  const bookingLocation = booking ? booking.pickupLocation ?? booking.patient.location : null;
+  const dialogKey = `${booking?.bookingId ?? "empty"}-${open ? "open" : "closed"}`;
+
+  const [reassignDriverId, setReassignDriverId] = useState(() => booking?.driver.id ?? "");
+  const [reassignHospitalId, setReassignHospitalId] = useState(() => booking?.hospital.id ?? "");
+  const [reassignPickupX, setReassignPickupX] = useState(() => bookingLocation?.x?.toString() ?? "");
+  const [reassignPickupY, setReassignPickupY] = useState(() => bookingLocation?.y?.toString() ?? "");
   const [reassignPickupAddress, setReassignPickupAddress] = useState("");
   const [reassignError, setReassignError] = useState<string | null>(null);
 
   const drivers = useGetDrivers({ providerId: env.VITE_PROVIDER_ID, isActive: true });
   const hospitals = useGetHospitals();
   const reassignBooking = useReassignBooking();
-
-  useEffect(() => {
-    if (!booking || !open) return;
-
-    setReassignDriverId(booking.driver.id);
-    setReassignHospitalId(booking.hospital.id);
-    const sourceLocation = booking.pickupLocation ?? booking.patient.location;
-    setReassignPickupX(sourceLocation?.x?.toString() ?? "");
-    setReassignPickupY(sourceLocation?.y?.toString() ?? "");
-    setReassignPickupAddress("");
-    setReassignError(null);
-  }, [booking, open]);
 
   const driverOptions = useMemo(
     () =>
@@ -135,6 +126,7 @@ export function ReassignBookingDialog({
 
   return (
     <Dialog
+      key={dialogKey}
       open={open}
       onOpenChange={(nextOpen) => {
         if (!nextOpen) onClose();

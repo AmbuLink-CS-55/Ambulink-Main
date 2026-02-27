@@ -51,7 +51,12 @@ export class DriverGateway implements OnGatewayInit {
     const activeBooking = await this.bookingService.getActiveBookingForDriver(driverId);
 
     if (activeBooking) {
-      if (activeBooking.status === "ASSIGNED" || activeBooking.status === "ARRIVED") {
+      await this.driverService.setStatus(driverId, "BUSY");
+      if (
+        activeBooking.status === "ASSIGNED" ||
+        activeBooking.status === "ARRIVED" ||
+        activeBooking.status === "PICKEDUP"
+      ) {
         const bookingPayload = await this.bookingService.buildAssignedBookingPayload(
           activeBooking.id
         );
@@ -59,6 +64,9 @@ export class DriverGateway implements OnGatewayInit {
           client.emit("booking:assigned", bookingPayload);
         }
       }
+    } else {
+      // Normalize online driver availability when connected and not handling an active booking.
+      await this.driverService.setStatus(driverId, "AVAILABLE");
     }
 
     console.log("[socket] connected", {
@@ -69,7 +77,7 @@ export class DriverGateway implements OnGatewayInit {
   }
 
   handleDisconnect(client: Socket) {
-    this.driverService.setStatus(client.data.driverId, "OFFLINE");
+    // Network disconnects are transient; shift status should be controlled by explicit clock in/out events.
     console.log("[socket] disconnected", {
       namespace: "/driver",
       clientId: client.id,

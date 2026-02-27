@@ -50,9 +50,10 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.ComponentProps<"tr"
 TableRow.displayName = "TableRow";
 
 const TableHead = React.forwardRef<HTMLTableCellElement, React.ComponentProps<"th">>(
-  ({ className, ...props }, ref) => (
+  ({ className, scope, ...props }, ref) => (
     <th
       ref={ref}
+      scope={scope ?? "col"}
       className={cn(
         "h-11 px-4 text-left align-middle font-medium text-muted-foreground",
         className
