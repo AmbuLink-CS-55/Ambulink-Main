@@ -10,6 +10,7 @@ import { IS_PUBLIC_KEY } from "./public.decorator";
 import { ROLES_KEY } from "./roles.decorator";
 import { TokenService } from "./token.service";
 import type { UserRole } from "@/core/database/schema";
+import { buildDevHttpUser, isAuthBypassed } from "./auth-bypass";
 
 @Injectable()
 export class HttpAuthGuard implements CanActivate {
@@ -28,6 +29,16 @@ export class HttpAuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
+    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(ROLES_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (isAuthBypassed()) {
+      request.user = buildDevHttpUser(requiredRoles);
+      return true;
+    }
+
     const authorization = request.headers.authorization as string | undefined;
     if (!authorization) {
       throw new UnauthorizedException("Missing authorization header");
@@ -39,11 +50,6 @@ export class HttpAuthGuard implements CanActivate {
     }
 
     const user = this.tokenService.verify(token);
-    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-
     if (requiredRoles?.length && !requiredRoles.includes(user.role)) {
       throw new ForbiddenException("Insufficient role");
     }

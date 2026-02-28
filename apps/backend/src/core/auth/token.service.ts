@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { createHmac, timingSafeEqual } from "node:crypto";
-import env from "@/env";
+import env from "../../../env";
 import type { AuthUser } from "./auth.types";
 
 @Injectable()

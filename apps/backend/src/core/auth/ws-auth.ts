@@ -3,12 +3,17 @@ import type { Socket } from "socket.io";
 import type { UserRole } from "@/core/database/schema";
 import { TokenService } from "./token.service";
 import type { AuthUser } from "./auth.types";
+import { buildDevSocketUser, isAuthBypassed } from "./auth-bypass";
 
 export function authenticateSocket(
   client: Socket,
   tokenService: TokenService,
   roles: UserRole[]
 ): AuthUser {
+  if (isAuthBypassed()) {
+    return buildDevSocketUser(client, roles);
+  }
+
   const authToken = client.handshake.auth.token as string | undefined;
   const authHeader =
     (client.handshake.headers.authorization as string | undefined) ??

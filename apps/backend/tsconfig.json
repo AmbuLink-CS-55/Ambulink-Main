@@ -15,8 +15,7 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
-      "@/*": ["./src/*"],
-      "@/env": ["./env.ts"]
+      "@/*": ["./src/*"]
     },
     "incremental": true,
     "skipLibCheck": true,

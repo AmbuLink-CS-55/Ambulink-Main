@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Text, Alert, View, ActivityIndicator } from "react-native";
-import UserMap from "./components/UserMap";
-import MapOptions from "./components/MapOptions";
+import UserMap from "./_components/UserMap";
+import MapOptions from "./_components/MapOptions";
 import { useLocation } from "@/common/hooks/useLocation";
-import { usePatientEvents } from "./hooks/usePatientEvents";
-import { useNearbyHospitals } from "./hooks/useNearbyHospitals";
-import { useNearbyDrivers } from "./hooks/useNearbyDrivers";
+import { usePatientEvents } from "@/features/patient/hooks/usePatientEvents";
+import { useNearbyHospitals } from "@/features/patient/hooks/useNearbyHospitals";
+import { useNearbyDrivers } from "@/features/patient/hooks/useNearbyDrivers";
 import { loadSettings } from "@/common/utils/settingsStorage";
 import type { BookingStatus, User, Hospital, PatientSettingsData } from "@ambulink/types";
 import { sendPatientCancel, sendPatientHelp } from "@/common/lib/patientEvents";

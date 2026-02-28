@@ -1,4 +1,4 @@
-import UserMap from "../(patient)/components/UserMap";
+import UserMap from "../(patient)/_components/UserMap";
 import { useSocket } from "@/common/hooks/SocketContext";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect } from "react";

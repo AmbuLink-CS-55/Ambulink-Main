@@ -15,12 +15,14 @@ const envSchema = z.object({
   // Security
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters").optional(),
   JWT_EXPIRATION: z.string().default("24h"),
+  AUTH_DISABLED: z.coerce.boolean().default(false),
 
   // Redis (optional)
   REDIS_URL: z.string().url().optional(),
 
   // Frontend CORS
   FRONTEND_URL: z.string().url().optional(),
+  FRONTEND_URLS: z.string().optional(),
 
   // Logging
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),

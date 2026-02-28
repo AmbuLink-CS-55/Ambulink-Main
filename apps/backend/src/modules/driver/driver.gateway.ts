@@ -13,9 +13,16 @@ import { driverLocationPayloadSchema } from "@/common/validation/socket.schemas"
 import { DriverCommandService } from "./driver-command.service";
 import { TokenService } from "@/core/auth/token.service";
 import { authenticateSocket } from "@/core/auth/ws-auth";
-import env from "@/env";
+import env from "../../../env";
 
-@WebSocketGateway({ cors: { origin: env.FRONTEND_URL ?? false }, namespace: "/driver" })
+const gatewayCorsOrigins = [env.FRONTEND_URL, ...(env.FRONTEND_URLS?.split(",").map((origin) => origin.trim()) ?? [])].filter((origin): origin is string => Boolean(origin));
+
+@WebSocketGateway({
+  cors: {
+    origin: gatewayCorsOrigins.length > 0 ? gatewayCorsOrigins : env.APP_STAGE === "dev" ? true : false,
+  },
+  namespace: "/driver",
+})
 export class DriverGateway implements OnGatewayInit {
   @WebSocketServer()
   server: Server;

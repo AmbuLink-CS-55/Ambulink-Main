@@ -6,7 +6,7 @@ import { useSocket } from "@/common/hooks/SocketContext";
 import type { BookingAssignedPayload, BookingStatus } from "@ambulink/types";
 import { env } from "../../../env";
 import { postDriverArrived, postDriverCompleted, postDriverShift } from "@/common/lib/driverEvents";
-import { useDriverShift } from "./hooks/useDriverShift";
+import { useDriverShift } from "@/features/driver/hooks/useDriverShift";
 
 const SRI_LANKA_REGION = {
   latitude: 7.8731,

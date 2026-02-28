@@ -7,9 +7,16 @@ import { BookingService } from "../booking/booking.service";
 import { DispatcherService } from "./dispatcher.service";
 import { TokenService } from "@/core/auth/token.service";
 import { authenticateSocket } from "@/core/auth/ws-auth";
-import env from "@/env";
+import env from "../../../env";
 
-@WebSocketGateway({ cors: { origin: env.FRONTEND_URL ?? false }, namespace: "/dispatcher" })
+const gatewayCorsOrigins = [env.FRONTEND_URL, ...(env.FRONTEND_URLS?.split(",").map((origin) => origin.trim()) ?? [])].filter((origin): origin is string => Boolean(origin));
+
+@WebSocketGateway({
+  cors: {
+    origin: gatewayCorsOrigins.length > 0 ? gatewayCorsOrigins : env.APP_STAGE === "dev" ? true : false,
+  },
+  namespace: "/dispatcher",
+})
 export class DispatcherGateway implements OnGatewayInit {
   @WebSocketServer() server: Server;
   private readonly offlineTimers = new Map<string, ReturnType<typeof setTimeout>>();
