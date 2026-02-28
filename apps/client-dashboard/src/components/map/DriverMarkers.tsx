@@ -17,7 +17,10 @@ export function DriverMarkers({ ongoingBookings }: DriverMarkersProps) {
     staleTime: Infinity,
     enabled: false,
   });
-  const driverLocations = driverLocationsQuery.data ?? {};
+  const driverLocations = useMemo(
+    () => driverLocationsQuery.data ?? {},
+    [driverLocationsQuery.data]
+  );
   const ongoingList = useMemo(() => Object.values(ongoingBookings), [ongoingBookings]);
 
   const activeDriverIds = useMemo(
@@ -49,16 +52,16 @@ export function DriverMarkers({ ongoingBookings }: DriverMarkersProps) {
 
         return (
           <Fragment key={booking.bookingId}>
-            {!isCompleted && booking.status === "ASSIGNED" && patientLocation && (
+            {!isCompleted && booking.status === "ASSIGNED" && patientLocation ? (
               <OngoingPatientMarker longitude={patientLocation.x} latitude={patientLocation.y} />
-            )}
-            {driverLocation && (
+            ) : null}
+            {driverLocation ? (
               <DriverMarker
                 longitude={driverLocation.x}
                 latitude={driverLocation.y}
                 variant={isCompleted ? "available" : "active"}
               />
-            )}
+            ) : null}
           </Fragment>
         );
       })}

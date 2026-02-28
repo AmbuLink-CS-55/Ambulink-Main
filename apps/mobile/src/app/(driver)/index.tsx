@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Alert, Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Linking, Pressable, ScrollView, Text, View } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSocket } from "@/hooks/SocketContext";
@@ -175,7 +175,7 @@ export default function Home() {
                 ? "Location sharing is active for dispatch."
                 : "Clock in to receive bookings and share location."}
             </Text>
-            <TouchableOpacity
+            <Pressable
               className={`mt-3 rounded-xl p-3 items-center ${
                 isOnShift ? "bg-red-500" : "bg-emerald-500"
               } ${isShiftUpdating ? "opacity-60" : ""}`}
@@ -185,7 +185,7 @@ export default function Home() {
               <Text className="text-white font-bold">
                 {isShiftUpdating ? "Updating..." : isOnShift ? "Clock Out" : "Clock In"}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           <View className="rounded-2xl overflow-hidden shadow-sm bg-white border border-gray-100">
@@ -235,14 +235,13 @@ export default function Home() {
               </MapView>
             </View>
 
-            <TouchableOpacity
-              activeOpacity={0.8}
+            <Pressable
               className={`p-4 items-center justify-center ${currentRide && isOnShift ? "bg-green-500" : "bg-gray-300"}`}
               onPress={handleOpenOnMap}
               disabled={!currentRide || !isOnShift}
             >
               <Text className="text-white font-bold text-lg">Open in Navigation</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           <View className="mt-6 p-5 bg-white rounded-2xl shadow-sm border border-gray-100">
@@ -253,29 +252,29 @@ export default function Home() {
           </View>
 
           <View className="mt-3">
-            <TouchableOpacity
+            <Pressable
               onPress={() => handleCall(currentRide?.patient.phoneNumber ?? undefined)}
               disabled={!currentRide || !isOnShift}
               className={`p-4 mt-3 rounded-xl items-center ${currentRide && isOnShift ? "bg-white" : "bg-gray-200"}`}
             >
               <Text className="text-black font-bold">📞 Call Patient</Text>
-            </TouchableOpacity>
+            </Pressable>
 
-            <TouchableOpacity
+            <Pressable
               onPress={handleArrived}
               disabled={rideStatus !== "ASSIGNED"}
               className={`p-4 mt-3 rounded-xl items-center ${rideStatus === "ASSIGNED" ? "bg-yellow-400" : "bg-gray-200"}`}
             >
               <Text className="font-bold">Arrived</Text>
-            </TouchableOpacity>
+            </Pressable>
 
-            <TouchableOpacity
+            <Pressable
               onPress={handleCompleted}
               disabled={rideStatus !== "ARRIVED"}
               className={`p-4 mt-3 rounded-xl items-center ${rideStatus === "ARRIVED" ? "bg-green-500" : "bg-gray-200"}`}
             >
               <Text className="text-white font-bold">Complete Ride</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </ScrollView>

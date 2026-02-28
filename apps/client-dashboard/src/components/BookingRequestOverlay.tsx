@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Bell, Truck, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import type { BookingDecisionState } from "@/lib/booking-types";
 import { queryKeys } from "@/lib/queryKeys";
 import type { DispatcherBookingPayload } from "@/lib/socket-types";
 import { cn } from "@/lib/utils";
-import { BookingRequestsSection } from "@/components/booking-overlay/BookingRequestsSection";
+import { MemoizedBookingRequestsSection } from "@/components/booking-overlay/BookingRequestsSection";
 import { OngoingBookingsSection } from "@/components/booking-overlay/OngoingBookingsSection";
 import { ReassignBookingDialog } from "@/components/booking-overlay/ReassignBookingDialog";
 
@@ -41,7 +41,6 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
   const bookingDecisions = bookingDecisionsQuery.data ?? {};
 
   const [isOpen, setIsOpen] = useState(true);
-  const [now, setNow] = useState(() => Date.now());
   const [selectedBooking, setSelectedBooking] = useState<DispatcherBookingPayload | null>(null);
 
   const { ongoingList, durations } = useOngoingBookingRoutes(ongoingBookings);
@@ -52,21 +51,22 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
     queryClient,
   });
 
-  useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(interval);
-  }, []);
+  const handleAccept = useCallback(
+    (requestId: string) => {
+      resolveBookingRequestCallback(requestId, true);
+      setPendingBookingDecision(queryClient, requestId);
+    },
+    [queryClient]
+  );
 
-  const handleAccept = (requestId: string) => {
-    resolveBookingRequestCallback(requestId, true);
-    setPendingBookingDecision(queryClient, requestId);
-  };
-
-  const handleReject = (requestId: string) => {
-    resolveBookingRequestCallback(requestId, false);
-    removeBookingRequest(queryClient, requestId);
-    clearBookingDecision(queryClient, requestId);
-  };
+  const handleReject = useCallback(
+    (requestId: string) => {
+      resolveBookingRequestCallback(requestId, false);
+      removeBookingRequest(queryClient, requestId);
+      clearBookingDecision(queryClient, requestId);
+    },
+    [queryClient]
+  );
 
   return (
     <>
@@ -79,11 +79,11 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
           className="relative shadow-[var(--amb-shadow-medium)]"
         >
           {isOpen ? <X className="h-4 w-4" /> : <Truck />}
-          {bookingRequests.length > 0 && (
+          {bookingRequests.length > 0 ? (
             <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-[color:var(--amb-critical)] text-[color:var(--amb-surface)] text-xs flex items-center justify-center font-semibold">
               {bookingRequests.length}
             </span>
-          )}
+          ) : null}
         </Button>
       </div>
 
@@ -113,10 +113,9 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
                   etaDurations={durations}
                   onReassign={(booking) => setSelectedBooking(booking)}
                 />
-                <BookingRequestsSection
+                <MemoizedBookingRequestsSection
                   bookingRequests={bookingRequests}
                   bookingDecisions={bookingDecisions}
-                  now={now}
                   onAccept={handleAccept}
                   onReject={handleReject}
                 />
@@ -126,12 +125,12 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
         </div>
       </div>
 
-      {isOpen && bookingRequests.length > 0 && (
+      {isOpen && bookingRequests.length > 0 ? (
         <div
           className="fixed inset-0 bg-black/20 z-30 transition-opacity duration-300"
           onClick={() => setIsOpen(false)}
         />
-      )}
+      ) : null}
 
       <ReassignBookingDialog
         booking={selectedBooking}

@@ -1,4 +1,4 @@
-import { View, TouchableOpacity, Text, ActivityIndicator, Alert, Linking } from "react-native";
+import { View, Pressable, Text, ActivityIndicator, Alert, Linking } from "react-native";
 import React from "react";
 import { Ionicons } from "@expo/vector-icons";
 import type { BookingStatus, User, Hospital } from "@ambulink/types";
@@ -105,37 +105,34 @@ export default function MapOptions({
 
         {/* High-stakes actions expose role/label/hint so screen readers can disambiguate who will be called. */}
         <View className="flex-row gap-3 mt-4">
-          <TouchableOpacity
+          <Pressable
             accessibilityRole="button"
             accessibilityLabel="Call assigned driver"
             accessibilityHint="Calls the assigned driver for this booking."
             className={`flex-1 min-h-12 items-center justify-center p-3 rounded-xl ${driverPhone ? "bg-emerald-500" : "bg-emerald-200"}`}
-            activeOpacity={0.8}
             onPress={() => handleCall(driverPhone)}
             disabled={!driverPhone}
           >
             <Text className="text-white font-bold">Call Driver</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </Pressable>
+          <Pressable
             accessibilityRole="button"
             accessibilityLabel="Call provider hotline"
             accessibilityHint="Calls the ambulance provider emergency hotline."
             className={`flex-1 min-h-12 items-center justify-center p-3 rounded-xl ${providerPhone ? "bg-blue-500" : "bg-blue-200"}`}
-            activeOpacity={0.8}
             onPress={() => handleCall(providerPhone)}
             disabled={!providerPhone}
           >
             <Text className="text-white font-bold">Call Provider</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
-        <TouchableOpacity
+        <Pressable
           // Destructive action is explicitly labeled and iconized so users do not rely on red color alone.
           accessibilityRole="button"
           accessibilityLabel="Cancel booking"
           accessibilityHint="Cancels the currently assigned booking."
           className={`justify-center items-center min-h-12 p-3 mt-5 rounded-xl border ${isCancelling ? "bg-red-300 border-red-300" : "bg-red-500 border-red-600"}`}
-          activeOpacity={0.8}
           onPress={cancelRequest}
           disabled={isCancelling}
         >
@@ -150,20 +147,19 @@ export default function MapOptions({
               <Text className="text-white font-bold uppercase ml-2">Cancel Booking</Text>
             </View>
           )}
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   }
 
   // idle state
   return (
-    <TouchableOpacity
+    <Pressable
       // Primary emergency CTA uses explicit accessibility metadata for assistive tech.
       accessibilityRole="button"
       accessibilityLabel="Request ambulance"
       accessibilityHint="Sends a new emergency pickup request."
       className={`justify-center items-center min-h-12 p-4 w-full rounded-2xl shadow-lg border border-slate-100 ${isBooking ? "bg-gray-100" : "bg-white"}`}
-      activeOpacity={0.9}
       onPress={onHelpRequest}
       disabled={isBooking}
     >
@@ -175,6 +171,6 @@ export default function MapOptions({
       ) : (
         <Text className="text-black font-bold text-xl uppercase">Book</Text>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 }

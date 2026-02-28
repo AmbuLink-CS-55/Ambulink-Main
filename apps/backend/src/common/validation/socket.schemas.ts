@@ -67,6 +67,13 @@ export const driverShiftCommandSchema = driverEventDriverIdSchema.merge(
   })
 );
 
+export const patientHelpHttpBodySchema = patientPickupRequestSchema;
+export const patientCancelHttpBodySchema = patientCancelRequestSchema;
+export const driverLocationHttpBodySchema = driverLocationPayloadSchema;
+export const driverShiftHttpBodySchema = z.object({
+  onShift: z.boolean(),
+});
+
 const locationSchema = z
   .object({
     x: z.number(),

@@ -21,11 +21,11 @@ export function Select({ className, options, placeholder, ...props }: SelectProp
       )}
       {...props}
     >
-      {placeholder && (
+      {placeholder ? (
         <option value="" disabled>
           {placeholder}
         </option>
-      )}
+      ) : null}
       {options.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}

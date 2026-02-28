@@ -19,7 +19,11 @@ export function BookingRoutesLayer({
 
     return (
       <Fragment key={booking.bookingId}>
-        {!isCompleted && phase === "patient" && driverLocation && patientLocation && routes[routeKey] && (
+        {!isCompleted &&
+        phase === "patient" &&
+        driverLocation &&
+        patientLocation &&
+        routes[routeKey] ? (
           <MapRoute
             id={`route-${booking.bookingId}-patient`}
             coordinates={routes[routeKey]}
@@ -27,20 +31,20 @@ export function BookingRoutesLayer({
             width={4}
             opacity={0.85}
           />
-        )}
+        ) : null}
         {!isCompleted &&
-          phase === "hospital" &&
-          driverLocation &&
-          hospitalLocation &&
-          routes[routeKey] && (
-            <MapRoute
-              id={`route-${booking.bookingId}-hospital`}
-              coordinates={routes[routeKey]}
-              color="#ef4444"
-              width={4}
-              opacity={0.85}
-            />
-          )}
+        phase === "hospital" &&
+        driverLocation &&
+        hospitalLocation &&
+        routes[routeKey] ? (
+          <MapRoute
+            id={`route-${booking.bookingId}-hospital`}
+            coordinates={routes[routeKey]}
+            color="#ef4444"
+            width={4}
+            opacity={0.85}
+          />
+        ) : null}
       </Fragment>
     );
   });

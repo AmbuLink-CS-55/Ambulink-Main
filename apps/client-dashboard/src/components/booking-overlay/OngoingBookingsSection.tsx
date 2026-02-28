@@ -48,16 +48,18 @@ export function OngoingBookingsSection({
                     <User2 className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">{booking.patient.fullName ?? "Unknown"}</span>
                   </div>
-                  {booking.patient.phoneNumber && (
+                  {booking.patient.phoneNumber ? (
                     <div className="mt-1 flex items-center gap-2 text-muted-foreground">
                       <Phone className="h-4 w-4" />
                       <span>{booking.patient.phoneNumber}</span>
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 <div className="rounded-md border bg-muted/40 p-3">
-                  <div className="text-[10px] uppercase text-muted-foreground">Driver / Provider</div>
+                  <div className="text-[10px] uppercase text-muted-foreground">
+                    Driver / Provider
+                  </div>
                   <div className="mt-1 text-sm font-medium">
                     {booking.driver.provider?.name ?? "Unknown Provider"}
                   </div>
@@ -68,10 +70,14 @@ export function OngoingBookingsSection({
 
                 <div className="rounded-md border bg-muted/40 p-3">
                   <div className="text-[10px] uppercase text-muted-foreground">Hospital</div>
-                  <div className="mt-1 text-sm font-medium">{booking.hospital.name ?? "Unknown"}</div>
-                  {booking.hospital.phoneNumber && (
-                    <div className="mt-1 text-xs text-muted-foreground">{booking.hospital.phoneNumber}</div>
-                  )}
+                  <div className="mt-1 text-sm font-medium">
+                    {booking.hospital.name ?? "Unknown"}
+                  </div>
+                  {booking.hospital.phoneNumber ? (
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {booking.hospital.phoneNumber}
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="flex items-center justify-between text-[11px] text-muted-foreground">

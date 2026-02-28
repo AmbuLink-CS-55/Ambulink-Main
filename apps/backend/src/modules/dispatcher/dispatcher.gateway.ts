@@ -1,12 +1,15 @@
 import { Server, Socket } from "socket.io";
 import { OnGatewayInit, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
-import { Inject, forwardRef } from "@nestjs/common";
+import { UnauthorizedException } from "@nestjs/common";
 
 import { SocketService } from "@/common/socket/socket.service";
 import { BookingService } from "../booking/booking.service";
 import { DispatcherService } from "./dispatcher.service";
+import { TokenService } from "@/common/auth/token.service";
+import { authenticateSocket } from "@/common/auth/ws-auth";
+import env from "@/env";
 
-@WebSocketGateway({ cors: { origin: "*" }, namespace: "/dispatcher" })
+@WebSocketGateway({ cors: { origin: env.FRONTEND_URL ?? false }, namespace: "/dispatcher" })
 export class DispatcherGateway implements OnGatewayInit {
   @WebSocketServer() server: Server;
   private readonly offlineTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -14,7 +17,8 @@ export class DispatcherGateway implements OnGatewayInit {
   constructor(
     private dispatcherServise: DispatcherService,
     private socketService: SocketService,
-    @Inject(forwardRef(() => BookingService)) private bookingService: BookingService
+    private bookingService: BookingService,
+    private tokenService: TokenService
   ) {}
 
   afterInit() {
@@ -24,22 +28,26 @@ export class DispatcherGateway implements OnGatewayInit {
     });
   }
 
-  handleConnection(client: Socket) {
+  async handleConnection(client: Socket) {
     console.log("[socket] connection_attempt", {
       namespace: "/dispatcher",
       clientId: client.id,
     });
-    const dispatcherId = client.handshake.auth.dispatcherId as string;
-    if (!dispatcherId) {
+    let dispatcherId: string;
+    try {
+      const user = authenticateSocket(client, this.tokenService, ["DISPATCHER"]);
+      dispatcherId = user.sub;
+    } catch (error) {
       console.warn("[socket] missing_auth", {
         namespace: "/dispatcher",
         clientId: client.id,
+        error: error instanceof UnauthorizedException ? error.message : "invalid_token",
       });
       return client.disconnect(true);
     }
     client.data.dispatcherId = dispatcherId;
     this.clearPendingOffline(dispatcherId);
-    this.dispatcherServise.setStatus(dispatcherId, "AVAILABLE");
+    await this.dispatcherServise.setStatus(dispatcherId, "AVAILABLE");
     client.join(`dispatcher:${dispatcherId}`);
     this.bookingService
       .getDispatcherActiveBookings(dispatcherId)
@@ -86,7 +94,7 @@ export class DispatcherGateway implements OnGatewayInit {
       try {
         const activeSockets = await this.server.in(`dispatcher:${dispatcherId}`).fetchSockets();
         if (activeSockets.length === 0) {
-          this.dispatcherServise.setStatus(dispatcherId, "OFFLINE");
+          await this.dispatcherServise.setStatus(dispatcherId, "OFFLINE");
         }
       } finally {
         this.offlineTimers.delete(dispatcherId);

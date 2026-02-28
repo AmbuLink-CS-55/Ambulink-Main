@@ -4,9 +4,8 @@ import MapLibreGL, { type PopupOptions, type MarkerOptions } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
   createContext,
-  forwardRef,
+  use,
   useCallback,
-  useContext,
   useEffect,
   useId,
   useImperativeHandle,
@@ -81,7 +80,7 @@ type MapContextValue = {
 const MapContext = createContext<MapContextValue | null>(null);
 
 function useMap() {
-  const context = useContext(MapContext);
+  const context = use(MapContext);
   if (!context) {
     throw new Error("useMap must be used within a Map component");
   }
@@ -125,10 +124,14 @@ const DefaultLoader = () => (
   </div>
 );
 
-const Map = forwardRef<MapRef, MapProps>(function Map(
-  { children, theme: themeProp, styles, projection, ...props },
-  ref
-) {
+function Map({
+  children,
+  theme: themeProp,
+  styles,
+  projection,
+  ref,
+  ...props
+}: MapProps & { ref?: React.Ref<MapRef> }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mapInstance, setMapInstance] = useState<MapLibreGL.Map | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -225,13 +228,13 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
   return (
     <MapContext.Provider value={contextValue}>
       <div ref={containerRef} className="relative w-full h-full">
-        {!isLoaded && <DefaultLoader />}
+        {!isLoaded ? <DefaultLoader /> : null}
         {/* SSR-safe: children render only when map is loaded on client */}
-        {mapInstance && children}
+        {mapInstance ? children : null}
       </div>
     </MapContext.Provider>
   );
-});
+}
 
 type MarkerContextValue = {
   marker: MapLibreGL.Marker;
@@ -241,7 +244,7 @@ type MarkerContextValue = {
 const MarkerContext = createContext<MarkerContextValue | null>(null);
 
 function useMarkerContext() {
-  const context = useContext(MarkerContext);
+  const context = use(MarkerContext);
   if (!context) {
     throw new Error("Marker components must be used within MapMarker");
   }
@@ -452,7 +455,7 @@ function MarkerPopup({
         className
       )}
     >
-      {closeButton && (
+      {closeButton ? (
         <button
           type="button"
           onClick={handleClose}
@@ -462,7 +465,7 @@ function MarkerPopup({
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </button>
-      )}
+      ) : null}
       {children}
     </div>,
     container
@@ -691,7 +694,7 @@ function MapControls({
     <div
       className={cn("absolute z-10 flex flex-col gap-1.5", positionClasses[position], className)}
     >
-      {showZoom && (
+      {showZoom ? (
         <ControlGroup>
           <ControlButton onClick={handleZoomIn} label="Zoom in">
             <Plus className="size-4" />
@@ -700,13 +703,13 @@ function MapControls({
             <Minus className="size-4" />
           </ControlButton>
         </ControlGroup>
-      )}
-      {showCompass && (
+      ) : null}
+      {showCompass ? (
         <ControlGroup>
           <CompassButton onClick={handleResetBearing} />
         </ControlGroup>
-      )}
-      {showLocate && (
+      ) : null}
+      {showLocate ? (
         <ControlGroup>
           <ControlButton
             onClick={handleLocate}
@@ -720,14 +723,14 @@ function MapControls({
             )}
           </ControlButton>
         </ControlGroup>
-      )}
-      {showFullscreen && (
+      ) : null}
+      {showFullscreen ? (
         <ControlGroup>
           <ControlButton onClick={handleFullscreen} label="Toggle fullscreen">
             <Maximize className="size-4" />
           </ControlButton>
         </ControlGroup>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -861,7 +864,7 @@ function MapPopup({
         className
       )}
     >
-      {closeButton && (
+      {closeButton ? (
         <button
           type="button"
           onClick={handleClose}
@@ -871,7 +874,7 @@ function MapPopup({
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </button>
-      )}
+      ) : null}
       {children}
     </div>,
     container
@@ -1286,7 +1289,6 @@ function MapClusterLayer<P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonPr
 
 export {
   Map,
-  useMap,
   MapMarker,
   MarkerContent,
   MarkerPopup,
@@ -1297,6 +1299,9 @@ export {
   MapRoute,
   MapClusterLayer,
 };
+
+// eslint-disable-next-line react-refresh/only-export-components -- Hook must be exported for map composition APIs.
+export { useMap };
 
 export type { MapRef };
 

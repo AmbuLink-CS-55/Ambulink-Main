@@ -8,8 +8,11 @@ import {
 import { PatientService } from "./patient.service";
 import { BookingService } from "../booking/booking.service";
 import { SocketService } from "@/common/socket/socket.service";
+import { TokenService } from "@/common/auth/token.service";
+import { authenticateSocket } from "@/common/auth/ws-auth";
+import env from "@/env";
 
-@WebSocketGateway({ cors: { origin: "*" }, namespace: "/patient" })
+@WebSocketGateway({ cors: { origin: env.FRONTEND_URL ?? false }, namespace: "/patient" })
 export class PatientGateway implements OnGatewayInit {
   @WebSocketServer() server: Server;
   private readonly offlineTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -17,7 +20,8 @@ export class PatientGateway implements OnGatewayInit {
   constructor(
     private patientService: PatientService,
     private bookingService: BookingService,
-    private socketService: SocketService
+    private socketService: SocketService,
+    private tokenService: TokenService
   ) {}
 
   afterInit() {
@@ -32,8 +36,11 @@ export class PatientGateway implements OnGatewayInit {
       namespace: "/patient",
       clientId: client.id,
     });
-    const patientId = client.handshake.auth.patientId as string;
-    if (!patientId) {
+    let patientId: string;
+    try {
+      const user = authenticateSocket(client, this.tokenService, ["PATIENT"]);
+      patientId = user.sub;
+    } catch {
       console.warn("[socket] missing_auth", {
         namespace: "/patient",
         clientId: client.id,
@@ -43,7 +50,7 @@ export class PatientGateway implements OnGatewayInit {
     client.data.patientId = patientId;
     this.clearPendingOffline(patientId);
     client.join(`patient:${patientId}`);
-    this.patientService.updateStatus(patientId, "AVAILABLE");
+    await this.patientService.updateStatus(patientId, "AVAILABLE");
 
     const activeBooking = await this.bookingService.getActiveBookingForPatient(patientId);
     // restate user activity to before when they logged out
@@ -94,7 +101,7 @@ export class PatientGateway implements OnGatewayInit {
       try {
         const activeSockets = await this.server.in(`patient:${patientId}`).fetchSockets();
         if (activeSockets.length === 0) {
-          this.patientService.updateStatus(patientId, "OFFLINE");
+          await this.patientService.updateStatus(patientId, "OFFLINE");
         }
       } finally {
         this.offlineTimers.delete(patientId);

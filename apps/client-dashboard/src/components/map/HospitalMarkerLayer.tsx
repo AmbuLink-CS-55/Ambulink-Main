@@ -87,7 +87,7 @@ function HospitalMarkersLayer({ hospitals }: { hospitals: Hospital[] }) {
   if (hospitals === undefined) return <></>;
   return (
     <>
-      {selectedHospital && (
+      {selectedHospital ? (
         <MapPopup
           longitude={selectedHospital.location!.x}
           latitude={selectedHospital.location!.y}
@@ -98,7 +98,7 @@ function HospitalMarkersLayer({ hospitals }: { hospitals: Hospital[] }) {
             <p className="text-xs">{selectedHospital.hospitalType}</p>
           </div>
         </MapPopup>
-      )}
+      ) : null}
     </>
   );
 }

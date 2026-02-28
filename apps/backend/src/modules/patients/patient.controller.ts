@@ -8,11 +8,14 @@ import {
   type UpdatePatientDto,
 } from "@/common/validation/schemas";
 import {
-  patientCancelCommandSchema,
-  patientHelpCommandSchema,
+  patientCancelHttpBodySchema,
+  patientHelpHttpBodySchema,
 } from "@/common/validation/socket.schemas";
 import { PatientCommandService } from "./patient-command.service";
-import type { PatientCancelCommand, PatientHelpCommand, PatientPickupRequest } from "@ambulink/types";
+import type { PatientCancelRequest, PatientPickupRequest } from "@ambulink/types";
+import { CurrentUser } from "@/common/auth/current-user.decorator";
+import type { AuthUser } from "@/common/auth/auth.types";
+import { Roles } from "@/common/auth/roles.decorator";
 
 @Controller("api/patients")
 export class PatientController {
@@ -55,11 +58,13 @@ export class PatientController {
   }
 
   @Post("events/help")
+  @Roles("PATIENT")
   async requestHelp(
-    @Body(Validate(patientHelpCommandSchema))
-    body: PatientHelpCommand
+    @CurrentUser() user: AuthUser,
+    @Body(Validate(patientHelpHttpBodySchema))
+    body: PatientPickupRequest
   ) {
-    await this.patientCommandService.requestHelp(body.patientId, {
+    await this.patientCommandService.requestHelp(user.sub, {
       x: body.x,
       y: body.y,
       patientSettings: body.patientSettings as PatientPickupRequest["patientSettings"],
@@ -68,11 +73,13 @@ export class PatientController {
   }
 
   @Post("events/cancel")
+  @Roles("PATIENT")
   async cancel(
-    @Body(Validate(patientCancelCommandSchema))
-    body: PatientCancelCommand
+    @CurrentUser() user: AuthUser,
+    @Body(Validate(patientCancelHttpBodySchema))
+    body: PatientCancelRequest
   ) {
-    await this.patientCommandService.cancel(body.patientId, { reason: body.reason });
+    await this.patientCommandService.cancel(user.sub, { reason: body.reason });
     return { accepted: true };
   }
 }

@@ -36,7 +36,7 @@ export default function Dashboard() {
     <MapView theme="dark" center={mapView.center} zoom={mapView.zoom}>
       <MapControls position="bottom-right" showZoom showLocate className="mb-4" />
 
-      {hospitals && <HospitalMarkersLayer hospitals={hospitals} />}
+      {hospitals ? <HospitalMarkersLayer hospitals={hospitals} /> : null}
 
       {bookingRequestIds.map((id) => (
         <PatientRequestMarker key={id} id={id} />

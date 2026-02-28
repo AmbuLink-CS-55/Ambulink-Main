@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { eq, ne, and, or, sql, inArray, desc } from "drizzle-orm";
 import { ambulanceProviders, bookings, hospitals, users } from "@/common/database/schema";
-import { DbService } from "@/common/database/db.service";
+import { DbExecutor, DbService } from "@/common/database/db.service";
 import type { Booking, BookingStatus } from "@/common/database/schema";
 
 type CreateBookingValues = {
@@ -20,8 +20,8 @@ type CreateBookingValues = {
 export class BookingRepository {
   constructor(private dbService: DbService) {}
 
-  createBooking(values: CreateBookingValues) {
-    return this.dbService.db
+  createBooking(values: CreateBookingValues, db: DbExecutor = this.dbService.db) {
+    return db
       .insert(bookings)
       .values({
         patientId: values.patientId,
@@ -39,8 +39,8 @@ export class BookingRepository {
       .returning();
   }
 
-  updateBooking(bookingId: string, booking: Partial<Booking>) {
-    return this.dbService.db.update(bookings).set(booking).where(eq(bookings.id, bookingId)).returning();
+  updateBooking(bookingId: string, booking: Partial<Booking>, db: DbExecutor = this.dbService.db) {
+    return db.update(bookings).set(booking).where(eq(bookings.id, bookingId)).returning();
   }
 
   getActiveBookingForPatient(patientId: string) {
@@ -72,19 +72,20 @@ export class BookingRepository {
       );
   }
 
-  cancelBookingByPatient(patientId: string, reason: string) {
-    return this.dbService.db
+  cancelBookingByPatient(patientId: string, reason: string, db: DbExecutor = this.dbService.db) {
+    return db
       .update(bookings)
       .set({
         status: "CANCELLED",
+        ongoing: false,
         cancellationReason: reason,
       })
       .where(and(eq(bookings.patientId, patientId), ne(bookings.status, "COMPLETED")))
       .returning();
   }
 
-  getDriverActiveBooking(driverId: string) {
-    return this.dbService.db
+  getDriverActiveBooking(driverId: string, db: DbExecutor = this.dbService.db) {
+    return db
       .select()
       .from(bookings)
       .where(
@@ -95,8 +96,8 @@ export class BookingRepository {
       );
   }
 
-  getOngoingBookingDispatchInfoForDriver(driverId: string) {
-    return this.dbService.db
+  getOngoingBookingDispatchInfoForDriver(driverId: string, db: DbExecutor = this.dbService.db) {
+    return db
       .select({
         patientId: bookings.patientId,
         dispatcherId: bookings.dispatcherId,

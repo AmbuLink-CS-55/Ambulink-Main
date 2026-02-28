@@ -1,12 +1,28 @@
 import { Injectable } from "@nestjs/common";
 import { eq, and, sql, isNotNull, asc, or } from "drizzle-orm";
 import { users, bookings } from "@/common/database/schema";
-import { DbService } from "@/common/database/db.service";
+import { DbExecutor, DbService } from "@/common/database/db.service";
 import type { NewUser, UserStatus } from "@/common/database/schema";
 
 @Injectable()
 export class DriverRepository {
   constructor(private dbService: DbService) {}
+
+  private readonly safeUserColumns = {
+    id: users.id,
+    fullName: users.fullName,
+    phoneNumber: users.phoneNumber,
+    email: users.email,
+    createdAt: users.createdAt,
+    updatedAt: users.updatedAt,
+    isActive: users.isActive,
+    lastLoginAt: users.lastLoginAt,
+    role: users.role,
+    providerId: users.providerId,
+    currentLocation: users.currentLocation,
+    lastLocationUpdate: users.lastLocationUpdate,
+    status: users.status,
+  };
 
   createDriver(driver: Omit<NewUser, "role">) {
     return this.dbService.db
@@ -19,7 +35,7 @@ export class DriverRepository {
         role: "DRIVER",
         providerId: driver.providerId as string | null,
       })
-      .returning();
+      .returning(this.safeUserColumns);
   }
 
   findAllDrivers(providerId?: string, isActive?: boolean, status?: UserStatus) {
@@ -38,14 +54,14 @@ export class DriverRepository {
     }
 
     return this.dbService.db
-      .select()
+      .select(this.safeUserColumns)
       .from(users)
       .where(and(...conditions));
   }
 
-  findDriverById(id: string) {
-    return this.dbService.db
-      .select()
+  findDriverById(id: string, db: DbExecutor = this.dbService.db) {
+    return db
+      .select(this.safeUserColumns)
       .from(users)
       .where(and(eq(users.id, id), eq(users.role, "DRIVER" as const)));
   }
@@ -61,7 +77,11 @@ export class DriverRepository {
     if (driver.passwordHash !== undefined) updateData.passwordHash = driver.passwordHash;
     if (driver.providerId !== undefined) updateData.providerId = driver.providerId as string | null;
 
-    return this.dbService.db.update(users).set(updateData).where(eq(users.id, id)).returning();
+    return this.dbService.db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, id))
+      .returning(this.safeUserColumns);
   }
 
   removeDriver(id: string) {
@@ -71,15 +91,15 @@ export class DriverRepository {
       .where(eq(users.id, id));
   }
 
-  setDriverStatus(driverId: string, status: UserStatus) {
-    return this.dbService.db
+  setDriverStatus(driverId: string, status: UserStatus, db: DbExecutor = this.dbService.db) {
+    return db
       .update(users)
       .set({
         status: status,
         updatedAt: new Date(),
       })
       .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")))
-      .returning();
+      .returning(this.safeUserColumns);
   }
 
   checkDriverAvailability(driverId: string) {

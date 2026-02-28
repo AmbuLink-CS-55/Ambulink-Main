@@ -1,15 +1,17 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import {
   useGetAmbulances,
   useCreateAmbulance,
   useUpdateAmbulance,
 } from "@/services/ambulance.service";
-import { VirtualizedTable } from "@/components/VirtualizedTable";
+import { DataTable } from "@/components/VirtualizedTable";
 import { Button } from "@/components/ui/button";
+import { useEntityFormDialog } from "@/hooks/use-entity-form-dialog";
 import type { Ambulance } from "@/lib/types";
 import { createAmbulanceColumns } from "@/pages/ambulances/ambulance-columns";
 import {
-  AmbulanceFormDialog,
+  CreateAmbulanceDialog,
+  EditAmbulanceDialog,
   type AmbulanceFormState,
 } from "@/pages/ambulances/AmbulanceFormDialog";
 import env from "@/../env";
@@ -21,33 +23,34 @@ const initialForm: AmbulanceFormState = {
 };
 
 export default function AmbulancesDashboard() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [editing, setEditing] = useState<Ambulance | null>(null);
-  const [form, setForm] = useState<AmbulanceFormState>(initialForm);
-
   const ambulances = useGetAmbulances({ providerId: env.VITE_PROVIDER_ID });
   const createAmbulance = useCreateAmbulance();
   const updateAmbulance = useUpdateAmbulance();
+  const mapAmbulanceToForm = useCallback(
+    (ambulance: Ambulance) => ({
+      vehicleNumber: ambulance.vehicleNumber ?? "",
+      equipmentLevel: ambulance.equipmentLevel ?? "",
+      status: ambulance.status ?? "AVAILABLE",
+    }),
+    []
+  );
+  const { isOpen, editing, form, openForCreate, openForEdit, onOpenChange, reset, updateForm } =
+    useEntityFormDialog<Ambulance, AmbulanceFormState>({
+      initialForm,
+      mapEntityToForm: mapAmbulanceToForm,
+    });
 
   const rows = useMemo(() => ambulances.data ?? [], [ambulances.data]);
 
   const columns = useMemo(
     () =>
       createAmbulanceColumns({
-        onEdit: (ambulance) => {
-          setEditing(ambulance);
-          setForm({
-            vehicleNumber: ambulance.vehicleNumber ?? "",
-            equipmentLevel: ambulance.equipmentLevel ?? "",
-            status: ambulance.status ?? "AVAILABLE",
-          });
-          setIsOpen(true);
-        },
+        onEdit: openForEdit,
       }),
-    []
+    [openForEdit]
   );
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     const payload = {
       providerId: env.VITE_PROVIDER_ID,
       vehicleNumber: form.vehicleNumber.trim(),
@@ -63,10 +66,16 @@ export default function AmbulancesDashboard() {
       await createAmbulance.mutateAsync(payload);
     }
 
-    setIsOpen(false);
-    setEditing(null);
-    setForm(initialForm);
-  };
+    reset();
+  }, [
+    createAmbulance,
+    editing,
+    form.equipmentLevel,
+    form.status,
+    form.vehicleNumber,
+    reset,
+    updateAmbulance,
+  ]);
 
   return (
     <div className="p-6 space-y-4">
@@ -75,33 +84,31 @@ export default function AmbulancesDashboard() {
           <h1 className="text-2xl font-semibold">Ambulances</h1>
           <p className="text-sm text-muted-foreground">Manage your fleet.</p>
         </div>
-        <Button onClick={() => setIsOpen(true)} disabled={!env.VITE_PROVIDER_ID}>
+        <Button onClick={openForCreate} disabled={!env.VITE_PROVIDER_ID}>
           Add Ambulance
         </Button>
       </div>
 
-      <VirtualizedTable columns={columns} rows={rows} height={640} rowHeight={56} />
+      <DataTable columns={columns} rows={rows} height={640} rowHeight={56} />
 
-      <AmbulanceFormDialog
-        open={isOpen}
-        editing={editing !== null}
-        form={form}
-        providerAvailable={Boolean(env.VITE_PROVIDER_ID)}
-        onOpenChange={(open) => {
-          setIsOpen(open);
-          if (!open) {
-            setEditing(null);
-            setForm(initialForm);
-          }
-        }}
-        onChange={(field, value) =>
-          setForm((prev) => ({
-            ...prev,
-            [field]: field === "status" ? (value as AmbulanceFormState["status"]) : value,
-          }))
-        }
-        onSubmit={handleSubmit}
-      />
+      {editing ? (
+        <EditAmbulanceDialog
+          open={isOpen}
+          form={form}
+          onOpenChange={onOpenChange}
+          onChange={updateForm}
+          onSubmit={handleSubmit}
+        />
+      ) : (
+        <CreateAmbulanceDialog
+          open={isOpen}
+          form={form}
+          providerAvailable={Boolean(env.VITE_PROVIDER_ID)}
+          onOpenChange={onOpenChange}
+          onChange={updateForm}
+          onSubmit={handleSubmit}
+        />
+      )}
     </div>
   );
 }

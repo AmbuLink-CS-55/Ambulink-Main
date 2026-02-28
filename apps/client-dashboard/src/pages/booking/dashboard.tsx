@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { VirtualizedTable } from "@/components/VirtualizedTable";
+import { DataTable } from "@/components/VirtualizedTable";
 import { useGetBookingLog, useManualAssignBooking } from "@/services/booking.service";
 import { useMapView } from "@/hooks/use-map-view";
 import { getBookingActionErrorMessage } from "@/lib/booking-ui-errors";
@@ -19,7 +19,8 @@ export default function BookingLogPage() {
   const { mapView } = useMapView();
 
   const rows = useMemo(() => bookingLog.data ?? [], [bookingLog.data]);
-  const { driverOptions, hospitalOptions, patientOptions, recentPatients } = useBookingLogOptions(rows);
+  const { driverOptions, hospitalOptions, patientOptions, recentPatients } =
+    useBookingLogOptions(rows);
   const { form, updateField, resetForm, prefillPickupFromMapOrLocation, currentPickupPoint } =
     useManualBookingForm();
 
@@ -52,7 +53,8 @@ export default function BookingLogPage() {
         pickupAddress: form.pickupAddress.trim() || null,
         emergencyType: form.emergencyType.trim() || null,
         patientId: form.patientMode === "existing" ? form.selectedPatientId : undefined,
-        patientPhoneNumber: form.patientMode === "guest" ? form.guestPhone.trim() || null : undefined,
+        patientPhoneNumber:
+          form.patientMode === "guest" ? form.guestPhone.trim() || null : undefined,
         patientEmail: form.patientMode === "guest" ? form.guestEmail.trim() || null : undefined,
       });
       resetForm();
@@ -99,7 +101,7 @@ export default function BookingLogPage() {
         onSubmit={handleManualAssign}
       />
 
-      <VirtualizedTable columns={bookingLogColumns} rows={rows} height={640} rowHeight={56} />
+      <DataTable columns={bookingLogColumns} rows={rows} height={640} rowHeight={56} />
     </div>
   );
 }

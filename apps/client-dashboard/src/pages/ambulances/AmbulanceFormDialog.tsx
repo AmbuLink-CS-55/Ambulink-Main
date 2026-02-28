@@ -23,28 +23,32 @@ export type AmbulanceFormState = {
   status: AmbulanceStatus;
 };
 
-export function AmbulanceFormDialog({
+type BaseAmbulanceDialogProps = {
+  open: boolean;
+  form: AmbulanceFormState;
+  onOpenChange: (open: boolean) => void;
+  onChange: <K extends keyof AmbulanceFormState>(field: K, value: AmbulanceFormState[K]) => void;
+  title: string;
+  submitLabel: string;
+  submitDisabled: boolean;
+  onSubmit: () => void;
+};
+
+function BaseAmbulanceFormDialog({
   open,
-  editing,
   form,
-  providerAvailable,
   onOpenChange,
   onChange,
+  title,
+  submitLabel,
+  submitDisabled,
   onSubmit,
-}: {
-  open: boolean;
-  editing: boolean;
-  form: AmbulanceFormState;
-  providerAvailable: boolean;
-  onOpenChange: (open: boolean) => void;
-  onChange: (field: keyof AmbulanceFormState, value: string) => void;
-  onSubmit: () => void;
-}) {
+}: BaseAmbulanceDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{editing ? "Edit Ambulance" : "Add Ambulance"}</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
           <DialogDescription>Provider cannot be changed.</DialogDescription>
         </DialogHeader>
 
@@ -67,7 +71,7 @@ export function AmbulanceFormDialog({
             <label className="text-sm font-medium">Status</label>
             <Select
               value={form.status}
-              onChange={(e) => onChange("status", e.target.value)}
+              onChange={(e) => onChange("status", e.target.value as AmbulanceStatus)}
               options={[...STATUS_OPTIONS]}
             />
           </div>
@@ -77,11 +81,67 @@ export function AmbulanceFormDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={onSubmit} disabled={!form.vehicleNumber.trim() || !providerAvailable}>
-            {editing ? "Save Changes" : "Create Ambulance"}
+          <Button onClick={onSubmit} disabled={submitDisabled}>
+            {submitLabel}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+export function CreateAmbulanceDialog({
+  open,
+  form,
+  providerAvailable,
+  onOpenChange,
+  onChange,
+  onSubmit,
+}: {
+  open: boolean;
+  form: AmbulanceFormState;
+  providerAvailable: boolean;
+  onOpenChange: (open: boolean) => void;
+  onChange: <K extends keyof AmbulanceFormState>(field: K, value: AmbulanceFormState[K]) => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <BaseAmbulanceFormDialog
+      open={open}
+      form={form}
+      onOpenChange={onOpenChange}
+      onChange={onChange}
+      title="Add Ambulance"
+      submitLabel="Create Ambulance"
+      submitDisabled={!form.vehicleNumber.trim() || !providerAvailable}
+      onSubmit={onSubmit}
+    />
+  );
+}
+
+export function EditAmbulanceDialog({
+  open,
+  form,
+  onOpenChange,
+  onChange,
+  onSubmit,
+}: {
+  open: boolean;
+  form: AmbulanceFormState;
+  onOpenChange: (open: boolean) => void;
+  onChange: <K extends keyof AmbulanceFormState>(field: K, value: AmbulanceFormState[K]) => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <BaseAmbulanceFormDialog
+      open={open}
+      form={form}
+      onOpenChange={onOpenChange}
+      onChange={onChange}
+      title="Edit Ambulance"
+      submitLabel="Save Changes"
+      submitDisabled={!form.vehicleNumber.trim()}
+      onSubmit={onSubmit}
+    />
   );
 }

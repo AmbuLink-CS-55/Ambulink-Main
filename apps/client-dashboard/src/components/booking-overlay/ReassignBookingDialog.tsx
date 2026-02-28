@@ -28,13 +28,17 @@ export function ReassignBookingDialog({
   open: boolean;
   onClose: () => void;
 }) {
-  const bookingLocation = booking ? booking.pickupLocation ?? booking.patient.location : null;
+  const bookingLocation = booking ? (booking.pickupLocation ?? booking.patient.location) : null;
   const dialogKey = `${booking?.bookingId ?? "empty"}-${open ? "open" : "closed"}`;
 
   const [reassignDriverId, setReassignDriverId] = useState(() => booking?.driver.id ?? "");
   const [reassignHospitalId, setReassignHospitalId] = useState(() => booking?.hospital.id ?? "");
-  const [reassignPickupX, setReassignPickupX] = useState(() => bookingLocation?.x?.toString() ?? "");
-  const [reassignPickupY, setReassignPickupY] = useState(() => bookingLocation?.y?.toString() ?? "");
+  const [reassignPickupX, setReassignPickupX] = useState(
+    () => bookingLocation?.x?.toString() ?? ""
+  );
+  const [reassignPickupY, setReassignPickupY] = useState(
+    () => bookingLocation?.y?.toString() ?? ""
+  );
   const [reassignPickupAddress, setReassignPickupAddress] = useState("");
   const [reassignError, setReassignError] = useState<string | null>(null);
 
@@ -101,7 +105,9 @@ export function ReassignBookingDialog({
     const x = Number.parseFloat(reassignPickupX);
     const y = Number.parseFloat(reassignPickupY);
     const pickupChanged =
-      Number.isFinite(x) && Number.isFinite(y) && (x !== currentPickup?.x || y !== currentPickup?.y);
+      Number.isFinite(x) &&
+      Number.isFinite(y) &&
+      (x !== currentPickup?.x || y !== currentPickup?.y);
 
     if (pickupChanged) {
       payload.pickupLocation = { x, y };
@@ -141,12 +147,12 @@ export function ReassignBookingDialog({
         </DialogHeader>
 
         <div className="grid flex-1 gap-4 overflow-y-auto px-6 pb-6 min-h-0">
-          {reassignError && (
+          {reassignError ? (
             <Alert variant="destructive">
               <AlertTitle>Could not reassign booking</AlertTitle>
               <AlertDescription>{reassignError}</AlertDescription>
             </Alert>
-          )}
+          ) : null}
 
           <div className="grid gap-2">
             <label className="text-sm font-medium">Driver</label>

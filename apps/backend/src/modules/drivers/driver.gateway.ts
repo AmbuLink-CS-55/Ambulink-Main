@@ -11,8 +11,11 @@ import { SocketService } from "@/common/socket/socket.service";
 import type { DriverLocationPayload, SocketErrorPayload } from "@ambulink/types";
 import { driverLocationPayloadSchema } from "@/common/validation/socket.schemas";
 import { DriverCommandService } from "./driver-command.service";
+import { TokenService } from "@/common/auth/token.service";
+import { authenticateSocket } from "@/common/auth/ws-auth";
+import env from "@/env";
 
-@WebSocketGateway({ cors: { origin: "*" }, namespace: "/driver" })
+@WebSocketGateway({ cors: { origin: env.FRONTEND_URL ?? false }, namespace: "/driver" })
 export class DriverGateway implements OnGatewayInit {
   @WebSocketServer()
   server: Server;
@@ -21,7 +24,8 @@ export class DriverGateway implements OnGatewayInit {
     private driverService: DriverService,
     private bookingService: BookingService,
     private socketService: SocketService,
-    private driverCommandService: DriverCommandService
+    private driverCommandService: DriverCommandService,
+    private tokenService: TokenService
   ) {}
 
   afterInit() {
@@ -36,8 +40,11 @@ export class DriverGateway implements OnGatewayInit {
       namespace: "/driver",
       clientId: client.id,
     });
-    const driverId = client.handshake.auth.driverId as string;
-    if (!driverId) {
+    let driverId: string;
+    try {
+      const user = authenticateSocket(client, this.tokenService, ["DRIVER"]);
+      driverId = user.sub;
+    } catch {
       console.warn("[socket] missing_auth", {
         namespace: "/driver",
         clientId: client.id,

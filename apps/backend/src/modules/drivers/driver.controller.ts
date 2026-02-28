@@ -3,18 +3,23 @@ import { DriverService } from "./driver.service";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
 import {
   createDriverSchema,
+  driverListQuerySchema,
+  driverNearbyQuerySchema,
   updateDriverSchema,
   type CreateDriverDto,
+  type DriverListQueryDto,
+  type DriverNearbyQueryDto,
   type UpdateDriverDto,
 } from "@/common/validation/schemas";
-import type { UserStatus } from "@/common/database/schema";
 import {
-  driverEventDriverIdSchema,
-  driverLocationCommandSchema,
-  driverShiftCommandSchema,
+  driverLocationHttpBodySchema,
+  driverShiftHttpBodySchema,
 } from "@/common/validation/socket.schemas";
 import { DriverCommandService } from "./driver-command.service";
-import type { DriverCommand, DriverLocationCommand, DriverShiftCommand } from "@ambulink/types";
+import type { DriverLocationPayload } from "@ambulink/types";
+import { CurrentUser } from "@/common/auth/current-user.decorator";
+import type { AuthUser } from "@/common/auth/auth.types";
+import { Roles } from "@/common/auth/roles.decorator";
 
 @Controller("api/drivers")
 export class DriverController {
@@ -32,25 +37,13 @@ export class DriverController {
   }
 
   @Get()
-  findAll(
-    @Query("providerId") providerId?: string,
-    @Query("isActive") isActive?: string,
-    @Query("status") status?: string
-  ) {
-    const isActiveBool = isActive !== undefined ? isActive === "true" : undefined;
-    return this.driverService.findAll(providerId, isActiveBool, status as UserStatus | undefined);
+  findAll(@Query(Validate(driverListQuerySchema)) query: DriverListQueryDto) {
+    return this.driverService.findAll(query.providerId, query.isActive, query.status);
   }
 
   @Get("nearby")
-  findNearby(
-    @Query("lat") latQuery?: string,
-    @Query("lng") lngQuery?: string,
-    @Query("limit") limitQuery?: string
-  ) {
-    const lat = Number(latQuery ?? 0);
-    const lng = Number(lngQuery ?? 0);
-    const limit = Number(limitQuery ?? 6);
-    return this.driverService.findNearby(lat, lng, limit);
+  findNearby(@Query(Validate(driverNearbyQuerySchema)) query: DriverNearbyQueryDto) {
+    return this.driverService.findNearby(query.lat, query.lng, query.limit);
   }
 
   @Get(":id")
@@ -73,25 +66,35 @@ export class DriverController {
   }
 
   @Post("events/location")
-  async updateLocation(@Body(Validate(driverLocationCommandSchema)) body: DriverLocationCommand) {
-    await this.driverCommandService.updateLocation(body.driverId, { x: body.x, y: body.y });
+  @Roles("DRIVER")
+  async updateLocation(
+    @CurrentUser() user: AuthUser,
+    @Body(Validate(driverLocationHttpBodySchema)) body: DriverLocationPayload
+  ) {
+    await this.driverCommandService.updateLocation(user.sub, { x: body.x, y: body.y });
     return { ok: true };
   }
 
   @Post("events/arrived")
-  async arrived(@Body(Validate(driverEventDriverIdSchema)) body: DriverCommand) {
-    await this.driverCommandService.arrived(body.driverId);
+  @Roles("DRIVER")
+  async arrived(@CurrentUser() user: AuthUser) {
+    await this.driverCommandService.arrived(user.sub);
     return { ok: true };
   }
 
   @Post("events/completed")
-  async completed(@Body(Validate(driverEventDriverIdSchema)) body: DriverCommand) {
-    await this.driverCommandService.completed(body.driverId);
+  @Roles("DRIVER")
+  async completed(@CurrentUser() user: AuthUser) {
+    await this.driverCommandService.completed(user.sub);
     return { ok: true };
   }
 
   @Post("events/shift")
-  async setShift(@Body(Validate(driverShiftCommandSchema)) body: DriverShiftCommand) {
-    return this.driverCommandService.setShift(body.driverId, body.onShift);
+  @Roles("DRIVER")
+  async setShift(
+    @CurrentUser() user: AuthUser,
+    @Body(Validate(driverShiftHttpBodySchema)) body: { onShift: boolean }
+  ) {
+    return this.driverCommandService.setShift(user.sub, body.onShift);
   }
 }

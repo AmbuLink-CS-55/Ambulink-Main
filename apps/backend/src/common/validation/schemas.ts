@@ -56,7 +56,6 @@ const pointSchema = z.object({
 });
 
 export const manualAssignBookingSchema = z.object({
-  dispatcherId: z.string().uuid(),
   driverId: z.string().uuid(),
   hospitalId: z.string().uuid(),
   pickupLocation: pointSchema,
@@ -69,7 +68,6 @@ export const manualAssignBookingSchema = z.object({
 
 export const reassignBookingSchema = z
   .object({
-    dispatcherId: z.string().uuid(),
     driverId: z.string().uuid().optional(),
     hospitalId: z.string().uuid().optional(),
     pickupLocation: pointSchema.optional(),
@@ -87,6 +85,35 @@ export const reassignBookingSchema = z
     }
   );
 
+export const driverNearbyQuerySchema = z.object({
+  lat: z.coerce.number().min(-90).max(90),
+  lng: z.coerce.number().min(-180).max(180),
+  limit: z.coerce.number().int().min(1).max(50).default(6),
+});
+
+export const hospitalNearbyQuerySchema = z.object({
+  lat: z.coerce.number().min(-90).max(90),
+  lng: z.coerce.number().min(-180).max(180),
+  limit: z.coerce.number().int().min(1).max(50).default(5),
+  radiusKm: z.coerce.number().positive().max(200).default(10),
+});
+
+export const driverListQuerySchema = z.object({
+  providerId: z.string().uuid().optional(),
+  isActive: z
+    .enum(["true", "false"])
+    .transform((value) => value === "true")
+    .optional(),
+  status: z.enum(["AVAILABLE", "BUSY", "OFFLINE"]).optional(),
+});
+
+export const bookingListQuerySchema = z.object({
+  providerId: z.string().uuid().optional(),
+  status: z
+    .enum(["REQUESTED", "ASSIGNED", "ARRIVED", "PICKEDUP", "COMPLETED", "CANCELLED"])
+    .optional(),
+});
+
 export type CreatePatientDto = z.infer<typeof createPatientSchema>;
 export type UpdatePatientDto = z.infer<typeof updatePatientSchema>;
 
@@ -100,3 +127,7 @@ export type CreateAmbulanceProviderDto = z.infer<typeof createAmbulanceProviderS
 export type UpdateAmbulanceProviderDto = z.infer<typeof updateAmbulanceProviderSchema>;
 export type ManualAssignBookingDto = z.infer<typeof manualAssignBookingSchema>;
 export type ReassignBookingDto = z.infer<typeof reassignBookingSchema>;
+export type DriverNearbyQueryDto = z.infer<typeof driverNearbyQuerySchema>;
+export type HospitalNearbyQueryDto = z.infer<typeof hospitalNearbyQuerySchema>;
+export type DriverListQueryDto = z.infer<typeof driverListQuerySchema>;
+export type BookingListQueryDto = z.infer<typeof bookingListQuerySchema>;

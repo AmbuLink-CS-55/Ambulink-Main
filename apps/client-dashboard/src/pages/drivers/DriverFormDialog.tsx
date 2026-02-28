@@ -16,9 +16,89 @@ export type DriverFormState = {
   passwordHash: string;
 };
 
-export function DriverFormDialog({
+type DriverFormFieldsProps = {
+  form: DriverFormState;
+  onChange: <K extends keyof DriverFormState>(field: K, value: DriverFormState[K]) => void;
+  showPassword: boolean;
+};
+
+function DriverFormFields({ form, onChange, showPassword }: DriverFormFieldsProps) {
+  return (
+    <div className="grid gap-4 px-6">
+      <div className="grid gap-2">
+        <label className="text-sm font-medium">Full Name</label>
+        <Input value={form.fullName} onChange={(e) => onChange("fullName", e.target.value)} />
+      </div>
+      <div className="grid gap-2">
+        <label className="text-sm font-medium">Phone Number</label>
+        <Input value={form.phoneNumber} onChange={(e) => onChange("phoneNumber", e.target.value)} />
+      </div>
+      <div className="grid gap-2">
+        <label className="text-sm font-medium">Email</label>
+        <Input value={form.email} onChange={(e) => onChange("email", e.target.value)} />
+      </div>
+      {showPassword ? (
+        <div className="grid gap-2">
+          <label className="text-sm font-medium">Password</label>
+          <Input
+            type="password"
+            value={form.passwordHash}
+            onChange={(e) => onChange("passwordHash", e.target.value)}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+type BaseDriverDialogProps = {
+  open: boolean;
+  form: DriverFormState;
+  onOpenChange: (open: boolean) => void;
+  onChange: <K extends keyof DriverFormState>(field: K, value: DriverFormState[K]) => void;
+  title: string;
+  submitLabel: string;
+  showPassword: boolean;
+  submitDisabled: boolean;
+  onSubmit: () => void;
+};
+
+function BaseDriverFormDialog({
   open,
-  editing,
+  form,
+  onOpenChange,
+  onChange,
+  title,
+  submitLabel,
+  showPassword,
+  submitDisabled,
+  onSubmit,
+}: BaseDriverDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>Provider cannot be changed.</DialogDescription>
+        </DialogHeader>
+
+        <DriverFormFields form={form} onChange={onChange} showPassword={showPassword} />
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={onSubmit} disabled={submitDisabled}>
+            {submitLabel}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function CreateDriverDialog({
+  open,
   form,
   providerAvailable,
   onOpenChange,
@@ -26,63 +106,59 @@ export function DriverFormDialog({
   onSubmit,
 }: {
   open: boolean;
-  editing: boolean;
   form: DriverFormState;
   providerAvailable: boolean;
   onOpenChange: (open: boolean) => void;
-  onChange: (field: keyof DriverFormState, value: string) => void;
+  onChange: <K extends keyof DriverFormState>(field: K, value: DriverFormState[K]) => void;
   onSubmit: () => void;
 }) {
+  const submitDisabled =
+    !form.fullName.trim() ||
+    !form.phoneNumber.trim() ||
+    !form.passwordHash.trim() ||
+    !providerAvailable;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{editing ? "Edit Driver" : "Add Driver"}</DialogTitle>
-          <DialogDescription>Provider cannot be changed.</DialogDescription>
-        </DialogHeader>
+    <BaseDriverFormDialog
+      open={open}
+      form={form}
+      onOpenChange={onOpenChange}
+      onChange={onChange}
+      title="Add Driver"
+      submitLabel="Create Driver"
+      showPassword={true}
+      submitDisabled={submitDisabled}
+      onSubmit={onSubmit}
+    />
+  );
+}
 
-        <div className="grid gap-4 px-6">
-          <div className="grid gap-2">
-            <label className="text-sm font-medium">Full Name</label>
-            <Input value={form.fullName} onChange={(e) => onChange("fullName", e.target.value)} />
-          </div>
-          <div className="grid gap-2">
-            <label className="text-sm font-medium">Phone Number</label>
-            <Input value={form.phoneNumber} onChange={(e) => onChange("phoneNumber", e.target.value)} />
-          </div>
-          <div className="grid gap-2">
-            <label className="text-sm font-medium">Email</label>
-            <Input value={form.email} onChange={(e) => onChange("email", e.target.value)} />
-          </div>
-          {!editing && (
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">Password</label>
-              <Input
-                type="password"
-                value={form.passwordHash}
-                onChange={(e) => onChange("passwordHash", e.target.value)}
-              />
-            </div>
-          )}
-        </div>
+export function EditDriverDialog({
+  open,
+  form,
+  onOpenChange,
+  onChange,
+  onSubmit,
+}: {
+  open: boolean;
+  form: DriverFormState;
+  onOpenChange: (open: boolean) => void;
+  onChange: <K extends keyof DriverFormState>(field: K, value: DriverFormState[K]) => void;
+  onSubmit: () => void;
+}) {
+  const submitDisabled = !form.fullName.trim() || !form.phoneNumber.trim();
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={onSubmit}
-            disabled={
-              !form.fullName.trim() ||
-              !form.phoneNumber.trim() ||
-              (!editing && !form.passwordHash.trim()) ||
-              (!editing && !providerAvailable)
-            }
-          >
-            {editing ? "Save Changes" : "Create Driver"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+  return (
+    <BaseDriverFormDialog
+      open={open}
+      form={form}
+      onOpenChange={onOpenChange}
+      onChange={onChange}
+      title="Edit Driver"
+      submitLabel="Save Changes"
+      showPassword={false}
+      submitDisabled={submitDisabled}
+      onSubmit={onSubmit}
+    />
   );
 }

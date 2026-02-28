@@ -11,6 +11,7 @@ import {
   geometry,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { type InferSelectModel, type InferInsertModel } from "drizzle-orm";
 
 export const userRoleEnum = pgEnum("user_role", ["PATIENT", "DISPATCHER", "DRIVER", "EMT"]);
@@ -215,6 +216,9 @@ export const bookings = pgTable(
     driverStatusIdx: index("driver_status_idx").on(t.driverId, t.status),
     emtStatusIdx: index("emt_status_idx").on(t.emtId, t.status),
     dispatcherStatusIdx: index("dispatcher_status_idx").on(t.dispatcherId, t.status),
+    activeDriverBookingUnique: uniqueIndex("active_driver_booking_unique")
+      .on(t.driverId)
+      .where(sql`${t.status} in ('REQUESTED', 'ASSIGNED', 'ARRIVED', 'PICKEDUP')`),
   })
 );
 export type Booking = InferSelectModel<typeof bookings>;

@@ -2,10 +2,11 @@ import UserMap from "@/components/patient/UserMap";
 import { useSocket } from "@/hooks/SocketContext";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect } from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocation } from "@/hooks/useLocation";
 import type { Point } from "@ambulink/types";
+import { AppImage as Image } from "@/components/ui/AppImage";
 
 const LocationCard = ({
   title,
@@ -16,7 +17,7 @@ const LocationCard = ({
   subtitle?: string;
   onPress?: () => void;
 }) => (
-  <TouchableOpacity
+  <Pressable
     className="flex-row items-center bg-gray-100 rounded-2xl p-4 w-full shadow-md"
     onPress={onPress}
   >
@@ -30,9 +31,9 @@ const LocationCard = ({
     <Image
       source={{ uri: "https://via.placeholder.com/50" }}
       className="w-10 h-10"
-      resizeMode="contain"
+      contentFit="contain"
     />
-  </TouchableOpacity>
+  </Pressable>
 );
 
 const Separator = () => (

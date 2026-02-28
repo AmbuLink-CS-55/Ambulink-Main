@@ -30,7 +30,10 @@ export function ManualBookingDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   form: ManualBookingFormState;
-  updateField: <K extends keyof ManualBookingFormState>(field: K, value: ManualBookingFormState[K]) => void;
+  updateField: <K extends keyof ManualBookingFormState>(
+    field: K,
+    value: ManualBookingFormState[K]
+  ) => void;
   currentPickupPoint: { x: number; y: number } | null;
   recentPatients: Array<{ id: string; name: string; phone: string }>;
   options: {
@@ -53,12 +56,12 @@ export function ManualBookingDialog({
         </DialogHeader>
 
         <div className="grid flex-1 gap-4 overflow-y-auto px-6 pb-6 min-h-0">
-          {manualError && (
+          {manualError ? (
             <Alert variant="destructive">
               <AlertTitle>Could not assign booking</AlertTitle>
               <AlertDescription>{manualError}</AlertDescription>
             </Alert>
-          )}
+          ) : null}
 
           <div className="grid gap-2">
             <label className="text-sm font-medium">Patient Type</label>
@@ -81,7 +84,7 @@ export function ManualBookingDialog({
                 options={options.patientOptions}
                 placeholder="Select patient"
               />
-              {recentPatients.length > 0 && (
+              {recentPatients.length > 0 ? (
                 <div className="flex flex-wrap gap-2 pt-1">
                   {recentPatients.map((patient) => (
                     <Button
@@ -95,7 +98,7 @@ export function ManualBookingDialog({
                     </Button>
                   ))}
                 </div>
-              )}
+              ) : null}
             </div>
           ) : (
             <>
@@ -118,7 +121,7 @@ export function ManualBookingDialog({
                 />
               </div>
 
-              {recentPatients.length > 0 && (
+              {recentPatients.length > 0 ? (
                 <div className="grid gap-2">
                   <label className="text-xs font-medium text-muted-foreground">
                     Quick fill from recent callers
@@ -142,7 +145,7 @@ export function ManualBookingDialog({
                       ))}
                   </div>
                 </div>
-              )}
+              ) : null}
             </>
           )}
 
@@ -169,11 +172,17 @@ export function ManualBookingDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
               <label className="text-sm font-medium">Pickup Longitude (x)</label>
-              <Input value={form.pickupX} onChange={(e) => updateField("pickupX", e.target.value)} />
+              <Input
+                value={form.pickupX}
+                onChange={(e) => updateField("pickupX", e.target.value)}
+              />
             </div>
             <div className="grid gap-2">
               <label className="text-sm font-medium">Pickup Latitude (y)</label>
-              <Input value={form.pickupY} onChange={(e) => updateField("pickupY", e.target.value)} />
+              <Input
+                value={form.pickupY}
+                onChange={(e) => updateField("pickupY", e.target.value)}
+              />
             </div>
           </div>
 

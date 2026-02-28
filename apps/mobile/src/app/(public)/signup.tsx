@@ -3,11 +3,10 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Image,
   StyleSheet,
   Modal,
   FlatList,
@@ -26,13 +25,66 @@ const hospitalNames = [
   "Emergency Care Unit",
 ];
 
+type Role = "patient" | "driver" | "emt";
+
+function RoleButton({
+  type,
+  label,
+  icon,
+  role,
+  onSelect,
+}: {
+  type: Role;
+  label: string;
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  role: Role;
+  onSelect: (next: Role) => void;
+}) {
+  return (
+    <Pressable onPress={() => onSelect(type)} style={[styles.roleButton, role === type && styles.roleButtonActive]}>
+      <Ionicons name={icon} size={24} color={role === type ? "white" : "#205fb7ff"} />
+      <Text style={[styles.roleButtonText, role === type && styles.roleButtonTextActive]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function StaffFields({
+  staffId,
+  hospitalName,
+  setStaffId,
+  onSelectHospital,
+}: {
+  staffId: string;
+  hospitalName: string;
+  setStaffId: (value: string) => void;
+  onSelectHospital: () => void;
+}) {
+  return (
+    <>
+      <View style={styles.inputContainer}>
+        <Ionicons name="id-card-outline" size={20} color="#9CA3AF" />
+        <TextInput style={styles.input} placeholder="Staff ID" value={staffId} onChangeText={setStaffId} />
+      </View>
+      <Pressable style={styles.inputContainer} onPress={onSelectHospital}>
+        <Ionicons name="business-outline" size={20} color="#9CA3AF" />
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={{ fontSize: 16, color: hospitalName ? "#1F2937" : "#9CA3AF" }}>
+            {hospitalName || "Select Hospital Name"}
+          </Text>
+        </View>
+        <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
+      </Pressable>
+    </>
+  );
+}
+
 export default function SignupPage() {
   const router = useRouter();
   const [step, setStep] = useState(1); // 1: Details, 2: OTP
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
-  const [role, setRole] = useState<"patient" | "driver" | "emt">("patient");
+  const [role, setRole] = useState<Role>("patient");
   const [staffId, setStaffId] = useState("");
   const [hospitalName, setHospitalName] = useState("");
   const [agreed, setAgreed] = useState(false);
@@ -60,18 +112,6 @@ export default function SignupPage() {
       router.replace("/(public)/login_modern");
     }, 1500);
   };
-  const RoleButton = ({ type, label, icon }: { type: any; label: string; icon: any }) => (
-    <TouchableOpacity
-      onPress={() => setRole(type)}
-      style={[styles.roleButton, role === type && styles.roleButtonActive]}
-    >
-      <Ionicons name={icon} size={24} color={role === type ? "white" : "#205fb7ff"} />
-      <Text style={[styles.roleButtonText, role === type && styles.roleButtonTextActive]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-
   return (
     <>
       <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
@@ -86,12 +126,12 @@ export default function SignupPage() {
           >
             {/* Header */}
             <View style={styles.header}>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => (step === 2 ? setStep(1) : router.back())}
                 style={styles.backButton}
               >
                 <Ionicons name="arrow-back" size={24} color="#1F2937" />
-              </TouchableOpacity>
+              </Pressable>
               <Text style={styles.headerTitle}>Create Account</Text>
             </View>
 
@@ -136,57 +176,38 @@ export default function SignupPage() {
                 {/* Role Selection */}
                 <Text style={styles.label}>Sign up as:</Text>
                 <View style={styles.roleContainer}>
-                  <RoleButton type="patient" label="Patient" icon="person-outline" />
-                  <RoleButton type="driver" label="Driver" icon="car-outline" />
-                  <RoleButton type="emt" label="EMT" icon="medkit-outline" />
+                  <RoleButton
+                    type="patient"
+                    label="Patient"
+                    icon="person-outline"
+                    role={role}
+                    onSelect={setRole}
+                  />
+                  <RoleButton type="driver" label="Driver" icon="car-outline" role={role} onSelect={setRole} />
+                  <RoleButton type="emt" label="EMT" icon="medkit-outline" role={role} onSelect={setRole} />
                 </View>
 
                 {(role === "driver" || role === "emt") && (
-                  <>
-                    {/* Staff ID */}
-                    <View style={styles.inputContainer}>
-                      <Ionicons name="id-card-outline" size={20} color="#9CA3AF" />
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Staff ID"
-                        value={staffId}
-                        onChangeText={setStaffId}
-                      />
-                    </View>
-
-                    {/* Hospital Selection */}
-                    <TouchableOpacity
-                      style={styles.inputContainer}
-                      onPress={() => setShowHospitalModal(true)}
-                    >
-                      <Ionicons name="business-outline" size={20} color="#9CA3AF" />
-                      <View style={{ flex: 1, marginLeft: 12 }}>
-                        <Text
-                          style={{
-                            fontSize: 16,
-                            color: hospitalName ? "#1F2937" : "#9CA3AF",
-                          }}
-                        >
-                          {hospitalName || "Select Hospital Name"}
-                        </Text>
-                      </View>
-                      <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
-                    </TouchableOpacity>
-                  </>
+                  <StaffFields
+                    staffId={staffId}
+                    hospitalName={hospitalName}
+                    setStaffId={setStaffId}
+                    onSelectHospital={() => setShowHospitalModal(true)}
+                  />
                 )}
 
                 {/* Terms & Conditions */}
-                <TouchableOpacity style={styles.termsContainer} onPress={() => setAgreed(!agreed)}>
+                <Pressable style={styles.termsContainer} onPress={() => setAgreed((prev) => !prev)}>
                   <View style={[styles.checkbox, agreed && styles.checkboxActive]}>
                     {agreed && <Ionicons name="checkmark" size={16} color="white" />}
                   </View>
                   <Text style={styles.termsText}>
                     I agree to the <Text style={styles.termsLink}>Terms and Conditions</Text>
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
 
                 {/* Next Button */}
-                <TouchableOpacity
+                <Pressable
                   onPress={handleNext}
                   disabled={
                     !firstName ||
@@ -208,7 +229,7 @@ export default function SignupPage() {
                   ]}
                 >
                   <Text style={styles.buttonText}>{loading ? "Processing..." : "Next"}</Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             ) : (
               <View style={styles.formContainer}>
@@ -230,13 +251,13 @@ export default function SignupPage() {
                   />
                 </View>
 
-                <TouchableOpacity style={styles.resendContainer} onPress={() => {}}>
+                <Pressable style={styles.resendContainer} onPress={() => {}}>
                   <Text style={styles.resendText}>
                     Didn`t receive code? <Text style={styles.resendLink}>Resend</Text>
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
 
-                <TouchableOpacity
+                <Pressable
                   onPress={handleVerify}
                   disabled={otp.length < 4 || loading}
                   style={[
@@ -247,16 +268,16 @@ export default function SignupPage() {
                   <Text style={styles.buttonText}>
                     {loading ? "Verifying..." : "Verify & Sign Up"}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             )}
 
             {/* Footer */}
             <View style={styles.footer}>
               <Text style={styles.footerText}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => router.push("/(public)/login_modern")}>
+              <Pressable onPress={() => router.push("/(public)/login_modern")}>
                 <Text style={styles.footerLink}>Log In</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -273,15 +294,15 @@ export default function SignupPage() {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Hospital</Text>
-              <TouchableOpacity onPress={() => setShowHospitalModal(false)}>
+              <Pressable onPress={() => setShowHospitalModal(false)}>
                 <Ionicons name="close" size={24} color="#1F2937" />
-              </TouchableOpacity>
+              </Pressable>
             </View>
             <FlatList
               data={hospitalNames}
               keyExtractor={(item) => item}
               renderItem={({ item }) => (
-                <TouchableOpacity
+                <Pressable
                   style={styles.hospitalItem}
                   onPress={() => {
                     setHospitalName(item);
@@ -299,7 +320,7 @@ export default function SignupPage() {
                   {hospitalName === item && (
                     <Ionicons name="checkmark-circle" size={22} color="#205fb7ff" />
                   )}
-                </TouchableOpacity>
+                </Pressable>
               )}
               contentContainerStyle={{ paddingBottom: 20 }}
             />

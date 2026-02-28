@@ -1,12 +1,17 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { VirtualizedTable } from "@/components/VirtualizedTable";
+import { DataTable } from "@/components/VirtualizedTable";
 import { Button } from "@/components/ui/button";
+import { useEntityFormDialog } from "@/hooks/use-entity-form-dialog";
 import { queryKeys } from "@/lib/queryKeys";
 import { useCreateDriver, useGetDrivers, useUpdateDriver } from "@/services/driver.service";
 import type { User } from "@/lib/types";
 import { createDriverColumns } from "@/pages/drivers/driver-columns";
-import { DriverFormDialog, type DriverFormState } from "@/pages/drivers/DriverFormDialog";
+import {
+  CreateDriverDialog,
+  EditDriverDialog,
+  type DriverFormState,
+} from "@/pages/drivers/DriverFormDialog";
 import env from "@/../env";
 
 const initialForm: DriverFormState = {
@@ -17,17 +22,32 @@ const initialForm: DriverFormState = {
 };
 
 export default function DriversDashboard() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [editing, setEditing] = useState<User | null>(null);
-  const [form, setForm] = useState<DriverFormState>(initialForm);
-
   const queryClient = useQueryClient();
-  const driverLocations =
-    queryClient.getQueryData<Record<string, { x: number; y: number }>>(queryKeys.driverLocations()) ?? {};
+  const driverLocations = useMemo(
+    () =>
+      queryClient.getQueryData<Record<string, { x: number; y: number }>>(
+        queryKeys.driverLocations()
+      ) ?? {},
+    [queryClient]
+  );
 
   const drivers = useGetDrivers({ providerId: env.VITE_PROVIDER_ID });
   const createDriver = useCreateDriver();
   const updateDriver = useUpdateDriver();
+  const mapDriverToForm = useCallback(
+    (driver: User) => ({
+      fullName: driver.fullName ?? "",
+      phoneNumber: driver.phoneNumber ?? "",
+      email: driver.email ?? "",
+      passwordHash: "",
+    }),
+    []
+  );
+  const { isOpen, editing, form, openForCreate, openForEdit, onOpenChange, reset, updateForm } =
+    useEntityFormDialog<User, DriverFormState>({
+      initialForm,
+      mapEntityToForm: mapDriverToForm,
+    });
 
   const rows = useMemo(() => drivers.data ?? [], [drivers.data]);
 
@@ -35,21 +55,12 @@ export default function DriversDashboard() {
     () =>
       createDriverColumns({
         driverLocations,
-        onEdit: (driver) => {
-          setEditing(driver);
-          setForm({
-            fullName: driver.fullName ?? "",
-            phoneNumber: driver.phoneNumber ?? "",
-            email: driver.email ?? "",
-            passwordHash: "",
-          });
-          setIsOpen(true);
-        },
+        onEdit: openForEdit,
       }),
-    [driverLocations]
+    [driverLocations, openForEdit]
   );
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     const payload = {
       fullName: form.fullName.trim(),
       phoneNumber: form.phoneNumber.trim(),
@@ -73,10 +84,17 @@ export default function DriversDashboard() {
       await createDriver.mutateAsync(payload);
     }
 
-    setIsOpen(false);
-    setEditing(null);
-    setForm(initialForm);
-  };
+    reset();
+  }, [
+    createDriver,
+    editing,
+    form.email,
+    form.fullName,
+    form.passwordHash,
+    form.phoneNumber,
+    reset,
+    updateDriver,
+  ]);
 
   return (
     <div className="p-6 space-y-4">
@@ -85,26 +103,29 @@ export default function DriversDashboard() {
           <h1 className="text-2xl font-semibold">Drivers</h1>
           <p className="text-sm text-muted-foreground">Manage your roster.</p>
         </div>
-        <Button onClick={() => setIsOpen(true)}>Add Driver</Button>
+        <Button onClick={openForCreate}>Add Driver</Button>
       </div>
 
-      <VirtualizedTable columns={columns} rows={rows} height={640} rowHeight={56} />
+      <DataTable columns={columns} rows={rows} height={640} rowHeight={56} />
 
-      <DriverFormDialog
-        open={isOpen}
-        editing={editing !== null}
-        form={form}
-        providerAvailable={Boolean(env.VITE_PROVIDER_ID)}
-        onOpenChange={(open) => {
-          setIsOpen(open);
-          if (!open) {
-            setEditing(null);
-            setForm(initialForm);
-          }
-        }}
-        onChange={(field, value) => setForm((prev) => ({ ...prev, [field]: value }))}
-        onSubmit={handleSubmit}
-      />
+      {editing ? (
+        <EditDriverDialog
+          open={isOpen}
+          form={form}
+          onOpenChange={onOpenChange}
+          onChange={updateForm}
+          onSubmit={handleSubmit}
+        />
+      ) : (
+        <CreateDriverDialog
+          open={isOpen}
+          form={form}
+          providerAvailable={Boolean(env.VITE_PROVIDER_ID)}
+          onOpenChange={onOpenChange}
+          onChange={updateForm}
+          onSubmit={handleSubmit}
+        />
+      )}
     </div>
   );
 }

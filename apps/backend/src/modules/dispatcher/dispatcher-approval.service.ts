@@ -10,7 +10,12 @@ export class DispatcherApprovalService {
     private dispatcherRepository: DispatcherRepository
   ) {}
 
-  async requestApproval(dispatcherId: string, driver: User, patient: User, requestId: string) {
+  async requestApproval(
+    dispatcherId: string,
+    driver: Pick<User, "id" | "providerId" | "currentLocation">,
+    patient: Pick<User, "id" | "fullName" | "phoneNumber" | "email" | "currentLocation">,
+    requestId: string
+  ) {
     return new Promise<boolean>((resolve) => {
       this.socketService.dispatcherServer
         ?.to(`dispatcher:${dispatcherId}`)

@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity, Image, Text } from "react-native";
+import { View, StyleSheet, Pressable, Text } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE, Region, Polyline } from "react-native-maps";
 import { Ionicons } from "@expo/vector-icons";
 import { BookingStatus, Point } from "@ambulink/types";
@@ -7,6 +7,7 @@ import ambulanceIcon from "../../../assets/images/ambu.png";
 import { useFetchRoute } from "@/hooks/use-fetch-route";
 import type { NearbyHospital } from "@/lib/hospitals";
 import type { NearbyDriver } from "@/lib/drivers";
+import { AppImage as Image } from "@/components/ui/AppImage";
 
 type Props = {
   userLocation: Point;
@@ -83,7 +84,7 @@ export default function UserMap({
             key={`d${i}`}
             coordinate={{ latitude: d.y, longitude: d.x }}
             anchor={{ x: 0.5, y: 0.5 }}
-            tracksViewChanges={true}
+            tracksViewChanges={false}
           >
             <View style={{ alignItems: "center", justifyContent: "center" }}>
               {/*<Svg width="30" height="30" viewBox="0 0 100 100">
@@ -92,7 +93,7 @@ export default function UserMap({
               <Image
                 source={ambulanceIcon}
                 style={{ width: 40, height: 40 }}
-                resizeMode="contain"
+                contentFit="contain"
               />
             </View>
           </Marker>
@@ -158,12 +159,12 @@ export default function UserMap({
           ))}
       </MapView>
       <View className="items-center flex-1 justify-end my-5 mx-10">
-        <TouchableOpacity
+        <Pressable
           className="bg-white p-1 rounded-md self-end mr-0 m-3 shadow-lg"
           onPress={handleLocate}
         >
           <Ionicons name="locate" size={24} color="#000000" />
-        </TouchableOpacity>
+        </Pressable>
 
         {safeHospitalLocation && safeDriverLocation && (
           <View className="w-full rounded-xl bg-white px-4 py-3 shadow-lg mb-3">

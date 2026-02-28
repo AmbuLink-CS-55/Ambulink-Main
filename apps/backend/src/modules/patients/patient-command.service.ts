@@ -70,18 +70,13 @@ export class PatientCommandService {
     }
 
     const hospital = await this.hospitalService.findTheNearestHospital(y, x);
-    const booking = await this.bookingService.createBooking(
+    const booking = await this.bookingService.createApprovedBooking(
       patient,
-      y,
-      x,
-      null,
+      { x, y },
       hospital,
       pickedDriver,
-      null,
       dispatcherId
     );
-
-    await this.driverService.setStatus(pickedDriver.id, "BUSY");
 
     const assignedPayload = booking.bookingId
       ? await this.bookingService.buildAssignedBookingPayload(booking.bookingId)
@@ -106,7 +101,8 @@ export class PatientCommandService {
   }
 
   async cancel(patientId: string, data: PatientCancelRequest = {}) {
-    const bookingData = await this.bookingService.getActiveBookingForPatient(patientId);
+    const cancellationReason = data.reason || "Cancelled by patient";
+    const bookingData = await this.bookingService.cancelByPatient(patientId, cancellationReason);
 
     if (!bookingData) {
       this.socketService.emitToPatient(patientId, "booking:cancel:error", {
@@ -115,19 +111,7 @@ export class PatientCommandService {
       return;
     }
 
-    const cancellationReason = data.reason || "Cancelled by patient";
-    await this.bookingService.updateBooking(bookingData.id, {
-      status: "CANCELLED",
-      cancellationReason,
-    });
-
     if (bookingData.driverId) {
-      const remainingBooking = await this.bookingService.getActiveBookingForDriver(
-        bookingData.driverId
-      );
-      if (!remainingBooking) {
-        await this.driverService.setStatus(bookingData.driverId, "AVAILABLE");
-      }
       this.socketService.emitToDriver(bookingData.driverId, "booking:cancelled", {
         bookingId: bookingData.id,
         reason: cancellationReason,

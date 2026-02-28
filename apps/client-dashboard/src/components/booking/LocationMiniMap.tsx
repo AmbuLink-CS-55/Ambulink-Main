@@ -61,7 +61,7 @@ export function LocationMiniMap({ value, onChange, className }: LocationMiniMapP
         />
         <MapClickCapture onChange={onChange} />
         <MapViewportSync point={value} />
-        {value && (
+        {value ? (
           <MapMarker
             longitude={value.x}
             latitude={value.y}
@@ -72,7 +72,7 @@ export function LocationMiniMap({ value, onChange, className }: LocationMiniMapP
               <span className="h-3 w-3 rounded-full border-2 border-white bg-red-500 shadow-md" />
             </MarkerContent>
           </MapMarker>
-        )}
+        ) : null}
       </Map>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   clearBookingHistory,
   loadBookingHistory,
@@ -31,7 +31,5 @@ export function useBookingHistory(role: BookingHistoryRole) {
     return unsubscribe;
   }, [load, role]);
 
-  const list = useMemo(() => items, [items]);
-
-  return { loading, items: list, reload: load, clear };
+  return { loading, items, reload: load, clear };
 }
