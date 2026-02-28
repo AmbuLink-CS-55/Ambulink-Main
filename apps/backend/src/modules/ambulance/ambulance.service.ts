@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { SocketService } from "@/common/socket/socket.service";
+import { SocketService } from "@/core/socket/socket.service";
 import type { CreateAmbulanceDto, UpdateAmbulanceDto } from "@/common/validation/schemas";
 import { AmbulanceRepository } from "./ambulance.repository";
 

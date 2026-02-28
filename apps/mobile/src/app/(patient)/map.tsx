@@ -1,16 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Text, Alert, View, ActivityIndicator } from "react-native";
-import UserMap from "@/components/patient/UserMap";
-import MapOptions from "../../components/patient/MapOptions";
-import { useLocation } from "@/hooks/useLocation";
-import { usePatientEvents } from "@/hooks/usePatientEvents";
-import { useNearbyHospitals } from "@/hooks/useNearbyHospitals";
-import { useNearbyDrivers } from "@/hooks/useNearbyDrivers";
-import { loadSettings } from "@/utils/settingsStorage";
+import UserMap from "./components/UserMap";
+import MapOptions from "./components/MapOptions";
+import { useLocation } from "@/common/hooks/useLocation";
+import { usePatientEvents } from "./hooks/usePatientEvents";
+import { useNearbyHospitals } from "./hooks/useNearbyHospitals";
+import { useNearbyDrivers } from "./hooks/useNearbyDrivers";
+import { loadSettings } from "@/common/utils/settingsStorage";
 import type { BookingStatus, User, Hospital, PatientSettingsData } from "@ambulink/types";
-import { sendPatientCancel, sendPatientHelp } from "@/lib/patientEvents";
+import { sendPatientCancel, sendPatientHelp } from "@/common/lib/patientEvents";
 import { env } from "../../../env";
-import { useSocket } from "@/hooks/SocketContext";
+import { useSocket } from "@/common/hooks/SocketContext";
 const PATIENT_BOOKING_TIMEOUT_MS = 40000;
 
 export default function Map() {

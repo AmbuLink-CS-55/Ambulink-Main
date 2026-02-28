@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { Alert, Linking, Pressable, ScrollView, Text, View } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useSocket } from "@/hooks/SocketContext";
+import { useSocket } from "@/common/hooks/SocketContext";
 import type { BookingAssignedPayload, BookingStatus } from "@ambulink/types";
 import { env } from "../../../env";
-import { postDriverArrived, postDriverCompleted, postDriverShift } from "@/lib/driverEvents";
-import { useDriverShift } from "@/hooks/useDriverShift";
+import { postDriverArrived, postDriverCompleted, postDriverShift } from "@/common/lib/driverEvents";
+import { useDriverShift } from "./hooks/useDriverShift";
 
 const SRI_LANKA_REGION = {
   latitude: 7.8731,

@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { eq, ne, and, or, sql, inArray, desc } from "drizzle-orm";
-import { ambulanceProviders, bookings, hospitals, users } from "@/common/database/schema";
-import { DbExecutor, DbService } from "@/common/database/db.service";
-import type { Booking, BookingStatus } from "@/common/database/schema";
+import { ambulanceProviders, bookings, hospitals, users } from "@/core/database/schema";
+import { DbExecutor, DbService } from "@/core/database/db.service";
+import type { Booking, BookingStatus } from "@/core/database/schema";
 
 type CreateBookingValues = {
   patientId: string;

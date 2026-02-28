@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { UserStatus } from "@/common/database/schema";
+import { UserStatus } from "@/core/database/schema";
 import { DispatcherRepository } from "./dispatcher.repository";
 
 @Injectable()

@@ -2,11 +2,11 @@ import { Server, Socket } from "socket.io";
 import { OnGatewayInit, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import { UnauthorizedException } from "@nestjs/common";
 
-import { SocketService } from "@/common/socket/socket.service";
+import { SocketService } from "@/core/socket/socket.service";
 import { BookingService } from "../booking/booking.service";
 import { DispatcherService } from "./dispatcher.service";
-import { TokenService } from "@/common/auth/token.service";
-import { authenticateSocket } from "@/common/auth/ws-auth";
+import { TokenService } from "@/core/auth/token.service";
+import { authenticateSocket } from "@/core/auth/ws-auth";
 import env from "@/env";
 
 @WebSocketGateway({ cors: { origin: env.FRONTEND_URL ?? false }, namespace: "/dispatcher" })

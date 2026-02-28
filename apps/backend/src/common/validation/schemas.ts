@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createInsertSchema } from "drizzle-zod";
-import { ambulance, ambulanceProviders, users } from "@/common/database/schema";
+import { ambulance, ambulanceProviders, users } from "@/core/database/schema";
 
 export const createPatientSchema = createInsertSchema(users).omit({
   id: true,

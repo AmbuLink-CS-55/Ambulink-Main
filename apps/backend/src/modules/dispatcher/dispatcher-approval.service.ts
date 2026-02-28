@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import { SocketService } from "@/common/socket/socket.service";
-import type { User } from "@/common/database/schema";
+import { SocketService } from "@/core/socket/socket.service";
+import type { User } from "@/core/database/schema";
 import { DispatcherRepository } from "./dispatcher.repository";
 
 @Injectable()

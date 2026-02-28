@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { eq, sql } from "drizzle-orm";
-import { hospitals } from "@/common/database/schema";
-import { DbExecutor, DbService } from "@/common/database/db.service";
+import { hospitals } from "@/core/database/schema";
+import { DbExecutor, DbService } from "@/core/database/db.service";
 
 @Injectable()
 export class HospitalRepository {

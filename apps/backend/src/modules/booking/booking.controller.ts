@@ -9,9 +9,9 @@ import {
   type ManualAssignBookingDto,
   type ReassignBookingDto,
 } from "@/common/validation/schemas";
-import { CurrentUser } from "@/common/auth/current-user.decorator";
-import type { AuthUser } from "@/common/auth/auth.types";
-import { Roles } from "@/common/auth/roles.decorator";
+import { CurrentUser } from "@/core/auth/current-user.decorator";
+import type { AuthUser } from "@/core/auth/auth.types";
+import { Roles } from "@/core/auth/roles.decorator";
 
 @Controller("api/booking")
 export class BookingController {

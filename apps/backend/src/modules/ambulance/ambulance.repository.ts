@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { eq } from "drizzle-orm";
-import { ambulance } from "@/common/database/schema";
-import { DbService } from "@/common/database/db.service";
-import type { NewAmbulance } from "@/common/database/schema";
+import { ambulance } from "@/core/database/schema";
+import { DbService } from "@/core/database/db.service";
+import type { NewAmbulance } from "@/core/database/schema";
 
 @Injectable()
 export class AmbulanceRepository {

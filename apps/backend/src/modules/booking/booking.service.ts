@@ -6,23 +6,23 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { and, eq, sql } from "drizzle-orm";
-import { bookings, users } from "@/common/database/schema";
-import type { Booking, Hospital, User } from "@/common/database/schema";
-import { DbExecutor, DbService } from "@/common/database/db.service";
+import { bookings, users } from "@/core/database/schema";
+import type { Booking, Hospital, User } from "@/core/database/schema";
+import { DbExecutor, DbService } from "@/core/database/db.service";
 import { DispatcherService } from "../dispatcher/dispatcher.service";
-import { RealtimeNotifierService } from "@/common/events/realtime-notifier.service";
+import { RealtimeNotifierService } from "@/events/realtime-notifier.service";
 import type {
   BookingLogEntry,
   DriverLocationUpdate,
   DispatcherBookingPayload,
   DispatcherBookingUpdatePayload,
 } from "@ambulink/types";
-import { mapAssignedBookingPayload, mapDispatcherBookingPayload } from "@/mappers";
+import { mapAssignedBookingPayload, mapDispatcherBookingPayload } from "@/common/mappers";
 import type { ManualAssignBookingDto, ReassignBookingDto } from "@/common/validation/schemas";
 import { DispatcherApprovalService } from "../dispatcher/dispatcher-approval.service";
 import { BookingRepository } from "./booking.repository";
-import { DriverRepository } from "../drivers/driver.repository";
-import { PatientRepository } from "../patients/patient.repository";
+import { DriverRepository } from "../driver/driver.repository";
+import { PatientRepository } from "../patient/patient.repository";
 import { HospitalRepository } from "../hospital/hospital.repository";
 
 @Injectable()

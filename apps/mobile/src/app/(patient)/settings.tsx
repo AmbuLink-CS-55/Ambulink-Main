@@ -1,21 +1,21 @@
 import { View, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import i18n from "@/i18n/i18n";
-import { SettingsProvider, useSettings } from "@/contexts/SettingsContext";
+import i18n from "@/common/i18n/i18n";
+import { SettingsProvider, useSettings } from "@/common/hooks/SettingsContext";
 
 // Sections
-import PersonalSection from "@/components/patient/settings/PersonalSection";
-import MedicalSection from "@/components/patient/settings/MedicalSection";
-import EmergencyContactsSection from "@/components/patient/settings/EmergencyContactsSection";
-import AppSettingsSection from "@/components/patient/settings/AppSettingsSection";
+import PersonalSection from "./components/settings/PersonalSection";
+import MedicalSection from "./components/settings/MedicalSection";
+import EmergencyContactsSection from "./components/settings/EmergencyContactsSection";
+import AppSettingsSection from "./components/settings/AppSettingsSection";
 
 // Modals
-import BloodTypeModal from "@/components/patient/settings/modals/BloodTypeModal";
-import LanguageModal from "@/components/patient/settings/modals/LanguageModal";
-import AllergiesModal from "@/components/patient/settings/modals/AllergiesModal";
-import EmergencyContactModal from "@/components/patient/settings/modals/EmergencyContactModal";
+import BloodTypeModal from "./components/settings/modals/BloodTypeModal";
+import LanguageModal from "./components/settings/modals/LanguageModal";
+import AllergiesModal from "./components/settings/modals/AllergiesModal";
+import EmergencyContactModal from "./components/settings/modals/EmergencyContactModal";
 
-import { BLOOD_TYPES, LANGUAGES, ALLERGIES_LIST } from "@/constants/settings";
+import { BLOOD_TYPES, LANGUAGES, ALLERGIES_LIST } from "@/common/constants/settings";
 
 export default function Settings() {
   return (

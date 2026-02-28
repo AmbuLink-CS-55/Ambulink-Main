@@ -1,12 +1,12 @@
-import UserMap from "@/components/patient/UserMap";
-import { useSocket } from "@/hooks/SocketContext";
+import UserMap from "../(patient)/components/UserMap";
+import { useSocket } from "@/common/hooks/SocketContext";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocation } from "@/hooks/useLocation";
+import { useLocation } from "@/common/hooks/useLocation";
 import type { Point } from "@ambulink/types";
-import { AppImage as Image } from "@/components/ui/AppImage";
+import { AppImage as Image } from "@/common/components/AppImage";
 
 const LocationCard = ({
   title,

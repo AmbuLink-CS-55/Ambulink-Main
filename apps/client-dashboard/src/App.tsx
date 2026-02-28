@@ -5,12 +5,12 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { DashboardLayout } from "./pages/layouts/DashboardLayout";
 
-const Dashboard = lazy(() => import("./pages/dashboard"));
+const Dashboard = lazy(() => import("./pages/dashboard/page"));
 const LoginPage = lazy(() => import("./pages/login"));
-const AmbulancesDashboard = lazy(() => import("./pages/ambulances/dashboard"));
-const DriversDashboard = lazy(() => import("./pages/drivers/dashboard"));
-const PatientsDashboard = lazy(() => import("./pages/patients/dashboard"));
-const BookingLogPage = lazy(() => import("./pages/booking/dashboard"));
+const AmbulancesDashboard = lazy(() => import("./pages/ambulances/page"));
+const DriversDashboard = lazy(() => import("./pages/drivers/page"));
+const PatientsDashboard = lazy(() => import("./pages/patients/page"));
+const BookingLogPage = lazy(() => import("./pages/booking/page"));
 
 const HOUR_IN_MS = 1000 * 60 * 60;
 const DAY_IN_MS = HOUR_IN_MS * 24;

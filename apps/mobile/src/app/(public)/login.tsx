@@ -1,5 +1,5 @@
-import { useAuthStore } from "@/hooks/AuthContext";
-import i18n from "@/i18n/i18n";
+import { useAuthStore } from "@/common/hooks/AuthContext";
+import i18n from "@/common/i18n/i18n";
 import { router } from "expo-router";
 import { Button } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";

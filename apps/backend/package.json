@@ -24,7 +24,7 @@
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit generate && drizzle-kit migrate",
     "studio": "drizzle-kit studio",
-    "seed": "npx tsx src/common/database/seed/seed.ts"
+    "seed": "npx tsx src/core/database/seed/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.12",

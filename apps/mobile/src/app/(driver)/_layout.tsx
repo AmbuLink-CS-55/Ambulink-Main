@@ -1,12 +1,12 @@
 import { Tabs, Redirect } from "expo-router";
 import { useEffect } from "react";
-import { useAuthStore } from "@/hooks/AuthContext";
-import { SocketProvider } from "@/hooks/SocketContext";
-import { useDriverTracking } from "@/hooks/useDriverTracking";
-import { useDriverHistory } from "@/hooks/useDriverHistory";
-import { useDriverShift } from "@/hooks/useDriverShift";
+import { useAuthStore } from "@/common/hooks/AuthContext";
+import { SocketProvider } from "@/common/hooks/SocketContext";
+import { useDriverTracking } from "./hooks/useDriverTracking";
+import { useDriverHistory } from "./hooks/useDriverHistory";
+import { useDriverShift } from "./hooks/useDriverShift";
 import Ionicons from "@expo/vector-icons/build/Ionicons";
-import { apiGet } from "@/lib/api";
+import { apiGet } from "@/common/lib/api";
 import { env } from "../../../env";
 
 function DriverHistoryListener() {
