@@ -18,23 +18,36 @@ type BookingCardProps = {
   providerName?: string | null;
 };
 
-function BookingCard({ createdAt, status, personName, hospitalName, providerName }: BookingCardProps) {
+function BookingCard({
+  createdAt,
+  status,
+  personName,
+  hospitalName,
+  providerName,
+}: BookingCardProps) {
   return (
     <View className="mb-3 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
       <View className="flex-row items-center justify-between">
         <Text className="text-xs text-gray-500">{createdAt}</Text>
-        <Text className={`text-xs font-semibold ${status === "COMPLETED" ? "text-green-600" : "text-red-500"}`}>
+        <Text
+          className={`text-xs font-semibold ${status === "COMPLETED" ? "text-green-600" : "text-red-500"}`}
+        >
           {status}
         </Text>
       </View>
       <Text className="text-base font-semibold text-gray-900 mt-2">{personName}</Text>
       <Text className="text-sm text-gray-500 mt-1">Hospital: {hospitalName}</Text>
-      {providerName ? <Text className="text-sm text-gray-500 mt-1">Provider: {providerName}</Text> : null}
+      {providerName ? (
+        <Text className="text-sm text-gray-500 mt-1">Provider: {providerName}</Text>
+      ) : null}
     </View>
   );
 }
 
-export default function BookingHistoryScreen({ role, title = "Booking History" }: BookingHistoryScreenProps) {
+export default function BookingHistoryScreen({
+  role,
+  title = "Booking History",
+}: BookingHistoryScreenProps) {
   const { items, loading, reload, clear } = useBookingHistory(role);
   const unknownPerson = role === "PATIENT" ? "Unknown Driver" : "Unknown Patient";
 
@@ -78,7 +91,11 @@ export default function BookingHistoryScreen({ role, title = "Booking History" }
             <BookingCard
               createdAt={item.createdAt}
               status={item.status}
-              personName={role === "PATIENT" ? (item.driverName ?? unknownPerson) : (item.patientName ?? unknownPerson)}
+              personName={
+                role === "PATIENT"
+                  ? (item.driverName ?? unknownPerson)
+                  : (item.patientName ?? unknownPerson)
+              }
               hospitalName={item.hospitalName ?? "Unknown"}
               providerName={item.providerName}
             />

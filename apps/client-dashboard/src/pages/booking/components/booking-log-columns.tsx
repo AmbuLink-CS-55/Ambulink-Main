@@ -55,16 +55,20 @@ export const bookingLogColumns = [
   {
     header: "Status",
     width: "140px",
-    cell: (row: BookingLogEntry) => <Badge variant={statusVariant(row.status as Status)}>{row.status}</Badge>,
+    cell: (row: BookingLogEntry) => (
+      <Badge variant={statusVariant(row.status as Status)}>{row.status}</Badge>
+    ),
   },
   {
     header: "Requested",
     width: "170px",
-    cell: (row: BookingLogEntry) => (row.requestedAt ? new Date(row.requestedAt).toLocaleString() : "-"),
+    cell: (row: BookingLogEntry) =>
+      row.requestedAt ? new Date(row.requestedAt).toLocaleString() : "-",
   },
   {
     header: "Completed",
     width: "170px",
-    cell: (row: BookingLogEntry) => (row.completedAt ? new Date(row.completedAt).toLocaleString() : "-"),
+    cell: (row: BookingLogEntry) =>
+      row.completedAt ? new Date(row.completedAt).toLocaleString() : "-",
   },
 ];

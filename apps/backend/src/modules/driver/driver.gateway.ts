@@ -15,11 +15,15 @@ import { TokenService } from "@/core/auth/token.service";
 import { authenticateSocket } from "@/core/auth/ws-auth";
 import env from "../../../env";
 
-const gatewayCorsOrigins = [env.FRONTEND_URL, ...(env.FRONTEND_URLS?.split(",").map((origin) => origin.trim()) ?? [])].filter((origin): origin is string => Boolean(origin));
+const gatewayCorsOrigins = [
+  env.FRONTEND_URL,
+  ...(env.FRONTEND_URLS?.split(",").map((origin) => origin.trim()) ?? []),
+].filter((origin): origin is string => Boolean(origin));
 
 @WebSocketGateway({
   cors: {
-    origin: gatewayCorsOrigins.length > 0 ? gatewayCorsOrigins : env.APP_STAGE === "dev" ? true : false,
+    origin:
+      gatewayCorsOrigins.length > 0 ? gatewayCorsOrigins : env.APP_STAGE === "dev" ? true : false,
   },
   namespace: "/driver",
 })

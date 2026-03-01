@@ -28,7 +28,10 @@ export async function apiGet<T>(path: string, query?: Record<string, QueryValue>
   return (await response.json()) as T;
 }
 
-export async function apiPost<TResponse, TBody = unknown>(path: string, body: TBody): Promise<TResponse> {
+export async function apiPost<TResponse, TBody = unknown>(
+  path: string,
+  body: TBody
+): Promise<TResponse> {
   const url = new URL(path, env.EXPO_PUBLIC_API_SERVER_URL);
 
   const response = await fetch(url.toString(), {

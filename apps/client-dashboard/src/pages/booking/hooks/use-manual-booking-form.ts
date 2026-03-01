@@ -29,7 +29,10 @@ const initialState: ManualBookingFormState = {
 export function useManualBookingForm() {
   const [form, setForm] = useState<ManualBookingFormState>(initialState);
 
-  const updateField = <K extends keyof ManualBookingFormState>(field: K, value: ManualBookingFormState[K]) => {
+  const updateField = <K extends keyof ManualBookingFormState>(
+    field: K,
+    value: ManualBookingFormState[K]
+  ) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 

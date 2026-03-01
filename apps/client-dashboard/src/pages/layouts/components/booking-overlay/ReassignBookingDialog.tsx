@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +41,11 @@ export function ReassignBookingDialog({
   );
   const [reassignPickupAddress, setReassignPickupAddress] = useState("");
   const [reassignError, setReassignError] = useState<string | null>(null);
+  const driverId = useId();
+  const hospitalId = useId();
+  const pickupXId = useId();
+  const pickupYId = useId();
+  const pickupAddressId = useId();
 
   const drivers = useGetDrivers({ providerId: env.VITE_PROVIDER_ID, isActive: true });
   const hospitals = useGetHospitals();
@@ -155,8 +160,12 @@ export function ReassignBookingDialog({
           ) : null}
 
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Driver</label>
+            <label className="text-sm font-medium" htmlFor={driverId}>
+              Driver
+            </label>
             <Select
+              id={driverId}
+              name="driverId"
               value={reassignDriverId}
               onChange={(e) => setReassignDriverId(e.target.value)}
               options={driverOptions}
@@ -164,8 +173,12 @@ export function ReassignBookingDialog({
           </div>
 
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Hospital</label>
+            <label className="text-sm font-medium" htmlFor={hospitalId}>
+              Hospital
+            </label>
             <Select
+              id={hospitalId}
+              name="hospitalId"
               value={reassignHospitalId}
               onChange={(e) => setReassignHospitalId(e.target.value)}
               options={hospitalOptions}
@@ -174,17 +187,31 @@ export function ReassignBookingDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
-              <label className="text-sm font-medium">Pickup Longitude (x)</label>
-              <Input value={reassignPickupX} onChange={(e) => setReassignPickupX(e.target.value)} />
+              <label className="text-sm font-medium" htmlFor={pickupXId}>
+                Pickup Longitude (x)
+              </label>
+              <Input
+                id={pickupXId}
+                name="pickupX"
+                value={reassignPickupX}
+                onChange={(e) => setReassignPickupX(e.target.value)}
+              />
             </div>
             <div className="grid gap-2">
-              <label className="text-sm font-medium">Pickup Latitude (y)</label>
-              <Input value={reassignPickupY} onChange={(e) => setReassignPickupY(e.target.value)} />
+              <label className="text-sm font-medium" htmlFor={pickupYId}>
+                Pickup Latitude (y)
+              </label>
+              <Input
+                id={pickupYId}
+                name="pickupY"
+                value={reassignPickupY}
+                onChange={(e) => setReassignPickupY(e.target.value)}
+              />
             </div>
           </div>
 
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Pick Location on Map</label>
+            <p className="text-sm font-medium">Pick Location on Map</p>
             <LocationMiniMap
               className="h-40 sm:h-52 w-full overflow-hidden rounded-md border"
               value={currentReassignPoint}
@@ -199,8 +226,13 @@ export function ReassignBookingDialog({
           </div>
 
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Pickup Address (optional)</label>
+            <label className="text-sm font-medium" htmlFor={pickupAddressId}>
+              Pickup Address (optional)
+            </label>
             <Input
+              id={pickupAddressId}
+              name="pickupAddress"
+              autoComplete="street-address"
               value={reassignPickupAddress}
               onChange={(e) => setReassignPickupAddress(e.target.value)}
               placeholder="Only send if changed"

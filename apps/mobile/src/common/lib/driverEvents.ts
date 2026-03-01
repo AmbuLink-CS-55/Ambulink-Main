@@ -2,10 +2,7 @@ import { apiPost } from "./api";
 import type { DriverCommand, DriverLocationCommand, DriverShiftCommand } from "@ambulink/types";
 
 export async function postDriverLocation(payload: DriverLocationCommand) {
-  return apiPost<{ ok: boolean }, DriverLocationCommand>(
-    "/api/drivers/events/location",
-    payload
-  );
+  return apiPost<{ ok: boolean }, DriverLocationCommand>("/api/drivers/events/location", payload);
 }
 
 export async function postDriverArrived(payload: DriverCommand) {
@@ -17,8 +14,8 @@ export async function postDriverCompleted(payload: DriverCommand) {
 }
 
 export async function postDriverShift(payload: DriverShiftCommand) {
-  return apiPost<{ ok: boolean; status: "AVAILABLE" | "OFFLINE"; onShift: boolean }, DriverShiftCommand>(
-    "/api/drivers/events/shift",
-    payload
-  );
+  return apiPost<
+    { ok: boolean; status: "AVAILABLE" | "OFFLINE"; onShift: boolean },
+    DriverShiftCommand
+  >("/api/drivers/events/shift", payload);
 }

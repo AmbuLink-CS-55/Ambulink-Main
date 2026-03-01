@@ -41,7 +41,7 @@ export class DbService implements OnModuleInit, OnModuleDestroy {
 
         if (i >= retries) {
           this.logger.error("All database connection attempts failed", err as Error);
-          throw (err instanceof Error ? err : new Error("Database connection failed"));
+          throw err instanceof Error ? err : new Error("Database connection failed");
         }
 
         this.logger.warn(`Database connection failed, retrying ${i} in ${delay}`);
@@ -52,9 +52,9 @@ export class DbService implements OnModuleInit, OnModuleDestroy {
       }
     }
 
-    throw (
-      lastError instanceof Error ? lastError : new Error("Database connection failed after retries")
-    );
+    throw lastError instanceof Error
+      ? lastError
+      : new Error("Database connection failed after retries");
   }
 
   async onModuleDestroy() {

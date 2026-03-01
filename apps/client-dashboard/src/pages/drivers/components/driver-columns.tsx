@@ -3,7 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import type { BadgeVariant } from "@/components/ui/badge";
 import type { User, UserStatus } from "@/lib/types";
 
-function onlineBadge(status: UserStatus | null | undefined): { label: string; variant: BadgeVariant } {
+function onlineBadge(status: UserStatus | null | undefined): {
+  label: string;
+  variant: BadgeVariant;
+} {
   if (status === "AVAILABLE") return { label: "Online", variant: "success" };
   if (status === "BUSY") return { label: "Busy", variant: "warning" };
   return { label: "Offline", variant: "default" };

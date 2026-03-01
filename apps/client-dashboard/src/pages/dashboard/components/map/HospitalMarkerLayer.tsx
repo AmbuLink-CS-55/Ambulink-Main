@@ -2,6 +2,12 @@ import type { Hospital } from "@/lib/types";
 import { memo, useId, useState, useMemo, useEffect } from "react";
 import { useMap, MapPopup } from "@/components/ui/map";
 
+function resolveThemeColor(variableName: string, fallback: string) {
+  if (typeof window === "undefined") return fallback;
+  const resolved = getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
+  return resolved || fallback;
+}
+
 function HospitalMarkersLayer({ hospitals }: { hospitals: Hospital[] }) {
   const { map, isLoaded } = useMap();
   const id = useId();
@@ -24,6 +30,8 @@ function HospitalMarkersLayer({ hospitals }: { hospitals: Hospital[] }) {
     }
 
     const triangleId = "hospital-triangle-marker";
+    const triangleFill = resolveThemeColor("--amb-info", "#2B7FFF");
+    const triangleStroke = resolveThemeColor("--amb-surface", "#ffffff");
     const ensureLayer = () => {
       const existingLayer = map.getLayer(layerId);
       if (existingLayer && existingLayer.type !== "symbol") {
@@ -47,7 +55,7 @@ function HospitalMarkersLayer({ hospitals }: { hospitals: Hospital[] }) {
     if (!map.hasImage(triangleId)) {
       const triangleSvg =
         "<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 24 24'>" +
-        "<path d='M12 3 L22 21 L2 21 Z' fill='#2B7FFF' stroke='#ffffff' stroke-width='2'/>" +
+        `<path d='M12 3 L22 21 L2 21 Z' fill='${triangleFill}' stroke='${triangleStroke}' stroke-width='2'/>` +
         "</svg>";
       const image = new Image(26, 26);
       image.onload = () => {

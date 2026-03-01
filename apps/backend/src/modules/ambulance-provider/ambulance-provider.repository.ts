@@ -17,10 +17,7 @@ export class AmbulanceProviderRepository {
   }
 
   getAmbulanceProviderById(id: string) {
-    return this.dbService.db
-      .select()
-      .from(ambulanceProviders)
-      .where(eq(ambulanceProviders.id, id));
+    return this.dbService.db.select().from(ambulanceProviders).where(eq(ambulanceProviders.id, id));
   }
 
   updateAmbulanceProvider(id: string, provider: Partial<NewAmbulanceProvider>) {

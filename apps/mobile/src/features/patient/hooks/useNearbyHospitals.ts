@@ -14,10 +14,7 @@ export function useNearbyHospitals({ x, y, limit = 6, radiusKm = 10 }: Params) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const canFetch = useMemo(
-    () => Number.isFinite(x) && Number.isFinite(y),
-    [x, y]
-  );
+  const canFetch = useMemo(() => Number.isFinite(x) && Number.isFinite(y), [x, y]);
 
   useEffect(() => {
     if (!canFetch || x === undefined || y === undefined) {

@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +46,17 @@ export function ManualBookingDialog({
   isPending: boolean;
   onSubmit: () => void;
 }) {
+  const patientModeId = useId();
+  const selectedPatientId = useId();
+  const guestPhoneId = useId();
+  const guestEmailId = useId();
+  const selectedDriverId = useId();
+  const selectedHospitalId = useId();
+  const pickupXId = useId();
+  const pickupYId = useId();
+  const pickupAddressId = useId();
+  const emergencyTypeId = useId();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[90vh] flex-col overflow-hidden p-0">
@@ -64,8 +76,12 @@ export function ManualBookingDialog({
           ) : null}
 
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Patient Type</label>
+            <label className="text-sm font-medium" htmlFor={patientModeId}>
+              Patient Type
+            </label>
             <Select
+              id={patientModeId}
+              name="patientMode"
               value={form.patientMode}
               onChange={(e) => updateField("patientMode", e.target.value as "existing" | "guest")}
               options={[
@@ -77,8 +93,12 @@ export function ManualBookingDialog({
 
           {form.patientMode === "existing" ? (
             <div className="grid gap-2">
-              <label className="text-sm font-medium">Existing Patient</label>
+              <label className="text-sm font-medium" htmlFor={selectedPatientId}>
+                Existing Patient
+              </label>
               <Select
+                id={selectedPatientId}
+                name="selectedPatientId"
                 value={form.selectedPatientId}
                 onChange={(e) => updateField("selectedPatientId", e.target.value)}
                 options={options.patientOptions}
@@ -103,8 +123,13 @@ export function ManualBookingDialog({
           ) : (
             <>
               <div className="grid gap-2">
-                <label className="text-sm font-medium">Guest Phone (optional)</label>
+                <label className="text-sm font-medium" htmlFor={guestPhoneId}>
+                  Guest Phone (optional)
+                </label>
                 <Input
+                  id={guestPhoneId}
+                  name="guestPhone"
+                  autoComplete="tel"
                   value={form.guestPhone}
                   onChange={(e) => updateField("guestPhone", e.target.value)}
                   placeholder="e.g. +94..."
@@ -112,8 +137,13 @@ export function ManualBookingDialog({
               </div>
 
               <div className="grid gap-2">
-                <label className="text-sm font-medium">Guest Email (optional)</label>
+                <label className="text-sm font-medium" htmlFor={guestEmailId}>
+                  Guest Email (optional)
+                </label>
                 <Input
+                  id={guestEmailId}
+                  name="guestEmail"
+                  autoComplete="email"
                   type="email"
                   value={form.guestEmail}
                   onChange={(e) => updateField("guestEmail", e.target.value)}
@@ -123,9 +153,9 @@ export function ManualBookingDialog({
 
               {recentPatients.length > 0 ? (
                 <div className="grid gap-2">
-                  <label className="text-xs font-medium text-muted-foreground">
+                  <p className="text-xs font-medium text-muted-foreground">
                     Quick fill from recent callers
-                  </label>
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {recentPatients
                       .filter((patient) => !!patient.phone)
@@ -150,8 +180,12 @@ export function ManualBookingDialog({
           )}
 
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Driver</label>
+            <label className="text-sm font-medium" htmlFor={selectedDriverId}>
+              Driver
+            </label>
             <Select
+              id={selectedDriverId}
+              name="selectedDriverId"
               value={form.selectedDriverId}
               onChange={(e) => updateField("selectedDriverId", e.target.value)}
               options={options.driverOptions}
@@ -160,8 +194,12 @@ export function ManualBookingDialog({
           </div>
 
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Hospital</label>
+            <label className="text-sm font-medium" htmlFor={selectedHospitalId}>
+              Hospital
+            </label>
             <Select
+              id={selectedHospitalId}
+              name="selectedHospitalId"
               value={form.selectedHospitalId}
               onChange={(e) => updateField("selectedHospitalId", e.target.value)}
               options={options.hospitalOptions}
@@ -171,15 +209,23 @@ export function ManualBookingDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
-              <label className="text-sm font-medium">Pickup Longitude (x)</label>
+              <label className="text-sm font-medium" htmlFor={pickupXId}>
+                Pickup Longitude (x)
+              </label>
               <Input
+                id={pickupXId}
+                name="pickupX"
                 value={form.pickupX}
                 onChange={(e) => updateField("pickupX", e.target.value)}
               />
             </div>
             <div className="grid gap-2">
-              <label className="text-sm font-medium">Pickup Latitude (y)</label>
+              <label className="text-sm font-medium" htmlFor={pickupYId}>
+                Pickup Latitude (y)
+              </label>
               <Input
+                id={pickupYId}
+                name="pickupY"
                 value={form.pickupY}
                 onChange={(e) => updateField("pickupY", e.target.value)}
               />
@@ -187,7 +233,7 @@ export function ManualBookingDialog({
           </div>
 
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Pick Location on Map</label>
+            <p className="text-sm font-medium">Pick Location on Map</p>
             <LocationMiniMap
               className="h-40 sm:h-52 w-full overflow-hidden rounded-md border"
               value={currentPickupPoint}
@@ -202,16 +248,25 @@ export function ManualBookingDialog({
           </div>
 
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Pickup Address (optional)</label>
+            <label className="text-sm font-medium" htmlFor={pickupAddressId}>
+              Pickup Address (optional)
+            </label>
             <Input
+              id={pickupAddressId}
+              name="pickupAddress"
+              autoComplete="street-address"
               value={form.pickupAddress}
               onChange={(e) => updateField("pickupAddress", e.target.value)}
             />
           </div>
 
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Emergency Type (optional)</label>
+            <label className="text-sm font-medium" htmlFor={emergencyTypeId}>
+              Emergency Type (optional)
+            </label>
             <Input
+              id={emergencyTypeId}
+              name="emergencyType"
               value={form.emergencyType}
               onChange={(e) => updateField("emergencyType", e.target.value)}
             />

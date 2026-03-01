@@ -41,9 +41,14 @@ function RoleButton({
   onSelect: (next: Role) => void;
 }) {
   return (
-    <Pressable onPress={() => onSelect(type)} style={[styles.roleButton, role === type && styles.roleButtonActive]}>
+    <Pressable
+      onPress={() => onSelect(type)}
+      style={[styles.roleButton, role === type && styles.roleButtonActive]}
+    >
       <Ionicons name={icon} size={24} color={role === type ? "white" : "#205fb7ff"} />
-      <Text style={[styles.roleButtonText, role === type && styles.roleButtonTextActive]}>{label}</Text>
+      <Text style={[styles.roleButtonText, role === type && styles.roleButtonTextActive]}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -63,7 +68,12 @@ function StaffFields({
     <>
       <View style={styles.inputContainer}>
         <Ionicons name="id-card-outline" size={20} color="#9CA3AF" />
-        <TextInput style={styles.input} placeholder="Staff ID" value={staffId} onChangeText={setStaffId} />
+        <TextInput
+          style={styles.input}
+          placeholder="Staff ID"
+          value={staffId}
+          onChangeText={setStaffId}
+        />
       </View>
       <Pressable style={styles.inputContainer} onPress={onSelectHospital}>
         <Ionicons name="business-outline" size={20} color="#9CA3AF" />
@@ -183,8 +193,20 @@ export default function SignupPage() {
                     role={role}
                     onSelect={setRole}
                   />
-                  <RoleButton type="driver" label="Driver" icon="car-outline" role={role} onSelect={setRole} />
-                  <RoleButton type="emt" label="EMT" icon="medkit-outline" role={role} onSelect={setRole} />
+                  <RoleButton
+                    type="driver"
+                    label="Driver"
+                    icon="car-outline"
+                    role={role}
+                    onSelect={setRole}
+                  />
+                  <RoleButton
+                    type="emt"
+                    label="EMT"
+                    icon="medkit-outline"
+                    role={role}
+                    onSelect={setRole}
+                  />
                 </View>
 
                 {(role === "driver" || role === "emt") && (

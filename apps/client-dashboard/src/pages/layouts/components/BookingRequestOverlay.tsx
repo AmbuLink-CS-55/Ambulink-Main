@@ -20,6 +20,7 @@ import { OngoingBookingsSection } from "@/pages/layouts/components/booking-overl
 import { ReassignBookingDialog } from "@/pages/layouts/components/booking-overlay/ReassignBookingDialog";
 
 export function BookingRequestOverlay({ socketConnected }: { socketConnected?: boolean }) {
+  const panelId = "booking-activity-panel";
   const queryClient = useQueryClient();
   const { bookingRequests } = useBookingRequests();
   const ongoingBookingsQuery = useQuery<Record<string, DispatcherBookingPayload>>({
@@ -76,9 +77,15 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
           size="icon"
           onClick={() => setIsOpen(!isOpen)}
           aria-label={isOpen ? "Collapse booking activity panel" : "Open booking activity panel"}
+          aria-expanded={isOpen}
+          aria-controls={panelId}
           className="relative shadow-[var(--amb-shadow-medium)]"
         >
-          {isOpen ? <X className="h-4 w-4" /> : <Truck />}
+          {isOpen ? (
+            <X className="h-4 w-4 text-[color:var(--primary-foreground)]" />
+          ) : (
+            <Truck className="h-4 w-4 text-[color:var(--primary-foreground)]" />
+          )}
           {bookingRequests.length > 0 ? (
             <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-[color:var(--amb-critical)] text-[color:var(--amb-surface)] text-xs flex items-center justify-center font-semibold">
               {bookingRequests.length}
@@ -88,14 +95,15 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
       </div>
 
       <div
+        id={panelId}
         className={cn(
-          "fixed top-2 bottom-2 right-2 h-auto w-96 rounded-2xl border border-[color:var(--amb-border)] bg-[color:var(--amb-surface)]/85 shadow-[var(--amb-shadow-high)] backdrop-blur-md z-40 transition-transform duration-300 ease-in-out",
+          "fixed top-0 bottom-2 right-2 h-auto w-96 rounded-2xl border border-[color:var(--amb-border)] bg-[color:var(--amb-surface)] shadow-[var(--amb-shadow-high)] z-40 transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
         <div className="flex flex-col h-full">
-          <div className="items-center w-full justify-between p-3 border-b border-[color:var(--amb-border)]">
-            <h1 className="font-bold text-xl items-center text-center ">Activity</h1>
+          <div className="flex h-14 w-full items-center justify-center border-b border-[color:var(--amb-border)] px-4">
+            <h2 className="text-center text-xl font-bold leading-none">Activity</h2>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4">
@@ -127,8 +135,9 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
 
       {isOpen && bookingRequests.length > 0 ? (
         <div
-          className="fixed inset-0 bg-black/20 z-30 transition-opacity duration-300"
+          className="fixed inset-0 z-30 transition-opacity duration-300"
           onClick={() => setIsOpen(false)}
+          aria-hidden
         />
       ) : null}
 

@@ -53,17 +53,20 @@ export class BookingService {
       throw new BadRequestException("Driver without provider");
     }
 
-    const [createdBooking] = await this.bookingRepository.createBooking({
-      patientId: patient.id,
-      pickupAddress: pickupAddr,
-      pickupLocation: { x: _patientLng, y: _patientLat },
-      providerId: pickedDriver.providerId,
-      driverId: pickedDriver.id,
-      hospitalId: hospital.id,
-      dispatcherId: dispatcherId ?? null,
-      emergencyType: emergencyType,
-      fareEstimate: null,
-    }, db);
+    const [createdBooking] = await this.bookingRepository.createBooking(
+      {
+        patientId: patient.id,
+        pickupAddress: pickupAddr,
+        pickupLocation: { x: _patientLng, y: _patientLat },
+        providerId: pickedDriver.providerId,
+        driverId: pickedDriver.id,
+        hospitalId: hospital.id,
+        dispatcherId: dispatcherId ?? null,
+        emergencyType: emergencyType,
+        fareEstimate: null,
+      },
+      db
+    );
 
     return { bookingId: createdBooking?.id ?? null };
   }
@@ -263,6 +266,7 @@ export class BookingService {
         bookingId: updatedBooking.id,
         status: updatedBooking.status,
         updatedAt: new Date().toISOString(),
+        providerId: updatedBooking.providerId ?? null,
       } satisfies DispatcherBookingUpdatePayload);
     }
 
@@ -317,10 +321,18 @@ export class BookingService {
         bookingId: booking.id,
         status: "CANCELLED",
         updatedAt: new Date().toISOString(),
+        providerId: booking.providerId ?? null,
       } satisfies DispatcherBookingUpdatePayload);
     }
 
     if (booking.providerId) {
+      const providerUpdatePayload = {
+        bookingId: booking.id,
+        status: "CANCELLED" as const,
+        updatedAt: new Date().toISOString(),
+        providerId: booking.providerId,
+      } satisfies DispatcherBookingUpdatePayload;
+      this.realtimeNotifier.notifyAllDispatchers("booking:update", providerUpdatePayload);
       this.realtimeNotifier.notifyAllDispatchers("booking:log", {
         providerId: booking.providerId,
         bookingId: booking.id,
@@ -392,12 +404,13 @@ export class BookingService {
     );
 
     const activeRequests = requests.filter(
-      (request): request is {
+      (
+        request
+      ): request is {
         dispatcherId: string;
         driver: Pick<User, "id" | "providerId" | "currentLocation">;
         requestId: string;
-      } =>
-        Boolean(request)
+      } => Boolean(request)
     );
 
     if (activeRequests.length === 0) {

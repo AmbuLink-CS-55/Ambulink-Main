@@ -28,10 +28,7 @@ export class AmbulanceProviderService {
     return result[0];
   }
 
-  async update(
-    id: string,
-    updateAmbulanceProviderDto: UpdateAmbulanceProviderDto
-  ) {
+  async update(id: string, updateAmbulanceProviderDto: UpdateAmbulanceProviderDto) {
     const result = await this.ambulanceProviderRepository.updateAmbulanceProvider(
       id,
       updateAmbulanceProviderDto

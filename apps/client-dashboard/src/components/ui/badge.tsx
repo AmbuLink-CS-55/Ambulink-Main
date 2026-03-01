@@ -10,7 +10,8 @@ type BadgeProps = React.ComponentProps<"span"> & {
 };
 
 const badgeVariants: Record<NonNullable<BadgeProps["variant"]>, string> = {
-  default: "bg-[color:var(--amb-surface-elevated)] text-[color:var(--amb-foreground)] border border-[color:var(--amb-border)]",
+  default:
+    "bg-[color:var(--amb-surface-elevated)] text-[color:var(--amb-foreground)] border border-[color:var(--amb-border)]",
   success: "bg-[color:var(--amb-success)] text-[color:var(--amb-surface)]",
   warning: "bg-[color:var(--amb-warning)] text-[color:var(--amb-surface)]",
   critical: "bg-[color:var(--amb-critical)] text-[color:var(--amb-surface)]",

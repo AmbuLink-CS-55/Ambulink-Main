@@ -220,6 +220,7 @@ export type DispatcherBookingUpdatePayload = {
   bookingId: string;
   status: "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED";
   updatedAt: string;
+  providerId?: string | null;
 };
 export type DispatcherBookingLogPayload = {
   providerId: string;

@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,24 +24,58 @@ type DriverFormFieldsProps = {
 };
 
 function DriverFormFields({ form, onChange, showPassword }: DriverFormFieldsProps) {
+  const fullNameId = useId();
+  const phoneNumberId = useId();
+  const emailId = useId();
+  const passwordId = useId();
+
   return (
     <div className="grid gap-4 px-6">
       <div className="grid gap-2">
-        <label className="text-sm font-medium">Full Name</label>
-        <Input value={form.fullName} onChange={(e) => onChange("fullName", e.target.value)} />
+        <label className="text-sm font-medium" htmlFor={fullNameId}>
+          Full Name
+        </label>
+        <Input
+          id={fullNameId}
+          name="fullName"
+          autoComplete="name"
+          value={form.fullName}
+          onChange={(e) => onChange("fullName", e.target.value)}
+        />
       </div>
       <div className="grid gap-2">
-        <label className="text-sm font-medium">Phone Number</label>
-        <Input value={form.phoneNumber} onChange={(e) => onChange("phoneNumber", e.target.value)} />
+        <label className="text-sm font-medium" htmlFor={phoneNumberId}>
+          Phone Number
+        </label>
+        <Input
+          id={phoneNumberId}
+          name="phoneNumber"
+          autoComplete="tel"
+          value={form.phoneNumber}
+          onChange={(e) => onChange("phoneNumber", e.target.value)}
+        />
       </div>
       <div className="grid gap-2">
-        <label className="text-sm font-medium">Email</label>
-        <Input value={form.email} onChange={(e) => onChange("email", e.target.value)} />
+        <label className="text-sm font-medium" htmlFor={emailId}>
+          Email
+        </label>
+        <Input
+          id={emailId}
+          name="email"
+          autoComplete="email"
+          value={form.email}
+          onChange={(e) => onChange("email", e.target.value)}
+        />
       </div>
       {showPassword ? (
         <div className="grid gap-2">
-          <label className="text-sm font-medium">Password</label>
+          <label className="text-sm font-medium" htmlFor={passwordId}>
+            Password
+          </label>
           <Input
+            id={passwordId}
+            name="password"
+            autoComplete="new-password"
             type="password"
             value={form.passwordHash}
             onChange={(e) => onChange("passwordHash", e.target.value)}

@@ -18,7 +18,7 @@ import { HttpAuthGuard } from "./core/auth/http-auth.guard";
 
 @Module({
   imports: [
-    AuthModule,
+    AuthModule, // By default every HTTP controller goes through HttpAuthGuard unless marked @Public()
     DbModule,
     EventsModule,
     SocketModule,

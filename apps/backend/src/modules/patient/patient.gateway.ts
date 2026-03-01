@@ -1,9 +1,5 @@
 import { Server, Socket } from "socket.io";
-import {
-  OnGatewayInit,
-  WebSocketGateway,
-  WebSocketServer,
-} from "@nestjs/websockets";
+import { OnGatewayInit, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 
 import { PatientService } from "./patient.service";
 import { BookingService } from "../booking/booking.service";
@@ -12,11 +8,15 @@ import { TokenService } from "@/core/auth/token.service";
 import { authenticateSocket } from "@/core/auth/ws-auth";
 import env from "../../../env";
 
-const gatewayCorsOrigins = [env.FRONTEND_URL, ...(env.FRONTEND_URLS?.split(",").map((origin) => origin.trim()) ?? [])].filter((origin): origin is string => Boolean(origin));
+const gatewayCorsOrigins = [
+  env.FRONTEND_URL,
+  ...(env.FRONTEND_URLS?.split(",").map((origin) => origin.trim()) ?? []),
+].filter((origin): origin is string => Boolean(origin));
 
 @WebSocketGateway({
   cors: {
-    origin: gatewayCorsOrigins.length > 0 ? gatewayCorsOrigins : env.APP_STAGE === "dev" ? true : false,
+    origin:
+      gatewayCorsOrigins.length > 0 ? gatewayCorsOrigins : env.APP_STAGE === "dev" ? true : false,
   },
   namespace: "/patient",
 })
@@ -69,7 +69,9 @@ export class PatientGateway implements OnGatewayInit {
         this.socketService.emitToPatient(patientId, "booking:assigned", bookingPayload);
       }
       if (activeBooking.status === "ARRIVED") {
-        this.socketService.emitToPatient(patientId, "booking:arrived", { bookingId: activeBooking.id });
+        this.socketService.emitToPatient(patientId, "booking:arrived", {
+          bookingId: activeBooking.id,
+        });
       }
     }
 

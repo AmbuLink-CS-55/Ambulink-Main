@@ -115,7 +115,10 @@ export default function Map() {
             });
           } catch (error) {
             setIsCancelling(false);
-            Alert.alert("Cancel Failed", error instanceof Error ? error.message : "Please try again.");
+            Alert.alert(
+              "Cancel Failed",
+              error instanceof Error ? error.message : "Please try again."
+            );
           }
         },
       },

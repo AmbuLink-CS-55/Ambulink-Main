@@ -4,7 +4,6 @@ import { env } from "../../../env";
 
 const SocketContext = createContext<Socket | null>(null);
 
-
 export class SocketClientCreator {
   static patientSocketUrl = `${env.EXPO_PUBLIC_WS_SERVER_URL}/patient`;
   static driverSocketUrl = `${env.EXPO_PUBLIC_WS_SERVER_URL}/driver`;
@@ -79,10 +78,7 @@ export class SocketClientCreator {
     });
 
     instance.io.on("reconnect_attempt", (attempt) => {
-      const nextDelay = Math.min(
-        500 * Math.pow(2, Math.max(attempt - 1, 0)),
-        30000
-      );
+      const nextDelay = Math.min(500 * Math.pow(2, Math.max(attempt - 1, 0)), 30000);
       console.info("[socket] reconnect_attempt", {
         url,
         type,
@@ -102,7 +98,6 @@ export class SocketClientCreator {
     }
   }
 }
-
 
 export const SocketProvider = ({
   type,

@@ -1,9 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import {
-  setBookingDecision,
-  upsertBookingRequest,
-} from "@/lib/booking-cache-ops";
+import { setBookingDecision, upsertBookingRequest } from "@/lib/booking-cache-ops";
 import { setBookingRequestCallback } from "@/lib/booking-request-callbacks";
 import type {
   BookingNewPayload,
@@ -65,6 +62,8 @@ export function registerDispatcherSocketHandlers({
   });
 
   socket.on("booking:update", (payload: DispatcherBookingUpdatePayload) => {
+    const matchesProvider = !providerId || !payload.providerId || payload.providerId === providerId;
+    if (!matchesProvider) return;
     queryClient.setQueryData<Record<string, DispatcherBookingPayload>>(
       queryKeys.ongoingBookings(),
       (prev = {}) => {
@@ -128,46 +127,49 @@ export function registerDispatcherSocketHandlers({
   socket.on("booking:log", (payload: DispatcherBookingLogPayload) => {
     if (providerId && payload.providerId !== providerId) return;
 
-    queryClient.setQueryData<BookingLogEntry[]>(queryKeys.bookingLog(providerId ?? null), (prev = []) => {
-      const index = prev.findIndex((entry) => entry.bookingId === payload.bookingId);
-      if (index === -1) {
-        return [
-          {
-            bookingId: payload.bookingId,
-            status: payload.status,
-            updatedAt: payload.updatedAt,
-            requestedAt: null,
-            assignedAt: null,
-            arrivedAt: null,
-            pickedupAt: null,
-            completedAt: null,
-            fareEstimate: null,
-            fareFinal: null,
-            cancellationReason: null,
-            patientId: null,
-            patientName: null,
-            patientPhone: null,
-            driverId: null,
-            driverName: null,
-            driverPhone: null,
-            ambulanceId: null,
-            providerId: payload.providerId ?? null,
-            providerName: null,
-            hospitalId: null,
-            hospitalName: null,
-          },
-          ...prev,
-        ];
-      }
+    queryClient.setQueryData<BookingLogEntry[]>(
+      queryKeys.bookingLog(providerId ?? null),
+      (prev = []) => {
+        const index = prev.findIndex((entry) => entry.bookingId === payload.bookingId);
+        if (index === -1) {
+          return [
+            {
+              bookingId: payload.bookingId,
+              status: payload.status,
+              updatedAt: payload.updatedAt,
+              requestedAt: null,
+              assignedAt: null,
+              arrivedAt: null,
+              pickedupAt: null,
+              completedAt: null,
+              fareEstimate: null,
+              fareFinal: null,
+              cancellationReason: null,
+              patientId: null,
+              patientName: null,
+              patientPhone: null,
+              driverId: null,
+              driverName: null,
+              driverPhone: null,
+              ambulanceId: null,
+              providerId: payload.providerId ?? null,
+              providerName: null,
+              hospitalId: null,
+              hospitalName: null,
+            },
+            ...prev,
+          ];
+        }
 
-      const next = [...prev];
-      next[index] = {
-        ...next[index],
-        status: payload.status,
-        updatedAt: payload.updatedAt,
-      };
-      return next;
-    });
+        const next = [...prev];
+        next[index] = {
+          ...next[index],
+          status: payload.status,
+          updatedAt: payload.updatedAt,
+        };
+        return next;
+      }
+    );
   });
 
   return () => {

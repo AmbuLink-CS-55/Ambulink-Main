@@ -97,7 +97,10 @@ export default function Home() {
         setRideStatus("COMPLETED");
       }
     } catch (error) {
-      Alert.alert("Shift Update Failed", error instanceof Error ? error.message : "Please try again.");
+      Alert.alert(
+        "Shift Update Failed",
+        error instanceof Error ? error.message : "Please try again."
+      );
     } finally {
       setIsShiftUpdating(false);
     }
@@ -210,15 +213,17 @@ export default function Home() {
                   <>
                     {(currentRide.pickupLocation || currentRide.patient.location) &&
                       isValidPoint(currentRide.pickupLocation ?? currentRide.patient.location) && (
-                      <Marker
-                        coordinate={{
-                          latitude: (currentRide.pickupLocation ?? currentRide.patient.location)!.y,
-                          longitude: (currentRide.pickupLocation ?? currentRide.patient.location)!.x,
-                        }}
-                        title="Pickup"
-                        pinColor="red"
-                      />
-                    )}
+                        <Marker
+                          coordinate={{
+                            latitude: (currentRide.pickupLocation ?? currentRide.patient.location)!
+                              .y,
+                            longitude: (currentRide.pickupLocation ?? currentRide.patient.location)!
+                              .x,
+                          }}
+                          title="Pickup"
+                          pinColor="red"
+                        />
+                      )}
                     {currentRide.hospital.location &&
                       isValidPoint(currentRide.hospital.location) && (
                         <Marker

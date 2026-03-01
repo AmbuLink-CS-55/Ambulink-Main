@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -44,6 +45,10 @@ function BaseAmbulanceFormDialog({
   submitDisabled,
   onSubmit,
 }: BaseAmbulanceDialogProps) {
+  const vehicleNumberId = useId();
+  const equipmentLevelId = useId();
+  const statusId = useId();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -54,22 +59,34 @@ function BaseAmbulanceFormDialog({
 
         <div className="grid gap-4 px-6">
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Vehicle Number</label>
+            <label className="text-sm font-medium" htmlFor={vehicleNumberId}>
+              Vehicle Number
+            </label>
             <Input
+              id={vehicleNumberId}
+              name="vehicleNumber"
               value={form.vehicleNumber}
               onChange={(e) => onChange("vehicleNumber", e.target.value)}
             />
           </div>
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Equipment Level</label>
+            <label className="text-sm font-medium" htmlFor={equipmentLevelId}>
+              Equipment Level
+            </label>
             <Input
+              id={equipmentLevelId}
+              name="equipmentLevel"
               value={form.equipmentLevel}
               onChange={(e) => onChange("equipmentLevel", e.target.value)}
             />
           </div>
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Status</label>
+            <label className="text-sm font-medium" htmlFor={statusId}>
+              Status
+            </label>
             <Select
+              id={statusId}
+              name="status"
               value={form.status}
               onChange={(e) => onChange("status", e.target.value as AmbulanceStatus)}
               options={[...STATUS_OPTIONS]}

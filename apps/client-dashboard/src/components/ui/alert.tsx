@@ -8,7 +8,8 @@ const alertVariants = cva(
   {
     variants: {
       variant: {
-        default: "border-[color:var(--amb-border)] bg-[color:var(--amb-surface)] text-[color:var(--amb-foreground)]",
+        default:
+          "border-[color:var(--amb-border)] bg-[color:var(--amb-surface)] text-[color:var(--amb-foreground)]",
         destructive:
           "border-[color:var(--amb-critical)]/40 bg-[color:var(--amb-critical)]/10 text-[color:var(--amb-foreground)] *:data-[slot=alert-description]:text-[color:var(--amb-foreground)] *:[svg]:text-[color:var(--amb-critical)]",
       },

@@ -27,42 +27,47 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-2 border-b">
-        <h1 className="font-bold text-xl items-center text-center">Dispatch.Ambulink</h1>
+      <SidebarHeader className="h-14 flex-row items-center justify-center gap-0 border-b px-4 py-0">
+        <div className="text-center text-xl font-bold leading-none">Dispatch.Ambulink</div>
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Operations</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {MENU_ITEMS.map((item) => {
-                const isActive =
-                  item.path === "/"
-                    ? location.pathname === "/"
-                    : location.pathname.startsWith(item.path);
+        <nav aria-label="Primary">
+          <SidebarGroup>
+            <SidebarGroupLabel>Operations</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {MENU_ITEMS.map((item) => {
+                  const isActive =
+                    item.path === "/"
+                      ? location.pathname === "/"
+                      : location.pathname.startsWith(item.path);
 
-                return (
-                  <SidebarMenuItem key={item.path}>
-                    <Link to={item.path}>
-                      <SidebarMenuButton isActive={isActive}>
+                  return (
+                    <SidebarMenuItem key={item.path}>
+                      <SidebarMenuButton
+                        isActive={isActive}
+                        aria-current={isActive ? "page" : undefined}
+                        render={<Link to={item.path} />}
+                      >
                         <item.icon className="mr-2 size-4" />
                         <span>{item.title}</span>
                       </SidebarMenuButton>
-                    </Link>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </nav>
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-sidebar-border/50">
-        <SidebarMenuButton variant="outline">
-          <Link to="/login" className="justify-center w-full flex">
-            Logout
-          </Link>
+        <SidebarMenuButton
+          variant="outline"
+          render={<Link to="/login" className="justify-center" />}
+        >
+          Logout
         </SidebarMenuButton>
       </SidebarFooter>
     </Sidebar>

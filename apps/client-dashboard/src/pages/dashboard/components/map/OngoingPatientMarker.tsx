@@ -13,7 +13,7 @@ export function OngoingPatientMarker({ longitude, latitude }: OngoingPatientMark
   return (
     <MapMarker longitude={longitude} latitude={latitude}>
       <MarkerContent className="relative">
-        <span className="relative block h-3 w-3 rounded-full bg-yellow-400 border-2 border-white shadow" />
+        <span className="relative block h-3 w-3 rounded-full bg-[color:var(--amb-warning)] border-2 border-[color:var(--amb-surface)] shadow-[var(--amb-shadow-low)]" />
       </MarkerContent>
     </MapMarker>
   );

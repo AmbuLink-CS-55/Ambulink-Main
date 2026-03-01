@@ -36,10 +36,8 @@ export default function UserMap({
   const safeHospitalLocation = isValidPoint(hospitalLocation) ? hospitalLocation : undefined;
   const showDriverEta = bookingStatus !== "ARRIVED" && bookingStatus !== "PICKEDUP";
 
-  const { routeCoords: patientDriverCord, durationSeconds: patientDriverEtaSeconds } = useFetchRoute(
-    safeUserLocation,
-    showDriverEta ? safeDriverLocation : undefined
-  );
+  const { routeCoords: patientDriverCord, durationSeconds: patientDriverEtaSeconds } =
+    useFetchRoute(safeUserLocation, showDriverEta ? safeDriverLocation : undefined);
   const { routeCoords: patientHospitalCord, durationSeconds: patientHospitalEtaSeconds } =
     useFetchRoute(safeUserLocation, safeHospitalLocation);
 
@@ -169,15 +167,15 @@ export default function UserMap({
         {safeHospitalLocation && safeDriverLocation && (
           <View className="w-full rounded-xl bg-white px-4 py-3 shadow-lg mb-3">
             <View className="flex-row items-center justify-between">
-                <View>
-                  <View className="flex-row items-center">
-                    <View className="h-2 w-2 rounded-full bg-[#007AFF] mr-2" />
-                    <Text className="text-xs text-gray-500">Driver ETA</Text>
-                  </View>
-                  <Text className="text-base font-semibold text-gray-900">
-                    {showDriverEta ? formatEta(patientDriverEtaSeconds) : "Arrived"}
-                  </Text>
+              <View>
+                <View className="flex-row items-center">
+                  <View className="h-2 w-2 rounded-full bg-[#007AFF] mr-2" />
+                  <Text className="text-xs text-gray-500">Driver ETA</Text>
                 </View>
+                <Text className="text-base font-semibold text-gray-900">
+                  {showDriverEta ? formatEta(patientDriverEtaSeconds) : "Arrived"}
+                </Text>
+              </View>
               <View>
                 <View className="flex-row items-center">
                   <View className="h-2 w-2 rounded-full bg-[#FF3B30] mr-2" />

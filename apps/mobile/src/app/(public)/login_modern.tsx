@@ -126,10 +126,7 @@ export default function LoginModern() {
             </View>
 
             {/* Forgot Password */}
-            <Pressable
-              onPress={() => {}}
-              style={{ alignItems: "flex-start", marginBottom: 24 }}
-            >
+            <Pressable onPress={() => {}} style={{ alignItems: "flex-start", marginBottom: 24 }}>
               <Text style={{ color: "#205fb7ff", fontSize: 13, fontWeight: "500" }}>
                 Forgot Password?
               </Text>

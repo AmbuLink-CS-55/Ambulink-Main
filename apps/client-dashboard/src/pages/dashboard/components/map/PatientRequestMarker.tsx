@@ -29,11 +29,11 @@ export function PatientRequestMarker({ id }: PatientRequestMarkerProps) {
   return (
     <MapMarker longitude={coordinates[0]} latitude={coordinates[1]}>
       <MarkerContent className="relative flex items-center justify-center h-3 w-3">
-        <span className="absolute h-20 w-20 rounded-full border border-yellow-400 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
-        <span className="absolute h-15 w-15 rounded-full border border-yellow-400 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] [animation-delay:0.3s]" />
-        <span className="absolute h-10 w-10 rounded-full border border-yellow-400 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] [animation-delay:0.6s]" />
+        <span className="absolute h-20 w-20 rounded-full border border-[color:var(--amb-warning)] animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
+        <span className="absolute h-15 w-15 rounded-full border border-[color:var(--amb-warning)] animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] [animation-delay:0.3s]" />
+        <span className="absolute h-10 w-10 rounded-full border border-[color:var(--amb-warning)] animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] [animation-delay:0.6s]" />
 
-        <span className="relative block h-3 w-3 rounded-full bg-yellow-400 border-2 border-white shadow" />
+        <span className="relative block h-3 w-3 rounded-full bg-[color:var(--amb-warning)] border-2 border-[color:var(--amb-surface)] shadow-[var(--amb-shadow-low)]" />
       </MarkerContent>
     </MapMarker>
   );
