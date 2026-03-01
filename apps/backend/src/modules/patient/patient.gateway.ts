@@ -4,19 +4,10 @@ import { OnGatewayInit, WebSocketGateway, WebSocketServer } from "@nestjs/websoc
 import { PatientService } from "./patient.service";
 import { BookingService } from "../booking/booking.service";
 import { SocketService } from "@/core/socket/socket.service";
-import { TokenService } from "@/core/auth/token.service";
-import { authenticateSocket } from "@/core/auth/ws-auth";
-import env from "../../../env";
-
-const gatewayCorsOrigins = [
-  env.FRONTEND_URL,
-  ...(env.FRONTEND_URLS?.split(",").map((origin) => origin.trim()) ?? []),
-].filter((origin): origin is string => Boolean(origin));
 
 @WebSocketGateway({
   cors: {
-    origin:
-      gatewayCorsOrigins.length > 0 ? gatewayCorsOrigins : env.APP_STAGE === "dev" ? true : false,
+    origin: true,
   },
   namespace: "/patient",
 })
@@ -27,8 +18,7 @@ export class PatientGateway implements OnGatewayInit {
   constructor(
     private patientService: PatientService,
     private bookingService: BookingService,
-    private socketService: SocketService,
-    private tokenService: TokenService
+    private socketService: SocketService
   ) {}
 
   afterInit() {
@@ -45,8 +35,7 @@ export class PatientGateway implements OnGatewayInit {
     });
     let patientId: string;
     try {
-      const user = authenticateSocket(client, this.tokenService, ["PATIENT"]);
-      patientId = user.sub;
+      patientId = this.extractSocketActorId(client, "patientId");
     } catch {
       console.warn("[socket] missing_auth", {
         namespace: "/patient",
@@ -80,6 +69,21 @@ export class PatientGateway implements OnGatewayInit {
       clientId: client.id,
       patientId,
     });
+  }
+
+  private extractSocketActorId(client: Socket, key: "patientId" | "driverId" | "dispatcherId") {
+    const authValue = client.handshake.auth?.[key];
+    const queryValue = client.handshake.query?.[key];
+    const value =
+      typeof authValue === "string"
+        ? authValue
+        : typeof queryValue === "string"
+          ? queryValue
+          : null;
+    if (!value) {
+      throw new Error(`${key} is required`);
+    }
+    return value;
   }
 
   handleDisconnect(client: Socket) {

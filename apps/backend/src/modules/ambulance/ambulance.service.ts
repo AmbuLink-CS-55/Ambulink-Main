@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { SocketService } from "@/core/socket/socket.service";
+import { NotificationService } from "@/core/socket/notification.service";
 import type { CreateAmbulanceDto, UpdateAmbulanceDto } from "@/common/validation/schemas";
 import { AmbulanceRepository } from "./ambulance.repository";
 
@@ -7,14 +7,14 @@ import { AmbulanceRepository } from "./ambulance.repository";
 export class AmbulanceService {
   constructor(
     private ambulanceRepository: AmbulanceRepository,
-    private socketService: SocketService
+    private notificationService: NotificationService
   ) {}
 
   async create(createAmbulanceDto: CreateAmbulanceDto) {
     const result = await this.ambulanceRepository.createAmbulance(createAmbulanceDto);
     const created = result[0];
     if (created) {
-      this.socketService.emitToAllDispatchers("ambulance:update", {
+      this.notificationService.notifyAllDispatchers("ambulance:update", {
         providerId: created.providerId,
         ambulance: created,
         action: "created",
@@ -42,7 +42,7 @@ export class AmbulanceService {
     }
     const updated = result[0];
     if (updated) {
-      this.socketService.emitToAllDispatchers("ambulance:update", {
+      this.notificationService.notifyAllDispatchers("ambulance:update", {
         providerId: updated.providerId,
         ambulance: updated,
         action: "updated",

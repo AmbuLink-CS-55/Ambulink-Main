@@ -35,7 +35,7 @@ export function OngoingBookingsSection({
           <Alert
             key={booking.bookingId}
             variant="default"
-            className="border-[color:var(--amb-border)] bg-[color:var(--amb-surface)]"
+            className="border-[color:var(--border)] bg-[color:var(--card)]"
           >
             <Truck className="h-4 w-4" />
             <AlertTitle>Active Booking</AlertTitle>

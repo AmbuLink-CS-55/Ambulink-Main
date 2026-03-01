@@ -1,4 +1,4 @@
-import UserMap from "../(patient)/_components/UserMap";
+import { UserMap } from "@/features/patient/components";
 import { useSocket } from "@/common/hooks/SocketContext";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect } from "react";
@@ -6,7 +6,7 @@ import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocation } from "@/common/hooks/useLocation";
 import type { Point } from "@ambulink/types";
-import { AppImage as Image } from "@/common/components/AppImage";
+import { AppImage as Image } from "@/common/components";
 
 const LocationCard = ({
   title,
@@ -18,15 +18,15 @@ const LocationCard = ({
   onPress?: () => void;
 }) => (
   <Pressable
-    className="flex-row items-center bg-gray-100 rounded-2xl p-4 w-full shadow-md"
+    className="flex-row items-center bg-muted rounded-2xl p-4 w-full shadow-md"
     onPress={onPress}
   >
     <View className="w-10 h-10 rounded-full bg-red-300 justify-center items-center mr-4">
       <MaterialCommunityIcons name="heart-pulse" size={24} color="#000" />
     </View>
     <View className="flex-1 justify-center">
-      <Text className="text-base font-bold text-gray-800">{title}</Text>
-      {subtitle && <Text className="text-xs text-gray-600 mt-0.5">{subtitle}</Text>}
+      <Text className="text-base font-bold text-foreground">{title}</Text>
+      {subtitle && <Text className="text-xs text-muted-foreground mt-0.5">{subtitle}</Text>}
     </View>
     <Image
       source={{ uri: "https://via.placeholder.com/50" }}
@@ -38,9 +38,9 @@ const LocationCard = ({
 
 const Separator = () => (
   <View className="h-5 justify-center items-center gap-0.5">
-    <View className="w-5 h-1 bg-gray-300 rounded-sm" />
-    <View className="w-5 h-1 bg-gray-300 rounded-sm" />
-    <View className="w-5 h-1 bg-gray-300 rounded-sm" />
+    <View className="w-5 h-1 bg-muted rounded-sm" />
+    <View className="w-5 h-1 bg-muted rounded-sm" />
+    <View className="w-5 h-1 bg-muted rounded-sm" />
   </View>
 );
 

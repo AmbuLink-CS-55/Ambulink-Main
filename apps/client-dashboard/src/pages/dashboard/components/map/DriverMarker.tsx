@@ -13,8 +13,8 @@ export function DriverMarker({ longitude, latitude, variant = "active" }: Driver
 
   const markerClassName =
     variant === "available"
-      ? "h-3 w-3 rounded-full border-2 border-[color:var(--amb-critical)] bg-[color:var(--amb-surface)] shadow-[var(--amb-shadow-low)]"
-      : "h-3 w-3 rounded-full bg-[color:var(--amb-critical)] border-2 border-[color:var(--amb-surface)] shadow-[var(--amb-shadow-low)]";
+      ? "h-3 w-3 rounded-full border-2 border-[color:var(--destructive)] bg-[color:var(--card)] shadow-[var(--shadow-sm)]"
+      : "h-3 w-3 rounded-full bg-[color:var(--destructive)] border-2 border-[color:var(--card)] shadow-[var(--shadow-sm)]";
 
   return (
     <MapMarker longitude={longitude} latitude={latitude}>

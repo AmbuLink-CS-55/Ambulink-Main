@@ -42,7 +42,7 @@ export async function saveSettings(data: SettingsData): Promise<void> {
   await AsyncStorage.setItem(KEY, JSON.stringify(data));
 }
 
-export const storeData = async (key: string, value: any) => {
+export const storeData = async (key: string, value: unknown) => {
   try {
     const jsonValue = JSON.stringify(value);
     await AsyncStorage.setItem(key, jsonValue);
@@ -54,10 +54,10 @@ export const storeData = async (key: string, value: any) => {
   }
 };
 
-export const getData = async (key: string) => {
+export const getData = async <T = unknown>(key: string): Promise<T | null | undefined> => {
   try {
     const jsonValue = await AsyncStorage.getItem(key);
-    return jsonValue != null ? JSON.parse(jsonValue) : null;
+    return jsonValue != null ? (JSON.parse(jsonValue) as T) : null;
   } catch (e) {
     console.error("[storage] Failed to read data:", {
       key,

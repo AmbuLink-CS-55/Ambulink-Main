@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from "@nestjs/common";
 import { PatientService } from "./patient.service";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
 import {
@@ -13,9 +23,6 @@ import {
 } from "@/common/validation/socket.schemas";
 import { PatientCommandService } from "./patient-command.service";
 import type { PatientCancelRequest, PatientPickupRequest } from "@ambulink/types";
-import { CurrentUser } from "@/core/auth/current-user.decorator";
-import type { AuthUser } from "@/core/auth/auth.types";
-import { Roles } from "@/core/auth/roles.decorator";
 
 @Controller("api/patients")
 export class PatientController {
@@ -58,13 +65,15 @@ export class PatientController {
   }
 
   @Post("events/help")
-  @Roles("PATIENT")
   async requestHelp(
-    @CurrentUser() user: AuthUser,
+    @Query("patientId") patientId: string | undefined,
     @Body(Validate(patientHelpHttpBodySchema))
     body: PatientPickupRequest
   ) {
-    await this.patientCommandService.requestHelp(user.sub, {
+    if (!patientId) {
+      throw new BadRequestException("patientId is required");
+    }
+    await this.patientCommandService.requestHelp(patientId, {
       x: body.x,
       y: body.y,
       patientSettings: body.patientSettings as PatientPickupRequest["patientSettings"],
@@ -73,13 +82,15 @@ export class PatientController {
   }
 
   @Post("events/cancel")
-  @Roles("PATIENT")
   async cancel(
-    @CurrentUser() user: AuthUser,
+    @Query("patientId") patientId: string | undefined,
     @Body(Validate(patientCancelHttpBodySchema))
     body: PatientCancelRequest
   ) {
-    await this.patientCommandService.cancel(user.sub, { reason: body.reason });
+    if (!patientId) {
+      throw new BadRequestException("patientId is required");
+    }
+    await this.patientCommandService.cancel(patientId, { reason: body.reason });
     return { accepted: true };
   }
 }

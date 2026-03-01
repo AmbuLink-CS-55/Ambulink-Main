@@ -30,8 +30,8 @@ function HospitalMarkersLayer({ hospitals }: { hospitals: Hospital[] }) {
     }
 
     const triangleId = "hospital-triangle-marker";
-    const triangleFill = resolveThemeColor("--amb-info", "#2B7FFF");
-    const triangleStroke = resolveThemeColor("--amb-surface", "#ffffff");
+    const triangleFill = resolveThemeColor("--accent", "#2B7FFF");
+    const triangleStroke = resolveThemeColor("--card", "#ffffff");
     const ensureLayer = () => {
       const existingLayer = map.getLayer(layerId);
       if (existingLayer && existingLayer.type !== "symbol") {

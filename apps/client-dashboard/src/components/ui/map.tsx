@@ -406,7 +406,7 @@ function MarkerContent({ children, className }: MarkerContentProps) {
 
 function DefaultMarkerIcon() {
   return (
-    <div className="relative h-4 w-4 rounded-full border-2 border-[color:var(--amb-surface)] bg-[color:var(--amb-info)] shadow-[var(--amb-shadow-medium)]" />
+    <div className="relative h-4 w-4 rounded-full border-2 border-[color:var(--card)] bg-[color:var(--accent)] shadow-[var(--shadow-md)]" />
   );
 }
 
@@ -907,7 +907,7 @@ type MapRouteProps = {
   id?: string;
   /** Array of [longitude, latitude] coordinate pairs defining the route */
   coordinates: [number, number][];
-  /** Line color as CSS color value (default: "var(--amb-info)") */
+  /** Line color as CSS color value (default: "var(--accent)") */
   color?: string;
   /** Line width in pixels (default: 3) */
   width?: number;
@@ -928,7 +928,7 @@ type MapRouteProps = {
 function MapRoute({
   id: propId,
   coordinates,
-  color = "var(--amb-info)",
+  color = "var(--accent)",
   width = 3,
   opacity = 0.8,
   dashArray,
@@ -1047,7 +1047,7 @@ type MapClusterLayerProps<P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonP
   clusterColors?: [string, string, string];
   /** Point count thresholds for color/size steps: [medium, large] (default: [100, 750]) */
   clusterThresholds?: [number, number];
-  /** Color for unclustered individual points (default: "var(--amb-brand-primary)") */
+  /** Color for unclustered individual points (default: "var(--primary)") */
   pointColor?: string;
   /** Callback when an unclustered point is clicked */
   onPointClick?: (
@@ -1062,9 +1062,9 @@ function MapClusterLayer<P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonPr
   data,
   clusterMaxZoom = 14,
   clusterRadius = 50,
-  clusterColors = ["var(--amb-info)", "var(--amb-warning)", "var(--amb-critical)"],
+  clusterColors = ["var(--accent)", "var(--secondary)", "var(--destructive)"],
   clusterThresholds = [100, 750],
-  pointColor = "var(--amb-brand-primary)",
+  pointColor = "var(--primary)",
   onPointClick,
   onClusterClick,
 }: MapClusterLayerProps<P>) {
@@ -1088,7 +1088,7 @@ function MapClusterLayer<P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonPr
     [pointColor]
   );
   const resolvedClusterTextColor = useMemo(
-    () => resolveThemeColor("var(--amb-surface)", FALLBACK_COLORS.surface),
+    () => resolveThemeColor("var(--card)", FALLBACK_COLORS.surface),
     []
   );
 

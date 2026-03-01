@@ -1,17 +1,13 @@
 import { useCallback, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { DataTable } from "@/components/VirtualizedTable";
+import { DataTable } from "@/components";
 import { Button } from "@/components/ui/button";
 import { useEntityFormDialog } from "@/hooks/use-entity-form-dialog";
 import { queryKeys } from "@/lib/queryKeys";
 import { useCreateDriver, useGetDrivers, useUpdateDriver } from "@/services/driver.service";
 import type { User } from "@/lib/types";
-import { createDriverColumns } from "@/pages/drivers/components/driver-columns";
-import {
-  CreateDriverDialog,
-  EditDriverDialog,
-  type DriverFormState,
-} from "@/pages/drivers/components/DriverFormDialog";
+import { createDriverColumns } from "@/pages/drivers/components";
+import { CreateDriverDialog, EditDriverDialog, type DriverFormState } from "@/pages/drivers/components";
 import env from "@/../env";
 
 const initialForm: DriverFormState = {

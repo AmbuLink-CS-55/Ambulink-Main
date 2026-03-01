@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from "@nestjs/common";
 import { DriverService } from "./driver.service";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
 import {
@@ -17,9 +27,6 @@ import {
 } from "@/common/validation/socket.schemas";
 import { DriverCommandService } from "./driver-command.service";
 import type { DriverLocationPayload } from "@ambulink/types";
-import { CurrentUser } from "@/core/auth/current-user.decorator";
-import type { AuthUser } from "@/core/auth/auth.types";
-import { Roles } from "@/core/auth/roles.decorator";
 
 @Controller("api/drivers")
 export class DriverController {
@@ -66,35 +73,43 @@ export class DriverController {
   }
 
   @Post("events/location")
-  @Roles("DRIVER")
   async updateLocation(
-    @CurrentUser() user: AuthUser,
+    @Query("driverId") driverId: string | undefined,
     @Body(Validate(driverLocationHttpBodySchema)) body: DriverLocationPayload
   ) {
-    await this.driverCommandService.updateLocation(user.sub, { x: body.x, y: body.y });
+    if (!driverId) {
+      throw new BadRequestException("driverId is required");
+    }
+    await this.driverCommandService.updateLocation(driverId, { x: body.x, y: body.y });
     return { ok: true };
   }
 
   @Post("events/arrived")
-  @Roles("DRIVER")
-  async arrived(@CurrentUser() user: AuthUser) {
-    await this.driverCommandService.arrived(user.sub);
+  async arrived(@Query("driverId") driverId: string | undefined) {
+    if (!driverId) {
+      throw new BadRequestException("driverId is required");
+    }
+    await this.driverCommandService.arrived(driverId);
     return { ok: true };
   }
 
   @Post("events/completed")
-  @Roles("DRIVER")
-  async completed(@CurrentUser() user: AuthUser) {
-    await this.driverCommandService.completed(user.sub);
+  async completed(@Query("driverId") driverId: string | undefined) {
+    if (!driverId) {
+      throw new BadRequestException("driverId is required");
+    }
+    await this.driverCommandService.completed(driverId);
     return { ok: true };
   }
 
   @Post("events/shift")
-  @Roles("DRIVER")
   async setShift(
-    @CurrentUser() user: AuthUser,
+    @Query("driverId") driverId: string | undefined,
     @Body(Validate(driverShiftHttpBodySchema)) body: { onShift: boolean }
   ) {
-    return this.driverCommandService.setShift(user.sub, body.onShift);
+    if (!driverId) {
+      throw new BadRequestException("driverId is required");
+    }
+    return this.driverCommandService.setShift(driverId, body.onShift);
   }
 }

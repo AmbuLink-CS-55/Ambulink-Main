@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 import { useGetHospitals } from "@/services/hospital.service";
 import { Map as MapView, MapControls } from "@/components/ui/map";
-import HospitalMarkersLayer from "@/pages/dashboard/components/map/HospitalMarkerLayer";
-import { PatientRequestMarker } from "@/pages/dashboard/components/map/PatientRequestMarker";
-import { DriverMarkers } from "@/pages/dashboard/components/map/DriverMarkers";
-import { BookingRoutesLayer } from "@/pages/dashboard/components/map/BookingRoutesLayer";
+import {
+  BookingRoutesLayer,
+  DriverMarkers,
+  HospitalMarkersLayer,
+  PatientRequestMarker,
+} from "@/pages/dashboard/components";
 import { useBookingRequests } from "@/pages/dashboard/hooks/use-booking-requests";
 import { useMapView } from "@/hooks/use-map-view";
 import { useOngoingBookingRoutes } from "@/pages/dashboard/hooks/use-ongoing-booking-routes";

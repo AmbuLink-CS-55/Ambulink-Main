@@ -1,23 +1,13 @@
 import { Server, Socket } from "socket.io";
 import { OnGatewayInit, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
-import { UnauthorizedException } from "@nestjs/common";
 
 import { SocketService } from "@/core/socket/socket.service";
 import { BookingService } from "../booking/booking.service";
 import { DispatcherService } from "./dispatcher.service";
-import { TokenService } from "@/core/auth/token.service";
-import { authenticateSocket } from "@/core/auth/ws-auth";
-import env from "../../../env";
-
-const gatewayCorsOrigins = [
-  env.FRONTEND_URL,
-  ...(env.FRONTEND_URLS?.split(",").map((origin) => origin.trim()) ?? []),
-].filter((origin): origin is string => Boolean(origin));
 
 @WebSocketGateway({
   cors: {
-    origin:
-      gatewayCorsOrigins.length > 0 ? gatewayCorsOrigins : env.APP_STAGE === "dev" ? true : false,
+    origin: true,
   },
   namespace: "/dispatcher",
 })
@@ -28,8 +18,7 @@ export class DispatcherGateway implements OnGatewayInit {
   constructor(
     private dispatcherServise: DispatcherService,
     private socketService: SocketService,
-    private bookingService: BookingService,
-    private tokenService: TokenService
+    private bookingService: BookingService
   ) {}
 
   afterInit() {
@@ -46,13 +35,12 @@ export class DispatcherGateway implements OnGatewayInit {
     });
     let dispatcherId: string;
     try {
-      const user = authenticateSocket(client, this.tokenService, ["DISPATCHER"]);
-      dispatcherId = user.sub;
+      dispatcherId = this.extractSocketActorId(client, "dispatcherId");
     } catch (error) {
       console.warn("[socket] missing_auth", {
         namespace: "/dispatcher",
         clientId: client.id,
-        error: error instanceof UnauthorizedException ? error.message : "invalid_token",
+        error: error instanceof Error ? error.message : "invalid_socket_identity",
       });
       return client.disconnect(true);
     }
@@ -75,6 +63,21 @@ export class DispatcherGateway implements OnGatewayInit {
       clientId: client.id,
       dispatcherId,
     });
+  }
+
+  private extractSocketActorId(client: Socket, key: "patientId" | "driverId" | "dispatcherId") {
+    const authValue = client.handshake.auth?.[key];
+    const queryValue = client.handshake.query?.[key];
+    const value =
+      typeof authValue === "string"
+        ? authValue
+        : typeof queryValue === "string"
+          ? queryValue
+          : null;
+    if (!value) {
+      throw new Error(`${key} is required`);
+    }
+    return value;
   }
 
   handleDisconnect(client: Socket) {

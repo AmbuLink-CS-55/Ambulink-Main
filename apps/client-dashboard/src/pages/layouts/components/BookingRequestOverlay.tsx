@@ -79,7 +79,7 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
           aria-label={isOpen ? "Collapse booking activity panel" : "Open booking activity panel"}
           aria-expanded={isOpen}
           aria-controls={panelId}
-          className="relative shadow-[var(--amb-shadow-medium)]"
+          className="relative shadow-[var(--shadow-md)]"
         >
           {isOpen ? (
             <X className="h-4 w-4 text-[color:var(--primary-foreground)]" />
@@ -87,7 +87,7 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
             <Truck className="h-4 w-4 text-[color:var(--primary-foreground)]" />
           )}
           {bookingRequests.length > 0 ? (
-            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-[color:var(--amb-critical)] text-[color:var(--amb-surface)] text-xs flex items-center justify-center font-semibold">
+            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-[color:var(--destructive)] text-[color:var(--card)] text-xs flex items-center justify-center font-semibold">
               {bookingRequests.length}
             </span>
           ) : null}
@@ -97,12 +97,12 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
       <div
         id={panelId}
         className={cn(
-          "fixed top-0 bottom-2 right-2 h-auto w-96 rounded-2xl border border-[color:var(--amb-border)] bg-[color:var(--amb-surface)] shadow-[var(--amb-shadow-high)] z-40 transition-transform duration-300 ease-in-out",
+          "fixed top-0 bottom-2 right-2 h-auto w-96 rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] shadow-[var(--shadow-lg)] z-40 transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
         <div className="flex flex-col h-full">
-          <div className="flex h-14 w-full items-center justify-center border-b border-[color:var(--amb-border)] px-4">
+          <div className="flex h-14 w-full items-center justify-center border-b border-[color:var(--border)] px-4">
             <h2 className="text-center text-xl font-bold leading-none">Activity</h2>
           </div>
 

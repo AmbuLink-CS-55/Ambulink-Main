@@ -11,19 +11,19 @@ type BadgeProps = React.ComponentProps<"span"> & {
 
 const badgeVariants: Record<NonNullable<BadgeProps["variant"]>, string> = {
   default:
-    "bg-[color:var(--amb-surface-elevated)] text-[color:var(--amb-foreground)] border border-[color:var(--amb-border)]",
-  success: "bg-[color:var(--amb-success)] text-[color:var(--amb-surface)]",
-  warning: "bg-[color:var(--amb-warning)] text-[color:var(--amb-surface)]",
-  critical: "bg-[color:var(--amb-critical)] text-[color:var(--amb-surface)]",
-  info: "bg-[color:var(--amb-info)] text-[color:var(--amb-surface)]",
+    "bg-[color:var(--card)] text-[color:var(--foreground)] border border-[color:var(--border)]",
+  success: "bg-[color:var(--primary)] text-[color:var(--card)]",
+  warning: "bg-[color:var(--secondary)] text-[color:var(--card)]",
+  critical: "bg-[color:var(--destructive)] text-[color:var(--card)]",
+  info: "bg-[color:var(--accent)] text-[color:var(--card)]",
 };
 
 const dotVariants: Record<NonNullable<BadgeProps["variant"]>, string> = {
-  default: "bg-[color:var(--amb-border)]",
-  success: "bg-[color:var(--amb-success)]",
-  warning: "bg-[color:var(--amb-warning)]",
-  critical: "bg-[color:var(--amb-critical)]",
-  info: "bg-[color:var(--amb-info)]",
+  default: "bg-[color:var(--border)]",
+  success: "bg-[color:var(--primary)]",
+  warning: "bg-[color:var(--secondary)]",
+  critical: "bg-[color:var(--destructive)]",
+  info: "bg-[color:var(--accent)]",
 };
 
 export function Badge({ className, variant = "default", label, children, ...props }: BadgeProps) {

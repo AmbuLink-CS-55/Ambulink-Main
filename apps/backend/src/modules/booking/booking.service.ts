@@ -10,7 +10,7 @@ import { bookings, users } from "@/core/database/schema";
 import type { Booking, Hospital, User } from "@/core/database/schema";
 import { DbExecutor, DbService } from "@/core/database/db.service";
 import { DispatcherService } from "../dispatcher/dispatcher.service";
-import { RealtimeNotifierService } from "@/events/realtime-notifier.service";
+import { NotificationService } from "@/core/socket/notification.service";
 import type {
   BookingLogEntry,
   DriverLocationUpdate,
@@ -30,7 +30,7 @@ export class BookingService {
   constructor(
     private dbService: DbService,
     private dispatcherService: DispatcherService,
-    private realtimeNotifier: RealtimeNotifierService,
+    private notificationService: NotificationService,
     private dispatcherApprovalService: DispatcherApprovalService,
     private bookingRepository: BookingRepository,
     private driverRepository: DriverRepository,
@@ -124,9 +124,9 @@ export class BookingService {
       throw new BadRequestException("Failed to build booking payload");
     }
 
-    this.realtimeNotifier.notifyDispatcher(dispatcherId, "booking:assigned", dispatcherPayload);
-    this.realtimeNotifier.notifyDriver(driver.id, "booking:assigned", assignedPayload);
-    this.realtimeNotifier.notifyPatient(booking.patientId, "booking:assigned", assignedPayload);
+    this.notificationService.notifyDispatcher(dispatcherId, "booking:assigned", dispatcherPayload);
+    this.notificationService.notifyDriver(driver.id, "booking:assigned", assignedPayload);
+    this.notificationService.notifyPatient(booking.patientId, "booking:assigned", assignedPayload);
 
     return {
       bookingId: booking.bookingId,
@@ -223,19 +223,23 @@ export class BookingService {
     }
 
     if (previousDriverId && nextDriverId && previousDriverId !== nextDriverId) {
-      this.realtimeNotifier.notifyDriver(previousDriverId, "booking:cancelled", {
+      this.notificationService.notifyDriver(previousDriverId, "booking:cancelled", {
         bookingId,
         reason: "Reassigned by dispatcher",
       });
     }
 
     if (nextDriverId) {
-      this.realtimeNotifier.notifyDriver(nextDriverId, "booking:assigned", assignedPayload);
+      this.notificationService.notifyDriver(nextDriverId, "booking:assigned", assignedPayload);
     }
     if (booking.patientId) {
-      this.realtimeNotifier.notifyPatient(booking.patientId, "booking:assigned", assignedPayload);
+      this.notificationService.notifyPatient(
+        booking.patientId,
+        "booking:assigned",
+        assignedPayload
+      );
     }
-    this.realtimeNotifier.notifyDispatcher(dispatcherId, "booking:assigned", dispatcherPayload);
+    this.notificationService.notifyDispatcher(dispatcherId, "booking:assigned", dispatcherPayload);
 
     return {
       bookingId,
@@ -262,7 +266,7 @@ export class BookingService {
       if (updatedBooking.status === "REQUESTED") {
         return updatedBooking;
       }
-      this.realtimeNotifier.notifyDispatcher(updatedBooking.dispatcherId, "booking:update", {
+      this.notificationService.notifyDispatcher(updatedBooking.dispatcherId, "booking:update", {
         bookingId: updatedBooking.id,
         status: updatedBooking.status,
         updatedAt: new Date().toISOString(),
@@ -271,7 +275,7 @@ export class BookingService {
     }
 
     if (updatedBooking?.providerId) {
-      this.realtimeNotifier.notifyAllDispatchers("booking:log", {
+      this.notificationService.notifyAllDispatchers("booking:log", {
         providerId: updatedBooking.providerId,
         bookingId: updatedBooking.id,
         status: updatedBooking.status,
@@ -317,7 +321,7 @@ export class BookingService {
     }
 
     if (booking.dispatcherId) {
-      this.realtimeNotifier.notifyDispatcher(booking.dispatcherId, "booking:update", {
+      this.notificationService.notifyDispatcher(booking.dispatcherId, "booking:update", {
         bookingId: booking.id,
         status: "CANCELLED",
         updatedAt: new Date().toISOString(),
@@ -332,8 +336,8 @@ export class BookingService {
         updatedAt: new Date().toISOString(),
         providerId: booking.providerId,
       } satisfies DispatcherBookingUpdatePayload;
-      this.realtimeNotifier.notifyAllDispatchers("booking:update", providerUpdatePayload);
-      this.realtimeNotifier.notifyAllDispatchers("booking:log", {
+      this.notificationService.notifyAllDispatchers("booking:update", providerUpdatePayload);
+      this.notificationService.notifyAllDispatchers("booking:log", {
         providerId: booking.providerId,
         bookingId: booking.id,
         status: booking.status,
@@ -469,8 +473,8 @@ export class BookingService {
     if (!patientId || !dispatcherId) {
       return;
     }
-    this.realtimeNotifier.notifyDispatcher(dispatcherId, "driver:update", data);
-    this.realtimeNotifier.notifyPatient(patientId, "driver:update", data);
+    this.notificationService.notifyDispatcher(dispatcherId, "driver:update", data);
+    this.notificationService.notifyPatient(patientId, "driver:update", data);
   }
 
   async getDispatcherActiveBookings(dispatcherId: string) {

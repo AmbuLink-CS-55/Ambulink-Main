@@ -20,11 +20,11 @@
 
 @layer base {
   * {
-    @apply border-border outline-[var(--amb-brand-primary)]/50;
+    @apply border-border outline-[var(--primary)]/50;
   }
 
   body {
-    @apply font-sans bg-[color:var(--amb-background)] text-[color:var(--amb-foreground)];
+    @apply font-sans bg-[color:var(--background)] text-[color:var(--foreground)];
   }
 
   html {

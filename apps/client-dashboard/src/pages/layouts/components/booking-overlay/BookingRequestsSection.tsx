@@ -13,9 +13,9 @@ function getTimeLeft(now: number, timestamp: number) {
 
 function getProgressClasses(remainingMs: number) {
   const ratio = remainingMs / REQUEST_EXPIRY_MS;
-  if (ratio <= 0.33) return "bg-[color:var(--amb-critical)]";
-  if (ratio <= 0.66) return "bg-[color:var(--amb-warning)]";
-  return "bg-[color:var(--amb-success)]";
+  if (ratio <= 0.33) return "bg-[color:var(--destructive)]";
+  if (ratio <= 0.66) return "bg-[color:var(--secondary)]";
+  return "bg-[color:var(--primary)]";
 }
 
 export function BookingRequestsSection({
@@ -49,7 +49,7 @@ export function BookingRequestsSection({
           <Alert
             key={request.requestId}
             variant="default"
-            className="animate-in slide-in-from-right-5 border-[color:var(--amb-border)] bg-[color:var(--amb-surface)]"
+            className="animate-in slide-in-from-right-5 border-[color:var(--border)] bg-[color:var(--card)]"
           >
             <Bell className="h-4 w-4" />
             <AlertTitle>New Booking Request</AlertTitle>
@@ -94,14 +94,14 @@ export function BookingRequestsSection({
               <Badge variant="warning">Pending Dispatcher Decision</Badge>
 
               {decision?.status === "pending" ? (
-                <div className="mt-3 rounded-md border border-[color:var(--amb-warning)]/40 bg-[color:var(--amb-warning)]/10 px-3 py-2 text-xs text-[color:var(--amb-foreground)]">
+                <div className="mt-3 rounded-md border border-[color:var(--secondary)]/40 bg-[color:var(--secondary)]/10 px-3 py-2 text-xs text-[color:var(--foreground)]">
                   Waiting for decision...
                 </div>
               ) : null}
 
               {decision?.status !== "pending" && decision?.status !== "won" ? (
                 <div
-                  className="mt-3 rounded-md border border-[color:var(--amb-border)] bg-[color:var(--amb-surface-elevated)] px-3 py-2 text-xs"
+                  className="mt-3 rounded-md border border-[color:var(--border)] bg-[color:var(--card)] px-3 py-2 text-xs"
                   // Countdown updates are polite to avoid interrupting critical screen-reader announcements.
                   aria-live="polite"
                   aria-atomic="true"
@@ -110,7 +110,7 @@ export function BookingRequestsSection({
                     <span>Time remaining</span>
                     <span className="font-mono">{remainingSeconds}s</span>
                   </div>
-                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--amb-border)]/40">
+                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--border)]/40">
                     <div
                       className={`h-full rounded-full transition-all ${getProgressClasses(remainingMs)}`}
                       style={{ width: progressWidth }}
@@ -120,13 +120,13 @@ export function BookingRequestsSection({
               ) : null}
 
               {decision?.status === "won" ? (
-                <div className="mt-3 rounded-md border border-[color:var(--amb-success)]/40 bg-[color:var(--amb-success)]/10 px-3 py-2 text-xs text-[color:var(--amb-foreground)]">
+                <div className="mt-3 rounded-md border border-[color:var(--primary)]/40 bg-[color:var(--primary)]/10 px-3 py-2 text-xs text-[color:var(--foreground)]">
                   You got the booking.
                 </div>
               ) : null}
 
               {decision?.status === "lost" ? (
-                <div className="mt-3 rounded-md border border-[color:var(--amb-critical)]/40 bg-[color:var(--amb-critical)]/10 px-3 py-2 text-xs text-[color:var(--amb-foreground)]">
+                <div className="mt-3 rounded-md border border-[color:var(--destructive)]/40 bg-[color:var(--destructive)]/10 px-3 py-2 text-xs text-[color:var(--foreground)]">
                   Another dispatcher got it: {decision.winner.name ?? "Unknown"}
                   {decision.winner.providerName ? ` (${decision.winner.providerName})` : ""}.
                 </div>

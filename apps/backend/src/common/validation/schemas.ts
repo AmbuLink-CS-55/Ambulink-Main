@@ -56,6 +56,7 @@ const pointSchema = z.object({
 });
 
 export const manualAssignBookingSchema = z.object({
+  dispatcherId: z.string().uuid(),
   driverId: z.string().uuid(),
   hospitalId: z.string().uuid(),
   pickupLocation: pointSchema,
@@ -68,6 +69,7 @@ export const manualAssignBookingSchema = z.object({
 
 export const reassignBookingSchema = z
   .object({
+    dispatcherId: z.string().uuid(),
     driverId: z.string().uuid().optional(),
     hospitalId: z.string().uuid().optional(),
     pickupLocation: pointSchema.optional(),

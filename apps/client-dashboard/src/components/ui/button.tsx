@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const focusRingClass =
-  "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--amb-background)] focus-visible:ring-[color:var(--amb-brand-primary)]";
+  "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--background)] focus-visible:ring-[color:var(--primary)]";
 
 const buttonVariants = cva(
   cn(
@@ -15,18 +15,18 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-[color:var(--amb-brand-primary)] text-[color:var(--amb-surface)] hover:brightness-110 focus-visible:ring-offset-[color:var(--amb-background)]",
+          "bg-[color:var(--primary)] text-[color:var(--card)] hover:brightness-110 focus-visible:ring-offset-[color:var(--background)]",
         primary:
-          "bg-[color:var(--amb-brand-primary)] text-[color:var(--amb-surface)] hover:brightness-110 focus-visible:ring-offset-[color:var(--amb-background)]",
+          "bg-[color:var(--primary)] text-[color:var(--card)] hover:brightness-110 focus-visible:ring-offset-[color:var(--background)]",
         secondary:
-          "border border-[color:var(--amb-border)] bg-[color:var(--amb-surface-elevated)] text-[color:var(--amb-foreground)] hover:border-[color:var(--amb-brand-accent)]",
+          "border border-[color:var(--border)] bg-[color:var(--card)] text-[color:var(--foreground)] hover:border-[color:var(--secondary)]",
         destructive:
-          "bg-[color:var(--amb-critical)] text-[color:var(--amb-surface)] hover:brightness-105",
+          "bg-[color:var(--destructive)] text-[color:var(--card)] hover:brightness-105",
         ghost:
-          "bg-transparent text-[color:var(--amb-foreground)] hover:bg-[color:var(--amb-surface-elevated)]",
+          "bg-transparent text-[color:var(--foreground)] hover:bg-[color:var(--card)]",
         outline:
-          "border border-[color:var(--amb-border)] bg-transparent text-[color:var(--amb-foreground)] hover:border-[color:var(--amb-brand-accent)] focus-visible:ring-offset-[color:var(--amb-background)]",
-        link: "bg-transparent px-0 text-[color:var(--amb-brand-primary)] underline-offset-4 hover:underline",
+          "border border-[color:var(--border)] bg-transparent text-[color:var(--foreground)] hover:border-[color:var(--secondary)] focus-visible:ring-offset-[color:var(--background)]",
+        link: "bg-transparent px-0 text-[color:var(--primary)] underline-offset-4 hover:underline",
       },
       size: {
         default: "h-10 px-5 text-sm font-semibold",

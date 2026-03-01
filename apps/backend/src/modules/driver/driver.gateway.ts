@@ -11,19 +11,10 @@ import { SocketService } from "@/core/socket/socket.service";
 import type { DriverLocationPayload, SocketErrorPayload } from "@ambulink/types";
 import { driverLocationPayloadSchema } from "@/common/validation/socket.schemas";
 import { DriverCommandService } from "./driver-command.service";
-import { TokenService } from "@/core/auth/token.service";
-import { authenticateSocket } from "@/core/auth/ws-auth";
-import env from "../../../env";
-
-const gatewayCorsOrigins = [
-  env.FRONTEND_URL,
-  ...(env.FRONTEND_URLS?.split(",").map((origin) => origin.trim()) ?? []),
-].filter((origin): origin is string => Boolean(origin));
 
 @WebSocketGateway({
   cors: {
-    origin:
-      gatewayCorsOrigins.length > 0 ? gatewayCorsOrigins : env.APP_STAGE === "dev" ? true : false,
+    origin: true,
   },
   namespace: "/driver",
 })
@@ -35,8 +26,7 @@ export class DriverGateway implements OnGatewayInit {
     private driverService: DriverService,
     private bookingService: BookingService,
     private socketService: SocketService,
-    private driverCommandService: DriverCommandService,
-    private tokenService: TokenService
+    private driverCommandService: DriverCommandService
   ) {}
 
   afterInit() {
@@ -53,8 +43,7 @@ export class DriverGateway implements OnGatewayInit {
     });
     let driverId: string;
     try {
-      const user = authenticateSocket(client, this.tokenService, ["DRIVER"]);
-      driverId = user.sub;
+      driverId = this.extractSocketActorId(client, "driverId");
     } catch {
       console.warn("[socket] missing_auth", {
         namespace: "/driver",
@@ -92,6 +81,21 @@ export class DriverGateway implements OnGatewayInit {
       clientId: client.id,
       driverId,
     });
+  }
+
+  private extractSocketActorId(client: Socket, key: "patientId" | "driverId" | "dispatcherId") {
+    const authValue = client.handshake.auth?.[key];
+    const queryValue = client.handshake.query?.[key];
+    const value =
+      typeof authValue === "string"
+        ? authValue
+        : typeof queryValue === "string"
+          ? queryValue
+          : null;
+    if (!value) {
+      throw new Error(`${key} is required`);
+    }
+    return value;
   }
 
   handleDisconnect(client: Socket) {

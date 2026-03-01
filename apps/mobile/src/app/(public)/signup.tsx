@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   Pressable,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -273,7 +274,10 @@ export default function SignupPage() {
                   />
                 </View>
 
-                <Pressable style={styles.resendContainer} onPress={() => {}}>
+                <Pressable
+                  style={styles.resendContainer}
+                  onPress={() => Alert.alert("Resend", "OTP resend is not implemented yet.")}
+                >
                   <Text style={styles.resendText}>
                     Didn`t receive code? <Text style={styles.resendLink}>Resend</Text>
                   </Text>

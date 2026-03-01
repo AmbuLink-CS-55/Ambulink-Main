@@ -1,9 +1,9 @@
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar } from "@/components";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Outlet } from "react-router-dom";
 import { useDispatcherSocketSync } from "@/hooks/use-dispatcher-socket-sync";
 import { useEffect } from "react";
-import { BookingRequestOverlay } from "@/pages/layouts/components/BookingRequestOverlay";
+import { BookingRequestOverlay } from "@/pages/layouts/components";
 import type { SocketErrorPayload } from "@/lib/socket-types";
 
 export function DashboardLayout() {

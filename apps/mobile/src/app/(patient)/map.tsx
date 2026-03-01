@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Text, Alert, View, ActivityIndicator } from "react-native";
-import UserMap from "./_components/UserMap";
-import MapOptions from "./_components/MapOptions";
+import { MapOptions, UserMap } from "@/features/patient/components";
 import { useLocation } from "@/common/hooks/useLocation";
 import { usePatientEvents } from "@/features/patient/hooks/usePatientEvents";
 import { useNearbyHospitals } from "@/features/patient/hooks/useNearbyHospitals";
@@ -129,7 +128,7 @@ export default function Map() {
     return (
       <View className="flex-1 items-center justify-center">
         <ActivityIndicator size="large" color="#ef4444" />
-        <Text className="mt-4 text-gray-500">Getting your location...</Text>
+        <Text className="mt-4 text-muted-foreground">Getting your location...</Text>
       </View>
     );
   }
@@ -138,7 +137,7 @@ export default function Map() {
     return (
       <View className="flex-1 items-center justify-center px-6">
         <Text className="text-center text-red-500 font-semibold">Location Unavailable</Text>
-        <Text className="mt-2 text-center text-gray-500">{locationState.error}</Text>
+        <Text className="mt-2 text-center text-muted-foreground">{locationState.error}</Text>
       </View>
     );
   }

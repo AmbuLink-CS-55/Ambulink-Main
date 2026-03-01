@@ -10,34 +10,11 @@ async function bootstrap() {
   const logger = new Logger("Bootstrap");
   const app = await NestFactory.create(AppModule);
 
-  const configuredOrigins = [
-    env.FRONTEND_URL,
-    ...(env.FRONTEND_URLS?.split(",").map((origin) => origin.trim()) ?? []),
-  ].filter((origin): origin is string => Boolean(origin));
-  const defaultDevOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
-  const allowedOrigins =
-    configuredOrigins.length > 0
-      ? configuredOrigins
-      : env.APP_STAGE === "dev"
-        ? defaultDevOrigins
-        : [];
-
   app.enableCors({
-    origin: (origin, callback) => {
-      // Allow native/mobile and same-origin requests without Origin.
-      if (!origin) {
-        callback(null, true);
-        return;
-      }
-
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-        return;
-      }
-
-      callback(new Error(`CORS blocked for origin: ${origin}`), false);
-    },
+    origin: true,
     credentials: true,
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+    allowedHeaders: ["*"],
   });
   app.useWebSocketAdapter(new IoAdapter(app));
   app.useGlobalFilters(new AllExceptionsFilter());

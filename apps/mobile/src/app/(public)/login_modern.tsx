@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   Pressable,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -14,7 +15,7 @@ import { Redirect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "@/common/hooks/AuthContext";
 import i18n from "@/common/i18n/i18n";
-import { AppImage as Image } from "@/common/components/AppImage";
+import { AppImage as Image } from "@/common/components";
 
 export default function LoginModern() {
   const router = useRouter();
@@ -126,7 +127,10 @@ export default function LoginModern() {
             </View>
 
             {/* Forgot Password */}
-            <Pressable onPress={() => {}} style={{ alignItems: "flex-start", marginBottom: 24 }}>
+            <Pressable
+              onPress={() => Alert.alert("Coming Soon", "Password reset is not implemented yet.")}
+              style={{ alignItems: "flex-start", marginBottom: 24 }}
+            >
               <Text style={{ color: "#205fb7ff", fontSize: 13, fontWeight: "500" }}>
                 Forgot Password?
               </Text>

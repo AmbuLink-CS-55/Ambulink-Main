@@ -1,0 +1,176 @@
+import { View, Pressable, Text, ActivityIndicator, Alert, Linking } from "react-native";
+import React from "react";
+import { Ionicons } from "@expo/vector-icons";
+import type { BookingStatus, User, Hospital } from "@ambulink/types";
+
+interface MapOptionsProps {
+  bookingAssigned: boolean;
+  status: BookingStatus;
+  booking: {
+    patient: User;
+    pickedDriver: User;
+    hospital: Hospital;
+    provider?: { id: string; name: string; hotlineNumber?: string } | null;
+  } | null;
+  onHelpRequest: () => void;
+  cancelRequest: () => void;
+  isCancelling?: boolean;
+  isBooking?: boolean;
+  completedAt?: number | null;
+}
+
+export default function MapOptions({
+  bookingAssigned,
+  status,
+  booking,
+  onHelpRequest,
+  cancelRequest,
+  isCancelling = false,
+  isBooking = false,
+  completedAt = null,
+}: MapOptionsProps) {
+  const handleCall = (phone?: string) => {
+    if (!phone) return Alert.alert("Error", "No phone number available");
+    Linking.openURL(`tel:${phone}`).catch(() =>
+      Alert.alert("Error", "Could not open phone dialer")
+    );
+  };
+  const shouldShowCompleted =
+    status === "COMPLETED" && completedAt !== null && Date.now() - completedAt < 8000;
+
+  if (shouldShowCompleted) {
+    return (
+      <View
+        accessibilityRole="summary"
+        className="bg-card p-4 w-full rounded-2xl shadow-lg items-center border border-border"
+      >
+        <Ionicons name="checkmark-circle" size={48} color="#22c55e" />
+        <Text className="text-green-600 font-bold text-xl mt-2">Trip Completed</Text>
+        <Text className="text-muted-foreground mt-1">
+          {booking?.hospital?.name
+            ? `You have arrived at ${booking.hospital.name}`
+            : "You have arrived at your destination"}
+        </Text>
+      </View>
+    );
+  }
+
+  if (status === "ARRIVED" && booking) {
+    return (
+      <View
+        accessibilityRole="summary"
+        className="bg-card p-4 w-full rounded-2xl shadow-lg border border-border"
+      >
+        <View className="items-center mb-3">
+          <Ionicons name="car" size={32} color="#f59e0b" />
+          <Text className="text-amber-600 font-bold text-lg mt-1">Ambulance Arrived!</Text>
+        </View>
+        <View className="border-t border-border pt-3">
+          <Text className="text-muted-foreground text-sm">Provider</Text>
+          <Text className="font-semibold">{booking?.pickedDriver.providerId ?? ""}</Text>
+        </View>
+        <View className="mt-2">
+          <Text className="text-muted-foreground text-sm">Destination</Text>
+          <Text className="font-semibold">{booking?.hospital.name}</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (status === "ASSIGNED" && booking) {
+    const driverPhone = booking.pickedDriver.phoneNumber;
+    const providerPhone = booking.provider?.hotlineNumber;
+    const providerName = booking.provider?.name ?? "Provider";
+    return (
+      <View className="bg-card p-5 w-full rounded-2xl shadow-lg border border-border">
+        <View className="flex-row items-center mb-3">
+          <View className="bg-green-100 p-2 rounded-full mr-3">
+            <Ionicons name="car" size={24} color="#22c55e" />
+          </View>
+          <View className="flex-1">
+            <Text className="text-green-600 font-bold">Ambulance Assigned</Text>
+            <Text className="text-muted-foreground text-sm">On the way to you</Text>
+          </View>
+        </View>
+
+        <View className="border-t border-border pt-3">
+          <Text className="text-muted-foreground text-sm">Provider</Text>
+          <Text className="font-semibold">{providerName}</Text>
+        </View>
+
+        <View className="mt-2">
+          <Text className="text-muted-foreground text-sm">Destination Hospital</Text>
+          <Text className="font-semibold">{booking.hospital.name}</Text>
+        </View>
+
+        {/* High-stakes actions expose role/label/hint so screen readers can disambiguate who will be called. */}
+        <View className="flex-row gap-3 mt-4">
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Call assigned driver"
+            accessibilityHint="Calls the assigned driver for this booking."
+            className={`flex-1 min-h-12 items-center justify-center p-3 rounded-xl ${driverPhone ? "bg-emerald-500" : "bg-emerald-200"}`}
+            onPress={() => handleCall(driverPhone)}
+            disabled={!driverPhone}
+          >
+            <Text className="text-white font-bold">Call Driver</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Call provider hotline"
+            accessibilityHint="Calls the ambulance provider emergency hotline."
+            className={`flex-1 min-h-12 items-center justify-center p-3 rounded-xl ${providerPhone ? "bg-blue-500" : "bg-blue-200"}`}
+            onPress={() => handleCall(providerPhone)}
+            disabled={!providerPhone}
+          >
+            <Text className="text-white font-bold">Call Provider</Text>
+          </Pressable>
+        </View>
+
+        <Pressable
+          // Destructive action is explicitly labeled and iconized so users do not rely on red color alone.
+          accessibilityRole="button"
+          accessibilityLabel="Cancel booking"
+          accessibilityHint="Cancels the currently assigned booking."
+          className={`justify-center items-center min-h-12 p-3 mt-5 rounded-xl border ${isCancelling ? "bg-red-300 border-red-300" : "bg-red-500 border-red-600"}`}
+          onPress={cancelRequest}
+          disabled={isCancelling}
+        >
+          {isCancelling ? (
+            <View className="flex-row items-center">
+              <ActivityIndicator color="white" size="small" />
+              <Text className="text-white font-bold uppercase ml-2">Cancelling...</Text>
+            </View>
+          ) : (
+            <View className="flex-row items-center">
+              <Ionicons name="warning-outline" size={16} color="white" />
+              <Text className="text-white font-bold uppercase ml-2">Cancel Booking</Text>
+            </View>
+          )}
+        </Pressable>
+      </View>
+    );
+  }
+
+  // idle state
+  return (
+    <Pressable
+      // Primary emergency CTA uses explicit accessibility metadata for assistive tech.
+      accessibilityRole="button"
+      accessibilityLabel="Request ambulance"
+      accessibilityHint="Sends a new emergency pickup request."
+      className={`justify-center items-center min-h-12 p-4 w-full rounded-2xl shadow-lg border border-border ${isBooking ? "bg-muted" : "bg-card"}`}
+      onPress={onHelpRequest}
+      disabled={isBooking}
+    >
+      {isBooking ? (
+        <View className="flex-row items-center">
+          <ActivityIndicator size="small" color="#ef4444" />
+          <Text className="text-foreground font-semibold ml-2">Requesting ambulance...</Text>
+        </View>
+      ) : (
+        <Text className="text-foreground font-bold text-xl uppercase">Book</Text>
+      )}
+    </Pressable>
+  );
+}

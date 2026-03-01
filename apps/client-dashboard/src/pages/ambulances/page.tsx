@@ -4,16 +4,16 @@ import {
   useCreateAmbulance,
   useUpdateAmbulance,
 } from "@/services/ambulance.service";
-import { DataTable } from "@/components/VirtualizedTable";
+import { DataTable } from "@/components";
 import { Button } from "@/components/ui/button";
 import { useEntityFormDialog } from "@/hooks/use-entity-form-dialog";
 import type { Ambulance } from "@/lib/types";
-import { createAmbulanceColumns } from "@/pages/ambulances/components/ambulance-columns";
 import {
+  createAmbulanceColumns,
   CreateAmbulanceDialog,
   EditAmbulanceDialog,
   type AmbulanceFormState,
-} from "@/pages/ambulances/components/AmbulanceFormDialog";
+} from "@/pages/ambulances/components";
 import env from "@/../env";
 
 const initialForm: AmbulanceFormState = {

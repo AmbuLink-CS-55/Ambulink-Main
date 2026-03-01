@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import type { DriverLocationPayload } from "@ambulink/types";
 import { BookingService } from "../booking/booking.service";
 import { DriverService } from "./driver.service";
-import { SocketService } from "@/core/socket/socket.service";
+import { NotificationService } from "@/core/socket/notification.service";
 
 @Injectable()
 export class DriverCommandService {
@@ -11,7 +11,7 @@ export class DriverCommandService {
   constructor(
     private driverService: DriverService,
     private bookingService: BookingService,
-    private socketService: SocketService
+    private notificationService: NotificationService
   ) {}
 
   async setShift(driverId: string, onShift: boolean) {
@@ -42,7 +42,7 @@ export class DriverCommandService {
     const now = Date.now();
     const lastEmit = this.lastEmitTimes.get(driverId) || 0;
     if (now - lastEmit > 1000) {
-      this.socketService.emitToAllDispatchers("driver:update", {
+      this.notificationService.notifyAllDispatchers("driver:update", {
         id: driverId,
         x,
         y,
@@ -59,7 +59,7 @@ export class DriverCommandService {
 
     await this.bookingService.updateBooking(bookingData.id, { status: "ARRIVED" });
     const { id, patientId } = bookingData;
-    this.socketService.emitToPatient(patientId!, "booking:arrived", {
+    this.notificationService.notifyPatient(patientId!, "booking:arrived", {
       bookingId: id,
     });
   }
@@ -74,10 +74,10 @@ export class DriverCommandService {
     await this.driverService.setStatus(driverId, "AVAILABLE");
 
     const { id, patientId } = bookingData;
-    this.socketService.emitToPatient(patientId!, "booking:completed", {
+    this.notificationService.notifyPatient(patientId!, "booking:completed", {
       bookingId: id,
     });
-    this.socketService.emitToDriver(driverId, "booking:completed", {
+    this.notificationService.notifyDriver(driverId, "booking:completed", {
       bookingId: id,
     });
   }

@@ -3,7 +3,7 @@ import type { PatientCancelRequest, PatientPickupRequest } from "@ambulink/types
 import { BookingService } from "../booking/booking.service";
 import { DriverService } from "../driver/driver.service";
 import { HospitalService } from "../hospital/hospital.service";
-import { SocketService } from "@/core/socket/socket.service";
+import { NotificationService } from "@/core/socket/notification.service";
 import { PatientService } from "./patient.service";
 
 @Injectable()
@@ -13,7 +13,7 @@ export class PatientCommandService {
     private driverService: DriverService,
     private bookingService: BookingService,
     private hospitalService: HospitalService,
-    private socketService: SocketService
+    private notificationService: NotificationService
   ) {}
 
   async requestHelp(patientId: string, data: PatientPickupRequest) {
@@ -32,7 +32,7 @@ export class PatientCommandService {
         reason: "no_drivers",
         stage: "nearby_search",
       });
-      this.socketService.emitToPatient(patientId, "booking:failed", {
+      this.notificationService.notifyPatient(patientId, "booking:failed", {
         reason: "no drivers near patient",
       });
       return;
@@ -50,7 +50,9 @@ export class PatientCommandService {
         reason: result.reason,
         stage: "dispatcher_approval",
       });
-      this.socketService.emitToPatient(patientId, "booking:failed", { reason: result.reason });
+      this.notificationService.notifyPatient(patientId, "booking:failed", {
+        reason: result.reason,
+      });
       return;
     }
 
@@ -65,7 +67,7 @@ export class PatientCommandService {
         dispatcherId,
         requestId,
       });
-      this.socketService.emitToPatient(patientId, "booking:failed", { reason: "no_drivers" });
+      this.notificationService.notifyPatient(patientId, "booking:failed", { reason: "no_drivers" });
       return;
     }
 
@@ -86,11 +88,15 @@ export class PatientCommandService {
       : null;
 
     if (dispatcherPayload) {
-      this.socketService.emitToDispatcher(dispatcherId, "booking:assigned", dispatcherPayload);
+      this.notificationService.notifyDispatcher(
+        dispatcherId,
+        "booking:assigned",
+        dispatcherPayload
+      );
     }
     if (assignedPayload) {
-      this.socketService.emitToDriver(pickedDriver.id, "booking:assigned", assignedPayload);
-      this.socketService.emitToPatient(patientId, "booking:assigned", assignedPayload);
+      this.notificationService.notifyDriver(pickedDriver.id, "booking:assigned", assignedPayload);
+      this.notificationService.notifyPatient(patientId, "booking:assigned", assignedPayload);
       console.info("[patient] booking_assigned", {
         patientId,
         bookingId: assignedPayload.bookingId,
@@ -105,20 +111,20 @@ export class PatientCommandService {
     const bookingData = await this.bookingService.cancelByPatient(patientId, cancellationReason);
 
     if (!bookingData) {
-      this.socketService.emitToPatient(patientId, "booking:cancel:error", {
+      this.notificationService.notifyPatient(patientId, "booking:cancel:error", {
         message: "No active booking to cancel",
       });
       return;
     }
 
     if (bookingData.driverId) {
-      this.socketService.emitToDriver(bookingData.driverId, "booking:cancelled", {
+      this.notificationService.notifyDriver(bookingData.driverId, "booking:cancelled", {
         bookingId: bookingData.id,
         reason: cancellationReason,
       });
     }
 
-    this.socketService.emitToPatient(patientId, "booking:cancelled", {
+    this.notificationService.notifyPatient(patientId, "booking:cancelled", {
       bookingId: bookingData.id,
       message: "Booking cancelled successfully",
     });

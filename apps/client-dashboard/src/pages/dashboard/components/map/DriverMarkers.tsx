@@ -1,6 +1,5 @@
 import { Fragment, useMemo } from "react";
-import { DriverMarker } from "@/pages/dashboard/components/map/DriverMarker";
-import { OngoingPatientMarker } from "@/pages/dashboard/components/map/OngoingPatientMarker";
+import { DriverMarker, OngoingPatientMarker } from "@/pages/dashboard/components";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import type { DispatcherBookingPayload } from "@/lib/socket-types";

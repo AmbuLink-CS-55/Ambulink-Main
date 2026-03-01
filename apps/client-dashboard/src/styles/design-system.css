@@ -55,27 +55,8 @@
   --shadow-2xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.45);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
-  --amb-background: var(--background);
-  --amb-foreground: var(--foreground);
-  --amb-surface: var(--card);
-  --amb-surface-elevated: var(--card);
-  --amb-border: var(--border);
-  --amb-muted: var(--muted);
-  --amb-muted-foreground: var(--muted-foreground);
-  --amb-success: var(--primary);
-  --amb-warning: var(--secondary);
-  --amb-critical: var(--destructive);
-  --amb-info: var(--accent);
-  --amb-brand-primary: var(--primary);
-  --amb-brand-accent: var(--secondary);
-  --amb-radius: var(--radius);
-  --amb-shadow: var(--shadow);
-  --amb-shadow-low: var(--shadow-sm);
-  --amb-shadow-medium: var(--shadow-md);
-  --amb-shadow-high: var(--shadow-lg);
-  --amb-shadow-xl: var(--shadow-xl);
-  --amb-overlay: 40;
-  --amb-dialog: 50;
+  --z-overlay: 40;
+  --z-dialog: 50;
 }
 
 .dark {
@@ -129,27 +110,8 @@
   --shadow-lg: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 4px 6px -1px hsl(0 0% 0% / 0.18);
   --shadow-xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 8px 10px -1px hsl(0 0% 0% / 0.18);
   --shadow-2xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.45);
-  --amb-background: var(--background);
-  --amb-foreground: var(--foreground);
-  --amb-surface: var(--card);
-  --amb-surface-elevated: var(--card);
-  --amb-border: var(--border);
-  --amb-muted: var(--muted);
-  --amb-muted-foreground: var(--muted-foreground);
-  --amb-success: var(--primary);
-  --amb-warning: var(--secondary);
-  --amb-critical: var(--destructive);
-  --amb-info: var(--accent);
-  --amb-brand-primary: var(--primary);
-  --amb-brand-accent: var(--secondary);
-  --amb-radius: var(--radius);
-  --amb-shadow: var(--shadow);
-  --amb-shadow-low: var(--shadow-sm);
-  --amb-shadow-medium: var(--shadow-md);
-  --amb-shadow-high: var(--shadow-lg);
-  --amb-shadow-xl: var(--shadow-xl);
-  --amb-overlay: 40;
-  --amb-dialog: 50;
+  --z-overlay: 40;
+  --z-dialog: 50;
 }
 
 @theme inline {

@@ -28,7 +28,7 @@ function DialogOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) 
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 bg-[color:var(--amb-background)]/80 duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs fixed inset-0 z-[var(--amb-overlay)]",
+        "data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 bg-[color:var(--background)]/80 duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs fixed inset-0 z-[var(--z-overlay)]",
         className
       )}
       {...props}
@@ -49,7 +49,7 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "bg-[color:var(--amb-surface)] data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 fixed left-1/2 top-1/2 z-[var(--amb-dialog)] w-[95vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-[var(--amb-radius)] border border-[color:var(--amb-border)] shadow-[var(--amb-shadow-medium)] duration-200",
+          "bg-[color:var(--card)] data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 fixed left-1/2 top-1/2 z-[var(--z-dialog)] w-[95vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-[var(--radius)] border border-[color:var(--border)] shadow-[var(--shadow-md)] duration-200",
           className
         )}
         {...props}

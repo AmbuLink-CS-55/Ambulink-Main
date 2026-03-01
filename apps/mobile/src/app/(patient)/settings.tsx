@@ -4,16 +4,16 @@ import i18n from "@/common/i18n/i18n";
 import { SettingsProvider, useSettings } from "@/common/hooks/SettingsContext";
 
 // Sections
-import PersonalSection from "./components/settings/PersonalSection";
-import MedicalSection from "./components/settings/MedicalSection";
-import EmergencyContactsSection from "./components/settings/EmergencyContactsSection";
-import AppSettingsSection from "./components/settings/AppSettingsSection";
+import PersonalSection from "@/features/patient/components/settings/PersonalSection";
+import MedicalSection from "@/features/patient/components/settings/MedicalSection";
+import EmergencyContactsSection from "@/features/patient/components/settings/EmergencyContactsSection";
+import AppSettingsSection from "@/features/patient/components/settings/AppSettingsSection";
 
 // Modals
-import BloodTypeModal from "./components/settings/modals/BloodTypeModal";
-import LanguageModal from "./components/settings/modals/LanguageModal";
-import AllergiesModal from "./components/settings/modals/AllergiesModal";
-import EmergencyContactModal from "./components/settings/modals/EmergencyContactModal";
+import BloodTypeModal from "@/features/patient/components/settings/modals/BloodTypeModal";
+import LanguageModal from "@/features/patient/components/settings/modals/LanguageModal";
+import AllergiesModal from "@/features/patient/components/settings/modals/AllergiesModal";
+import EmergencyContactModal from "@/features/patient/components/settings/modals/EmergencyContactModal";
 
 import { BLOOD_TYPES, LANGUAGES, ALLERGIES_LIST } from "@/common/constants/settings";
 

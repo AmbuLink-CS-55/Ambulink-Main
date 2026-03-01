@@ -7,7 +7,7 @@ import type { Socket } from "socket.io-client";
 
 export const usePatientEvents = (
   socket: Socket | null,
-  setBooking: React.Dispatch<React.SetStateAction<any>>,
+  setBooking: React.Dispatch<React.SetStateAction<PatientBooking | null>>,
   setStatus: React.Dispatch<React.SetStateAction<BookingStatus>>,
   setIsCancelling: React.Dispatch<React.SetStateAction<boolean>>,
   setIsBooking: React.Dispatch<React.SetStateAction<boolean>>,
@@ -78,7 +78,7 @@ export const usePatientEvents = (
   const onDriverUpdate = useCallback(
     (point: Point) => {
       if (!point) return;
-      setBooking((prev: any) =>
+      setBooking((prev) =>
         prev
           ? {
               ...prev,
@@ -98,7 +98,7 @@ export const usePatientEvents = (
 
   const onBookingCompleted = useCallback(() => {
     setStatus("COMPLETED");
-    setBooking((prev: any) => {
+    setBooking((prev) => {
       if (prev) {
         addBookingHistory("PATIENT", {
           id: `${Date.now()}:${prev.patient?.id ?? "patient"}`,
@@ -122,7 +122,7 @@ export const usePatientEvents = (
   const onBookingCancelled = useCallback(
     (data: { message: string }) => {
       if (!data) return;
-      setBooking((prev: any) => {
+      setBooking((prev) => {
         if (prev) {
           addBookingHistory("PATIENT", {
             id: `${Date.now()}:${prev.patient?.id ?? "patient"}`,
@@ -207,4 +207,12 @@ export const usePatientEvents = (
     onBookingFailed,
     onDriverUpdate,
   ]);
+};
+
+type PatientBooking = {
+  bookingId?: string | null;
+  patient: User;
+  pickedDriver: User;
+  hospital: Hospital;
+  provider?: { id: string; name: string; hotlineNumber?: string } | null;
 };

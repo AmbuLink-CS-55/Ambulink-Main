@@ -17,6 +17,7 @@ import { getBookingActionErrorMessage } from "@/lib/booking-ui-errors";
 import { useGetDrivers } from "@/services/driver.service";
 import { useGetHospitals } from "@/services/hospital.service";
 import { useReassignBooking } from "@/services/booking.service";
+import { getDispatcherId } from "@/lib/identity";
 import env from "@/../env";
 
 export function ReassignBookingDialog({
@@ -95,7 +96,7 @@ export function ReassignBookingDialog({
       pickupLocation?: { x: number; y: number };
       pickupAddress?: string | null;
     } = {
-      dispatcherId: env.VITE_DISPATCHER_ID,
+      dispatcherId: getDispatcherId(),
     };
 
     if (reassignDriverId && reassignDriverId !== booking.driver.id) {

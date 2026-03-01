@@ -26,19 +26,19 @@ function BookingCard({
   providerName,
 }: BookingCardProps) {
   return (
-    <View className="mb-3 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
+    <View className="mb-3 p-4 bg-card rounded-2xl border border-border shadow-sm">
       <View className="flex-row items-center justify-between">
-        <Text className="text-xs text-gray-500">{createdAt}</Text>
+        <Text className="text-xs text-muted-foreground">{createdAt}</Text>
         <Text
           className={`text-xs font-semibold ${status === "COMPLETED" ? "text-green-600" : "text-red-500"}`}
         >
           {status}
         </Text>
       </View>
-      <Text className="text-base font-semibold text-gray-900 mt-2">{personName}</Text>
-      <Text className="text-sm text-gray-500 mt-1">Hospital: {hospitalName}</Text>
+      <Text className="text-base font-semibold text-foreground mt-2">{personName}</Text>
+      <Text className="text-sm text-muted-foreground mt-1">Hospital: {hospitalName}</Text>
       {providerName ? (
-        <Text className="text-sm text-gray-500 mt-1">Provider: {providerName}</Text>
+        <Text className="text-sm text-muted-foreground mt-1">Provider: {providerName}</Text>
       ) : null}
     </View>
   );
@@ -64,18 +64,18 @@ export default function BookingHistoryScreen({
   }, [clear, reload]);
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-background">
       <View className="px-4 py-3 flex-row items-center justify-between">
-        <Text className="text-xl font-bold text-gray-900">{title}</Text>
-        <Pressable className="px-3 py-2 rounded-lg bg-gray-200" onPress={onClear}>
-          <Text className="text-gray-700 font-semibold text-sm">Clear</Text>
+        <Text className="text-xl font-bold text-foreground">{title}</Text>
+        <Pressable className="px-3 py-2 rounded-lg bg-muted" onPress={onClear}>
+          <Text className="text-foreground font-semibold text-sm">Clear</Text>
         </Pressable>
       </View>
 
       {loading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#ef4444" />
-          <Text className="mt-3 text-gray-500">Loading history...</Text>
+          <Text className="mt-3 text-muted-foreground">Loading history...</Text>
         </View>
       ) : (
         <FlatList
@@ -84,7 +84,7 @@ export default function BookingHistoryScreen({
           contentContainerStyle={{ padding: 16, flexGrow: 1 }}
           ListEmptyComponent={
             <View className="items-center justify-center mt-24">
-              <Text className="text-gray-500">No past bookings yet.</Text>
+              <Text className="text-muted-foreground">No past bookings yet.</Text>
             </View>
           }
           renderItem={({ item }) => (

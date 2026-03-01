@@ -69,7 +69,7 @@ export function LocationMiniMap({ value, onChange, className }: LocationMiniMapP
             onDragEnd={(lngLat) => onChange({ x: lngLat.lng, y: lngLat.lat })}
           >
             <MarkerContent className="relative flex items-center justify-center h-4 w-4">
-              <span className="h-3 w-3 rounded-full border-2 border-[color:var(--amb-surface)] bg-[color:var(--amb-critical)] shadow-[var(--amb-shadow-low)]" />
+              <span className="h-3 w-3 rounded-full border-2 border-[color:var(--card)] bg-[color:var(--destructive)] shadow-[var(--shadow-sm)]" />
             </MarkerContent>
           </MapMarker>
         ) : null}

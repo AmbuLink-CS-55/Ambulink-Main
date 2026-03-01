@@ -27,7 +27,7 @@ export function BookingRoutesLayer({
           <MapRoute
             id={`route-${booking.bookingId}-patient`}
             coordinates={routes[routeKey]}
-            color="var(--amb-warning)"
+            color="var(--secondary)"
             width={4}
             opacity={0.85}
           />
@@ -40,7 +40,7 @@ export function BookingRoutesLayer({
           <MapRoute
             id={`route-${booking.bookingId}-hospital`}
             coordinates={routes[routeKey]}
-            color="var(--amb-critical)"
+            color="var(--destructive)"
             width={4}
             opacity={0.85}
           />

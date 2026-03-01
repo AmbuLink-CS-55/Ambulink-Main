@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { UserStatus } from "@/core/database/schema";
-import { SocketService } from "@/core/socket/socket.service";
+import { NotificationService } from "@/core/socket/notification.service";
 import type { CreateDriverDto, UpdateDriverDto } from "@/common/validation/schemas";
 import type { NearbyDriver } from "@ambulink/types";
 import { DriverRepository } from "./driver.repository";
@@ -9,14 +9,14 @@ import { DriverRepository } from "./driver.repository";
 export class DriverService {
   constructor(
     private driverRepository: DriverRepository,
-    private socketService: SocketService
+    private notificationService: NotificationService
   ) {}
 
   async create(createDriverDto: CreateDriverDto) {
     const result = await this.driverRepository.createDriver(createDriverDto);
     const created = result[0];
     if (created) {
-      this.socketService.emitToAllDispatchers("driver:roster", {
+      this.notificationService.notifyAllDispatchers("driver:roster", {
         providerId: created.providerId,
         driver: created,
         action: "created",
@@ -48,7 +48,7 @@ export class DriverService {
     }
     const updated = result[0];
     if (updated) {
-      this.socketService.emitToAllDispatchers("driver:roster", {
+      this.notificationService.notifyAllDispatchers("driver:roster", {
         providerId: updated.providerId,
         driver: updated,
         action: "updated",
@@ -60,7 +60,7 @@ export class DriverService {
   async remove(id: string) {
     await this.findOne(id);
     await this.driverRepository.removeDriver(id);
-    this.socketService.emitToAllDispatchers("driver:roster", {
+    this.notificationService.notifyAllDispatchers("driver:roster", {
       providerId: null,
       driver: { id },
       action: "removed",
@@ -71,7 +71,7 @@ export class DriverService {
     const result = await this.driverRepository.setDriverStatus(driverId, status);
     const updated = result[0];
     if (updated) {
-      this.socketService.emitToAllDispatchers("driver:roster", {
+      this.notificationService.notifyAllDispatchers("driver:roster", {
         providerId: updated.providerId,
         driver: updated,
         action: "updated",
