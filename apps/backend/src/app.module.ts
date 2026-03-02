@@ -1,16 +1,14 @@
 import { Module } from "@nestjs/common";
-import { AmbulanceProviderModule } from "@/modules/ambulance_providers/ambulance-provider.module";
-import { PatientModule } from "@/modules/patients/patient.module";
-import { DriverModule } from "@/modules/drivers/driver.module";
+import { AmbulanceProviderModule } from "@/modules/ambulance-provider/ambulance-provider.module";
+import { PatientModule } from "@/modules/patient/patient.module";
+import { DriverModule } from "@/modules/driver/driver.module";
 import { AmbulanceModule } from "@/modules/ambulance/ambulance.module";
 import { BookingModule } from "./modules/booking/booking.module";
-import { DbModule } from "./common/database/db.module";
-import { SocketModule } from "./common/socket/socket.module";
+import { DbModule } from "./core/database/db.module";
+import { SocketModule } from "./core/socket/socket.module";
 import { DispatcherModule } from "./modules/dispatcher/dispatcher.module";
-import { HealthController } from "./common/health/health.controller";
+import { HealthController } from "./core/health/health.controller";
 import { HospitalModule } from "./modules/hospital/hospital.module";
-import { EventEmitterModule } from "@nestjs/event-emitter";
-// import { WebsocketModule } from "./services/websocket-session.module";
 
 @Module({
   imports: [
@@ -23,8 +21,8 @@ import { EventEmitterModule } from "@nestjs/event-emitter";
     BookingModule,
     DispatcherModule,
     HospitalModule,
-    EventEmitterModule.forRoot(),
   ],
   controllers: [HealthController],
+  providers: [],
 })
 export class AppModule {}

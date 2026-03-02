@@ -1,32 +1,9 @@
 import { api } from "@/lib/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import type { Point } from "@/lib/types";
+import type { BookingLogEntry, Point } from "@ambulink/types";
 
-export type BookingLogEntry = {
-  bookingId: string;
-  status: "REQUESTED" | "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED";
-  requestedAt: string | null;
-  assignedAt: string | null;
-  arrivedAt: string | null;
-  pickedupAt: string | null;
-  completedAt: string | null;
-  updatedAt?: string | null;
-  fareEstimate: string | null;
-  fareFinal: string | null;
-  cancellationReason: string | null;
-  patientId: string | null;
-  patientName: string | null;
-  patientPhone: string | null;
-  driverId: string | null;
-  driverName: string | null;
-  driverPhone: string | null;
-  ambulanceId: string | null;
-  providerId: string | null;
-  providerName: string | null;
-  hospitalId: string | null;
-  hospitalName: string | null;
-};
+export type { BookingLogEntry };
 
 export const useGetBookingLog = (params?: { providerId?: string; status?: string }) => {
   return useQuery({

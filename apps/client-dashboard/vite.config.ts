@@ -19,4 +19,20 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 1300,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+
+          if (id.includes("maplibre-gl")) return "vendor-map";
+          if (id.includes("@tanstack")) return "vendor-tanstack";
+          if (id.includes("lucide-react") || id.includes("@hugeicons")) return "vendor-icons";
+          if (id.includes("@base-ui")) return "vendor-base-ui";
+          return "vendor";
+        },
+      },
+    },
+  },
 });

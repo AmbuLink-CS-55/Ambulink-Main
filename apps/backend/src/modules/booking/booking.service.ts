@@ -1,121 +1,121 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
 import { and, eq, sql } from "drizzle-orm";
-import { ambulanceProviders, bookings, users } from "@/common/database/schema";
-import type { Booking, Hospital, User } from "@/common/database/schema";
-import { DbService } from "@/common/database/db.service";
+import { bookings, users } from "@/core/database/schema";
+import type { Booking, Hospital, User } from "@/core/database/schema";
+import { DbExecutor, DbService } from "@/core/database/db.service";
 import { DispatcherService } from "../dispatcher/dispatcher.service";
-import { SocketService } from "@/common/socket/socket.service";
+import { NotificationService } from "@/core/socket/notification.service";
 import type {
+  BookingLogEntry,
   DriverLocationUpdate,
   DispatcherBookingPayload,
   DispatcherBookingUpdatePayload,
 } from "@ambulink/types";
-import { mapAssignedBookingPayload, mapDispatcherBookingPayload } from "@/mappers";
-import {
-  createPatient,
-  createBooking,
-  findDriverById,
-  findPatientById,
-  getDriverActiveBooking,
-  getHospitalById,
-  getAssignedBookingPayloadRow,
-  updateBooking as updateBookingQuery,
-  getActiveBookingForPatient,
-  cancelBookingByPatient,
-  getDispatcherBookingPayloadRow,
-  getDispatcherActiveBookingRows,
-  getBookingLogRows,
-  getOngoingBookingDispatchInfoForDriver,
-  getDispatcherWinnerInfo,
-  setDriverStatus,
-} from "@/common/queries";
+import { mapAssignedBookingPayload, mapDispatcherBookingPayload } from "@/common/mappers";
 import type { ManualAssignBookingDto, ReassignBookingDto } from "@/common/validation/schemas";
+import { DispatcherApprovalService } from "../dispatcher/dispatcher-approval.service";
+import { BookingRepository } from "./booking.repository";
+import { DriverRepository } from "../driver/driver.repository";
+import { PatientRepository } from "../patient/patient.repository";
+import { HospitalRepository } from "../hospital/hospital.repository";
 
 @Injectable()
 export class BookingService {
   constructor(
     private dbService: DbService,
     private dispatcherService: DispatcherService,
-    private socketService: SocketService
+    private notificationService: NotificationService,
+    private dispatcherApprovalService: DispatcherApprovalService,
+    private bookingRepository: BookingRepository,
+    private driverRepository: DriverRepository,
+    private patientRepository: PatientRepository,
+    private hospitalRepository: HospitalRepository
   ) {}
 
   async createBooking(
-    patient: User,
+    patient: Pick<User, "id">,
     _patientLat: number,
     _patientLng: number,
     pickupAddr: string | null,
-    hospital: Hospital,
-    pickedDriver: User,
+    hospital: Pick<Hospital, "id">,
+    pickedDriver: Pick<User, "id" | "providerId">,
     emergencyType: string | null,
-    dispatcherId?: string | null
+    dispatcherId?: string | null,
+    db: DbExecutor = this.dbService.db
   ) {
-    const [createdBooking] = await createBooking(this.dbService.db, {
-      patientId: patient.id,
-      pickupAddress: pickupAddr,
-      pickupLocation: { x: _patientLng, y: _patientLat },
-      providerId: pickedDriver.providerId,
-      driverId: pickedDriver.id,
-      hospitalId: hospital.id,
-      dispatcherId: dispatcherId ?? null,
-      emergencyType: emergencyType,
-      fareEstimate: null,
-    });
-
     if (!pickedDriver.providerId) {
-      throw new Error("Driver without provider");
+      throw new BadRequestException("Driver without provider");
     }
 
-    const provider = await this.dbService.db
-      .select()
-      .from(ambulanceProviders)
-      .where(eq(ambulanceProviders.id, pickedDriver.providerId));
+    const [createdBooking] = await this.bookingRepository.createBooking(
+      {
+        patientId: patient.id,
+        pickupAddress: pickupAddr,
+        pickupLocation: { x: _patientLng, y: _patientLat },
+        providerId: pickedDriver.providerId,
+        driverId: pickedDriver.id,
+        hospitalId: hospital.id,
+        dispatcherId: dispatcherId ?? null,
+        emergencyType: emergencyType,
+        fareEstimate: null,
+      },
+      db
+    );
 
-    return { patient, pickedDriver, provider, hospital, bookingId: createdBooking?.id ?? null };
+    return { bookingId: createdBooking?.id ?? null };
   }
 
   async buildAssignedBookingPayload(bookingId: string) {
-    const [row] = await getAssignedBookingPayloadRow(this.dbService.db, bookingId);
+    const [row] = await this.bookingRepository.getAssignedBookingPayloadRow(bookingId);
     return mapAssignedBookingPayload(row);
   }
 
-  async manualAssignBooking(payload: ManualAssignBookingDto) {
-    const dispatcher = await this.getDispatcherOrThrow(payload.dispatcherId);
+  async manualAssignBooking(dispatcherId: string, payload: ManualAssignBookingDto) {
+    const dispatcher = await this.getDispatcherOrThrow(dispatcherId);
     const driver = await this.getDriverForDispatcherOrThrow(
       payload.driverId,
       dispatcher.providerId
     );
     const hospital = await this.getHospitalOrThrow(payload.hospitalId);
 
-    const activeDriverBookings = await getDriverActiveBooking(this.dbService.db, payload.driverId);
-    if (activeDriverBookings.length > 0) {
-      throw new BadRequestException("Selected driver already has an active booking");
-    }
+    const booking = await this.dbService.db.transaction(async (tx) => {
+      const activeDriverBookings = await this.bookingRepository.getDriverActiveBooking(
+        payload.driverId,
+        tx
+      );
+      if (activeDriverBookings.length > 0) {
+        throw new ConflictException("Selected driver already has an active booking");
+      }
 
-    const patient = await this.resolvePatientForManualAssignment(payload);
-    const pickupAddress = payload.pickupAddress ?? null;
-    const emergencyType = payload.emergencyType ?? null;
+      const patient = await this.resolvePatientForManualAssignment(payload, tx);
+      const pickupAddress = payload.pickupAddress ?? null;
+      const emergencyType = payload.emergencyType ?? null;
 
-    const booking = await this.createBooking(
-      patient,
-      payload.pickupLocation.y,
-      payload.pickupLocation.x,
-      pickupAddress,
-      hospital,
-      driver,
-      emergencyType,
-      payload.dispatcherId
-    );
+      const created = await this.createBooking(
+        patient,
+        payload.pickupLocation.y,
+        payload.pickupLocation.x,
+        pickupAddress,
+        hospital,
+        driver,
+        emergencyType,
+        dispatcherId,
+        tx
+      );
 
-    if (!booking.bookingId) {
-      throw new BadRequestException("Booking creation failed");
-    }
+      if (!created.bookingId) {
+        throw new BadRequestException("Booking creation failed");
+      }
 
-    await setDriverStatus(this.dbService.db, driver.id, "BUSY");
+      await this.driverRepository.setDriverStatus(driver.id, "BUSY", tx);
+      return { bookingId: created.bookingId, patientId: patient.id };
+    });
 
     const assignedPayload = await this.buildAssignedBookingPayload(booking.bookingId);
     const dispatcherPayload = await this.buildDispatcherBookingPayload(booking.bookingId);
@@ -124,13 +124,9 @@ export class BookingService {
       throw new BadRequestException("Failed to build booking payload");
     }
 
-    this.socketService.emitToDispatcher(
-      payload.dispatcherId,
-      "booking:assigned",
-      dispatcherPayload
-    );
-    this.socketService.emitToDriver(driver.id, "booking:assigned", assignedPayload);
-    this.socketService.emitToPatient(patient.id, "booking:assigned", assignedPayload);
+    this.notificationService.notifyDispatcher(dispatcherId, "booking:assigned", dispatcherPayload);
+    this.notificationService.notifyDriver(driver.id, "booking:assigned", assignedPayload);
+    this.notificationService.notifyPatient(booking.patientId, "booking:assigned", assignedPayload);
 
     return {
       bookingId: booking.bookingId,
@@ -139,8 +135,8 @@ export class BookingService {
     };
   }
 
-  async reassignBooking(bookingId: string, payload: ReassignBookingDto) {
-    const dispatcher = await this.getDispatcherOrThrow(payload.dispatcherId);
+  async reassignBooking(bookingId: string, dispatcherId: string, payload: ReassignBookingDto) {
+    const dispatcher = await this.getDispatcherOrThrow(dispatcherId);
     const [booking] = await this.dbService.db
       .select()
       .from(bookings)
@@ -154,7 +150,7 @@ export class BookingService {
       throw new ForbiddenException("Dispatcher cannot reassign booking outside provider scope");
     }
 
-    if (booking.dispatcherId && booking.dispatcherId !== payload.dispatcherId) {
+    if (booking.dispatcherId && booking.dispatcherId !== dispatcherId) {
       throw new ForbiddenException("Only the assigned dispatcher can reassign this booking");
     }
 
@@ -176,46 +172,48 @@ export class BookingService {
     const previousDriverId = booking.driverId;
     let nextDriverId = booking.driverId;
 
-    if (payload.driverId && payload.driverId !== booking.driverId) {
-      const nextDriver = await this.getDriverForDispatcherOrThrow(
-        payload.driverId,
-        dispatcher.providerId
-      );
-      const activeTargetBookings = await getDriverActiveBooking(
-        this.dbService.db,
-        payload.driverId
-      );
-      if (activeTargetBookings.length > 0) {
-        throw new BadRequestException("Selected driver already has an active booking");
+    await this.dbService.db.transaction(async (tx) => {
+      if (payload.driverId && payload.driverId !== booking.driverId) {
+        const nextDriver = await this.getDriverForDispatcherOrThrow(
+          payload.driverId,
+          dispatcher.providerId,
+          tx
+        );
+        const activeTargetBookings = await this.bookingRepository.getDriverActiveBooking(
+          payload.driverId,
+          tx
+        );
+        if (activeTargetBookings.length > 0) {
+          throw new ConflictException("Selected driver already has an active booking");
+        }
+        updateData.driverId = nextDriver.id;
+        nextDriverId = nextDriver.id;
+        await this.driverRepository.setDriverStatus(nextDriver.id, "BUSY", tx);
       }
-      updateData.driverId = nextDriver.id;
-      nextDriverId = nextDriver.id;
-      await setDriverStatus(this.dbService.db, nextDriver.id, "BUSY");
-    }
 
-    if (Object.keys(updateData).length > 0) {
-      await updateBookingQuery(this.dbService.db, bookingId, updateData);
-    }
-
-    if (payload.pickupLocation) {
-      await this.dbService.db
-        .update(bookings)
-        .set({
-          pickupLocation: sql`ST_SetSRID(ST_MakePoint(${payload.pickupLocation.x}, ${payload.pickupLocation.y}), 4326)`,
-        })
-        .where(eq(bookings.id, bookingId));
-    }
-
-    if (previousDriverId && nextDriverId && previousDriverId !== nextDriverId) {
-      const oldDriverBookings = await getDriverActiveBooking(this.dbService.db, previousDriverId);
-      if (oldDriverBookings.length === 0) {
-        await setDriverStatus(this.dbService.db, previousDriverId, "AVAILABLE");
+      if (Object.keys(updateData).length > 0) {
+        await this.bookingRepository.updateBooking(bookingId, updateData, tx);
       }
-      this.socketService.emitToDriver(previousDriverId, "booking:cancelled", {
-        bookingId,
-        reason: "Reassigned by dispatcher",
-      });
-    }
+
+      if (payload.pickupLocation) {
+        await tx
+          .update(bookings)
+          .set({
+            pickupLocation: sql`ST_SetSRID(ST_MakePoint(${payload.pickupLocation.x}, ${payload.pickupLocation.y}), 4326)`,
+          })
+          .where(eq(bookings.id, bookingId));
+      }
+
+      if (previousDriverId && nextDriverId && previousDriverId !== nextDriverId) {
+        const oldDriverBookings = await this.bookingRepository.getDriverActiveBooking(
+          previousDriverId,
+          tx
+        );
+        if (oldDriverBookings.length === 0) {
+          await this.driverRepository.setDriverStatus(previousDriverId, "AVAILABLE", tx);
+        }
+      }
+    });
 
     const assignedPayload = await this.buildAssignedBookingPayload(bookingId);
     const dispatcherPayload = await this.buildDispatcherBookingPayload(bookingId);
@@ -224,17 +222,24 @@ export class BookingService {
       throw new BadRequestException("Failed to build booking payload");
     }
 
+    if (previousDriverId && nextDriverId && previousDriverId !== nextDriverId) {
+      this.notificationService.notifyDriver(previousDriverId, "booking:cancelled", {
+        bookingId,
+        reason: "Reassigned by dispatcher",
+      });
+    }
+
     if (nextDriverId) {
-      this.socketService.emitToDriver(nextDriverId, "booking:assigned", assignedPayload);
+      this.notificationService.notifyDriver(nextDriverId, "booking:assigned", assignedPayload);
     }
     if (booking.patientId) {
-      this.socketService.emitToPatient(booking.patientId, "booking:assigned", assignedPayload);
+      this.notificationService.notifyPatient(
+        booking.patientId,
+        "booking:assigned",
+        assignedPayload
+      );
     }
-    this.socketService.emitToDispatcher(
-      payload.dispatcherId,
-      "booking:assigned",
-      dispatcherPayload
-    );
+    this.notificationService.notifyDispatcher(dispatcherId, "booking:assigned", dispatcherPayload);
 
     return {
       bookingId,
@@ -255,21 +260,22 @@ export class BookingService {
       updateData.ongoing = false;
     }
 
-    const [updatedBooking] = await updateBookingQuery(this.dbService.db, bookingId, updateData);
+    const [updatedBooking] = await this.bookingRepository.updateBooking(bookingId, updateData);
 
     if (updatedBooking?.dispatcherId) {
       if (updatedBooking.status === "REQUESTED") {
         return updatedBooking;
       }
-      this.socketService.emitToDispatcher(updatedBooking.dispatcherId, "booking:update", {
+      this.notificationService.notifyDispatcher(updatedBooking.dispatcherId, "booking:update", {
         bookingId: updatedBooking.id,
         status: updatedBooking.status,
         updatedAt: new Date().toISOString(),
+        providerId: updatedBooking.providerId ?? null,
       } satisfies DispatcherBookingUpdatePayload);
     }
 
     if (updatedBooking?.providerId) {
-      this.socketService.emitToAllDispatchers("booking:log", {
+      this.notificationService.notifyAllDispatchers("booking:log", {
         providerId: updatedBooking.providerId,
         bookingId: updatedBooking.id,
         status: updatedBooking.status,
@@ -281,22 +287,113 @@ export class BookingService {
   }
 
   async getActiveBookingForPatient(patientId: string) {
-    const booking = await getActiveBookingForPatient(this.dbService.db, patientId);
+    const booking = await this.bookingRepository.getActiveBookingForPatient(patientId);
     return booking[0];
   }
 
   async getActiveBookingForDriver(driverId: string) {
-    const booking = await getDriverActiveBooking(this.dbService.db, driverId);
+    const booking = await this.bookingRepository.getDriverActiveBooking(driverId);
     return booking[0];
   }
 
   async cancelByPatient(patientId: string, reason: string) {
-    const [booking] = await cancelBookingByPatient(this.dbService.db, patientId, reason);
+    const booking = await this.dbService.db.transaction(async (tx) => {
+      const [booking] = await this.bookingRepository.cancelBookingByPatient(patientId, reason, tx);
+      if (!booking) {
+        return null;
+      }
+
+      if (booking.driverId) {
+        const remainingDriverBookings = await this.bookingRepository.getDriverActiveBooking(
+          booking.driverId,
+          tx
+        );
+        if (remainingDriverBookings.length === 0) {
+          await this.driverRepository.setDriverStatus(booking.driverId, "AVAILABLE", tx);
+        }
+      }
+
+      return booking;
+    });
+
+    if (!booking) {
+      return null;
+    }
+
+    if (booking.dispatcherId) {
+      this.notificationService.notifyDispatcher(booking.dispatcherId, "booking:update", {
+        bookingId: booking.id,
+        status: "CANCELLED",
+        updatedAt: new Date().toISOString(),
+        providerId: booking.providerId ?? null,
+      } satisfies DispatcherBookingUpdatePayload);
+    }
+
+    if (booking.providerId) {
+      const providerUpdatePayload = {
+        bookingId: booking.id,
+        status: "CANCELLED" as const,
+        updatedAt: new Date().toISOString(),
+        providerId: booking.providerId,
+      } satisfies DispatcherBookingUpdatePayload;
+      this.notificationService.notifyAllDispatchers("booking:update", providerUpdatePayload);
+      this.notificationService.notifyAllDispatchers("booking:log", {
+        providerId: booking.providerId,
+        bookingId: booking.id,
+        status: booking.status,
+        updatedAt: new Date().toISOString(),
+      });
+    }
 
     return booking;
   }
 
-  async askDispatchers(nearByDrivers: User[], patient: User) {
+  async createApprovedBooking(
+    patient: Pick<User, "id">,
+    pickup: { x: number; y: number },
+    hospital: Pick<Hospital, "id">,
+    pickedDriver: Pick<User, "id" | "providerId">,
+    dispatcherId: string
+  ) {
+    return this.dbService.db.transaction(async (tx) => {
+      const activeDriverBookings = await this.bookingRepository.getDriverActiveBooking(
+        pickedDriver.id,
+        tx
+      );
+      if (activeDriverBookings.length > 0) {
+        throw new ConflictException("Selected driver already has an active booking");
+      }
+
+      const booking = await this.createBooking(
+        patient,
+        pickup.y,
+        pickup.x,
+        null,
+        hospital,
+        pickedDriver,
+        null,
+        dispatcherId,
+        tx
+      );
+      if (!booking.bookingId) {
+        throw new BadRequestException("Booking creation failed");
+      }
+
+      await this.driverRepository.setDriverStatus(pickedDriver.id, "BUSY", tx);
+      return booking;
+    });
+  }
+
+  async askDispatchers(
+    nearByDrivers: Pick<User, "id" | "providerId" | "currentLocation">[],
+    patient: Pick<User, "id" | "fullName" | "phoneNumber" | "email" | "currentLocation">
+  ) {
+    console.info("[booking] ask_dispatchers_start", {
+      patientId: patient.id,
+      nearbyDriverCount: nearByDrivers.length,
+      nearbyDriverIds: nearByDrivers.map((driver) => driver.id),
+    });
+
     const requests = await Promise.all(
       nearByDrivers.map(async (driver) => {
         const dispatcherId = await this.dispatcherService.findLiveDispatchersByProvider(
@@ -311,101 +408,64 @@ export class BookingService {
     );
 
     const activeRequests = requests.filter(
-      (request): request is { dispatcherId: string; driver: User; requestId: string } =>
-        Boolean(request)
+      (
+        request
+      ): request is {
+        dispatcherId: string;
+        driver: Pick<User, "id" | "providerId" | "currentLocation">;
+        requestId: string;
+      } => Boolean(request)
     );
 
     if (activeRequests.length === 0) {
-      console.error("No available dispatchers for nearby drivers");
+      console.warn("[booking] ask_dispatchers_failed", {
+        patientId: patient.id,
+        reason: "no_dispatchers",
+        nearbyDriverCount: nearByDrivers.length,
+      });
       return { status: "failed" as const, reason: "no_dispatchers" as const };
     }
 
     const approvalPromises = activeRequests.map(({ dispatcherId, driver, requestId }) =>
-      this.waitForDispatcherApproval(dispatcherId, driver, patient, requestId).then((result) => ({
-        ...result,
-        requestId,
-      }))
+      this.dispatcherApprovalService
+        .requestApproval(dispatcherId, driver, patient, requestId)
+        .then((approved) => {
+          if (!approved) {
+            throw new BadRequestException("Dispatcher declined or ignored");
+          }
+          return {
+            dispatcherId,
+            pickedDriver: driver,
+            requestId,
+          };
+        })
     );
 
     try {
       const winningResponse = await Promise.any(approvalPromises);
-      await this.notifyDispatcherDecision(
+      console.info("[booking] dispatcher_approval_won", {
+        patientId: patient.id,
+        dispatcherId: winningResponse.dispatcherId,
+        driverId: winningResponse.pickedDriver.id,
+        requestId: winningResponse.requestId,
+      });
+      await this.dispatcherApprovalService.notifyDecision(
         activeRequests.map(({ dispatcherId, requestId }) => ({ dispatcherId, requestId })),
         winningResponse.dispatcherId
       );
       return { ...winningResponse, status: "approved" as const };
     } catch (_error) {
-      console.error("All dispatchers rejected the request");
+      console.warn("[booking] ask_dispatchers_failed", {
+        patientId: patient.id,
+        reason: "all_rejected",
+        activeRequestCount: activeRequests.length,
+      });
       return { status: "failed" as const, reason: "all_rejected" as const };
     }
   }
 
-  private async waitForDispatcherApproval(
-    dispatcherId: string,
-    driver: User,
-    patient: User,
-    requestId: string
-  ) {
-    return new Promise<{ dispatcherId: string; pickedDriver: User }>((resolve, reject) => {
-      this.socketService.dispatcherServer
-        ?.to(`dispatcher:${dispatcherId}`)
-        .timeout(30000)
-        .emit(
-          "booking:new",
-          {
-            requestId,
-            driver: {
-              id: driver.id,
-              providerId: driver.providerId,
-              currentLocation: driver.currentLocation ?? null,
-            },
-            patient: {
-              id: patient.id,
-              fullName: patient.fullName ?? null,
-              phoneNumber: patient.phoneNumber ?? null,
-              email: patient.email ?? null,
-              currentLocation: patient.currentLocation ?? null,
-            },
-          },
-          (err: any, response: any) => {
-            // response is a array
-            if (err || !response[0]?.approved) {
-              return reject("Dispatcher declined or ignored");
-            }
-
-            resolve({ dispatcherId: dispatcherId, pickedDriver: driver });
-          }
-        );
-    });
-  }
-
-  private async notifyDispatcherDecision(
-    dispatcherRequests: { dispatcherId: string; requestId: string }[],
-    winnerDispatcherId: string
-  ) {
-    if (!this.socketService.dispatcherServer) return;
-
-    const [winner] = await getDispatcherWinnerInfo(this.dbService.db, winnerDispatcherId);
-
-    const winnerPayload = {
-      id: winnerDispatcherId,
-      name: winner?.name ?? null,
-      providerName: winner?.providerName ?? null,
-    };
-
-    dispatcherRequests.forEach(({ dispatcherId, requestId }) => {
-      this.socketService.dispatcherServer
-        ?.to(`dispatcher:${dispatcherId}`)
-        .emit("booking:decision", {
-          requestId,
-          isWinner: dispatcherId === winnerDispatcherId,
-          winner: winnerPayload,
-        });
-    });
-  }
-
   async sendDriverLocation(driverId: string, data: DriverLocationUpdate) {
-    const [booking] = await getOngoingBookingDispatchInfoForDriver(this.dbService.db, driverId);
+    const [booking] = await this.bookingRepository.getOngoingBookingDispatchInfoForDriver(driverId);
     if (!booking) {
       return;
     }
@@ -413,12 +473,12 @@ export class BookingService {
     if (!patientId || !dispatcherId) {
       return;
     }
-    this.socketService.emitToDispatcher(dispatcherId, "driver:update", data);
-    this.socketService.emitToPatient(patientId, "driver:update", data);
+    this.notificationService.notifyDispatcher(dispatcherId, "driver:update", data);
+    this.notificationService.notifyPatient(patientId, "driver:update", data);
   }
 
   async getDispatcherActiveBookings(dispatcherId: string) {
-    const rows = await getDispatcherActiveBookingRows(this.dbService.db, dispatcherId);
+    const rows = await this.bookingRepository.getDispatcherActiveBookingRows(dispatcherId);
 
     return rows
       .map((row) => mapDispatcherBookingPayload(row))
@@ -426,19 +486,27 @@ export class BookingService {
   }
 
   async buildDispatcherBookingPayload(bookingId: string, requestId?: string) {
-    const [row] = await getDispatcherBookingPayloadRow(this.dbService.db, bookingId);
+    const [row] = await this.bookingRepository.getDispatcherBookingPayloadRow(bookingId);
 
     if (!row) return null;
 
     return mapDispatcherBookingPayload(row, requestId);
   }
 
-  async getBookingLog(providerId?: string, status?: string) {
-    return getBookingLogRows(this.dbService.db, providerId, status);
+  async getBookingLog(providerId?: string, status?: string): Promise<BookingLogEntry[]> {
+    const rows = await this.bookingRepository.getBookingLogRows(providerId, status);
+    return rows.map((row) => ({
+      ...row,
+      requestedAt: row.requestedAt ? row.requestedAt.toISOString() : null,
+      assignedAt: row.assignedAt ? row.assignedAt.toISOString() : null,
+      arrivedAt: row.arrivedAt ? row.arrivedAt.toISOString() : null,
+      pickedupAt: row.pickedupAt ? row.pickedupAt.toISOString() : null,
+      completedAt: row.completedAt ? row.completedAt.toISOString() : null,
+    }));
   }
 
-  private async getDispatcherOrThrow(dispatcherId: string) {
-    const [dispatcher] = await this.dbService.db
+  private async getDispatcherOrThrow(dispatcherId: string, db: DbExecutor = this.dbService.db) {
+    const [dispatcher] = await db
       .select({ id: users.id, providerId: users.providerId, role: users.role })
       .from(users)
       .where(and(eq(users.id, dispatcherId), eq(users.role, "DISPATCHER")));
@@ -457,8 +525,12 @@ export class BookingService {
     };
   }
 
-  private async getDriverForDispatcherOrThrow(driverId: string, providerId: string) {
-    const [driver] = await findDriverById(this.dbService.db, driverId);
+  private async getDriverForDispatcherOrThrow(
+    driverId: string,
+    providerId: string,
+    db: DbExecutor = this.dbService.db
+  ) {
+    const [driver] = await this.driverRepository.findDriverById(driverId, db);
     if (!driver || !driver.isActive) {
       throw new NotFoundException("Driver not found");
     }
@@ -470,24 +542,27 @@ export class BookingService {
     return driver;
   }
 
-  private async getHospitalOrThrow(hospitalId: string) {
-    const [hospital] = await getHospitalById(this.dbService.db, hospitalId);
+  private async getHospitalOrThrow(hospitalId: string, db: DbExecutor = this.dbService.db) {
+    const [hospital] = await this.hospitalRepository.getHospitalById(hospitalId, db);
     if (!hospital) {
       throw new NotFoundException("Hospital not found");
     }
     return hospital;
   }
 
-  private async resolvePatientForManualAssignment(payload: ManualAssignBookingDto) {
+  private async resolvePatientForManualAssignment(
+    payload: ManualAssignBookingDto,
+    db: DbExecutor = this.dbService.db
+  ) {
     if (payload.patientId) {
-      const [patient] = await findPatientById(this.dbService.db, payload.patientId);
+      const [patient] = await this.patientRepository.findPatientById(payload.patientId, db);
       if (patient) {
         return patient;
       }
     }
 
     if (payload.patientPhoneNumber) {
-      const [existingGuest] = await this.dbService.db
+      const [existingGuest] = await db
         .select()
         .from(users)
         .where(
@@ -503,14 +578,17 @@ export class BookingService {
       }
     }
 
-    const [guest] = await createPatient(this.dbService.db, {
-      fullName: "Guest",
-      phoneNumber: payload.patientPhoneNumber ?? null,
-      email: payload.patientEmail ?? null,
-      passwordHash: `guest_${Date.now()}`,
-      providerId: null,
-      currentLocation: payload.pickupLocation,
-    });
+    const [guest] = await this.patientRepository.createPatient(
+      {
+        fullName: "Guest",
+        phoneNumber: payload.patientPhoneNumber ?? null,
+        email: payload.patientEmail ?? null,
+        passwordHash: `guest_${Date.now()}`,
+        providerId: null,
+        currentLocation: payload.pickupLocation,
+      },
+      db
+    );
 
     if (!guest) {
       throw new BadRequestException("Failed to create guest patient");

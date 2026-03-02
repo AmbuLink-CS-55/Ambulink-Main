@@ -30,6 +30,20 @@ export type DriverLocationUpdate = {
   x: number;
   y: number;
 };
+export type DriverRosterPayload = {
+  providerId: string | null;
+  action: "created" | "updated" | "removed";
+  driver: {
+    id: string;
+    providerId?: string | null;
+    status?: "AVAILABLE" | "BUSY" | "OFFLINE" | null;
+    currentLocation?: {
+      x: number;
+      y: number;
+    } | null;
+    updatedAt?: string | Date;
+  };
+};
 /**
  * Basic booking event payload with just the booking ID
  */
@@ -206,6 +220,7 @@ export type DispatcherBookingUpdatePayload = {
   bookingId: string;
   status: "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED";
   updatedAt: string;
+  providerId?: string | null;
 };
 export type DispatcherBookingLogPayload = {
   providerId: string;
@@ -273,5 +288,6 @@ export interface ServerToDispatcherEvents {
   "booking:decision": (data: BookingDecisionPayload) => void;
   "booking:log": (data: DispatcherBookingLogPayload) => void;
   "driver:update": (data: DriverLocationUpdate) => void;
+  "driver:roster": (data: DriverRosterPayload) => void;
   "socket:error": (data: SocketErrorPayload) => void;
 }

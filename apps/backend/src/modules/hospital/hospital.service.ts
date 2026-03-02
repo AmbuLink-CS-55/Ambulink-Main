@@ -1,22 +1,27 @@
-import { DbService } from "@/common/database/db.service";
 import { Injectable } from "@nestjs/common";
-import { getAllHospitals, getNearbyHospitals, getNearestHospital } from "@/common/queries";
+import type { NearbyHospital } from "@ambulink/types";
+import { HospitalRepository } from "./hospital.repository";
 
 @Injectable()
 export class HospitalService {
-  constructor(private dbService: DbService) {}
+  constructor(private hospitalRepository: HospitalRepository) {}
 
   async getAll() {
-    return getAllHospitals(this.dbService.db);
+    return this.hospitalRepository.getAllHospitals();
   }
 
   async findTheNearestHospital(lat: number, lng: number) {
-    const nearestHospital = await getNearestHospital(this.dbService.db, lat, lng);
+    const nearestHospital = await this.hospitalRepository.getNearestHospital(lat, lng);
     return nearestHospital[0];
   }
 
-  async findNearby(lat: number, lng: number, limit: number, radiusKm: number) {
-    const rows = await getNearbyHospitals(this.dbService.db, lat, lng, limit, radiusKm);
+  async findNearby(
+    lat: number,
+    lng: number,
+    limit: number,
+    radiusKm: number
+  ): Promise<NearbyHospital[]> {
+    const rows = await this.hospitalRepository.getNearbyHospitals(lat, lng, limit, radiusKm);
 
     return rows.map((row) => ({
       id: row.id,

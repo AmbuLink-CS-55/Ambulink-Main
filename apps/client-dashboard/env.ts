@@ -9,7 +9,10 @@ const envSchema = z.object({
     .string()
     .url("VITE_WS_SERVER_URL must be a valid URL")
     .default("ws://localhost:3000"),
-  VITE_DISPATCHER_ID: z.string().uuid("VITE_DISPATCHER_ID must be a valid UUID"),
+  VITE_DISPATCHER_ID: z
+    .union([z.string().uuid("VITE_DISPATCHER_ID must be a valid UUID"), z.literal("")])
+    .optional()
+    .transform((value) => (value ? value : undefined)),
   VITE_PROVIDER_ID: z
     .union([z.string().uuid("VITE_PROVIDER_ID must be a valid UUID"), z.literal("")])
     .optional()

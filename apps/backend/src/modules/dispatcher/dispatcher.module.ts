@@ -1,12 +1,12 @@
-import { Module, forwardRef } from "@nestjs/common";
-import { DispatcherService } from "./dispatcher.service";
+import { Module } from "@nestjs/common";
 import { DispatcherGateway } from "./dispatcher.gateway";
 import { BookingModule } from "../booking/booking.module";
+import { DispatcherCoreModule } from "./dispatcher-core.module";
 
 @Module({
   controllers: [],
-  providers: [DispatcherService, DispatcherGateway],
-  imports: [forwardRef(() => BookingModule)],
-  exports: [DispatcherService, DispatcherGateway],
+  providers: [DispatcherGateway],
+  imports: [DispatcherCoreModule, BookingModule],
+  exports: [DispatcherCoreModule, DispatcherGateway],
 })
 export class DispatcherModule {}

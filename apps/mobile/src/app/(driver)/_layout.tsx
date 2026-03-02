@@ -1,9 +1,13 @@
 import { Tabs, Redirect } from "expo-router";
-import { useAuthStore } from "@/hooks/AuthContext";
-import { SocketProvider } from "@/hooks/SocketContext";
-import { useDriverTracking } from "@/hooks/useDriverTracking";
-import { useDriverHistory } from "@/hooks/useDriverHistory";
+import { useEffect } from "react";
+import { useAuthStore } from "@/common/hooks/AuthContext";
+import { SocketProvider } from "@/common/hooks/SocketContext";
+import { useDriverTracking } from "@/features/driver/hooks/useDriverTracking";
+import { useDriverHistory } from "@/features/driver/hooks/useDriverHistory";
+import { useDriverShift } from "@/features/driver/hooks/useDriverShift";
 import Ionicons from "@expo/vector-icons/build/Ionicons";
+import { apiGet } from "@/common/lib/api";
+import { env } from "../../../env";
 
 function DriverHistoryListener() {
   useDriverHistory();
@@ -12,12 +16,38 @@ function DriverHistoryListener() {
 
 export default function TabLayout() {
   const { user } = useAuthStore();
-  useDriverTracking(true);
+  const isOnShift = useDriverShift((state) => state.isOnShift);
+  const setOnShift = useDriverShift((state) => state.setOnShift);
+  useDriverTracking(isOnShift);
+
+  useEffect(() => {
+    if (!user || user.role !== "driver") return;
+    let isMounted = true;
+
+    const hydrateShiftState = async () => {
+      try {
+        const driver = await apiGet<{ status?: "AVAILABLE" | "BUSY" | "OFFLINE" | null }>(
+          `/api/drivers/${env.EXPO_PUBLIC_DRIVER_ID}`
+        );
+        if (!isMounted) return;
+        setOnShift(driver.status === "AVAILABLE" || driver.status === "BUSY");
+      } catch (error) {
+        console.warn("[driver] shift rehydrate failed", error);
+      }
+    };
+
+    hydrateShiftState();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [setOnShift, user]);
+
   if (!user) return <Redirect href="/(public)/login" />;
   if (user.role !== "driver") return <Redirect href="/login" />;
 
   return (
-    <SocketProvider type="DRIVER">
+    <SocketProvider type="DRIVER" enabled={isOnShift}>
       <DriverHistoryListener />
       <Tabs screenOptions={{ headerShown: false }}>
         <Tabs.Screen

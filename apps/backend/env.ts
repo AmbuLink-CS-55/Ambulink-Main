@@ -9,26 +9,29 @@ const envSchema = z.object({
 
   // Server
   PORT: z.coerce.number().default(3000),
-  NODE_ENV: z.enum(["development", "production"]).default("development"),
+  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   APP_STAGE: z.enum(["dev", "prod", "test"]).default("dev"),
 
   // Security
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters").optional(),
   JWT_EXPIRATION: z.string().default("24h"),
+  AUTH_DISABLED: z.coerce.boolean().default(false),
 
   // Redis (optional)
   REDIS_URL: z.string().url().optional(),
 
   // Frontend CORS
   FRONTEND_URL: z.string().url().optional(),
+  FRONTEND_URLS: z.string().optional(),
 
   // Logging
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+});
 
-  // Test seeds
-  PROVIDER_ID: z.uuidv4(),
-  PATIENT_ID: z.uuidv4("PATIENT_ID must be a valid UUID"),
-  DRIVER_ID: z.uuidv4("DRIVER_ID must be a valid UUID"),
+const seedSchema = z.object({
+  PROVIDER_ID: z.string().uuid("PROVIDER_ID must be a valid UUID"),
+  PATIENT_ID: z.string().uuid("PATIENT_ID must be a valid UUID"),
+  DRIVER_ID: z.string().uuid("DRIVER_ID must be a valid UUID"),
   DISPATCHER_ID: z.string().uuid("DISPATCHER_ID must be a valid UUID"),
 });
 
@@ -45,6 +48,8 @@ if (!parsed.success) {
 }
 
 export const env: Env = parsed.data;
+const parsedSeed = seedSchema.partial().parse(process.env);
+export const seedEnv = parsedSeed;
 
 const isDev = env.APP_STAGE === "dev";
 

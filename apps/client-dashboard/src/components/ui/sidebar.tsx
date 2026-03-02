@@ -39,7 +39,7 @@ type SidebarContextProps = {
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
 
 function useSidebar() {
-  const context = React.useContext(SidebarContext);
+  const context = React.use(SidebarContext);
   if (!context) {
     throw new Error("useSidebar must be used within a SidebarProvider.");
   }
@@ -589,9 +589,13 @@ function SidebarMenuSkeleton({
       data-slot="sidebar-menu-skeleton"
       data-sidebar="menu-skeleton"
       className={cn("h-8 gap-2 rounded-md px-2 flex items-center", className)}
+      style={{ "--skeleton-width": width } as React.CSSProperties}
       {...props}
     >
-      {showIcon && <></>}
+      {showIcon ? (
+        <div className="bg-sidebar-accent size-4 rounded-[calc(var(--radius-sm)-1px)]" />
+      ) : null}
+      <div className="bg-sidebar-accent h-4 flex-1 rounded-[calc(var(--radius-sm)-1px)] max-w-[var(--skeleton-width)]" />
     </div>
   );
 }
@@ -677,5 +681,4 @@ export {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
-  useSidebar,
 };

@@ -2,8 +2,10 @@ import { Body, Controller, Get, Param, Patch, Post, Query } from "@nestjs/common
 import { BookingService } from "./booking.service";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
 import {
+  bookingListQuerySchema,
   manualAssignBookingSchema,
   reassignBookingSchema,
+  type BookingListQueryDto,
   type ManualAssignBookingDto,
   type ReassignBookingDto,
 } from "@/common/validation/schemas";
@@ -13,13 +15,13 @@ export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
 
   @Get()
-  findByProvider(@Query("providerId") providerId?: string, @Query("status") status?: string) {
-    return this.bookingService.getBookingLog(providerId, status);
+  findByProvider(@Query(Validate(bookingListQuerySchema)) query: BookingListQueryDto) {
+    return this.bookingService.getBookingLog(query.providerId, query.status);
   }
 
   @Post("manual-assign")
   manualAssign(@Body(Validate(manualAssignBookingSchema)) body: ManualAssignBookingDto) {
-    return this.bookingService.manualAssignBooking(body);
+    return this.bookingService.manualAssignBooking(body.dispatcherId, body);
   }
 
   @Patch(":id/reassign")
@@ -27,6 +29,6 @@ export class BookingController {
     @Param("id") bookingId: string,
     @Body(Validate(reassignBookingSchema)) body: ReassignBookingDto
   ) {
-    return this.bookingService.reassignBooking(bookingId, body);
+    return this.bookingService.reassignBooking(bookingId, body.dispatcherId, body);
   }
 }

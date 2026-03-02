@@ -4,9 +4,8 @@ import MapLibreGL, { type PopupOptions, type MarkerOptions } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
   createContext,
-  forwardRef,
+  use,
   useCallback,
-  useContext,
   useEffect,
   useId,
   useImperativeHandle,
@@ -19,6 +18,27 @@ import { createPortal } from "react-dom";
 import { X, Minus, Plus, Locate, Maximize, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+
+const CSS_COLOR_VAR_PATTERN = /^var\((--[\w-]+)(?:,\s*([^)]+))?\)$/;
+const FALLBACK_COLORS = {
+  info: "#4285F4",
+  warning: "#f59e0b",
+  critical: "#ef4444",
+  brand: "#3b82f6",
+  surface: "#ffffff",
+} as const;
+
+function resolveThemeColor(color: string, fallback: string) {
+  const trimmed = color.trim();
+  const match = trimmed.match(CSS_COLOR_VAR_PATTERN);
+  if (!match) return trimmed || fallback;
+  if (typeof window === "undefined") return fallback;
+
+  const [, varName, inlineFallback] = match;
+  const resolved = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  if (resolved) return resolved;
+  return inlineFallback?.trim() || fallback;
+}
 
 // Check document class for theme (works with next-themes, etc.)
 function getDocumentTheme() {
@@ -81,7 +101,7 @@ type MapContextValue = {
 const MapContext = createContext<MapContextValue | null>(null);
 
 function useMap() {
-  const context = useContext(MapContext);
+  const context = use(MapContext);
   if (!context) {
     throw new Error("useMap must be used within a Map component");
   }
@@ -125,10 +145,14 @@ const DefaultLoader = () => (
   </div>
 );
 
-const Map = forwardRef<MapRef, MapProps>(function Map(
-  { children, theme: themeProp, styles, projection, ...props },
-  ref
-) {
+function Map({
+  children,
+  theme: themeProp,
+  styles,
+  projection,
+  ref,
+  ...props
+}: MapProps & { ref?: React.Ref<MapRef> }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mapInstance, setMapInstance] = useState<MapLibreGL.Map | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -225,13 +249,13 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
   return (
     <MapContext.Provider value={contextValue}>
       <div ref={containerRef} className="relative w-full h-full">
-        {!isLoaded && <DefaultLoader />}
+        {!isLoaded ? <DefaultLoader /> : null}
         {/* SSR-safe: children render only when map is loaded on client */}
-        {mapInstance && children}
+        {mapInstance ? children : null}
       </div>
     </MapContext.Provider>
   );
-});
+}
 
 type MarkerContextValue = {
   marker: MapLibreGL.Marker;
@@ -241,7 +265,7 @@ type MarkerContextValue = {
 const MarkerContext = createContext<MarkerContextValue | null>(null);
 
 function useMarkerContext() {
-  const context = useContext(MarkerContext);
+  const context = use(MarkerContext);
   if (!context) {
     throw new Error("Marker components must be used within MapMarker");
   }
@@ -382,7 +406,7 @@ function MarkerContent({ children, className }: MarkerContentProps) {
 
 function DefaultMarkerIcon() {
   return (
-    <div className="relative h-4 w-4 rounded-full border-2 border-white bg-blue-500 shadow-lg" />
+    <div className="relative h-4 w-4 rounded-full border-2 border-[color:var(--card)] bg-[color:var(--accent)] shadow-[var(--shadow-md)]" />
   );
 }
 
@@ -452,7 +476,7 @@ function MarkerPopup({
         className
       )}
     >
-      {closeButton && (
+      {closeButton ? (
         <button
           type="button"
           onClick={handleClose}
@@ -462,7 +486,7 @@ function MarkerPopup({
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </button>
-      )}
+      ) : null}
       {children}
     </div>,
     container
@@ -691,7 +715,7 @@ function MapControls({
     <div
       className={cn("absolute z-10 flex flex-col gap-1.5", positionClasses[position], className)}
     >
-      {showZoom && (
+      {showZoom ? (
         <ControlGroup>
           <ControlButton onClick={handleZoomIn} label="Zoom in">
             <Plus className="size-4" />
@@ -700,13 +724,13 @@ function MapControls({
             <Minus className="size-4" />
           </ControlButton>
         </ControlGroup>
-      )}
-      {showCompass && (
+      ) : null}
+      {showCompass ? (
         <ControlGroup>
           <CompassButton onClick={handleResetBearing} />
         </ControlGroup>
-      )}
-      {showLocate && (
+      ) : null}
+      {showLocate ? (
         <ControlGroup>
           <ControlButton
             onClick={handleLocate}
@@ -720,14 +744,14 @@ function MapControls({
             )}
           </ControlButton>
         </ControlGroup>
-      )}
-      {showFullscreen && (
+      ) : null}
+      {showFullscreen ? (
         <ControlGroup>
           <ControlButton onClick={handleFullscreen} label="Toggle fullscreen">
             <Maximize className="size-4" />
           </ControlButton>
         </ControlGroup>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -861,7 +885,7 @@ function MapPopup({
         className
       )}
     >
-      {closeButton && (
+      {closeButton ? (
         <button
           type="button"
           onClick={handleClose}
@@ -871,7 +895,7 @@ function MapPopup({
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </button>
-      )}
+      ) : null}
       {children}
     </div>,
     container
@@ -883,7 +907,7 @@ type MapRouteProps = {
   id?: string;
   /** Array of [longitude, latitude] coordinate pairs defining the route */
   coordinates: [number, number][];
-  /** Line color as CSS color value (default: "#4285F4") */
+  /** Line color as CSS color value (default: "var(--accent)") */
   color?: string;
   /** Line width in pixels (default: 3) */
   width?: number;
@@ -904,7 +928,7 @@ type MapRouteProps = {
 function MapRoute({
   id: propId,
   coordinates,
-  color = "#4285F4",
+  color = "var(--accent)",
   width = 3,
   opacity = 0.8,
   dashArray,
@@ -918,6 +942,7 @@ function MapRoute({
   const id = propId ?? autoId;
   const sourceId = `route-source-${id}`;
   const layerId = `route-layer-${id}`;
+  const resolvedColor = useMemo(() => resolveThemeColor(color, FALLBACK_COLORS.info), [color]);
 
   // Add source and layer on mount
   useEffect(() => {
@@ -938,7 +963,7 @@ function MapRoute({
       source: sourceId,
       layout: { "line-join": "round", "line-cap": "round" },
       paint: {
-        "line-color": color,
+        "line-color": resolvedColor,
         "line-width": width,
         "line-opacity": opacity,
         ...(dashArray && { "line-dasharray": dashArray }),
@@ -973,13 +998,13 @@ function MapRoute({
   useEffect(() => {
     if (!isLoaded || !map || !map.getLayer(layerId)) return;
 
-    map.setPaintProperty(layerId, "line-color", color);
+    map.setPaintProperty(layerId, "line-color", resolvedColor);
     map.setPaintProperty(layerId, "line-width", width);
     map.setPaintProperty(layerId, "line-opacity", opacity);
     if (dashArray) {
       map.setPaintProperty(layerId, "line-dasharray", dashArray);
     }
-  }, [isLoaded, map, layerId, color, width, opacity, dashArray]);
+  }, [isLoaded, map, layerId, resolvedColor, width, opacity, dashArray]);
 
   // Handle click and hover events
   useEffect(() => {
@@ -1018,11 +1043,11 @@ type MapClusterLayerProps<P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonP
   clusterMaxZoom?: number;
   /** Radius of each cluster when clustering points in pixels (default: 50) */
   clusterRadius?: number;
-  /** Colors for cluster circles: [small, medium, large] based on point count (default: ["#51bbd6", "#f1f075", "#f28cb1"]) */
+  /** Colors for cluster circles: [small, medium, large] based on point count */
   clusterColors?: [string, string, string];
   /** Point count thresholds for color/size steps: [medium, large] (default: [100, 750]) */
   clusterThresholds?: [number, number];
-  /** Color for unclustered individual points (default: "#3b82f6") */
+  /** Color for unclustered individual points (default: "var(--primary)") */
   pointColor?: string;
   /** Callback when an unclustered point is clicked */
   onPointClick?: (
@@ -1037,9 +1062,9 @@ function MapClusterLayer<P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonPr
   data,
   clusterMaxZoom = 14,
   clusterRadius = 50,
-  clusterColors = ["#51bbd6", "#f1f075", "#f28cb1"],
+  clusterColors = ["var(--accent)", "var(--secondary)", "var(--destructive)"],
   clusterThresholds = [100, 750],
-  pointColor = "#3b82f6",
+  pointColor = "var(--primary)",
   onPointClick,
   onClusterClick,
 }: MapClusterLayerProps<P>) {
@@ -1049,11 +1074,28 @@ function MapClusterLayer<P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonPr
   const clusterLayerId = `clusters-${id}`;
   const clusterCountLayerId = `cluster-count-${id}`;
   const unclusteredLayerId = `unclustered-point-${id}`;
+  const resolvedClusterColors = useMemo(
+    () =>
+      [
+        resolveThemeColor(clusterColors[0], FALLBACK_COLORS.info),
+        resolveThemeColor(clusterColors[1], FALLBACK_COLORS.warning),
+        resolveThemeColor(clusterColors[2], FALLBACK_COLORS.critical),
+      ] as [string, string, string],
+    [clusterColors]
+  );
+  const resolvedPointColor = useMemo(
+    () => resolveThemeColor(pointColor, FALLBACK_COLORS.brand),
+    [pointColor]
+  );
+  const resolvedClusterTextColor = useMemo(
+    () => resolveThemeColor("var(--card)", FALLBACK_COLORS.surface),
+    []
+  );
 
   const stylePropsRef = useRef({
-    clusterColors,
+    clusterColors: resolvedClusterColors,
     clusterThresholds,
-    pointColor,
+    pointColor: resolvedPointColor,
   });
 
   // Add source and layers on mount
@@ -1079,11 +1121,11 @@ function MapClusterLayer<P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonPr
         "circle-color": [
           "step",
           ["get", "point_count"],
-          clusterColors[0],
+          resolvedClusterColors[0],
           clusterThresholds[0],
-          clusterColors[1],
+          resolvedClusterColors[1],
           clusterThresholds[1],
-          clusterColors[2],
+          resolvedClusterColors[2],
         ],
         "circle-radius": [
           "step",
@@ -1108,7 +1150,7 @@ function MapClusterLayer<P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonPr
         "text-size": 12,
       },
       paint: {
-        "text-color": "#fff",
+        "text-color": resolvedClusterTextColor,
       },
     });
 
@@ -1119,7 +1161,7 @@ function MapClusterLayer<P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonPr
       source: sourceId,
       filter: ["!", ["has", "point_count"]],
       paint: {
-        "circle-color": pointColor,
+        "circle-color": resolvedPointColor,
         "circle-radius": 6,
       },
     });
@@ -1153,18 +1195,18 @@ function MapClusterLayer<P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonPr
 
     const prev = stylePropsRef.current;
     const colorsChanged =
-      prev.clusterColors !== clusterColors || prev.clusterThresholds !== clusterThresholds;
+      prev.clusterColors !== resolvedClusterColors || prev.clusterThresholds !== clusterThresholds;
 
     // Update cluster layer colors and sizes
     if (map.getLayer(clusterLayerId) && colorsChanged) {
       map.setPaintProperty(clusterLayerId, "circle-color", [
         "step",
         ["get", "point_count"],
-        clusterColors[0],
+        resolvedClusterColors[0],
         clusterThresholds[0],
-        clusterColors[1],
+        resolvedClusterColors[1],
         clusterThresholds[1],
-        clusterColors[2],
+        resolvedClusterColors[2],
       ]);
       map.setPaintProperty(clusterLayerId, "circle-radius", [
         "step",
@@ -1178,19 +1220,23 @@ function MapClusterLayer<P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonPr
     }
 
     // Update unclustered point layer color
-    if (map.getLayer(unclusteredLayerId) && prev.pointColor !== pointColor) {
-      map.setPaintProperty(unclusteredLayerId, "circle-color", pointColor);
+    if (map.getLayer(unclusteredLayerId) && prev.pointColor !== resolvedPointColor) {
+      map.setPaintProperty(unclusteredLayerId, "circle-color", resolvedPointColor);
     }
 
-    stylePropsRef.current = { clusterColors, clusterThresholds, pointColor };
+    stylePropsRef.current = {
+      clusterColors: resolvedClusterColors,
+      clusterThresholds,
+      pointColor: resolvedPointColor,
+    };
   }, [
     isLoaded,
     map,
     clusterLayerId,
     unclusteredLayerId,
-    clusterColors,
+    resolvedClusterColors,
     clusterThresholds,
-    pointColor,
+    resolvedPointColor,
   ]);
 
   // Handle click events
@@ -1286,7 +1332,6 @@ function MapClusterLayer<P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonPr
 
 export {
   Map,
-  useMap,
   MapMarker,
   MarkerContent,
   MarkerPopup,
@@ -1297,6 +1342,9 @@ export {
   MapRoute,
   MapClusterLayer,
 };
+
+// eslint-disable-next-line react-refresh/only-export-components -- Hook must be exported for map composition APIs.
+export { useMap };
 
 export type { MapRef };
 

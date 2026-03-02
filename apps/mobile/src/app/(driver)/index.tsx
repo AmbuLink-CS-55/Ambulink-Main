@@ -1,9 +1,19 @@
-import { useEffect, useState } from "react";
-import { Alert, Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Alert, Linking, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useSocket } from "@/hooks/SocketContext";
-import type { BookingStatus } from "@ambulink/types";
+import { useSocket } from "@/common/hooks/SocketContext";
+import type { BookingAssignedPayload } from "@ambulink/types";
+import { env } from "../../../env";
+import { postDriverArrived, postDriverCompleted, postDriverShift } from "@/common/lib/driverEvents";
+import { useDriverShift } from "@/features/driver/hooks/useDriverShift";
+import {
+  RideActions,
+  RideDetailsCard,
+  RideMapCard,
+  ShiftCard,
+  isValidPoint,
+  type Ride,
+} from "@/features/driver/components";
 
 const SRI_LANKA_REGION = {
   latitude: 7.8731,
@@ -14,210 +24,177 @@ const SRI_LANKA_REGION = {
 
 export default function Home() {
   const socket = useSocket();
-  const [currentRide, setCurrentRide] = useState<{
-    bookingId: string | null;
-    status: "ASSIGNED" | "ARRIVED" | "PICKEDUP";
-    pickupLocation: { x: number; y: number } | null;
-    patient: {
-      id: string;
-      fullName: string | null;
-      phoneNumber: string | null;
-      location: { x: number; y: number } | null;
-    };
-    driver: {
-      id: string;
-      fullName: string | null;
-      phoneNumber: string | null;
-      location: { x: number; y: number } | null;
-      provider: { id: string; name: string } | null;
-    };
-    hospital: {
-      id: string;
-      name: string | null;
-      phoneNumber: string | null;
-      location: { x: number; y: number } | null;
-    };
-    provider: { id: string; name: string } | null;
-  } | null>(null);
-  const [rideStatus, setRideStatus] = useState<BookingStatus>("COMPLETED");
-  const isValidPoint = (point?: { x: number; y: number } | null) =>
-    Boolean(point && Number.isFinite(point.x) && Number.isFinite(point.y));
+  const isOnShift = useDriverShift((state) => state.isOnShift);
+  const setOnShift = useDriverShift((state) => state.setOnShift);
+  const [isShiftUpdating, setIsShiftUpdating] = useState(false);
+  const [currentRide, setCurrentRide] = useState<Ride | null>(null);
+  const [rideStatus, setRideStatus] = useState<
+    "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED"
+  >("COMPLETED");
+
+  const pickupPoint = useMemo(
+    () => currentRide?.pickupLocation ?? currentRide?.patient.location ?? null,
+    [currentRide]
+  );
+
+  const mapRegion = useMemo(() => {
+    if (isValidPoint(pickupPoint)) {
+      const point = pickupPoint!;
+      return {
+        latitude: point.y,
+        longitude: point.x,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      };
+    }
+
+    return SRI_LANKA_REGION;
+  }, [pickupPoint]);
 
   useEffect(() => {
-    if (!socket) return;
-    socket.on("connect", () => {
+    if (!socket || !isOnShift) return;
+
+    const onConnect = () => {
       console.info("[driver] WebSocket connected");
-    });
-    socket.on("booking:assigned", (data) => {
-      console.info("[driver] Booking assigned:", {
-        patientId: data.patient?.id,
-        hospital: data.hospital?.id,
-      });
-      setCurrentRide(data);
+    };
+
+    const onAssigned = (data: BookingAssignedPayload) => {
+      setCurrentRide(data as Ride);
       setRideStatus(data.status ?? "ASSIGNED");
-    });
-    socket.on("booking:cancelled", () => {
+    };
+
+    const onCancelled = () => {
       setCurrentRide(null);
       setRideStatus("CANCELLED");
-    });
+    };
+
+    socket.on("connect", onConnect);
+    socket.on("booking:assigned", onAssigned);
+    socket.on("booking:cancelled", onCancelled);
 
     return () => {
-      socket?.disconnect();
+      socket.off("connect", onConnect);
+      socket.off("booking:assigned", onAssigned);
+      socket.off("booking:cancelled", onCancelled);
     };
-  }, [socket]);
+  }, [isOnShift, socket]);
 
-  const handleArrived = async () => {
-    if (!socket || !currentRide) return;
-    socket.emit("driver:arrived");
-    setRideStatus("ARRIVED");
-  };
-
-  const handleCompleted = async () => {
-    if (!socket || !currentRide) return;
-    socket.emit("driver:completed");
-    setCurrentRide(null);
-    setRideStatus("COMPLETED");
-  };
-
-  const handleCall = (phone?: string) => {
-    if (!phone) return Alert.alert("Error", "No phone number");
-    Linking.openURL(`tel:${phone}`);
-  };
-
-  const handleOpenOnMap = () => {
-    if (!currentRide) return;
-    const targetPickup = currentRide.pickupLocation ?? currentRide.patient.location;
-
-    if (!isValidPoint(targetPickup ?? null)) {
-      Alert.alert("Location Unavailable", "Patient location is not available yet.");
+  const handleToggleShift = useCallback(async () => {
+    if (isOnShift && currentRide) {
+      Alert.alert("Active Booking", "Complete or cancel the active booking before clocking out.");
       return;
     }
 
-    let url = "";
+    const nextOnShift = !isOnShift;
+    setIsShiftUpdating(true);
+    try {
+      await postDriverShift({
+        driverId: env.EXPO_PUBLIC_DRIVER_ID,
+        onShift: nextOnShift,
+      });
+      setOnShift(nextOnShift);
 
-    if (rideStatus === "ASSIGNED" && targetPickup) {
-      url = `https://www.google.com/maps/dir/?api=1&destination=${targetPickup.y},${targetPickup.x}`;
-    } else if (rideStatus === "ARRIVED") {
-      if (!targetPickup || !isValidPoint(currentRide.hospital.location ?? null)) {
+      if (!nextOnShift) {
+        setCurrentRide(null);
+        setRideStatus("COMPLETED");
+      }
+    } catch (error) {
+      Alert.alert(
+        "Shift Update Failed",
+        error instanceof Error ? error.message : "Please try again."
+      );
+    } finally {
+      setIsShiftUpdating(false);
+    }
+  }, [currentRide, isOnShift, setOnShift]);
+
+  const handleArrived = useCallback(async () => {
+    if (!currentRide) return;
+    try {
+      await postDriverArrived({ driverId: env.EXPO_PUBLIC_DRIVER_ID });
+      setRideStatus("ARRIVED");
+    } catch (error) {
+      Alert.alert("Error", error instanceof Error ? error.message : "Failed to update ride status");
+    }
+  }, [currentRide]);
+
+  const handleCompleted = useCallback(async () => {
+    if (!currentRide) return;
+    try {
+      await postDriverCompleted({ driverId: env.EXPO_PUBLIC_DRIVER_ID });
+      setCurrentRide(null);
+      setRideStatus("COMPLETED");
+    } catch (error) {
+      Alert.alert("Error", error instanceof Error ? error.message : "Failed to complete ride");
+    }
+  }, [currentRide]);
+
+  const handleCall = useCallback((phone?: string) => {
+    if (!phone) {
+      Alert.alert("Error", "No phone number");
+      return;
+    }
+    Linking.openURL(`tel:${phone}`);
+  }, []);
+
+  const handleOpenOnMap = useCallback(() => {
+    if (!currentRide || !isValidPoint(pickupPoint)) {
+      Alert.alert("Location Unavailable", "Patient location is not available yet.");
+      return;
+    }
+    const targetPickup = pickupPoint!;
+
+    if (rideStatus === "ASSIGNED") {
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${targetPickup.y},${targetPickup.x}`;
+      Linking.openURL(url).catch(() => Alert.alert("Error", "Could not open Google Maps"));
+      return;
+    }
+
+    if (rideStatus === "ARRIVED") {
+      if (!isValidPoint(currentRide.hospital.location)) {
         Alert.alert("Location Unavailable", "Hospital location is not available.");
         return;
       }
+
       const hospitalLocation = currentRide.hospital.location;
-      if (!hospitalLocation) {
-        Alert.alert("Location Unavailable", "Hospital location is not available.");
-        return;
-      }
-      url = `https://www.google.com/maps/dir/?api=1&origin=${targetPickup.y},${targetPickup.x}&destination=${hospitalLocation.y},${hospitalLocation.x}`;
+      if (!hospitalLocation) return;
+      const url = `https://www.google.com/maps/dir/?api=1&origin=${targetPickup.y},${targetPickup.x}&destination=${hospitalLocation.y},${hospitalLocation.x}`;
+      Linking.openURL(url).catch(() => Alert.alert("Error", "Could not open Google Maps"));
     }
-    console.info("[driver] Opening Maps:", url);
-    if (url) {
-      Linking.openURL(url).catch((err) => Alert.alert("Error", "Could not open Google Maps"));
-    }
-  };
+  }, [currentRide, pickupPoint, rideStatus]);
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} className="flex-1 bg-gray-50">
-      <ScrollView contentContainerStyle={{}} showsVerticalScrollIndicator={false}>
+    <SafeAreaView edges={["top", "left", "right"]} className="flex-1 bg-background">
+      <ScrollView showsVerticalScrollIndicator={false}>
         <View className="p-4">
-          <Text className="text-2xl font-bold text-gray-800 mb-4">Current Activity</Text>
+          <Text className="text-2xl font-bold text-foreground mb-4">Current Activity</Text>
 
-          <View className="rounded-2xl overflow-hidden shadow-sm bg-white border border-gray-100">
-            <View style={{ height: 220, width: "100%" }}>
-              <MapView
-                provider={PROVIDER_GOOGLE}
-                style={{ flex: 1 }}
-                showsPointsOfInterest={false}
-                initialRegion={
-                  (currentRide?.pickupLocation && isValidPoint(currentRide.pickupLocation)) ||
-                  (currentRide?.patient.location && isValidPoint(currentRide.patient.location))
-                    ? {
-                        latitude: (currentRide.pickupLocation ?? currentRide.patient.location)!.y,
-                        longitude: (currentRide.pickupLocation ?? currentRide.patient.location)!.x,
-                        latitudeDelta: 0.05,
-                        longitudeDelta: 0.05,
-                      }
-                    : SRI_LANKA_REGION
-                }
-              >
-                {currentRide && (
-                  <>
-                    {(currentRide.pickupLocation || currentRide.patient.location) &&
-                      isValidPoint(currentRide.pickupLocation ?? currentRide.patient.location) && (
-                      <Marker
-                        coordinate={{
-                          latitude: (currentRide.pickupLocation ?? currentRide.patient.location)!.y,
-                          longitude: (currentRide.pickupLocation ?? currentRide.patient.location)!.x,
-                        }}
-                        title="Pickup"
-                        pinColor="red"
-                      />
-                    )}
-                    {currentRide.hospital.location &&
-                      isValidPoint(currentRide.hospital.location) && (
-                        <Marker
-                          coordinate={{
-                            latitude: currentRide.hospital.location.y,
-                            longitude: currentRide.hospital.location.x,
-                          }}
-                          title="Hospital"
-                          pinColor="blue"
-                        />
-                      )}
-                  </>
-                )}
-              </MapView>
-            </View>
+          <ShiftCard
+            isOnShift={isOnShift}
+            isShiftUpdating={isShiftUpdating}
+            onToggleShift={handleToggleShift}
+          />
 
-            <TouchableOpacity
-              activeOpacity={0.8}
-              className={`p-4 items-center justify-center ${currentRide ? "bg-green-500" : "bg-gray-300"}`}
-              onPress={handleOpenOnMap}
-              disabled={!currentRide}
-            >
-              <Text className="text-white font-bold text-lg">Open in Navigation</Text>
-            </TouchableOpacity>
-          </View>
+          <RideMapCard
+            currentRide={currentRide}
+            pickupPoint={pickupPoint}
+            mapRegion={mapRegion}
+            isOnShift={isOnShift}
+            onOpenOnMap={handleOpenOnMap}
+          />
 
-          <View className="mt-6 p-5 bg-white rounded-2xl shadow-sm border border-gray-100">
-            <Text className="text-xs font-bold text-gray-400 uppercase mb-3">Ride Details</Text>
-            <DetailItem label="Patient Name" value={currentRide?.patient.fullName ?? "None"} />
-            <DetailItem label="Hospital" value={currentRide?.hospital.name ?? "None"} />
-            <DetailItem label="Status" value={rideStatus} />
-          </View>
+          <RideDetailsCard currentRide={currentRide} rideStatus={rideStatus} />
 
-          <View className="mt-3">
-            <TouchableOpacity
-              onPress={() => handleCall(currentRide?.patient.phoneNumber ?? undefined)}
-              disabled={!currentRide}
-              className={`p-4 mt-3 rounded-xl items-center ${currentRide ? "bg-white" : "bg-gray-200"}`}
-            >
-              <Text className="text-black font-bold">📞 Call Patient</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={handleArrived}
-              disabled={rideStatus !== "ASSIGNED"}
-              className={`p-4 mt-3 rounded-xl items-center ${rideStatus === "ASSIGNED" ? "bg-yellow-400" : "bg-gray-200"}`}
-            >
-              <Text className="font-bold">Arrived</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={handleCompleted}
-              disabled={rideStatus !== "ARRIVED"}
-              className={`p-4 mt-3 rounded-xl items-center ${rideStatus === "ARRIVED" ? "bg-green-500" : "bg-gray-200"}`}
-            >
-              <Text className="text-white font-bold">Complete Ride</Text>
-            </TouchableOpacity>
-          </View>
+          <RideActions
+            isOnShift={isOnShift}
+            currentRide={currentRide}
+            rideStatus={rideStatus}
+            onCall={handleCall}
+            onArrived={handleArrived}
+            onCompleted={handleCompleted}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-const DetailItem = ({ label, value }: { label: string; value: string }) => (
-  <View className="mb-3">
-    <Text className="text-gray-500 text-sm">{label}</Text>
-    <Text className="text-gray-900 font-semibold text-base">{value}</Text>
-  </View>
-);

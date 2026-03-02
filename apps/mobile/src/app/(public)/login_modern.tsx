@@ -3,18 +3,19 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
+  Pressable,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Image,
   Button,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Redirect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useAuthStore } from "@/hooks/AuthContext";
-import i18n from "@/i18n/i18n";
+import { useAuthStore } from "@/common/hooks/AuthContext";
+import i18n from "@/common/i18n/i18n";
+import { AppImage as Image } from "@/common/components";
 
 export default function LoginModern() {
   const router = useRouter();
@@ -55,7 +56,7 @@ export default function LoginModern() {
             <Image
               // source={require("../../../assets/images/Gemini_Generated_Image_obcq05obcq05obcq-removebg-preview.png")}
               style={{ width: 600, height: 600, marginTop: -195 }}
-              resizeMode="contain"
+              contentFit="contain"
             />
           </View>
 
@@ -116,27 +117,27 @@ export default function LoginModern() {
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
               />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+              <Pressable onPress={() => setShowPassword(!showPassword)}>
                 <Ionicons
                   name={showPassword ? "eye-off-outline" : "eye-outline"}
                   size={22}
                   color="#9CA3AF"
                 />
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             {/* Forgot Password */}
-            <TouchableOpacity
-              onPress={() => {}}
+            <Pressable
+              onPress={() => Alert.alert("Coming Soon", "Password reset is not implemented yet.")}
               style={{ alignItems: "flex-start", marginBottom: 24 }}
             >
               <Text style={{ color: "#205fb7ff", fontSize: 13, fontWeight: "500" }}>
                 Forgot Password?
               </Text>
-            </TouchableOpacity>
+            </Pressable>
 
             {/* Sign In Button */}
-            <TouchableOpacity
+            <Pressable
               onPress={handleSignIn}
               style={{
                 backgroundColor: "#205fb7ff",
@@ -154,7 +155,7 @@ export default function LoginModern() {
               <Text style={{ color: "white", fontSize: 18, fontWeight: "bold" }}>
                 {loading ? "Signing in..." : "Sign In"}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           {/* Divider with "Continue with" */}
@@ -175,7 +176,7 @@ export default function LoginModern() {
 
           {/* Google Sign In Button */}
           <View style={{ paddingHorizontal: 20 }}>
-            <TouchableOpacity
+            <Pressable
               style={{
                 backgroundColor: "white",
                 borderRadius: 12,
@@ -197,11 +198,12 @@ export default function LoginModern() {
                   uri: "https://www.google.com/images/branding/googleg/1x/googleg_standard_color_128dp.png",
                 }}
                 style={{ width: 24, height: 24, marginRight: 12 }}
+                contentFit="contain"
               />
               <Text style={{ color: "#1F2937", fontSize: 16, fontWeight: "600" }}>
                 Sign in with Google
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           {/* Footer */}
@@ -237,9 +239,9 @@ export default function LoginModern() {
               }}
             />
 
-            <TouchableOpacity onPress={() => router.push("/(public)/signup")}>
+            <Pressable onPress={() => router.push("/(public)/signup")}>
               <Text style={{ color: "#205fb7ff", fontSize: 15, fontWeight: "600" }}>Sign Up</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

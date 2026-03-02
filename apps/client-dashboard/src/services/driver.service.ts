@@ -3,7 +3,11 @@ import type { User } from "@/lib/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 
-export const useGetDrivers = (params?: { providerId?: string; isActive?: boolean; status?: string }) => {
+export const useGetDrivers = (params?: {
+  providerId?: string;
+  isActive?: boolean;
+  status?: string;
+}) => {
   return useQuery({
     queryKey: queryKeys.drivers(params),
     staleTime: 1000 * 30,

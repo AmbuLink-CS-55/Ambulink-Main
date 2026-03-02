@@ -1,27 +1,20 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { DbService } from "@/common/database/db.service";
-import { SocketService } from "@/common/socket/socket.service";
+import { NotificationService } from "@/core/socket/notification.service";
 import type { CreateAmbulanceDto, UpdateAmbulanceDto } from "@/common/validation/schemas";
-import {
-  createAmbulance,
-  getAllAmbulances,
-  getAmbulanceById,
-  updateAmbulance,
-  deleteAmbulance,
-} from "@/common/queries";
+import { AmbulanceRepository } from "./ambulance.repository";
 
 @Injectable()
 export class AmbulanceService {
   constructor(
-    private dbService: DbService,
-    private socketService: SocketService
+    private ambulanceRepository: AmbulanceRepository,
+    private notificationService: NotificationService
   ) {}
 
   async create(createAmbulanceDto: CreateAmbulanceDto) {
-    const result = await createAmbulance(this.dbService.db, createAmbulanceDto);
+    const result = await this.ambulanceRepository.createAmbulance(createAmbulanceDto);
     const created = result[0];
     if (created) {
-      this.socketService.emitToAllDispatchers("ambulance:update", {
+      this.notificationService.notifyAllDispatchers("ambulance:update", {
         providerId: created.providerId,
         ambulance: created,
         action: "created",
@@ -31,11 +24,11 @@ export class AmbulanceService {
   }
 
   async findAll(providerId?: string) {
-    return getAllAmbulances(this.dbService.db, providerId);
+    return this.ambulanceRepository.getAllAmbulances(providerId);
   }
 
   async findOne(id: string) {
-    const result = await getAmbulanceById(this.dbService.db, id);
+    const result = await this.ambulanceRepository.getAmbulanceById(id);
     if (result.length === 0) {
       throw new NotFoundException(`Ambulance with id ${id} not found`);
     }
@@ -43,13 +36,13 @@ export class AmbulanceService {
   }
 
   async update(id: string, updateAmbulanceDto: UpdateAmbulanceDto) {
-    const result = await updateAmbulance(this.dbService.db, id, updateAmbulanceDto);
+    const result = await this.ambulanceRepository.updateAmbulance(id, updateAmbulanceDto);
     if (result.length === 0) {
       throw new NotFoundException(`Ambulance with id ${id} not found`);
     }
     const updated = result[0];
     if (updated) {
-      this.socketService.emitToAllDispatchers("ambulance:update", {
+      this.notificationService.notifyAllDispatchers("ambulance:update", {
         providerId: updated.providerId,
         ambulance: updated,
         action: "updated",
@@ -60,6 +53,6 @@ export class AmbulanceService {
 
   async remove(id: string) {
     await this.findOne(id); // Check if exists
-    await deleteAmbulance(this.dbService.db, id);
+    await this.ambulanceRepository.deleteAmbulance(id);
   }
 }

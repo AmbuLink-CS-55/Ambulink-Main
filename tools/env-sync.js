@@ -66,6 +66,9 @@ function main() {
 
   const raw = fs.readFileSync(ROOT_ENV_PATH, "utf8");
   const rootEnv = parseEnvFile(raw);
+  const frontendUrl = rootEnv.FRONTEND_URL || "http://localhost:5173";
+  const frontendUrls =
+    rootEnv.FRONTEND_URLS || `${frontendUrl},http://127.0.0.1:5173`;
 
   requireKeys(rootEnv, REQUIRED_KEYS);
 
@@ -91,6 +94,8 @@ function main() {
     ["DISPATCHER_ID", rootEnv.DISPATCHER_ID],
     ["APP_STAGE", rootEnv.APP_STAGE],
     ["PROVIDER_ID", rootEnv.PROVIDER_ID],
+    ["FRONTEND_URL", frontendUrl],
+    ["FRONTEND_URLS", frontendUrls],
   ]);
 }
 

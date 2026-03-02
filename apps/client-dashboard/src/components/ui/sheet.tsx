@@ -29,7 +29,7 @@ function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {
     <SheetPrimitive.Backdrop
       data-slot="sheet-overlay"
       className={cn(
-        "data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 bg-black/80 duration-100 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs fixed inset-0 z-50",
+        "data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 bg-[color:var(--background)]/80 duration-100 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs fixed inset-0 z-50",
         className
       )}
       {...props}
@@ -60,7 +60,7 @@ function SheetContent({
         {...props}
       >
         {children}
-        {showCloseButton && (
+        {showCloseButton ? (
           <SheetPrimitive.Close
             data-slot="sheet-close"
             render={<Button variant="ghost" className="absolute top-4 right-4" size="icon-sm" />}
@@ -68,7 +68,7 @@ function SheetContent({
             <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} />
             <span className="sr-only">Close</span>
           </SheetPrimitive.Close>
-        )}
+        ) : null}
       </SheetPrimitive.Popup>
     </SheetPortal>
   );
