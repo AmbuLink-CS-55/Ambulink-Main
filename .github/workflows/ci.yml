@@ -36,8 +36,5 @@ jobs:
           restore-keys: |
             turbo-${{ runner.os }}-
 
-      - name: Lint
-        run: npm run lint
-
-      - name: Build
-        run: npm run build
+      - name: Lint & Build
+        run: npx turbo run lint build
