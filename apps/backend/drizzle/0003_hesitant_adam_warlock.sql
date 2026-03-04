@@ -1,1 +1,0 @@
-ALTER TABLE "bookings" ADD COLUMN "ongoing" boolean DEFAULT true NOT NULL;

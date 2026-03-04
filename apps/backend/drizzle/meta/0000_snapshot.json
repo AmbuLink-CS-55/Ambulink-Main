@@ -1,5 +1,5 @@
 {
-  "id": "c27e0748-3d24-4513-bd2a-9ad651a9d5ea",
+  "id": "002c206b-de02-4bc8-a745-66d0bd3ac87b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -89,6 +89,27 @@
           "columns": [
             {
               "expression": "provider_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ambulance_status_location_idx": {
+          "name": "ambulance_status_location_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "current_location",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -220,7 +241,7 @@
           "name": "pickup_address",
           "type": "varchar(500)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "pickup_location": {
           "name": "pickup_location",
@@ -236,6 +257,13 @@
           "notNull": true,
           "default": "'REQUESTED'"
         },
+        "ongoing": {
+          "name": "ongoing",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
         "provider_id": {
           "name": "provider_id",
           "type": "uuid",
@@ -250,6 +278,18 @@
         },
         "driver_id": {
           "name": "driver_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "emt_id": {
+          "name": "emt_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dispatcher_id": {
+          "name": "dispatcher_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -317,24 +357,15 @@
         }
       },
       "indexes": {
-        "patient_idx": {
-          "name": "patient_idx",
+        "patient_status_idx": {
+          "name": "patient_status_idx",
           "columns": [
             {
               "expression": "patient_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "status_idx": {
-          "name": "status_idx",
-          "columns": [
+            },
             {
               "expression": "status",
               "isExpression": false,
@@ -347,11 +378,17 @@
           "method": "btree",
           "with": {}
         },
-        "provider_idx_bookings": {
-          "name": "provider_idx_bookings",
+        "driver_status_idx": {
+          "name": "driver_status_idx",
           "columns": [
             {
-              "expression": "provider_id",
+              "expression": "driver_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -362,11 +399,17 @@
           "method": "btree",
           "with": {}
         },
-        "ambulance_idx": {
-          "name": "ambulance_idx",
+        "emt_status_idx": {
+          "name": "emt_status_idx",
           "columns": [
             {
-              "expression": "ambulance_id",
+              "expression": "emt_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -377,8 +420,29 @@
           "method": "btree",
           "with": {}
         },
-        "driver_idx": {
-          "name": "driver_idx",
+        "dispatcher_status_idx": {
+          "name": "dispatcher_status_idx",
+          "columns": [
+            {
+              "expression": "dispatcher_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "active_driver_booking_unique": {
+          "name": "active_driver_booking_unique",
           "columns": [
             {
               "expression": "driver_id",
@@ -387,22 +451,8 @@
               "nulls": "last"
             }
           ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "hospital_idx": {
-          "name": "hospital_idx",
-          "columns": [
-            {
-              "expression": "hospital_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
+          "isUnique": true,
+          "where": "\"bookings\".\"status\" in ('REQUESTED', 'ASSIGNED', 'ARRIVED', 'PICKEDUP')",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -454,6 +504,32 @@
           "tableTo": "users",
           "columnsFrom": [
             "driver_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "bookings_emt_id_users_id_fk": {
+          "name": "bookings_emt_id_users_id_fk",
+          "tableFrom": "bookings",
+          "tableTo": "users",
+          "columnsFrom": [
+            "emt_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "bookings_dispatcher_id_users_id_fk": {
+          "name": "bookings_dispatcher_id_users_id_fk",
+          "tableFrom": "bookings",
+          "tableTo": "users",
+          "columnsFrom": [
+            "dispatcher_id"
           ],
           "columnsTo": [
             "id"
@@ -657,6 +733,25 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
+        },
+        "current_location": {
+          "name": "current_location",
+          "type": "geometry(point)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_location_update": {
+          "name": "last_location_update",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "user_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -710,6 +805,39 @@
           "columns": [
             {
               "expression": "role",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "driver_status_location_idx": {
+          "name": "driver_status_location_idx",
+          "columns": [
+            {
+              "expression": "role",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "is_active",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "current_location",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -781,6 +909,15 @@
         "DISPATCHER",
         "DRIVER",
         "EMT"
+      ]
+    },
+    "public.user_status": {
+      "name": "user_status",
+      "schema": "public",
+      "values": [
+        "AVAILABLE",
+        "BUSY",
+        "OFFLINE"
       ]
     }
   },
