@@ -54,13 +54,23 @@ export class EmtGateway implements OnGatewayInit, OnModuleDestroy {
     }
 
     client.data.emtId = emtId;
-    this.clearPendingOffline(emtId);
-    client.join(`emt:${emtId}`);
-    await this.emtService.setStatus(emtId, "AVAILABLE");
+    try {
+      this.clearPendingOffline(emtId);
+      client.join(`emt:${emtId}`);
+      await this.emtService.setStatus(emtId, "AVAILABLE");
 
-    const bookingPayload = await this.emtService.getCurrentBooking(emtId);
-    if (bookingPayload) {
-      this.socketService.emitToEmt(emtId, "booking:assigned", bookingPayload);
+      const bookingPayload = await this.emtService.getCurrentBooking(emtId);
+      if (bookingPayload) {
+        this.socketService.emitToEmt(emtId, "booking:assigned", bookingPayload);
+      }
+    } catch (error) {
+      console.warn("[socket] invalid_emt_connection", {
+        namespace: "/emt",
+        clientId: client.id,
+        emtId,
+        message: error instanceof Error ? error.message : "Invalid EMT connection",
+      });
+      return client.disconnect(true);
     }
 
     console.log("[socket] connected", {

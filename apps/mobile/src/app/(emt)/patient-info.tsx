@@ -7,7 +7,7 @@ export default function PatientInfoScreen() {
   const booking = useEmtBookingState((state) => state.activeBooking);
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top", "left", "right"]}>
+    <SafeAreaView className="flex-1 bg-background" edges={["top", "left", "right", "bottom"]}>
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         {!booking ? (
           <View className="bg-card p-4 rounded-2xl border border-border">
