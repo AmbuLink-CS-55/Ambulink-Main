@@ -1,5 +1,6 @@
 import { INestApplication } from "@nestjs/common";
 import { and, eq } from "drizzle-orm";
+import request from "supertest";
 
 import { createSeededApp } from "./helpers/e2e-app";
 import { bookings, hospitals } from "../src/core/database/schema";
@@ -25,7 +26,7 @@ describe("Booking details and notes (integration)", () => {
   it("allows same-provider dispatcher and blocks cross-provider", async () => {
     const [hospital] = await dbService.db.select({ id: hospitals.id }).from(hospitals).limit(1);
 
-    const assignResponse = await (await import("supertest")).default(app.getHttpServer())
+    const assignResponse = await request(app.getHttpServer())
       .post("/api/booking/manual-assign")
       .send({
         dispatcherId: USER_SEED_IDS.dispatcherOne,
@@ -38,12 +39,12 @@ describe("Booking details and notes (integration)", () => {
 
     const bookingId: string = assignResponse.body.bookingId;
 
-    await (await import("supertest")).default(app.getHttpServer())
+    await request(app.getHttpServer())
       .get(`/api/booking/${bookingId}/details`)
       .query({ dispatcherId: USER_SEED_IDS.dispatcherOne })
       .expect(200);
 
-    await (await import("supertest")).default(app.getHttpServer())
+    await request(app.getHttpServer())
       .get(`/api/booking/${bookingId}/details`)
       .query({ dispatcherId: USER_SEED_IDS.dispatcherTwo })
       .expect(403);
@@ -52,7 +53,7 @@ describe("Booking details and notes (integration)", () => {
   it("appends notes via endpoint and returns in details", async () => {
     const [hospital] = await dbService.db.select({ id: hospitals.id }).from(hospitals).limit(1);
 
-    const assignResponse = await (await import("supertest")).default(app.getHttpServer())
+    const assignResponse = await request(app.getHttpServer())
       .post("/api/booking/manual-assign")
       .send({
         dispatcherId: USER_SEED_IDS.dispatcherOne,
@@ -65,7 +66,7 @@ describe("Booking details and notes (integration)", () => {
 
     const bookingId: string = assignResponse.body.bookingId;
 
-    await (await import("supertest")).default(app.getHttpServer())
+    await request(app.getHttpServer())
       .post(`/api/booking/${bookingId}/notes`)
       .send({
         dispatcherId: USER_SEED_IDS.dispatcherOne,
@@ -73,7 +74,7 @@ describe("Booking details and notes (integration)", () => {
       })
       .expect(201);
 
-    const detailsResponse = await (await import("supertest")).default(app.getHttpServer())
+    const detailsResponse = await request(app.getHttpServer())
       .get(`/api/booking/${bookingId}/details`)
       .query({ dispatcherId: USER_SEED_IDS.dispatcherOne })
       .expect(200);
@@ -93,7 +94,7 @@ describe("Booking details and notes (integration)", () => {
   it("keeps booking scoped to active states for details-driven flows", async () => {
     const [hospital] = await dbService.db.select({ id: hospitals.id }).from(hospitals).limit(1);
 
-    const assignResponse = await (await import("supertest")).default(app.getHttpServer())
+    const assignResponse = await request(app.getHttpServer())
       .post("/api/booking/manual-assign")
       .send({
         dispatcherId: USER_SEED_IDS.dispatcherOne,
@@ -106,7 +107,7 @@ describe("Booking details and notes (integration)", () => {
 
     const bookingId: string = assignResponse.body.bookingId;
 
-    await (await import("supertest")).default(app.getHttpServer())
+    await request(app.getHttpServer())
       .post("/api/drivers/events/completed")
       .query({ driverId: USER_SEED_IDS.driverOne })
       .expect(201);

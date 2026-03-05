@@ -1,4 +1,5 @@
 import { Server, Socket } from "socket.io";
+import { OnModuleDestroy } from "@nestjs/common";
 import {
   OnGatewayInit,
   SubscribeMessage,
@@ -17,9 +18,10 @@ import type { SocketErrorPayload } from "@ambulink/types";
   },
   namespace: "/emt",
 })
-export class EmtGateway implements OnGatewayInit {
+export class EmtGateway implements OnGatewayInit, OnModuleDestroy {
   @WebSocketServer() server: Server;
   private readonly offlineTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private isShuttingDown = false;
 
   constructor(
     private socketService: SocketService,
@@ -69,6 +71,9 @@ export class EmtGateway implements OnGatewayInit {
   }
 
   handleDisconnect(client: Socket) {
+    if (this.isShuttingDown) {
+      return;
+    }
     const emtId = client.data.emtId as string | undefined;
     if (emtId) {
       this.scheduleOfflineIfStillDisconnected(emtId);
@@ -159,6 +164,10 @@ export class EmtGateway implements OnGatewayInit {
     this.clearPendingOffline(emtId);
 
     const timer = setTimeout(async () => {
+      if (this.isShuttingDown) {
+        this.offlineTimers.delete(emtId);
+        return;
+      }
       try {
         const activeSockets = await this.server.in(`emt:${emtId}`).fetchSockets();
         if (activeSockets.length === 0) {
@@ -170,5 +179,13 @@ export class EmtGateway implements OnGatewayInit {
     }, 10000);
 
     this.offlineTimers.set(emtId, timer);
+  }
+
+  onModuleDestroy() {
+    this.isShuttingDown = true;
+    for (const timer of this.offlineTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.offlineTimers.clear();
   }
 }

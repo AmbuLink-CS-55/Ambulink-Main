@@ -1,5 +1,6 @@
 import { Server, Socket } from "socket.io";
 import { OnGatewayInit, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
+import { OnModuleDestroy } from "@nestjs/common";
 
 import { PatientService } from "./patient.service";
 import { BookingService } from "../booking/booking.service";
@@ -11,9 +12,10 @@ import { SocketService } from "@/core/socket/socket.service";
   },
   namespace: "/patient",
 })
-export class PatientGateway implements OnGatewayInit {
+export class PatientGateway implements OnGatewayInit, OnModuleDestroy {
   @WebSocketServer() server: Server;
   private readonly offlineTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private isShuttingDown = false;
 
   constructor(
     private patientService: PatientService,
@@ -87,6 +89,9 @@ export class PatientGateway implements OnGatewayInit {
   }
 
   handleDisconnect(client: Socket) {
+    if (this.isShuttingDown) {
+      return;
+    }
     const patientId = client.data.patientId as string | undefined;
     if (patientId) {
       this.scheduleOfflineIfStillDisconnected(patientId);
@@ -111,6 +116,10 @@ export class PatientGateway implements OnGatewayInit {
 
     // Keep availability stable through transient reconnects.
     const timer = setTimeout(async () => {
+      if (this.isShuttingDown) {
+        this.offlineTimers.delete(patientId);
+        return;
+      }
       try {
         const activeSockets = await this.server.in(`patient:${patientId}`).fetchSockets();
         if (activeSockets.length === 0) {
@@ -122,5 +131,13 @@ export class PatientGateway implements OnGatewayInit {
     }, 10000);
 
     this.offlineTimers.set(patientId, timer);
+  }
+
+  onModuleDestroy() {
+    this.isShuttingDown = true;
+    for (const timer of this.offlineTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.offlineTimers.clear();
   }
 }
