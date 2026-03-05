@@ -9,6 +9,8 @@ import { BookingPickerList, EmtBottomActions, EmtSearchBar } from "@/features/em
 import { useEmtSocketEvents } from "@/features/emt/hooks/useEmtSocketEvents";
 import { useEmtBookingState } from "@/features/emt/hooks/useEmtBookingState";
 
+const SEARCH_REFRESH_DEBOUNCE_MS = 400;
+
 export default function EmtMapScreen() {
   const router = useRouter();
   const socket = useSocket();
@@ -42,6 +44,17 @@ export default function EmtMapScreen() {
     if (!errorMessage) return;
     Alert.alert("EMT", errorMessage, [{ text: "OK", onPress: clearTransientErrors }]);
   }, [clearTransientErrors, errorMessage]);
+
+  useEffect(() => {
+    const trimmedQuery = searchTerm.trim();
+    if (!trimmedQuery) return;
+
+    const timeoutId = setTimeout(() => {
+      void loadOptions({ refresh: true });
+    }, SEARCH_REFRESH_DEBOUNCE_MS);
+
+    return () => clearTimeout(timeoutId);
+  }, [loadOptions, searchTerm]);
 
   const filteredOptions = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -120,6 +133,12 @@ export default function EmtMapScreen() {
       >
         <EmtSearchBar
           value={searchTerm}
+          onFocus={() => setPickerVisible(true)}
+          onBlur={() => {
+            if (!searchTerm.trim()) {
+              setPickerVisible(false);
+            }
+          }}
           onChangeText={(value) => {
             setSearchTerm(value);
             setPickerVisible(true);

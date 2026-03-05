@@ -1,10 +1,18 @@
 import { Server, Socket } from "socket.io";
-import { OnGatewayInit, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
+import {
+  OnGatewayInit,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+} from "@nestjs/websockets";
 import { OnModuleDestroy } from "@nestjs/common";
 
 import { SocketService } from "@/core/socket/socket.service";
 import { BookingService } from "../booking/booking.service";
 import { DispatcherService } from "./dispatcher.service";
+import { DispatcherPendingRequestService } from "./dispatcher-pending-request.service";
+import { dispatcherDecisionSubmitPayloadSchema } from "@/common/validation/socket.schemas";
+import type { SocketErrorPayload } from "@ambulink/types";
 
 @WebSocketGateway({
   cors: {
@@ -20,7 +28,8 @@ export class DispatcherGateway implements OnGatewayInit, OnModuleDestroy {
   constructor(
     private dispatcherServise: DispatcherService,
     private socketService: SocketService,
-    private bookingService: BookingService
+    private bookingService: BookingService,
+    private pendingRequestService: DispatcherPendingRequestService
   ) {}
 
   afterInit() {
@@ -50,16 +59,8 @@ export class DispatcherGateway implements OnGatewayInit, OnModuleDestroy {
     this.clearPendingOffline(dispatcherId);
     await this.dispatcherServise.setStatus(dispatcherId, "AVAILABLE");
     client.join(`dispatcher:${dispatcherId}`);
-    this.bookingService
-      .getDispatcherActiveBookings(dispatcherId)
-      .then((bookings) => {
-        this.socketService.emitToDispatcher(dispatcherId, "booking:sync", {
-          bookings,
-        });
-      })
-      .catch((error) => {
-        console.error("[dispatcher] active booking sync failed", error);
-      });
+    this.emitActiveBookingSync(dispatcherId);
+    this.emitPendingSync(dispatcherId);
     console.log("[socket] connected", {
       namespace: "/dispatcher",
       clientId: client.id,
@@ -133,5 +134,90 @@ export class DispatcherGateway implements OnGatewayInit, OnModuleDestroy {
       clearTimeout(timer);
     }
     this.offlineTimers.clear();
+  }
+
+  @SubscribeMessage("booking:decision-submit")
+  handleBookingDecisionSubmit(
+    client: Socket,
+    data: { requestId: string; approved: boolean }
+  ) {
+    const parsed = dispatcherDecisionSubmitPayloadSchema.safeParse(data);
+    if (!parsed.success) {
+      client.emit("socket:error", {
+        code: "VALIDATION_ERROR",
+        message: "Invalid booking decision payload",
+      } satisfies SocketErrorPayload);
+      return;
+    }
+
+    const dispatcherId = client.data.dispatcherId as string | undefined;
+    if (!dispatcherId) {
+      client.emit("socket:error", {
+        code: "UNAUTHORIZED",
+        message: "Dispatcher identity missing on socket",
+      } satisfies SocketErrorPayload);
+      return;
+    }
+
+    const ack = this.pendingRequestService.submitDecision(
+      dispatcherId,
+      parsed.data.requestId,
+      parsed.data.approved
+    );
+    this.socketService.emitToDispatcher(dispatcherId, "booking:decision-ack", ack);
+  }
+
+  @SubscribeMessage("booking:pending-sync:request")
+  handlePendingSyncRequest(client: Socket) {
+    const dispatcherId = client.data.dispatcherId as string | undefined;
+    if (!dispatcherId) {
+      client.emit("socket:error", {
+        code: "UNAUTHORIZED",
+        message: "Dispatcher identity missing on socket",
+      } satisfies SocketErrorPayload);
+      return;
+    }
+    this.emitPendingSync(dispatcherId);
+  }
+
+  @SubscribeMessage("booking:sync:request")
+  handleActiveBookingSyncRequest(client: Socket) {
+    const dispatcherId = client.data.dispatcherId as string | undefined;
+    if (!dispatcherId) {
+      client.emit("socket:error", {
+        code: "UNAUTHORIZED",
+        message: "Dispatcher identity missing on socket",
+      } satisfies SocketErrorPayload);
+      return;
+    }
+    this.emitActiveBookingSync(dispatcherId);
+  }
+
+  private emitActiveBookingSync(dispatcherId: string) {
+    this.bookingService
+      .getDispatcherActiveBookings(dispatcherId)
+      .then((bookings) => {
+        this.socketService.emitToDispatcher(dispatcherId, "booking:sync", {
+          bookings,
+        });
+        console.info("[dispatcher] active_booking_sync", {
+          dispatcherId,
+          bookingCount: bookings.length,
+        });
+      })
+      .catch((error) => {
+        console.error("[dispatcher] active booking sync failed", error);
+      });
+  }
+
+  private emitPendingSync(dispatcherId: string) {
+    const pendingRequests = this.pendingRequestService.getPendingForDispatcher(dispatcherId);
+    this.socketService.emitToDispatcher(dispatcherId, "booking:pending-sync", {
+      requests: pendingRequests,
+    });
+    console.info("[dispatcher] pending_request_sync", {
+      dispatcherId,
+      pendingCount: pendingRequests.length,
+    });
   }
 }

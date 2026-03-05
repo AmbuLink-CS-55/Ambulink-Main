@@ -5,9 +5,11 @@ type Props = {
   value: string;
   onChangeText: (value: string) => void;
   onClear: () => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
 };
 
-export default function EmtSearchBar({ value, onChangeText, onClear }: Props) {
+export default function EmtSearchBar({ value, onChangeText, onClear, onFocus, onBlur }: Props) {
   return (
     <View className="bg-card rounded-xl border border-border px-3 py-2 shadow">
       <View className="flex-row items-center">
@@ -20,6 +22,8 @@ export default function EmtSearchBar({ value, onChangeText, onClear }: Props) {
           className="flex-1 ml-2 text-foreground"
           autoCapitalize="none"
           autoCorrect={false}
+          onFocus={onFocus}
+          onBlur={onBlur}
         />
         {value.length > 0 && (
           <Pressable onPress={onClear} accessibilityRole="button" accessibilityLabel="Clear booking search">

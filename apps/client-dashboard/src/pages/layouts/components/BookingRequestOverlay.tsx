@@ -5,21 +5,27 @@ import { Button } from "@/components/ui/button";
 import { useBookingRequests } from "@/pages/dashboard/hooks/use-booking-requests";
 import { useBookingOverlayTimers } from "@/pages/layouts/hooks/use-booking-overlay-timers";
 import { useOngoingBookingRoutes } from "@/pages/dashboard/hooks/use-ongoing-booking-routes";
-import {
-  clearBookingDecision,
-  removeBookingRequest,
-  setPendingBookingDecision,
-} from "@/lib/booking-cache-ops";
-import { resolveBookingRequestCallback } from "@/lib/booking-request-callbacks";
+import { setPendingBookingDecision } from "@/lib/booking-cache-ops";
 import type { BookingDecisionState } from "@/lib/booking-types";
 import { queryKeys } from "@/lib/queryKeys";
-import type { DispatcherBookingPayload } from "@/lib/socket-types";
+import type { DispatcherBookingPayload, DispatcherToServerEvents, ServerToDispatcherEvents } from "@/lib/socket-types";
 import { cn } from "@/lib/utils";
 import { MemoizedBookingRequestsSection } from "@/pages/layouts/components/booking-overlay/BookingRequestsSection";
 import { OngoingBookingsSection } from "@/pages/layouts/components/booking-overlay/OngoingBookingsSection";
 import { ReassignBookingDialog } from "@/pages/layouts/components/booking-overlay/ReassignBookingDialog";
 
-export function BookingRequestOverlay({ socketConnected }: { socketConnected?: boolean }) {
+type DispatcherSocket = import("socket.io-client").Socket<
+  ServerToDispatcherEvents,
+  DispatcherToServerEvents
+>;
+
+export function BookingRequestOverlay({
+  socketConnected,
+  socket,
+}: {
+  socketConnected?: boolean;
+  socket?: DispatcherSocket;
+}) {
   const panelId = "booking-activity-panel";
   const queryClient = useQueryClient();
   const { bookingRequests } = useBookingRequests();
@@ -54,19 +60,20 @@ export function BookingRequestOverlay({ socketConnected }: { socketConnected?: b
 
   const handleAccept = useCallback(
     (requestId: string) => {
-      resolveBookingRequestCallback(requestId, true);
+      if (!socket?.connected) return;
       setPendingBookingDecision(queryClient, requestId);
+      socket.emit("booking:decision-submit", { requestId, approved: true });
     },
-    [queryClient]
+    [queryClient, socket]
   );
 
   const handleReject = useCallback(
     (requestId: string) => {
-      resolveBookingRequestCallback(requestId, false);
-      removeBookingRequest(queryClient, requestId);
-      clearBookingDecision(queryClient, requestId);
+      if (!socket?.connected) return;
+      setPendingBookingDecision(queryClient, requestId);
+      socket.emit("booking:decision-submit", { requestId, approved: false });
     },
-    [queryClient]
+    [queryClient, socket]
   );
 
   return (

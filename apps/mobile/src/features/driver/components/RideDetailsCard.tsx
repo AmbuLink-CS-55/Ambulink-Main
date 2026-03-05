@@ -7,9 +7,17 @@ type RideDetailsCardProps = {
 };
 
 export function RideDetailsCard({ currentRide, rideStatus }: RideDetailsCardProps) {
+  const bookingId = currentRide?.bookingId;
+  const truncatedBookingId = bookingId
+    ? bookingId.length > 14
+      ? `${bookingId.slice(0, 8)}...${bookingId.slice(-4)}`
+      : bookingId
+    : "None";
+
   return (
     <View className="mt-6 p-5 bg-card rounded-2xl shadow-sm border border-border">
       <Text className="text-xs font-bold text-muted-foreground uppercase mb-3">Ride Details</Text>
+      <DetailItem label="Booking ID" value={truncatedBookingId} />
       <DetailItem label="Patient Name" value={currentRide?.patient.fullName ?? "None"} />
       <DetailItem label="Hospital" value={currentRide?.hospital.name ?? "None"} />
       <DetailItem label="Status" value={rideStatus} />

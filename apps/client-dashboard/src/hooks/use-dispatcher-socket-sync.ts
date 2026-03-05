@@ -21,8 +21,14 @@ export function useDispatcherSocketSync() {
       providerId: env.VITE_PROVIDER_ID,
     });
 
+    const requestSync = () => {
+      socket.emit("booking:sync:request");
+      socket.emit("booking:pending-sync:request");
+    };
+
     socket.on("connect", () => {
       setConnected(true);
+      requestSync();
     });
     socket.on("disconnect", () => setConnected(false));
     socket.on("connect_error", (error) => {
@@ -31,6 +37,11 @@ export function useDispatcherSocketSync() {
         type: error.name,
       });
     });
+
+    if (socket.connected) {
+      setConnected(true);
+      requestSync();
+    }
 
     return () => {
       console.info("[dispatcher-socket] hook_unmount");

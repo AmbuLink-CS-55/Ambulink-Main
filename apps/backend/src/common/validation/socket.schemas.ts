@@ -46,6 +46,13 @@ export const driverLocationPayloadSchema = z
   })
   .passthrough();
 
+export const dispatcherDecisionSubmitPayloadSchema = z
+  .object({
+    requestId: z.string().trim().min(1),
+    approved: z.boolean(),
+  })
+  .passthrough();
+
 export const emtSubscribePayloadSchema = z
   .object({
     bookingId: z.string().uuid(),

@@ -151,8 +151,11 @@ export type BookingAssignedPayload = {
  */
 export type BookingNewPayload = {
   requestId: string;
+  createdAt: string;
+  expiresAt: string;
   driver: {
     id: string;
+    providerId?: string | null;
     phoneNumber: string | null;
     fullName?: string | null;
     currentLocation?: {
@@ -180,6 +183,19 @@ export type BookingNewPayload = {
  */
 export type DispatcherApprovalResponse = {
   approved: boolean;
+};
+export type DispatcherDecisionSubmitPayload = {
+  requestId: string;
+  approved: boolean;
+};
+export type DispatcherDecisionAckPayload = {
+  requestId: string;
+  approved: boolean;
+  accepted: boolean;
+  reason?: "not_found" | "expired" | "forbidden" | "already_resolved";
+};
+export type DispatcherPendingSyncPayload = {
+  requests: BookingNewPayload[];
 };
 export type BookingDecisionPayload = {
   requestId: string;
@@ -289,17 +305,19 @@ export interface ServerToDriverEvents {
 }
 /**
  * Events that dispatchers can send to the server
- * Currently none - dispatchers respond via acknowledgment callbacks
  */
-export interface DispatcherToServerEvents {}
+export interface DispatcherToServerEvents {
+  "booking:decision-submit": (data: DispatcherDecisionSubmitPayload) => void;
+  "booking:pending-sync:request": () => void;
+  "booking:sync:request": () => void;
+}
 /**
  * Events that the server can send to dispatchers
  */
 export interface ServerToDispatcherEvents {
-  "booking:new": (
-    data: BookingNewPayload,
-    callback: (response: DispatcherApprovalResponse) => void,
-  ) => void;
+  "booking:new": (data: BookingNewPayload) => void;
+  "booking:pending-sync": (data: DispatcherPendingSyncPayload) => void;
+  "booking:decision-ack": (data: DispatcherDecisionAckPayload) => void;
   "booking:assigned": (data: DispatcherBookingPayload) => void;
   "booking:sync": (data: { bookings: DispatcherBookingPayload[] }) => void;
   "booking:update": (data: DispatcherBookingUpdatePayload) => void;

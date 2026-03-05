@@ -41,7 +41,7 @@ export function DashboardLayout() {
         </main>
 
         {/* Booking Request Overlay */}
-        <BookingRequestOverlay socketConnected={connected} />
+        <BookingRequestOverlay socketConnected={connected} socket={socket} />
       </div>
     </SidebarProvider>
   );

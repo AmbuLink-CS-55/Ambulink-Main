@@ -3,7 +3,6 @@ import type { QueryClient } from "@tanstack/react-query";
 import type { BookingDecisionState, BookingRequestEntity } from "@/lib/booking-types";
 import { clearBookingDecision, removeBookingRequest } from "@/lib/booking-cache-ops";
 
-const REQUEST_EXPIRY_MS = 30000;
 const LOST_DECISION_HOLD_MS = 5000;
 
 export function useBookingOverlayTimers({
@@ -17,7 +16,7 @@ export function useBookingOverlayTimers({
 }) {
   useEffect(() => {
     const requestTimeouts = bookingRequests.map((request) => {
-      const remaining = Math.max(REQUEST_EXPIRY_MS - (Date.now() - request.timestamp), 0);
+      const remaining = Math.max(request.expiresAt - Date.now(), 0);
 
       if (remaining === 0) {
         removeBookingRequest(queryClient, request.requestId);
