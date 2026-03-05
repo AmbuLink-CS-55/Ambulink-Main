@@ -28,6 +28,8 @@ type AssignedBookingRow = {
   hospitalPhone: string | null;
   hospitalLocationX: number | null;
   hospitalLocationY: number | null;
+  patientProfileSnapshot: unknown;
+  emtNotes: unknown;
 };
 
 type DispatcherBookingRow = {
@@ -108,6 +110,12 @@ export const mapAssignedBookingPayload = (row: AssignedBookingRow | null) => {
             hotlineNumber: row.providerHotline ?? null,
           }
         : null,
+    patientProfileSnapshot: (row.patientProfileSnapshot ?? null) as
+      | Record<string, unknown>
+      | null,
+    emtNotes: Array.isArray(row.emtNotes)
+      ? (row.emtNotes as Array<Record<string, unknown>>)
+      : [],
   };
 
   const parsed = bookingAssignedPayloadSchema.safeParse(payload);

@@ -22,6 +22,7 @@ export class DriverRepository {
     currentLocation: users.currentLocation,
     lastLocationUpdate: users.lastLocationUpdate,
     status: users.status,
+    subscribedBookingId: users.subscribedBookingId,
   };
 
   createDriver(driver: Omit<NewUser, "role">) {

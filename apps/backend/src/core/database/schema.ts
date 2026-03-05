@@ -9,6 +9,7 @@ import {
   index,
   pgEnum,
   geometry,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { sql } from "drizzle-orm";
@@ -83,12 +84,19 @@ export const users = pgTable(
 
     // Status tracking for drivers
     status: userStatusEnum("status"),
+
+    // Current active booking for all roles that participate in a booking lifecycle.
+    subscribedBookingId: uuid("subscribed_booking_id").references(() => bookings.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
   },
   (t) => ({
     phoneUnique: uniqueIndex("phone_unique").on(t.phoneNumber),
     emailUnique: uniqueIndex("email_unique").on(t.email),
     providerIdx: index("provider_idx").on(t.providerId),
     roleIdx: index("role_idx").on(t.role),
+    subscribedBookingIdx: index("subscribed_booking_idx").on(t.subscribedBookingId),
     driverStatusLocationIdx: index("driver_status_location_idx").on(
       t.role,
       t.isActive,
@@ -199,6 +207,8 @@ export const bookings = pgTable(
     }),
 
     emergencyType: varchar("emergency_type", { length: 100 }),
+    patientProfileSnapshot: jsonb("patient_profile_snapshot"),
+    emtNotes: jsonb("emt_notes").notNull().default(sql`'[]'::jsonb`),
 
     requestedAt: timestamp("requested_at", { withTimezone: true }).notNull().defaultNow(),
     assignedAt: timestamp("assigned_at", { withTimezone: true }),

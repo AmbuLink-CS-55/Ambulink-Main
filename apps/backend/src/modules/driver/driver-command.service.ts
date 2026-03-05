@@ -58,10 +58,6 @@ export class DriverCommandService {
     }
 
     await this.bookingService.updateBooking(bookingData.id, { status: "ARRIVED" });
-    const { id, patientId } = bookingData;
-    this.notificationService.notifyPatient(patientId!, "booking:arrived", {
-      bookingId: id,
-    });
   }
 
   async completed(driverId: string) {
@@ -72,13 +68,5 @@ export class DriverCommandService {
 
     await this.bookingService.updateBooking(bookingData.id, { status: "COMPLETED" });
     await this.driverService.setStatus(driverId, "AVAILABLE");
-
-    const { id, patientId } = bookingData;
-    this.notificationService.notifyPatient(patientId!, "booking:completed", {
-      bookingId: id,
-    });
-    this.notificationService.notifyDriver(driverId, "booking:completed", {
-      bookingId: id,
-    });
   }
 }

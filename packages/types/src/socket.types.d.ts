@@ -22,6 +22,20 @@ export type DriverLocationPayload = {
   x: number;
   y: number;
 };
+export type EmtNote = {
+  id: string;
+  bookingId: string;
+  authorId: string;
+  content: string;
+  createdAt: string;
+};
+export type EmtSubscribePayload = {
+  bookingId: string;
+};
+export type EmtAddNotePayload = {
+  bookingId: string;
+  content: string;
+};
 /**
  * Driver location update data
  */
@@ -126,6 +140,8 @@ export type BookingAssignedPayload = {
     name: string;
     hotlineNumber: string | null;
   } | null;
+  patientProfileSnapshot?: PatientSettingsData | null;
+  emtNotes?: EmtNote[];
 };
 /**
  * Booking request payload sent to dispatchers for approval
@@ -289,5 +305,21 @@ export interface ServerToDispatcherEvents {
   "booking:log": (data: DispatcherBookingLogPayload) => void;
   "driver:update": (data: DriverLocationUpdate) => void;
   "driver:roster": (data: DriverRosterPayload) => void;
+  "booking:notes": (data: { bookingId: string; note: EmtNote }) => void;
+  "socket:error": (data: SocketErrorPayload) => void;
+}
+
+export interface EmtToServerEvents {
+  "emt:subscribe": (data: EmtSubscribePayload) => void;
+  "emt:note:add": (data: EmtAddNotePayload) => void;
+}
+
+export interface ServerToEmtEvents {
+  "booking:assigned": (data: BookingAssignedPayload) => void;
+  "booking:arrived": (data: BookingEventPayload) => void;
+  "booking:completed": (data: BookingEventPayload) => void;
+  "booking:cancelled": (data: BookingCancelledPayload) => void;
+  "driver:update": (data: DriverLocationUpdate) => void;
+  "booking:notes": (data: { bookingId: string; note: EmtNote }) => void;
   "socket:error": (data: SocketErrorPayload) => void;
 }

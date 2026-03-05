@@ -9,6 +9,7 @@ import { SocketModule } from "./core/socket/socket.module";
 import { DispatcherModule } from "./modules/dispatcher/dispatcher.module";
 import { HealthController } from "./core/health/health.controller";
 import { HospitalModule } from "./modules/hospital/hospital.module";
+import { EmtModule } from "./modules/emt/emt.module";
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { HospitalModule } from "./modules/hospital/hospital.module";
     BookingModule,
     DispatcherModule,
     HospitalModule,
+    EmtModule,
   ],
   controllers: [HealthController],
   providers: [],

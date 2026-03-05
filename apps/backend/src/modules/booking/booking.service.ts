@@ -16,6 +16,8 @@ import type {
   DriverLocationUpdate,
   DispatcherBookingPayload,
   DispatcherBookingUpdatePayload,
+  EmtNote,
+  PatientSettingsData,
 } from "@ambulink/types";
 import { mapAssignedBookingPayload, mapDispatcherBookingPayload } from "@/common/mappers";
 import type { ManualAssignBookingDto, ReassignBookingDto } from "@/common/validation/schemas";
@@ -39,13 +41,14 @@ export class BookingService {
   ) {}
 
   async createBooking(
-    patient: Pick<User, "id">,
+    patient: { id: string },
     _patientLat: number,
     _patientLng: number,
     pickupAddr: string | null,
     hospital: Pick<Hospital, "id">,
     pickedDriver: Pick<User, "id" | "providerId">,
     emergencyType: string | null,
+    patientProfileSnapshot: PatientSettingsData | null,
     dispatcherId?: string | null,
     db: DbExecutor = this.dbService.db
   ) {
@@ -63,6 +66,7 @@ export class BookingService {
         hospitalId: hospital.id,
         dispatcherId: dispatcherId ?? null,
         emergencyType: emergencyType,
+        patientProfileSnapshot,
         fareEstimate: null,
       },
       db
@@ -98,13 +102,14 @@ export class BookingService {
       const emergencyType = payload.emergencyType ?? null;
 
       const created = await this.createBooking(
-        patient,
+        { id: patient.id },
         payload.pickupLocation.y,
         payload.pickupLocation.x,
         pickupAddress,
         hospital,
         driver,
         emergencyType,
+        null,
         dispatcherId,
         tx
       );
@@ -113,6 +118,8 @@ export class BookingService {
         throw new BadRequestException("Booking creation failed");
       }
 
+      await this.bookingRepository.setUserSubscribedBooking(patient.id, created.bookingId, tx);
+      await this.bookingRepository.setUserSubscribedBooking(driver.id, created.bookingId, tx);
       await this.driverRepository.setDriverStatus(driver.id, "BUSY", tx);
       return { bookingId: created.bookingId, patientId: patient.id };
     });
@@ -188,6 +195,7 @@ export class BookingService {
         }
         updateData.driverId = nextDriver.id;
         nextDriverId = nextDriver.id;
+        await this.bookingRepository.setUserSubscribedBooking(nextDriver.id, bookingId, tx);
         await this.driverRepository.setDriverStatus(nextDriver.id, "BUSY", tx);
       }
 
@@ -210,6 +218,7 @@ export class BookingService {
           tx
         );
         if (oldDriverBookings.length === 0) {
+          await this.bookingRepository.clearUserSubscribedBooking(previousDriverId, tx);
           await this.driverRepository.setDriverStatus(previousDriverId, "AVAILABLE", tx);
         }
       }
@@ -239,6 +248,10 @@ export class BookingService {
         assignedPayload
       );
     }
+    const emtSubscribers = await this.bookingRepository.getEmtsSubscribedToBooking(bookingId);
+    for (const subscriber of emtSubscribers) {
+      this.notificationService.notifyEmt(subscriber.emtId, "booking:assigned", assignedPayload);
+    }
     this.notificationService.notifyDispatcher(dispatcherId, "booking:assigned", dispatcherPayload);
 
     return {
@@ -260,7 +273,23 @@ export class BookingService {
       updateData.ongoing = false;
     }
 
-    const [updatedBooking] = await this.bookingRepository.updateBooking(bookingId, updateData);
+    const { updatedBooking, emtSubscriberIds } = await this.dbService.db.transaction(async (tx) => {
+      const [record] = await this.bookingRepository.updateBooking(bookingId, updateData, tx);
+      if (!record) {
+        return { updatedBooking: undefined, emtSubscriberIds: [] as string[] };
+      }
+
+      const emtSubscribers = await this.bookingRepository.getEmtsSubscribedToBooking(record.id, tx);
+
+      if (record.status === "COMPLETED" || record.status === "CANCELLED") {
+        await this.bookingRepository.clearSubscribedBookingForBooking(record.id, tx);
+      }
+
+      return {
+        updatedBooking: record,
+        emtSubscriberIds: emtSubscribers.map((subscriber) => subscriber.emtId),
+      };
+    });
 
     if (updatedBooking?.dispatcherId) {
       if (updatedBooking.status === "REQUESTED") {
@@ -283,25 +312,96 @@ export class BookingService {
       });
     }
 
+    if (updatedBooking?.patientId && updatedBooking.status === "ARRIVED") {
+      this.notificationService.notifyPatient(updatedBooking.patientId, "booking:arrived", {
+        bookingId: updatedBooking.id,
+      });
+    }
+
+    if (updatedBooking?.patientId && updatedBooking.status === "COMPLETED") {
+      this.notificationService.notifyPatient(updatedBooking.patientId, "booking:completed", {
+        bookingId: updatedBooking.id,
+      });
+    }
+
+    if (updatedBooking?.driverId && updatedBooking.status === "COMPLETED") {
+      this.notificationService.notifyDriver(updatedBooking.driverId, "booking:completed", {
+        bookingId: updatedBooking.id,
+      });
+    }
+
+    if (updatedBooking?.driverId && updatedBooking.status === "CANCELLED") {
+      this.notificationService.notifyDriver(updatedBooking.driverId, "booking:cancelled", {
+        bookingId: updatedBooking.id,
+        reason: updatedBooking.cancellationReason ?? "Booking cancelled",
+      });
+    }
+
+    if (
+      updatedBooking?.status === "ARRIVED" ||
+      updatedBooking?.status === "COMPLETED" ||
+      updatedBooking?.status === "CANCELLED"
+    ) {
+      for (const emtId of emtSubscriberIds) {
+        if (updatedBooking.status === "ARRIVED") {
+          this.notificationService.notifyEmt(emtId, "booking:arrived", {
+            bookingId: updatedBooking.id,
+          });
+        } else if (updatedBooking.status === "COMPLETED") {
+          this.notificationService.notifyEmt(emtId, "booking:completed", {
+            bookingId: updatedBooking.id,
+          });
+        } else {
+          this.notificationService.notifyEmt(emtId, "booking:cancelled", {
+            bookingId: updatedBooking.id,
+            reason: updatedBooking.cancellationReason ?? "Booking cancelled",
+          });
+        }
+      }
+    }
+
     return updatedBooking;
   }
 
   async getActiveBookingForPatient(patientId: string) {
+    const [subscription] = await this.bookingRepository.getUserSubscribedBooking(patientId);
+    if (subscription?.subscribedBookingId) {
+      const [subscribedBooking] = await this.bookingRepository.getActiveBookingById(
+        subscription.subscribedBookingId
+      );
+      if (subscribedBooking) {
+        return subscribedBooking;
+      }
+    }
+
     const booking = await this.bookingRepository.getActiveBookingForPatient(patientId);
     return booking[0];
   }
 
   async getActiveBookingForDriver(driverId: string) {
+    const [subscription] = await this.bookingRepository.getUserSubscribedBooking(driverId);
+    if (subscription?.subscribedBookingId) {
+      const [subscribedBooking] = await this.bookingRepository.getActiveBookingById(
+        subscription.subscribedBookingId
+      );
+      if (subscribedBooking) {
+        return subscribedBooking;
+      }
+    }
+
     const booking = await this.bookingRepository.getDriverActiveBooking(driverId);
     return booking[0];
   }
 
   async cancelByPatient(patientId: string, reason: string) {
-    const booking = await this.dbService.db.transaction(async (tx) => {
+    const { booking, emtSubscriberIds } = await this.dbService.db.transaction(async (tx) => {
       const [booking] = await this.bookingRepository.cancelBookingByPatient(patientId, reason, tx);
       if (!booking) {
-        return null;
+        return { booking: null, emtSubscriberIds: [] as string[] };
       }
+
+      const emtSubscribers = await this.bookingRepository.getEmtsSubscribedToBooking(booking.id, tx);
+      await this.bookingRepository.clearSubscribedBookingForBooking(booking.id, tx);
 
       if (booking.driverId) {
         const remainingDriverBookings = await this.bookingRepository.getDriverActiveBooking(
@@ -313,7 +413,10 @@ export class BookingService {
         }
       }
 
-      return booking;
+      return {
+        booking,
+        emtSubscriberIds: emtSubscribers.map((subscriber) => subscriber.emtId),
+      };
     });
 
     if (!booking) {
@@ -345,15 +448,23 @@ export class BookingService {
       });
     }
 
+    for (const emtId of emtSubscriberIds) {
+      this.notificationService.notifyEmt(emtId, "booking:cancelled", {
+        bookingId: booking.id,
+        reason,
+      });
+    }
+
     return booking;
   }
 
   async createApprovedBooking(
-    patient: Pick<User, "id">,
+    patient: { id: string },
     pickup: { x: number; y: number },
     hospital: Pick<Hospital, "id">,
     pickedDriver: Pick<User, "id" | "providerId">,
-    dispatcherId: string
+    dispatcherId: string,
+    patientProfileSnapshot: PatientSettingsData | null
   ) {
     return this.dbService.db.transaction(async (tx) => {
       const activeDriverBookings = await this.bookingRepository.getDriverActiveBooking(
@@ -372,6 +483,7 @@ export class BookingService {
         hospital,
         pickedDriver,
         null,
+        patientProfileSnapshot,
         dispatcherId,
         tx
       );
@@ -379,14 +491,26 @@ export class BookingService {
         throw new BadRequestException("Booking creation failed");
       }
 
+      await this.bookingRepository.setUserSubscribedBooking(patient.id, booking.bookingId, tx);
+      await this.bookingRepository.setUserSubscribedBooking(pickedDriver.id, booking.bookingId, tx);
       await this.driverRepository.setDriverStatus(pickedDriver.id, "BUSY", tx);
       return booking;
     });
   }
 
   async askDispatchers(
-    nearByDrivers: Pick<User, "id" | "providerId" | "currentLocation">[],
-    patient: Pick<User, "id" | "fullName" | "phoneNumber" | "email" | "currentLocation">
+    nearByDrivers: Array<{
+      id: string;
+      providerId: string | null;
+      currentLocation: User["currentLocation"];
+    }>,
+    patient: {
+      id: string;
+      fullName: string | null;
+      phoneNumber: string | null;
+      email: string | null;
+      currentLocation: User["currentLocation"];
+    }
   ) {
     console.info("[booking] ask_dispatchers_start", {
       patientId: patient.id,
@@ -412,7 +536,11 @@ export class BookingService {
         request
       ): request is {
         dispatcherId: string;
-        driver: Pick<User, "id" | "providerId" | "currentLocation">;
+        driver: {
+          id: string;
+          providerId: string | null;
+          currentLocation: User["currentLocation"];
+        };
         requestId: string;
       } => Boolean(request)
     );
@@ -475,6 +603,12 @@ export class BookingService {
     }
     this.notificationService.notifyDispatcher(dispatcherId, "driver:update", data);
     this.notificationService.notifyPatient(patientId, "driver:update", data);
+    const emtSubscribers = await this.bookingRepository.getEmtsSubscribedToBooking(
+      booking.bookingId
+    );
+    for (const subscriber of emtSubscribers) {
+      this.notificationService.notifyEmt(subscriber.emtId, "driver:update", data);
+    }
   }
 
   async getDispatcherActiveBookings(dispatcherId: string) {
@@ -503,6 +637,40 @@ export class BookingService {
       pickedupAt: row.pickedupAt ? row.pickedupAt.toISOString() : null,
       completedAt: row.completedAt ? row.completedAt.toISOString() : null,
     }));
+  }
+
+  async getActiveBookingById(bookingId: string) {
+    const [booking] = await this.bookingRepository.getActiveBookingById(bookingId);
+    return booking;
+  }
+
+  async getUserSubscribedBooking(userId: string) {
+    const [subscription] = await this.bookingRepository.getUserSubscribedBooking(userId);
+    if (!subscription?.subscribedBookingId) {
+      return null;
+    }
+
+    const [booking] = await this.bookingRepository.getActiveBookingById(
+      subscription.subscribedBookingId
+    );
+    return booking ?? null;
+  }
+
+  async setUserSubscribedBooking(userId: string, bookingId: string) {
+    await this.bookingRepository.setUserSubscribedBooking(userId, bookingId);
+  }
+
+  async searchOngoingBookingsByProvider(providerId: string, query: string, limit: number) {
+    return this.bookingRepository.searchOngoingBookingsByProvider(providerId, query, limit);
+  }
+
+  async getEmtSubscribersForBooking(bookingId: string) {
+    return this.bookingRepository.getEmtsSubscribedToBooking(bookingId);
+  }
+
+  async appendEmtNote(bookingId: string, note: EmtNote) {
+    const [updated] = await this.bookingRepository.appendEmtNote(bookingId, note);
+    return updated;
   }
 
   private async getDispatcherOrThrow(dispatcherId: string, db: DbExecutor = this.dbService.db) {

@@ -32,6 +32,19 @@ export class DispatcherRepository {
       );
   }
 
+  findAllLiveDispatchersByProvider(providerId: string) {
+    return this.dbService.db
+      .select({ dispatcherId: users.id })
+      .from(users)
+      .where(
+        and(
+          eq(users.status, "AVAILABLE"),
+          eq(users.providerId, providerId),
+          eq(users.role, "DISPATCHER")
+        )
+      );
+  }
+
   getDispatcherWinnerInfo(winnerDispatcherId: string) {
     return this.dbService.db
       .select({

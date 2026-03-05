@@ -20,4 +20,9 @@ export class DispatcherService {
     }
     return dispatcher[0]?.dispatcherId ?? null;
   }
+
+  async findAllLiveDispatchersByProvider(providerId: string) {
+    const dispatchers = await this.dispatcherRepository.findAllLiveDispatchersByProvider(providerId);
+    return dispatchers.map((dispatcher) => dispatcher.dispatcherId);
+  }
 }

@@ -6,6 +6,7 @@ export class SocketService {
   public driverServer: Server | null = null;
   public patientServer: Server | null = null;
   public dispatcherServer: Server | null = null;
+  public emtServer: Server | null = null;
 
   emitToDriver(driverId: string, event: string, payload: unknown) {
     if (!this.driverServer) {
@@ -28,6 +29,14 @@ export class SocketService {
       return;
     }
     this.dispatcherServer.to(`dispatcher:${dispatcherId}`).emit(event, payload);
+  }
+
+  emitToEmt(emtId: string, event: string, payload: unknown) {
+    if (!this.emtServer) {
+      console.warn(`[SocketService] emtServer not initialized yet! Event ${event} dropped.`);
+      return;
+    }
+    this.emtServer.to(`emt:${emtId}`).emit(event, payload);
   }
 
   emitToAllDispatchers(event: string, payload: unknown) {

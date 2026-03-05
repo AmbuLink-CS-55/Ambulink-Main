@@ -1,6 +1,6 @@
 import type { BookingStatus } from "./database.types";
 import type { Point } from "./common.types";
-import type { PatientSettingsData } from "./socket.types";
+import type { EmtNote, PatientSettingsData } from "./socket.types";
 
 export type NearbyDriver = {
   id: string;
@@ -75,4 +75,30 @@ export type PatientHelpCommand = {
 export type PatientCancelCommand = {
   patientId: string;
   reason?: string;
+};
+
+export type EmtSubscribeCommand = {
+  emtId: string;
+  bookingId: string;
+};
+
+export type EmtAddNoteCommand = {
+  emtId: string;
+  bookingId: string;
+  content: string;
+};
+
+export type EmtCurrentBookingResponse = {
+  booking: {
+    bookingId: string;
+    status: "ASSIGNED" | "ARRIVED" | "PICKEDUP";
+    patientProfileSnapshot: PatientSettingsData | null;
+    emtNotes: EmtNote[];
+  } | null;
+};
+
+export type EmtBookingSearchResult = {
+  bookingId: string;
+  shortId: string;
+  status: "ASSIGNED" | "ARRIVED" | "PICKEDUP";
 };

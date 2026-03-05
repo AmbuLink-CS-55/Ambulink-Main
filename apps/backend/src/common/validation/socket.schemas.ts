@@ -46,9 +46,28 @@ export const driverLocationPayloadSchema = z
   })
   .passthrough();
 
+export const emtSubscribePayloadSchema = z
+  .object({
+    bookingId: z.string().uuid(),
+  })
+  .passthrough();
+
+export const emtAddNotePayloadSchema = z
+  .object({
+    bookingId: z.string().uuid(),
+    content: z.string().trim().min(1).max(2000),
+  })
+  .passthrough();
+
 export const driverEventDriverIdSchema = z
   .object({
     driverId: z.string().uuid(),
+  })
+  .passthrough();
+
+export const emtEventEmtIdSchema = z
+  .object({
+    emtId: z.string().uuid(),
   })
   .passthrough();
 
@@ -72,6 +91,8 @@ export const driverShiftCommandSchema = driverEventDriverIdSchema.merge(
     onShift: z.boolean(),
   })
 );
+export const emtSubscribeCommandSchema = emtEventEmtIdSchema.merge(emtSubscribePayloadSchema);
+export const emtAddNoteCommandSchema = emtEventEmtIdSchema.merge(emtAddNotePayloadSchema);
 
 export const patientHelpHttpBodySchema = patientPickupRequestSchema;
 export const patientCancelHttpBodySchema = patientCancelRequestSchema;
@@ -79,6 +100,8 @@ export const driverLocationHttpBodySchema = driverLocationPayloadSchema;
 export const driverShiftHttpBodySchema = z.object({
   onShift: z.boolean(),
 });
+export const emtSubscribeHttpBodySchema = emtSubscribePayloadSchema;
+export const emtAddNoteHttpBodySchema = emtAddNotePayloadSchema;
 
 const locationSchema = z
   .object({
@@ -86,6 +109,14 @@ const locationSchema = z
     y: z.number(),
   })
   .nullable();
+
+const emtNoteSchema = z.object({
+  id: z.string(),
+  bookingId: z.string(),
+  authorId: z.string(),
+  content: z.string(),
+  createdAt: z.string(),
+});
 
 export const bookingAssignedPayloadSchema = z
   .object({
@@ -129,6 +160,8 @@ export const bookingAssignedPayloadSchema = z
         hotlineNumber: z.string().nullable(),
       })
       .nullable(),
+    patientProfileSnapshot: patientSettingsSchema.nullable().optional(),
+    emtNotes: z.array(emtNoteSchema).optional(),
   })
   .passthrough();
 

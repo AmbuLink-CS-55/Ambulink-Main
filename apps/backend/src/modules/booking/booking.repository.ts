@@ -1,8 +1,9 @@
 import { Injectable } from "@nestjs/common";
-import { eq, ne, and, or, sql, inArray, desc } from "drizzle-orm";
+import { eq, ne, and, or, sql, inArray, desc, isNotNull, ilike, asc } from "drizzle-orm";
 import { ambulanceProviders, bookings, hospitals, users } from "@/core/database/schema";
 import { DbExecutor, DbService } from "@/core/database/db.service";
 import type { Booking, BookingStatus } from "@/core/database/schema";
+import type { EmtNote, PatientSettingsData } from "@ambulink/types";
 
 type CreateBookingValues = {
   patientId: string;
@@ -14,6 +15,7 @@ type CreateBookingValues = {
   dispatcherId?: string | null;
   emergencyType: string | null;
   fareEstimate?: string | null;
+  patientProfileSnapshot?: PatientSettingsData | null;
 };
 
 @Injectable()
@@ -33,6 +35,7 @@ export class BookingRepository {
         hospitalId: values.hospitalId,
         dispatcherId: values.dispatcherId ?? null,
         emergencyType: values.emergencyType,
+        patientProfileSnapshot: values.patientProfileSnapshot ?? null,
         fareEstimate: values.fareEstimate ?? null,
         assignedAt: new Date(),
       })
@@ -55,6 +58,18 @@ export class BookingRepository {
       );
   }
 
+  getActiveBookingById(bookingId: string, db: DbExecutor = this.dbService.db) {
+    return db
+      .select()
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.id, bookingId),
+          inArray(bookings.status, ["ASSIGNED", "ARRIVED", "PICKEDUP"])
+        )
+      );
+  }
+
   getOngoingBookingByUserId(userId: string) {
     return this.dbService.db
       .select({
@@ -68,6 +83,62 @@ export class BookingRepository {
         and(
           or(eq(bookings.patientId, userId), eq(bookings.driverId, userId)),
           ne(bookings.status, "COMPLETED")
+        )
+      );
+  }
+
+  getUserSubscribedBooking(userId: string, db: DbExecutor = this.dbService.db) {
+    return db
+      .select({ subscribedBookingId: users.subscribedBookingId })
+      .from(users)
+      .where(eq(users.id, userId));
+  }
+
+  setUserSubscribedBooking(userId: string, bookingId: string, db: DbExecutor = this.dbService.db) {
+    return db
+      .update(users)
+      .set({
+        subscribedBookingId: bookingId,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning({ id: users.id, subscribedBookingId: users.subscribedBookingId });
+  }
+
+  clearUserSubscribedBooking(userId: string, db: DbExecutor = this.dbService.db) {
+    return db
+      .update(users)
+      .set({
+        subscribedBookingId: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning({ id: users.id, subscribedBookingId: users.subscribedBookingId });
+  }
+
+  clearSubscribedBookingForBooking(bookingId: string, db: DbExecutor = this.dbService.db) {
+    return db
+      .update(users)
+      .set({
+        subscribedBookingId: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.subscribedBookingId, bookingId))
+      .returning({ id: users.id, role: users.role });
+  }
+
+  getEmtsSubscribedToBooking(bookingId: string, db: DbExecutor = this.dbService.db) {
+    return db
+      .select({
+        emtId: users.id,
+      })
+      .from(users)
+      .where(
+        and(
+          eq(users.role, "EMT"),
+          eq(users.isActive, true),
+          eq(users.subscribedBookingId, bookingId),
+          isNotNull(users.providerId)
         )
       );
   }
@@ -99,6 +170,7 @@ export class BookingRepository {
   getOngoingBookingDispatchInfoForDriver(driverId: string, db: DbExecutor = this.dbService.db) {
     return db
       .select({
+        bookingId: bookings.id,
         patientId: bookings.patientId,
         dispatcherId: bookings.dispatcherId,
       })
@@ -131,6 +203,8 @@ export class BookingRepository {
         hospitalPhone: hospitals.phoneNumber,
         hospitalLocationX: sql<number | null>`ST_X(${hospitals.location})`,
         hospitalLocationY: sql<number | null>`ST_Y(${hospitals.location})`,
+        patientProfileSnapshot: bookings.patientProfileSnapshot,
+        emtNotes: bookings.emtNotes,
       })
       .from(bookings)
       .innerJoin(users, eq(users.id, bookings.patientId))
@@ -257,5 +331,37 @@ export class BookingRepository {
     const filteredQuery = whereClause ? baseQuery.where(whereClause) : baseQuery;
 
     return filteredQuery.orderBy(desc(bookings.requestedAt));
+  }
+
+  searchOngoingBookingsByProvider(providerId: string, query: string, limit: number) {
+    const normalizedQuery = query.trim();
+    return this.dbService.db
+      .select({
+        bookingId: bookings.id,
+        status: bookings.status,
+      })
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.providerId, providerId),
+          inArray(bookings.status, ["ASSIGNED", "ARRIVED", "PICKEDUP"]),
+          ilike(sql<string>`${bookings.id}::text`, `${normalizedQuery}%`)
+        )
+      )
+      .orderBy(asc(bookings.requestedAt))
+      .limit(limit);
+  }
+
+  appendEmtNote(bookingId: string, note: EmtNote, db: DbExecutor = this.dbService.db) {
+    return db
+      .update(bookings)
+      .set({
+        emtNotes: sql`${bookings.emtNotes} || ${JSON.stringify([note])}::jsonb`,
+      })
+      .where(eq(bookings.id, bookingId))
+      .returning({
+        id: bookings.id,
+        emtNotes: bookings.emtNotes,
+      });
   }
 }
