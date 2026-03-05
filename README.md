@@ -1,35 +1,68 @@
-# Ambulink mono repo
+# Ambulink Monorepo
 
-## Turborepo
-
-Install dependencies once at the repo root:
+## 1) Install
 
 ```sh
 npm install
 ```
 
-## Environment setup
+## 2) Environment setup (required)
 
-This repo uses a shared root `.env` as the source of truth. App-specific `.env` files are auto-generated.
+The root `.env` is the single source of truth. App-level `.env` files are generated from it.
 
-1. rename `.env_example` to `.env` at root (ambulink-mono).
-2. Run:
+1. Copy root example:
+
+```sh
+cp .env_example .env
+```
+
+2. Fill these required keys in root `.env`:
+- `API_SERVER_URL`
+- `WS_SERVER_URL`
+- `PROVIDER_ID`
+- `DISPATCHER_ID`
+- `PATIENT_ID`
+- `DRIVER_ID`
+- `EMT_ID`
+- `APP_STAGE`
+- `DATABASE_URL`
+
+3. Generate app env files:
 
 ```sh
 npm run env:sync
 ```
 
-`npm run dev` already runs `env:sync` for you.
+Generated files:
+- `apps/mobile/.env`
+- `apps/client-dashboard/.env`
+- `apps/backend/.env`
 
-3. Setup Database
+Notes:
+- Do not hand-edit generated app `.env` files; update root `.env` and re-run `npm run env:sync`.
+- `npm run dev` runs `env:sync` automatically before starting apps.
 
-- in root folder run `docker build -t postgres-postgis .`
-- start the container `docker run --name postgres-db -e POSTGRES_PASSWORD=123 -p 5432:5432 -d postgres-postgis`
-- to start the container if you restart your computer or shuts down docker run `docker start postgres-db`
-- run `npm run migrate` to setup the tables on the database or when ever you change the schema
-- run `npm run seed` to seed the database (fill it up with data)
+## 3) Database setup
 
-Run all apps in parallel:
+```sh
+docker build -t postgres-postgis .
+docker run --name postgres-db -e POSTGRES_PASSWORD=123 -p 5432:5432 -d postgres-postgis
+```
+
+If container already exists but is stopped:
+
+```sh
+docker start postgres-db
+```
+
+Apply schema and seed:
+
+```sh
+npm run migrate
+npm run seed
+```
+
+## 4) Run apps
 
 ```sh
 npm run dev

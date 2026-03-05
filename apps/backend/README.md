@@ -1,29 +1,37 @@
-# Plans and Notes
-- will add auth after completing basics, it should be easy to just plug. https://docs.nestjs.com/security/authentication
+# Backend (NestJS)
 
- `ifconfig | grep "inet " | grep -v 127.0.0.1`
+## Environment
 
-# Setup
-## db 
+`apps/backend/.env` is generated from root `.env` via:
+
 ```sh
-docker run --name postgres-db -e POSTGRES_PASSWORD=mypassword -p 5432:5432 -d postgres:18
+npm run env:sync
 ```
+
+Generated keys include:
+- `DATABASE_URL`
+- `PATIENT_ID`
+- `DRIVER_ID`
+- `EMT_ID`
+- `DISPATCHER_ID`
+- `PROVIDER_ID`
+- `APP_STAGE`
+- `FRONTEND_URL`
+- `FRONTEND_URLS`
+
+Do not edit `apps/backend/.env` directly; update root `.env` and run sync again.
+
+## Setup
+
+From repo root:
+
 ```sh
-docker run -d -p 6379:6379 --name redis redis:7-alpine
-```
-```sh
-npm run generate
 npm run migrate
+npm run seed
 ```
 
-# Tech Overview
-## Nest cli
+Run backend only:
+
 ```sh
-# nest generate <schematic> <name>
-nest g co users              # controller
-nest g s users               # service
-nest g mo users              # module
-nest g res users             # full CRUD resource
-nest g pi users              # pipe
-nest g gu users              # guard
+npm run dev --workspace=apps/backend
 ```
