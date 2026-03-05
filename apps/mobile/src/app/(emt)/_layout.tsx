@@ -1,6 +1,13 @@
 import { Redirect, Stack } from "expo-router";
-import { SocketProvider } from "@/common/hooks/SocketContext";
+import { SocketProvider, useSocket } from "@/common/hooks/SocketContext";
+import { useEmtSocketEvents } from "@/features/emt/hooks/useEmtSocketEvents";
 import { useAuthStore } from "@/common/hooks/AuthContext";
+
+function EmtSocketEventsBridge() {
+  const socket = useSocket();
+  useEmtSocketEvents(socket);
+  return null;
+}
 
 export default function EmtLayout() {
   const user = useAuthStore((state) => state.user);
@@ -10,6 +17,7 @@ export default function EmtLayout() {
 
   return (
     <SocketProvider type="EMT" enabled>
+      <EmtSocketEventsBridge />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="patient-info" />

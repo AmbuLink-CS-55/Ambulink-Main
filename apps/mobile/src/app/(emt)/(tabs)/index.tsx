@@ -4,16 +4,13 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { useRouter } from "expo-router";
 import { useLocation } from "@/common/hooks/useLocation";
 import { UserMap } from "@/features/patient/components";
-import { useSocket } from "@/common/hooks/SocketContext";
 import { BookingPickerList, EmtBottomActions, EmtSearchBar } from "@/features/emt/components";
-import { useEmtSocketEvents } from "@/features/emt/hooks/useEmtSocketEvents";
 import { useEmtBookingState } from "@/features/emt/hooks/useEmtBookingState";
 
 const SEARCH_REFRESH_DEBOUNCE_MS = 400;
 
 export default function EmtMapScreen() {
   const router = useRouter();
-  const socket = useSocket();
   const { location, loading, error } = useLocation();
 
   const activeBooking = useEmtBookingState((state) => state.activeBooking);
@@ -32,8 +29,6 @@ export default function EmtMapScreen() {
 
   const [isPickerVisible, setPickerVisible] = useState(false);
   const insets = useSafeAreaInsets();
-
-  useEmtSocketEvents(socket);
 
   useEffect(() => {
     loadOptions();
