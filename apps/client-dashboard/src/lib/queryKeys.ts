@@ -1,5 +1,6 @@
 export const queryKeys = {
-  bookingLog: (providerId?: string | null) => ["booking-log", providerId ?? null] as const,
+  bookingLog: (providerId?: string | null, status?: string | null) =>
+    ["booking-log", providerId ?? null, status ?? null] as const,
   bookingDetails: (bookingId: string) => ["booking-details", bookingId] as const,
   bookingRequestIds: () => ["booking-request-ids"] as const,
   bookingRequest: (id: string) => ["booking-request", id] as const,

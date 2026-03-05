@@ -1,18 +1,12 @@
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { Bell, Truck, X } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { useBookingRequests } from "@/pages/dashboard/hooks/use-booking-requests";
-import { useBookingOverlayTimers } from "@/pages/layouts/hooks/use-booking-overlay-timers";
-import { useOngoingBookingRoutes } from "@/pages/dashboard/hooks/use-ongoing-booking-routes";
-import { setPendingBookingDecision } from "@/lib/booking-cache-ops";
-import type { BookingDecisionState } from "@/lib/booking-types";
-import { queryKeys } from "@/lib/queryKeys";
-import type { DispatcherBookingPayload, DispatcherToServerEvents, ServerToDispatcherEvents } from "@/lib/socket-types";
+import type { DispatcherToServerEvents, ServerToDispatcherEvents } from "@/lib/socket-types";
 import { cn } from "@/lib/utils";
 import { MemoizedBookingRequestsSection } from "@/pages/layouts/components/booking-overlay/BookingRequestsSection";
 import { OngoingBookingsSection } from "@/pages/layouts/components/booking-overlay/OngoingBookingsSection";
 import { ReassignBookingDialog } from "@/pages/layouts/components/booking-overlay/ReassignBookingDialog";
+import { useBookingActivityOverlay } from "@/pages/layouts/hooks/use-booking-activity-overlay";
 
 type DispatcherSocket = import("socket.io-client").Socket<
   ServerToDispatcherEvents,
@@ -27,54 +21,17 @@ export function BookingRequestOverlay({
   socket?: DispatcherSocket;
 }) {
   const panelId = "booking-activity-panel";
-  const queryClient = useQueryClient();
-  const { bookingRequests } = useBookingRequests();
-  const ongoingBookingsQuery = useQuery<Record<string, DispatcherBookingPayload>>({
-    queryKey: queryKeys.ongoingBookings(),
-    queryFn: async () => ({}),
-    initialData: {},
-    staleTime: Infinity,
-    enabled: false,
-  });
-  const bookingDecisionsQuery = useQuery<Record<string, BookingDecisionState>>({
-    queryKey: queryKeys.bookingDecisions(),
-    queryFn: async () => ({}),
-    initialData: {},
-    staleTime: Infinity,
-    enabled: false,
-  });
-
-  const ongoingBookings = ongoingBookingsQuery.data ?? {};
-  const bookingDecisions = bookingDecisionsQuery.data ?? {};
-
   const [isOpen, setIsOpen] = useState(true);
-  const [selectedBooking, setSelectedBooking] = useState<DispatcherBookingPayload | null>(null);
-
-  const { ongoingList, durations } = useOngoingBookingRoutes(ongoingBookings);
-
-  useBookingOverlayTimers({
+  const {
     bookingRequests,
     bookingDecisions,
-    queryClient,
-  });
-
-  const handleAccept = useCallback(
-    (requestId: string) => {
-      if (!socket?.connected) return;
-      setPendingBookingDecision(queryClient, requestId);
-      socket.emit("booking:decision-submit", { requestId, approved: true });
-    },
-    [queryClient, socket]
-  );
-
-  const handleReject = useCallback(
-    (requestId: string) => {
-      if (!socket?.connected) return;
-      setPendingBookingDecision(queryClient, requestId);
-      socket.emit("booking:decision-submit", { requestId, approved: false });
-    },
-    [queryClient, socket]
-  );
+    ongoingList,
+    durations,
+    selectedBooking,
+    setSelectedBooking,
+    handleAccept,
+    handleReject,
+  } = useBookingActivityOverlay(socket);
 
   return (
     <>

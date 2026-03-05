@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { ConflictException, Injectable } from "@nestjs/common";
 import type { PatientCancelRequest, PatientPickupRequest } from "@ambulink/types";
 import { BookingService } from "../booking/booking.service";
 import { DriverService } from "../driver/driver.service";
@@ -20,6 +20,12 @@ export class PatientCommandService {
     const { x, y, patientSettings } = data;
     console.info("[patient] sent settings: ", patientSettings);
     console.info("[patient] request_help_start", { patientId, x, y });
+
+    const activeBooking = await this.bookingService.getActiveBookingForPatient(patientId);
+    if (activeBooking) {
+      throw new ConflictException("Patient already has an active booking");
+    }
+
     const patient = await this.patientService.findOne(patientId);
 
     patient.currentLocation = { x, y };

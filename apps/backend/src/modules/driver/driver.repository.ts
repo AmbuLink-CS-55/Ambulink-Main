@@ -129,7 +129,8 @@ export class DriverRepository {
         lastLocationUpdate: new Date(),
         updatedAt: new Date(),
       })
-      .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")));
+      .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")))
+      .returning({ id: users.id });
   }
 
   clearDriverLocation(driverId: string) {
@@ -140,7 +141,8 @@ export class DriverRepository {
         lastLocationUpdate: null,
         updatedAt: new Date(),
       })
-      .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")));
+      .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")))
+      .returning({ id: users.id });
   }
 
   findDriversByLocation(lat: number, lng: number) {

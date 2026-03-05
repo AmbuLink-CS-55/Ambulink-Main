@@ -7,11 +7,11 @@ import { dispatcherSocket } from "@/lib/dispatcher-socket";
 
 export function useDispatcherSocketSync() {
   const queryClient = useQueryClient();
-  const [connected, setConnected] = useState(false);
   const socket = dispatcherSocket as unknown as import("socket.io-client").Socket<
     ServerToDispatcherEvents,
     DispatcherToServerEvents
   >;
+  const [connected, setConnected] = useState(() => socket.connected);
 
   useEffect(() => {
     console.info("[dispatcher-socket] hook_mount");
@@ -38,10 +38,7 @@ export function useDispatcherSocketSync() {
       });
     });
 
-    if (socket.connected) {
-      setConnected(true);
-      requestSync();
-    }
+    if (socket.connected) requestSync();
 
     return () => {
       console.info("[dispatcher-socket] hook_unmount");

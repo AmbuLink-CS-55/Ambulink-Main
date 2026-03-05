@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Linking, ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSocket } from "@/common/hooks/SocketContext";
 import type { BookingAssignedPayload } from "@ambulink/types";
 import { env } from "../../../env";
@@ -23,6 +23,7 @@ const SRI_LANKA_REGION = {
 };
 
 export default function Home() {
+  const insets = useSafeAreaInsets();
   const socket = useSocket();
   const isOnShift = useDriverShift((state) => state.isOnShift);
   const setOnShift = useDriverShift((state) => state.setOnShift);
@@ -165,7 +166,11 @@ export default function Home() {
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} className="flex-1 bg-background">
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 88, 96) }}
+      >
         <View className="p-4">
           <Text className="text-2xl font-bold text-foreground mb-4">Current Activity</Text>
 

@@ -131,13 +131,10 @@ export default function UserMap({
               latitude: safeHospitalLocation.y,
               longitude: safeHospitalLocation.x,
             }}
-            anchor={{ x: 0.5, y: 1 }}
+            title="Hospital"
+            pinColor="#dc2626"
             tracksViewChanges={false}
-          >
-            <View
-              style={{ width: 40, height: 40, alignItems: "center", justifyContent: "center" }}
-            ></View>
-          </Marker>
+          />
         )}
 
         {nearbyHospitals

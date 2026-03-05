@@ -7,7 +7,7 @@ export type { BookingLogEntry };
 
 export const useGetBookingLog = (params?: { providerId?: string; status?: string }) => {
   return useQuery({
-    queryKey: queryKeys.bookingLog(params?.providerId ?? null),
+    queryKey: queryKeys.bookingLog(params?.providerId ?? null, params?.status ?? null),
     staleTime: 1000 * 30,
     queryFn: async () => {
       const { data } = await api.get<BookingLogEntry[]>("/booking", { params });

@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { DataTable } from "@/components";
 import { Button } from "@/components/ui/button";
 import { useEntityFormDialog } from "@/hooks/use-entity-form-dialog";
@@ -18,14 +18,14 @@ const initialForm: DriverFormState = {
 };
 
 export default function DriversDashboard() {
-  const queryClient = useQueryClient();
-  const driverLocations = useMemo(
-    () =>
-      queryClient.getQueryData<Record<string, { x: number; y: number }>>(
-        queryKeys.driverLocations()
-      ) ?? {},
-    [queryClient]
-  );
+  const driverLocationsQuery = useQuery<Record<string, { x: number; y: number }>>({
+    queryKey: queryKeys.driverLocations(),
+    queryFn: async () => ({}),
+    initialData: {},
+    staleTime: Infinity,
+    enabled: false,
+  });
+  const driverLocations = useMemo(() => driverLocationsQuery.data ?? {}, [driverLocationsQuery.data]);
 
   const drivers = useGetDrivers({ providerId: env.VITE_PROVIDER_ID });
   const createDriver = useCreateDriver();

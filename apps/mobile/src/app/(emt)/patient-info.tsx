@@ -1,14 +1,18 @@
 import { ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { PatientProfileCard } from "@/features/emt/components";
 import { useEmtBookingState } from "@/features/emt/hooks/useEmtBookingState";
 
 export default function PatientInfoScreen() {
+  const insets = useSafeAreaInsets();
   const booking = useEmtBookingState((state) => state.activeBooking);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top", "left", "right", "bottom"]}>
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={{ padding: 16, paddingBottom: Math.max(insets.bottom + 16, 24) }}
+      >
         {!booking ? (
           <View className="bg-card p-4 rounded-2xl border border-border">
             <Text className="text-lg font-bold text-foreground">No Booking Selected</Text>
