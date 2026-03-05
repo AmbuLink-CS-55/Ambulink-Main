@@ -6,3 +6,4 @@ dist
 .env
 node_modules
 .expo
+apps/backend/test-results

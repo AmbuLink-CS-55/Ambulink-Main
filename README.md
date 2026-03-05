@@ -75,3 +75,29 @@ npm run build
 npm run lint
 npm run test
 ```
+
+## 5) Automated booking lifecycle testing
+
+Backend unit tests:
+
+```sh
+npm run test:unit:backend
+```
+
+Backend integration tests (requires Postgres + PostGIS):
+
+```sh
+npm run test:integration:backend
+```
+
+Scenario tests (multi-actor sockets + HTTP lifecycle):
+
+```sh
+npm run test:scenario
+```
+
+Single-command local runner (starts DB container, migrates, seeds, then runs integration + scenario):
+
+```sh
+npm run test:booking-lifecycle
+```

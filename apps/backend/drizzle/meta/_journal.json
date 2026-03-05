@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1772625424185,
-      "tag": "0000_smart_skin",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1772688600000,
-      "tag": "0001_emt_subscription_support",
+      "when": 1772691913355,
+      "tag": "0000_daily_mister_sinister",
       "breakpoints": true
     }
   ]

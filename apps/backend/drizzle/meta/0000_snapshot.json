@@ -1,5 +1,5 @@
 {
-  "id": "002c206b-de02-4bc8-a745-66d0bd3ac87b",
+  "id": "91b47ccb-fdad-4fe6-b0bc-193901b100e4",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -305,6 +305,19 @@
           "type": "varchar(100)",
           "primaryKey": false,
           "notNull": false
+        },
+        "patient_profile_snapshot": {
+          "name": "patient_profile_snapshot",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "emt_notes": {
+          "name": "emt_notes",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
         },
         "requested_at": {
           "name": "requested_at",
@@ -752,6 +765,12 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": false
+        },
+        "subscribed_booking_id": {
+          "name": "subscribed_booking_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -815,6 +834,21 @@
           "method": "btree",
           "with": {}
         },
+        "subscribed_booking_idx": {
+          "name": "subscribed_booking_idx",
+          "columns": [
+            {
+              "expression": "subscribed_booking_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "driver_status_location_idx": {
           "name": "driver_status_location_idx",
           "columns": [
@@ -856,6 +890,19 @@
           "tableTo": "ambulance_providers",
           "columnsFrom": [
             "provider_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "users_subscribed_booking_id_bookings_id_fk": {
+          "name": "users_subscribed_booking_id_bookings_id_fk",
+          "tableFrom": "users",
+          "tableTo": "bookings",
+          "columnsFrom": [
+            "subscribed_booking_id"
           ],
           "columnsTo": [
             "id"
