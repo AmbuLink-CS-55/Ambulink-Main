@@ -36,6 +36,7 @@ export const useManualAssignBooking = () => {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.ongoingBookings() });
+      await queryClient.invalidateQueries({ queryKey: ["booking-log"] });
     },
   });
 };
