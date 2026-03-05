@@ -3,7 +3,7 @@ import { eq, ne, and, or, sql, inArray, desc, isNotNull, ilike, asc } from "driz
 import { ambulanceProviders, bookings, hospitals, users } from "@/core/database/schema";
 import { DbExecutor, DbService } from "@/core/database/db.service";
 import type { Booking, BookingStatus } from "@/core/database/schema";
-import type { EmtNote, PatientSettingsData } from "@ambulink/types";
+import type { BookingNote, EmtNote, PatientSettingsData } from "@ambulink/types";
 
 type CreateBookingValues = {
   patientId: string;
@@ -333,6 +333,38 @@ export class BookingRepository {
     return filteredQuery.orderBy(desc(bookings.requestedAt));
   }
 
+  getBookingDetailsRow(bookingId: string, db: DbExecutor = this.dbService.db) {
+    return db
+      .select({
+        bookingId: bookings.id,
+        status: bookings.status,
+        requestedAt: bookings.requestedAt,
+        assignedAt: bookings.assignedAt,
+        arrivedAt: bookings.arrivedAt,
+        pickedupAt: bookings.pickedupAt,
+        completedAt: bookings.completedAt,
+        cancellationReason: bookings.cancellationReason,
+        patientId: users.id,
+        patientName: users.fullName,
+        patientPhone: users.phoneNumber,
+        driverId: sql<string | null>`${bookings.driverId}`,
+        driverName: sql<string | null>`driver_user.full_name`,
+        driverPhone: sql<string | null>`driver_user.phone_number`,
+        providerId: sql<string | null>`${bookings.providerId}`,
+        providerName: sql<string | null>`${ambulanceProviders.name}`,
+        hospitalId: hospitals.id,
+        hospitalName: hospitals.name,
+        hospitalPhone: hospitals.phoneNumber,
+        notes: bookings.emtNotes,
+      })
+      .from(bookings)
+      .leftJoin(users, eq(users.id, bookings.patientId))
+      .leftJoin(sql`users as driver_user`, sql`driver_user.id = ${bookings.driverId}`)
+      .leftJoin(ambulanceProviders, eq(ambulanceProviders.id, bookings.providerId))
+      .leftJoin(hospitals, eq(hospitals.id, bookings.hospitalId))
+      .where(eq(bookings.id, bookingId));
+  }
+
   searchOngoingBookingsByProvider(providerId: string, query: string, limit: number) {
     const normalizedQuery = query.trim();
     return this.dbService.db
@@ -352,7 +384,7 @@ export class BookingRepository {
       .limit(limit);
   }
 
-  appendEmtNote(bookingId: string, note: EmtNote, db: DbExecutor = this.dbService.db) {
+  appendBookingNote(bookingId: string, note: BookingNote, db: DbExecutor = this.dbService.db) {
     return db
       .update(bookings)
       .set({
@@ -363,5 +395,9 @@ export class BookingRepository {
         id: bookings.id,
         emtNotes: bookings.emtNotes,
       });
+  }
+
+  appendEmtNote(bookingId: string, note: EmtNote, db: DbExecutor = this.dbService.db) {
+    return this.appendBookingNote(bookingId, note, db);
   }
 }

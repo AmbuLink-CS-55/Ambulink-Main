@@ -1,7 +1,7 @@
 import { api } from "@/lib/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import type { BookingLogEntry, Point } from "@ambulink/types";
+import type { BookingDetailsPayload, BookingLogEntry, BookingNote, Point } from "@ambulink/types";
 
 export type { BookingLogEntry };
 
@@ -62,6 +62,38 @@ export const useReassignBooking = () => {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.ongoingBookings() });
+    },
+  });
+};
+
+export const useGetBookingDetails = (bookingId: string | null, dispatcherId?: string) => {
+  return useQuery({
+    queryKey: queryKeys.bookingDetails(bookingId ?? "none"),
+    enabled: Boolean(bookingId && dispatcherId),
+    queryFn: async () => {
+      if (!bookingId || !dispatcherId) {
+        throw new Error("Booking ID and dispatcher ID are required");
+      }
+      const { data } = await api.get<BookingDetailsPayload>(`/booking/${bookingId}/details`, {
+        params: { dispatcherId },
+      });
+      return data;
+    },
+  });
+};
+
+export const useAddBookingNote = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { bookingId: string; dispatcherId: string; content: string }) => {
+      const { data } = await api.post<BookingNote>(`/booking/${payload.bookingId}/notes`, {
+        dispatcherId: payload.dispatcherId,
+        content: payload.content,
+      });
+      return data;
+    },
+    onSuccess: async (_note, variables) => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.bookingDetails(variables.bookingId) });
     },
   });
 };

@@ -1,4 +1,6 @@
 export type {
+  BookingDetailsPayload,
+  BookingNote,
   BookingAssignedPayload,
   BookingCancelledPayload,
   BookingDecisionPayload,

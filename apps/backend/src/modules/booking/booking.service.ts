@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import { randomUUID } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 import { bookings, users } from "@/core/database/schema";
 import type { Booking, Hospital, User } from "@/core/database/schema";
@@ -12,7 +13,9 @@ import { DbExecutor, DbService } from "@/core/database/db.service";
 import { DispatcherService } from "../dispatcher/dispatcher.service";
 import { NotificationService } from "@/core/socket/notification.service";
 import type {
+  BookingDetailsPayload,
   BookingLogEntry,
+  BookingNote,
   DriverLocationUpdate,
   DispatcherBookingPayload,
   DispatcherBookingUpdatePayload,
@@ -668,9 +671,115 @@ export class BookingService {
     return this.bookingRepository.getEmtsSubscribedToBooking(bookingId);
   }
 
+  async appendBookingNote(bookingId: string, note: BookingNote) {
+    const [updated] = await this.bookingRepository.appendBookingNote(bookingId, note);
+    return updated;
+  }
+
   async appendEmtNote(bookingId: string, note: EmtNote) {
     const [updated] = await this.bookingRepository.appendEmtNote(bookingId, note);
     return updated;
+  }
+
+  async getBookingDetailsForDispatcher(bookingId: string, dispatcherId: string) {
+    const dispatcher = await this.getDispatcherOrThrow(dispatcherId);
+    const [row] = await this.bookingRepository.getBookingDetailsRow(bookingId);
+    if (!row) {
+      throw new NotFoundException("Booking not found");
+    }
+
+    if (!row.providerId || row.providerId !== dispatcher.providerId) {
+      throw new ForbiddenException("Dispatcher cannot access booking outside provider scope");
+    }
+
+    return {
+      bookingId: row.bookingId,
+      status: row.status,
+      requestedAt: row.requestedAt ? row.requestedAt.toISOString() : null,
+      assignedAt: row.assignedAt ? row.assignedAt.toISOString() : null,
+      arrivedAt: row.arrivedAt ? row.arrivedAt.toISOString() : null,
+      pickedupAt: row.pickedupAt ? row.pickedupAt.toISOString() : null,
+      completedAt: row.completedAt ? row.completedAt.toISOString() : null,
+      cancellationReason: row.cancellationReason ?? null,
+      patient: {
+        id: row.patientId ?? null,
+        fullName: row.patientName ?? null,
+        phoneNumber: row.patientPhone ?? null,
+      },
+      driver: {
+        id: row.driverId ?? null,
+        fullName: row.driverName ?? null,
+        phoneNumber: row.driverPhone ?? null,
+      },
+      hospital: {
+        id: row.hospitalId ?? null,
+        name: row.hospitalName ?? null,
+        phoneNumber: row.hospitalPhone ?? null,
+      },
+      provider: {
+        id: row.providerId ?? null,
+        name: row.providerName ?? null,
+      },
+      notes: this.normalizeBookingNotes(row.notes, row.bookingId),
+    } satisfies BookingDetailsPayload;
+  }
+
+  async addDispatcherNote(bookingId: string, dispatcherId: string, content: string) {
+    const dispatcher = await this.getDispatcherOrThrow(dispatcherId);
+    const [booking] = await this.bookingRepository.getBookingDetailsRow(bookingId);
+    if (!booking) {
+      throw new NotFoundException("Booking not found");
+    }
+
+    if (!booking.providerId || booking.providerId !== dispatcher.providerId) {
+      throw new ForbiddenException("Dispatcher cannot access booking outside provider scope");
+    }
+
+    const note: BookingNote = {
+      id: randomUUID(),
+      bookingId,
+      authorId: dispatcherId,
+      authorRole: "DISPATCHER",
+      content,
+      createdAt: new Date().toISOString(),
+    };
+
+    await this.bookingRepository.appendBookingNote(bookingId, note);
+
+    const dispatcherIds = await this.dispatcherService.findAllLiveDispatchersByProvider(
+      dispatcher.providerId
+    );
+    for (const id of dispatcherIds) {
+      this.notificationService.notifyDispatcher(id, "booking:notes", { bookingId, note });
+    }
+
+    const emtSubscribers = await this.bookingRepository.getEmtsSubscribedToBooking(bookingId);
+    for (const subscriber of emtSubscribers) {
+      this.notificationService.notifyEmt(subscriber.emtId, "booking:notes", { bookingId, note });
+    }
+
+    return note;
+  }
+
+  private normalizeBookingNotes(raw: unknown, bookingId: string): BookingNote[] {
+    if (!Array.isArray(raw)) return [];
+
+    return raw
+      .map((entry) => {
+        if (!entry || typeof entry !== "object") return null;
+        const note = entry as Partial<BookingNote>;
+        if (!note.id || !note.authorId || !note.content || !note.createdAt) return null;
+        return {
+          id: note.id,
+          bookingId: note.bookingId ?? bookingId,
+          authorId: note.authorId,
+          authorRole: note.authorRole ?? "EMT",
+          content: note.content,
+          createdAt: note.createdAt,
+        } satisfies BookingNote;
+      })
+      .filter((note): note is BookingNote => Boolean(note))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
   private async getDispatcherOrThrow(dispatcherId: string, db: DbExecutor = this.dbService.db) {

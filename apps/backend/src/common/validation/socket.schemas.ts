@@ -114,6 +114,7 @@ const emtNoteSchema = z.object({
   id: z.string(),
   bookingId: z.string(),
   authorId: z.string(),
+  authorRole: z.enum(["EMT", "DISPATCHER"]),
   content: z.string(),
   createdAt: z.string(),
 });

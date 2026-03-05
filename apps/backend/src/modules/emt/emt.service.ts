@@ -4,7 +4,7 @@ import { BookingService } from "../booking/booking.service";
 import { EmtRepository } from "./emt.repository";
 import { DispatcherService } from "../dispatcher/dispatcher.service";
 import { NotificationService } from "@/core/socket/notification.service";
-import type { BookingAssignedPayload, EmtNote, UserStatus } from "@ambulink/types";
+import type { BookingAssignedPayload, BookingNote, UserStatus } from "@ambulink/types";
 
 @Injectable()
 export class EmtService {
@@ -77,7 +77,7 @@ export class EmtService {
     return this.bookingService.buildAssignedBookingPayload(booking.id);
   }
 
-  async addNote(emtId: string, bookingId: string, content: string): Promise<EmtNote> {
+  async addNote(emtId: string, bookingId: string, content: string): Promise<BookingNote> {
     const emt = await this.findOne(emtId);
     if (!emt.providerId) {
       throw new BadRequestException("EMT is not attached to a provider");
@@ -96,15 +96,16 @@ export class EmtService {
       throw new ForbiddenException("EMT cannot access booking outside provider scope");
     }
 
-    const note: EmtNote = {
+    const note: BookingNote = {
       id: randomUUID(),
       bookingId,
       authorId: emtId,
+      authorRole: "EMT",
       content,
       createdAt: new Date().toISOString(),
     };
 
-    await this.bookingService.appendEmtNote(bookingId, note);
+    await this.bookingService.appendBookingNote(bookingId, note);
 
     const emtSubscribers = await this.bookingService.getEmtSubscribersForBooking(bookingId);
     for (const subscriber of emtSubscribers) {

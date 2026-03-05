@@ -2,9 +2,13 @@ import { Body, Controller, Get, Param, Patch, Post, Query } from "@nestjs/common
 import { BookingService } from "./booking.service";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
 import {
+  bookingAddNoteSchema,
+  bookingDetailsQuerySchema,
   bookingListQuerySchema,
   manualAssignBookingSchema,
   reassignBookingSchema,
+  type BookingAddNoteDto,
+  type BookingDetailsQueryDto,
   type BookingListQueryDto,
   type ManualAssignBookingDto,
   type ReassignBookingDto,
@@ -30,5 +34,21 @@ export class BookingController {
     @Body(Validate(reassignBookingSchema)) body: ReassignBookingDto
   ) {
     return this.bookingService.reassignBooking(bookingId, body.dispatcherId, body);
+  }
+
+  @Get(":id/details")
+  details(
+    @Param("id") bookingId: string,
+    @Query(Validate(bookingDetailsQuerySchema)) query: BookingDetailsQueryDto
+  ) {
+    return this.bookingService.getBookingDetailsForDispatcher(bookingId, query.dispatcherId);
+  }
+
+  @Post(":id/notes")
+  addNote(
+    @Param("id") bookingId: string,
+    @Body(Validate(bookingAddNoteSchema)) body: BookingAddNoteDto
+  ) {
+    return this.bookingService.addDispatcherNote(bookingId, body.dispatcherId, body.content);
   }
 }

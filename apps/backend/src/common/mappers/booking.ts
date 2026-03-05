@@ -114,7 +114,11 @@ export const mapAssignedBookingPayload = (row: AssignedBookingRow | null) => {
       | Record<string, unknown>
       | null,
     emtNotes: Array.isArray(row.emtNotes)
-      ? (row.emtNotes as Array<Record<string, unknown>>)
+      ? (row.emtNotes as Array<Record<string, unknown>>).map((note) => ({
+          ...note,
+          authorRole:
+            note && typeof note === "object" && "authorRole" in note ? note.authorRole : "EMT",
+        }))
       : [],
   };
 

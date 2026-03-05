@@ -118,6 +118,15 @@ export const bookingListQuerySchema = z.object({
     .optional(),
 });
 
+export const bookingDetailsQuerySchema = z.object({
+  dispatcherId: z.string().uuid(),
+});
+
+export const bookingAddNoteSchema = z.object({
+  dispatcherId: z.string().uuid(),
+  content: z.string().trim().min(1).max(2000),
+});
+
 export const emtBookingSearchQuerySchema = z.object({
   q: z.string().trim().min(1),
   limit: z.coerce.number().int().min(1).max(50).default(10),
@@ -149,6 +158,8 @@ export type DriverNearbyQueryDto = z.infer<typeof driverNearbyQuerySchema>;
 export type HospitalNearbyQueryDto = z.infer<typeof hospitalNearbyQuerySchema>;
 export type DriverListQueryDto = z.infer<typeof driverListQuerySchema>;
 export type BookingListQueryDto = z.infer<typeof bookingListQuerySchema>;
+export type BookingDetailsQueryDto = z.infer<typeof bookingDetailsQuerySchema>;
+export type BookingAddNoteDto = z.infer<typeof bookingAddNoteSchema>;
 export type EmtBookingSearchQueryDto = z.infer<typeof emtBookingSearchQuerySchema>;
 export type EmtSubscribeDto = z.infer<typeof emtSubscribeSchema>;
 export type EmtAddNoteDto = z.infer<typeof emtAddNoteSchema>;

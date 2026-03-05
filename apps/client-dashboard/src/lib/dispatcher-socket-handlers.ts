@@ -3,6 +3,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { setBookingDecision, upsertBookingRequest } from "@/lib/booking-cache-ops";
 import { setBookingRequestCallback } from "@/lib/booking-request-callbacks";
 import type {
+  BookingNote,
   BookingNewPayload,
   DispatcherApprovalResponse,
   DispatcherBookingLogPayload,
@@ -172,6 +173,20 @@ export function registerDispatcherSocketHandlers({
     );
   });
 
+  socket.on("booking:notes", (payload: { bookingId: string; note: BookingNote }) => {
+    queryClient.setQueryData<{ notes: BookingNote[] } | undefined>(
+      queryKeys.bookingDetails(payload.bookingId),
+      (prev) => {
+        if (!prev) return prev;
+        if ((prev.notes ?? []).some((note) => note.id === payload.note.id)) return prev;
+        return {
+          ...prev,
+          notes: [payload.note, ...(prev.notes ?? [])],
+        };
+      }
+    );
+  });
+
   return () => {
     socket.off("booking:new");
     socket.off("booking:decision");
@@ -181,5 +196,6 @@ export function registerDispatcherSocketHandlers({
     socket.off("driver:update");
     socket.off("driver:roster");
     socket.off("booking:log");
+    socket.off("booking:notes");
   };
 }
