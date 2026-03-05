@@ -85,7 +85,7 @@ export const users = pgTable(
     // Status tracking for drivers
     status: userStatusEnum("status"),
 
-    // Current active booking for all roles that participate in a booking lifecycle.
+    // Points to the user's current active booking.
     subscribedBookingId: uuid("subscribed_booking_id").references(() => bookings.id, {
       onDelete: "set null",
       onUpdate: "cascade",

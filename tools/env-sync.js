@@ -11,6 +11,7 @@ const REQUIRED_KEYS = [
   "DISPATCHER_ID",
   "PATIENT_ID",
   "DRIVER_ID",
+  "EMT_ID",
   "APP_STAGE",
   "DATABASE_URL",
 ];
@@ -84,6 +85,7 @@ function main() {
     ["EXPO_PUBLIC_WS_SERVER_URL", rootEnv.WS_SERVER_URL],
     ["EXPO_PUBLIC_PATIENT_ID", rootEnv.PATIENT_ID],
     ["EXPO_PUBLIC_DRIVER_ID", rootEnv.DRIVER_ID],
+    ["EXPO_PUBLIC_EMT_ID", rootEnv.EMT_ID],
     ["EXPO_PUBLIC_APP_STAGE", rootEnv.APP_STAGE],
   ]);
 
@@ -91,6 +93,7 @@ function main() {
     ["DATABASE_URL", rootEnv.DATABASE_URL],
     ["PATIENT_ID", rootEnv.PATIENT_ID],
     ["DRIVER_ID", rootEnv.DRIVER_ID],
+    ["EMT_ID", rootEnv.EMT_ID],
     ["DISPATCHER_ID", rootEnv.DISPATCHER_ID],
     ["APP_STAGE", rootEnv.APP_STAGE],
     ["PROVIDER_ID", rootEnv.PROVIDER_ID],

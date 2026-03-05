@@ -1,40 +1,20 @@
-import { Tabs } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { Redirect, Stack } from "expo-router";
+import { SocketProvider } from "@/common/hooks/SocketContext";
+import { useAuthStore } from "@/common/hooks/AuthContext";
 
-export default function TabLayout() {
+export default function EmtLayout() {
+  const user = useAuthStore((state) => state.user);
+
+  if (!user) return <Redirect href="/(public)/login_modern" />;
+  if (user.role !== "emt") return <Redirect href="/" />;
+
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <Tabs.Screen
-        name="medical"
-        options={{
-          title: "Medical",
-          tabBarIcon: ({ color, size }) => <Ionicons name="medical" color={color} size={size} />,
-          tabBarLabel: "Medical",
-          tabBarAccessibilityLabel: "Access medical tools",
-        }}
-      />
-      <Tabs.Screen
-        name="navigation"
-        options={{
-          title: "Navigation",
-          tabBarIcon: ({ color, size }) => <Ionicons name="navigate" color={color} size={size} />,
-          tabBarLabel: "Navigation",
-          tabBarAccessibilityLabel: "Navigate routes",
-        }}
-      />
-      <Tabs.Screen
-        name="communication"
-        options={{
-          title: "Communication",
-          tabBarIcon: ({ color, size }) => <Ionicons name="chatbubble" color={color} size={size} />,
-          tabBarLabel: "Communication",
-          tabBarAccessibilityLabel: "Communicate with team",
-        }}
-      />
-    </Tabs>
+    <SocketProvider type="EMT" enabled>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="patient-info" />
+        <Stack.Screen name="notes" />
+      </Stack>
+    </SocketProvider>
   );
 }

@@ -30,7 +30,7 @@ export default function LoginModern() {
   // If already logged in, redirect
   if (user?.role === "patient") return <Redirect href="/(patient)/map" />;
   if (user?.role === "driver") return <Redirect href="/(driver)" />;
-  if (user?.role === "emt") return <Redirect href="/(emt)/medical" />;
+  if (user?.role === "emt") return <Redirect href={"/(emt)" as never} />;
 
   const handleSignIn = () => {
     setLoading(true);

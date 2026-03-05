@@ -5,6 +5,7 @@ const envSchema = z.object({
   EXPO_PUBLIC_WS_SERVER_URL: z.string().url("EXPO_PUBLIC_WS_SERVER_URL must be a valid URL"),
   EXPO_PUBLIC_PATIENT_ID: z.string().uuid("EXPO_PUBLIC_PATIENT_ID must be a valid UUID"),
   EXPO_PUBLIC_DRIVER_ID: z.string().uuid("EXPO_PUBLIC_DRIVER_ID must be a valid UUID"),
+  EXPO_PUBLIC_EMT_ID: z.string().uuid("EXPO_PUBLIC_EMT_ID must be a valid UUID"),
   EXPO_PUBLIC_APP_STAGE: z.enum(["dev", "prod", "test"]).default("dev"),
 });
 
