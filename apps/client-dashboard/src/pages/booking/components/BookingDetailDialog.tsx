@@ -6,7 +6,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -56,8 +55,8 @@ export function BookingDetailDialog({ bookingId, dispatcherId, open, onOpenChang
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-h-[85vh] max-w-4xl overflow-y-auto p-6 sm:p-8">
+        <DialogHeader className="gap-1 p-0 pr-12 text-left">
           <DialogTitle>Booking Details</DialogTitle>
           <DialogDescription>
             Dispatcher view for booking details and shared EMT/dispatcher notes.
@@ -82,16 +81,11 @@ export function BookingDetailDialog({ bookingId, dispatcherId, open, onOpenChang
             submitError={submitError}
             isSubmitting={addNote.isPending}
             notes={notes}
+            onClose={() => onOpenChange(false)}
           />
         ) : (
           <p className="text-sm text-muted-foreground">Booking details unavailable.</p>
         )}
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -105,6 +99,7 @@ function BookingContent({
   submitNote,
   submitError,
   isSubmitting,
+  onClose,
 }: {
   details: BookingDetailsPayload;
   notes: BookingDetailsPayload["notes"];
@@ -113,18 +108,19 @@ function BookingContent({
   submitNote: () => Promise<void>;
   submitError: string | null;
   isSubmitting: boolean;
+  onClose: () => void;
 }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-sm">
       <section className="space-y-2">
         <h3 className="text-sm font-semibold">Summary</h3>
-        <div className="rounded-md border p-3 space-y-2 text-sm">
-          <div className="flex items-center gap-2">
+        <div className="space-y-3 rounded-md border p-4">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="font-medium">Booking ID:</span>
             <span>{details.bookingId}</span>
             <Badge variant={details.status === "CANCELLED" ? "critical" : "info"}>{details.status}</Badge>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-muted-foreground">
+          <div className="grid grid-cols-1 gap-2 text-muted-foreground sm:grid-cols-2">
             <div>Requested: {details.requestedAt ? new Date(details.requestedAt).toLocaleString() : "-"}</div>
             <div>Assigned: {details.assignedAt ? new Date(details.assignedAt).toLocaleString() : "-"}</div>
             <div>Arrived: {details.arrivedAt ? new Date(details.arrivedAt).toLocaleString() : "-"}</div>
@@ -135,30 +131,36 @@ function BookingContent({
         </div>
       </section>
 
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <EntityCard title="Patient" id={details.patient.id} name={details.patient.fullName} phone={details.patient.phoneNumber} />
         <EntityCard title="Driver" id={details.driver.id} name={details.driver.fullName} phone={details.driver.phoneNumber} />
         <EntityCard title="Hospital" id={details.hospital.id} name={details.hospital.name} phone={details.hospital.phoneNumber} />
         <EntityCard title="Provider" id={details.provider.id} name={details.provider.name} phone={null} />
       </section>
 
-      <section className="space-y-3">
+      <section className="space-y-3 rounded-md border p-4">
         <h3 className="text-sm font-semibold">Shared Notes (EMT + Dispatcher)</h3>
-        <div className="rounded-md border p-3 space-y-3 max-h-56 overflow-y-auto">
+        <div className="max-h-[240px] space-y-3 overflow-y-auto pr-1">
           {notes.length === 0 ? (
             <p className="text-sm text-muted-foreground">No notes yet.</p>
           ) : (
             notes.map((note) => (
-              <div key={note.id} className="rounded-md border p-2 space-y-1">
-                <div className="flex items-center justify-between">
-                  <Badge variant={note.authorRole === "EMT" ? "warning" : "info"}>
-                    {note.authorRole === "EMT" ? "EMT" : "Dispatcher"}
+              <div key={note.id} className="space-y-2 rounded-md border p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Badge
+                    className={
+                      note.authorRole === "EMT"
+                        ? "bg-slate-300 text-slate-900 hover:bg-slate-300"
+                        : "bg-blue-600 text-white hover:bg-blue-600"
+                    }
+                  >
+                    {note.authorRole === "EMT" ? "EMT" : "DISPATCHER"}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
                     {new Date(note.createdAt).toLocaleString()}
                   </span>
                 </div>
-                <p className="text-sm">{note.content}</p>
+                <p className="text-sm leading-6">{note.content}</p>
               </div>
             ))
           )}
@@ -166,15 +168,20 @@ function BookingContent({
 
         <div className="space-y-2">
           <textarea
-            className="w-full min-h-24 rounded-md border bg-background p-2 text-sm"
+            className="min-h-[80px] max-h-[120px] w-full resize-none rounded-md border bg-background p-3 text-sm"
             placeholder="Add dispatcher note..."
             value={noteContent}
             onChange={(event) => setNoteContent(event.target.value)}
           />
           {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}
-          <Button onClick={submitNote} disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : "Add Note"}
-          </Button>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Button onClick={submitNote} disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Add Note"}
+            </Button>
+            <Button variant="outline" onClick={onClose}>
+              Close
+            </Button>
+          </div>
         </div>
       </section>
     </div>
@@ -193,7 +200,7 @@ function EntityCard({
   phone: string | null;
 }) {
   return (
-    <div className="rounded-md border p-3 space-y-1 text-sm">
+    <div className="space-y-2 rounded-md border p-4 text-sm">
       <h4 className="font-semibold">{title}</h4>
       <div className="text-muted-foreground">ID: {id ?? "-"}</div>
       <div>Name: {name ?? "-"}</div>
