@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { ActivityIndicator, Alert, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Keyboard, Platform, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useLocation } from "@/common/hooks/useLocation";
@@ -28,7 +28,14 @@ export default function EmtMapScreen() {
   const selectAndSubscribe = useEmtBookingState((state) => state.selectAndSubscribe);
 
   const [isPickerVisible, setPickerVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const insets = useSafeAreaInsets();
+  const hasSelectedBooking = Boolean(activeBooking?.bookingId);
+  const pickerBottomOffset = activeBooking?.bookingId
+    ? Math.max(insets.bottom + 170, 190)
+    : Math.max(insets.bottom + 92, 110);
+  const overlayBottom = pickerBottomOffset + Math.max(0, keyboardHeight - insets.bottom);
+  const shouldShowPicker = isPickerVisible || (!hasSelectedBooking && searchTerm.length > 0);
 
   useEffect(() => {
     loadOptions();
@@ -50,6 +57,23 @@ export default function EmtMapScreen() {
 
     return () => clearTimeout(timeoutId);
   }, [loadOptions, searchTerm]);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSub = Keyboard.addListener(showEvent, (event) => {
+      setKeyboardHeight(event.endCoordinates.height);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const filteredOptions = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -119,9 +143,11 @@ export default function EmtMapScreen() {
       </UserMap>
 
       <View
-        className="absolute"
+        className="absolute z-20"
         style={{
-          top: Math.max(insets.top, 8),
+          ...(hasSelectedBooking
+            ? { top: Math.max(insets.top, 8) }
+            : { bottom: overlayBottom }),
           left: Math.max(insets.left, 12),
           right: Math.max(insets.right, 12),
         }}
@@ -144,7 +170,7 @@ export default function EmtMapScreen() {
           }}
         />
 
-        {(isPickerVisible || searchTerm.length > 0) && (
+        {shouldShowPicker && (
           <BookingPickerList
             data={filteredOptions}
             onSelect={handleSelectBooking}

@@ -1,26 +1,91 @@
+import { useMemo } from "react";
 import type { EmtNote } from "@ambulink/types";
-import { FlatList, Text, View } from "react-native";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 
 type Props = {
   notes: EmtNote[];
 };
 
 export default function EmtNotesTimeline({ notes }: Props) {
+  const formatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }),
+    []
+  );
+
+  const formattedNotes = useMemo(
+    () =>
+      notes.map((note) => ({
+        ...note,
+        formattedCreatedAt: formatter.format(new Date(note.createdAt)),
+      })),
+    [formatter, notes]
+  );
+
   return (
     <FlatList
-      data={notes}
+      data={formattedNotes}
       keyExtractor={(item) => item.id}
+      scrollEnabled
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="interactive"
+      showsVerticalScrollIndicator={false}
+      style={styles.list}
+      contentContainerStyle={formattedNotes.length === 0 ? styles.emptyContent : styles.content}
       ListEmptyComponent={
-        <View className="py-6">
-          <Text className="text-sm text-muted-foreground">No notes yet. Add the first update.</Text>
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>No notes yet. Add the first update.</Text>
         </View>
       }
       renderItem={({ item }) => (
-        <View className="bg-card border border-border rounded-xl p-3 mb-2">
-          <Text className="text-sm text-foreground">{item.content}</Text>
-          <Text className="text-xs text-muted-foreground mt-1">{new Date(item.createdAt).toLocaleString()}</Text>
+        <View style={styles.noteCard}>
+          <Text style={styles.noteContent}>{item.content}</Text>
+          <Text style={styles.noteTimestamp}>{item.formattedCreatedAt}</Text>
         </View>
       )}
     />
   );
 }
+
+const styles = StyleSheet.create({
+  list: {
+    flex: 1,
+  },
+  content: {
+    paddingTop: 4,
+    paddingBottom: 10,
+  },
+  emptyContent: {
+    flexGrow: 1,
+    paddingTop: 4,
+    paddingBottom: 10,
+  },
+  emptyState: {
+    paddingVertical: 24,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#636363",
+  },
+  noteCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
+  },
+  noteContent: {
+    fontSize: 14,
+    color: "#000000",
+    lineHeight: 20,
+  },
+  noteTimestamp: {
+    fontSize: 12,
+    color: "#636363",
+    marginTop: 4,
+  },
+});

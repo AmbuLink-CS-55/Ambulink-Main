@@ -71,7 +71,7 @@ export default function UserMap({
         customMapStyle={mapStyle}
         showsPointsOfInterest={false}
       >
-        {driverLocations.filter(isValidPoint).map((d, i) => (
+        {driverLocations.filter(isValidPoint).map((d) => (
           // <Marker
           //   key={`driver:marker${i}`}
           //   coordinate={{ latitude: d.y, longitude: d.x }}
@@ -79,7 +79,7 @@ export default function UserMap({
           //   tracksViewChanges={true}
           // />
           <Marker
-            key={`d${i}`}
+            key={`driver-${d.x}-${d.y}`}
             coordinate={{ latitude: d.y, longitude: d.x }}
             anchor={{ x: 0.5, y: 0.5 }}
             tracksViewChanges={false}
@@ -157,6 +157,10 @@ export default function UserMap({
         <Pressable
           className="bg-card p-1 rounded-md self-end mr-0 m-3 shadow-lg"
           onPress={handleLocate}
+          accessibilityRole="button"
+          accessibilityLabel="Center map on your location"
+          accessibilityHint="Moves the map camera to your current position."
+          hitSlop={10}
         >
           <Ionicons name="locate" size={24} color="#000000" />
         </Pressable>

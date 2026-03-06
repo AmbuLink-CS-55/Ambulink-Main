@@ -220,7 +220,13 @@ export default function SignupPage() {
                 )}
 
                 {/* Terms & Conditions */}
-                <Pressable style={styles.termsContainer} onPress={() => setAgreed((prev) => !prev)}>
+                <Pressable
+                  style={styles.termsContainer}
+                  onPress={() => setAgreed((prev) => !prev)}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: agreed }}
+                  accessibilityLabel="Agree to terms and conditions"
+                >
                   <View style={[styles.checkbox, agreed && styles.checkboxActive]}>
                     {agreed && <Ionicons name="checkmark" size={16} color="white" />}
                   </View>
@@ -270,7 +276,7 @@ export default function SignupPage() {
                     maxLength={4}
                     value={otp}
                     onChangeText={setOtp}
-                    autoFocus
+                    accessibilityLabel="One-time password"
                   />
                 </View>
 

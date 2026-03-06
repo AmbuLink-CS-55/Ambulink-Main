@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { memo, useCallback } from "react";
 import { ActivityIndicator, FlatList, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
@@ -18,7 +18,7 @@ type BookingCardProps = {
   providerName?: string | null;
 };
 
-function BookingCard({
+const BookingCard = memo(function BookingCard({
   createdAt,
   status,
   personName,
@@ -42,7 +42,7 @@ function BookingCard({
       ) : null}
     </View>
   );
-}
+});
 
 export default function BookingHistoryScreen({
   role,
@@ -62,6 +62,33 @@ export default function BookingHistoryScreen({
     await clear();
     reload();
   }, [clear, reload]);
+
+  const renderItem = useCallback(
+    ({
+      item,
+    }: {
+      item: {
+        id: string;
+        createdAt: string;
+        status: "COMPLETED" | "CANCELLED";
+        driverName?: string | null;
+        patientName?: string | null;
+        hospitalName?: string | null;
+        providerName?: string | null;
+      };
+    }) => (
+      <BookingCard
+        createdAt={item.createdAt}
+        status={item.status}
+        personName={
+          role === "PATIENT" ? (item.driverName ?? unknownPerson) : (item.patientName ?? unknownPerson)
+        }
+        hospitalName={item.hospitalName ?? "Unknown"}
+        providerName={item.providerName}
+      />
+    ),
+    [role, unknownPerson]
+  );
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -87,19 +114,7 @@ export default function BookingHistoryScreen({
               <Text className="text-muted-foreground">No past bookings yet.</Text>
             </View>
           }
-          renderItem={({ item }) => (
-            <BookingCard
-              createdAt={item.createdAt}
-              status={item.status}
-              personName={
-                role === "PATIENT"
-                  ? (item.driverName ?? unknownPerson)
-                  : (item.patientName ?? unknownPerson)
-              }
-              hospitalName={item.hospitalName ?? "Unknown"}
-              providerName={item.providerName}
-            />
-          )}
+          renderItem={renderItem}
         />
       )}
     </SafeAreaView>

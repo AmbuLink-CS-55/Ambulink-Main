@@ -37,6 +37,8 @@ export default function EmtBottomActions({
       <View className="flex-row gap-3 mt-4">
         <Pressable
           onPress={onViewPatientInfo}
+          accessibilityRole="button"
+          accessibilityLabel="Open patient information"
           className="flex-1 min-h-12 rounded-xl bg-blue-500 items-center justify-center flex-row p-3"
         >
           <Ionicons name="person" size={16} color="white" />
@@ -44,6 +46,8 @@ export default function EmtBottomActions({
         </Pressable>
         <Pressable
           onPress={onOpenNotes}
+          accessibilityRole="button"
+          accessibilityLabel="Open booking notes"
           className="flex-1 min-h-12 rounded-xl bg-emerald-500 items-center justify-center flex-row p-3"
         >
           <Ionicons name="document-text" size={16} color="white" />

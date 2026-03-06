@@ -22,6 +22,8 @@ export function ShiftCard({ isOnShift, isShiftUpdating, onToggleShift }: ShiftCa
         className={`mt-3 rounded-xl p-3 items-center ${isOnShift ? "bg-red-500" : "bg-emerald-500"} ${isShiftUpdating ? "opacity-60" : ""}`}
         onPress={onToggleShift}
         disabled={isShiftUpdating}
+        accessibilityRole="button"
+        accessibilityLabel={isOnShift ? "Clock out" : "Clock in"}
       >
         <Text className="text-white font-bold">
           {isShiftUpdating ? "Updating..." : isOnShift ? "Clock Out" : "Clock In"}

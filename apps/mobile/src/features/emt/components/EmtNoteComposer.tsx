@@ -1,4 +1,4 @@
-import { Pressable, Text, TextInput, View, ActivityIndicator } from "react-native";
+import { Pressable, Text, TextInput, View, ActivityIndicator, StyleSheet } from "react-native";
 
 type Props = {
   value: string;
@@ -9,22 +9,65 @@ type Props = {
 
 export default function EmtNoteComposer({ value, onChange, onSubmit, loading = false }: Props) {
   return (
-    <View className="border-t border-border pt-3">
+    <View style={styles.wrapper}>
       <TextInput
         value={value}
         onChangeText={onChange}
         placeholder="Type a situation update..."
         placeholderTextColor="#94a3b8"
         multiline
-        className="bg-card border border-border rounded-xl px-3 py-3 text-foreground min-h-20"
+        blurOnSubmit={false}
+        textAlignVertical="top"
+        style={styles.input}
       />
       <Pressable
         disabled={loading}
         onPress={onSubmit}
-        className={`mt-3 min-h-11 rounded-xl items-center justify-center ${loading ? "bg-emerald-300" : "bg-emerald-500"}`}
+        style={[styles.button, loading && styles.buttonDisabled]}
       >
-        {loading ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold">Send Note</Text>}
+        {loading ? (
+          <ActivityIndicator color="white" />
+        ) : (
+          <Text style={styles.buttonText}>Send Note</Text>
+        )}
       </Pressable>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  wrapper: {
+    paddingTop: 12,
+    marginTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E5E5",
+    backgroundColor: "#FCFCFC",
+  },
+  input: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    color: "#000000",
+    fontSize: 14,
+    minHeight: 80,
+    maxHeight: 120,
+  },
+  button: {
+    marginTop: 12,
+    minHeight: 44,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#10b981",
+  },
+  buttonDisabled: {
+    backgroundColor: "#6ee7b7",
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+  },
+});
