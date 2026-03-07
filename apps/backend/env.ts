@@ -40,11 +40,25 @@ export type Env = z.infer<typeof envSchema>;
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
+  const flattened = parsed.error.flatten();
+  const fieldErrors = Object.entries(flattened.fieldErrors)
+    .map(([key, messages]) => `- ${key}: ${(messages ?? []).join(", ")}`)
+    .join("\n");
+
   console.error(
-    "❌ Invalid environment variables:",
-    JSON.stringify(parsed.error.format(), null, 2)
+    "❌ Invalid environment variables in apps/backend/env.ts\n" +
+      "This file is imported during module startup (including tests), so validation fails early.\n" +
+      "Provide required vars in your runtime/CI env before bootstrapping Nest.\n\n" +
+      `${fieldErrors || JSON.stringify(parsed.error.format(), null, 2)}`
   );
-  process.exit(1);
+
+  if (process.env.GITHUB_ACTIONS === "true") {
+    console.error(
+      "CI hint: define required vars under the job `env:` block in .github/workflows/ci.yml."
+    );
+  }
+
+  throw new Error("Environment validation failed");
 }
 
 export const env: Env = parsed.data;
