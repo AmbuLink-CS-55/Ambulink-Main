@@ -44,6 +44,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      NODE_ENV: test
+      APP_STAGE: test
+      JWT_SECRET: 12345678901234567890123456789012
 
     steps:
       - name: Checkout repository
