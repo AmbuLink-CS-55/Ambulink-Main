@@ -18,14 +18,6 @@ export function removeBookingRequest(queryClient: QueryClient, requestId: string
   queryClient.removeQueries({ queryKey: queryKeys.bookingRequest(requestId), exact: true });
 }
 
-export function clearBookingRequests(queryClient: QueryClient) {
-  const requestIds = queryClient.getQueryData<string[]>(queryKeys.bookingRequestIds()) ?? [];
-  requestIds.forEach((requestId) => {
-    queryClient.removeQueries({ queryKey: queryKeys.bookingRequest(requestId), exact: true });
-  });
-  queryClient.setQueryData<string[]>(queryKeys.bookingRequestIds(), []);
-}
-
 export function setBookingDecision(queryClient: QueryClient, payload: BookingDecisionPayload) {
   queryClient.setQueryData<Record<string, BookingDecisionState>>(
     queryKeys.bookingDecisions(),
@@ -61,8 +53,4 @@ export function clearBookingDecision(queryClient: QueryClient, requestId: string
       return next;
     }
   );
-}
-
-export function clearBookingDecisions(queryClient: QueryClient) {
-  queryClient.setQueryData<Record<string, BookingDecisionState>>(queryKeys.bookingDecisions(), {});
 }

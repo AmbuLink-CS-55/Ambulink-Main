@@ -31,6 +31,8 @@ import { DriverRepository } from "../driver/driver.repository";
 import { PatientRepository } from "../patient/patient.repository";
 import { HospitalRepository } from "../hospital/hospital.repository";
 
+const bookingError = (code: string, message: string) => ({ code, message });
+
 @Injectable()
 export class BookingService {
   private static readonly ACTIVE_BOOKING_STATUSES: BookingStatus[] = [
@@ -63,7 +65,9 @@ export class BookingService {
     db: DbExecutor = this.dbService.db
   ) {
     if (!pickedDriver.providerId) {
-      throw new BadRequestException("Driver without provider");
+      throw new BadRequestException(
+        bookingError("BOOKING_DRIVER_WITHOUT_PROVIDER", "Driver without provider")
+      );
     }
 
     const [createdBooking] = await this.bookingRepository.createBooking(
@@ -104,7 +108,9 @@ export class BookingService {
         tx
       );
       if (activeDriverBookings.length > 0) {
-        throw new ConflictException("Selected driver already has an active booking");
+        throw new ConflictException(
+          bookingError("BOOKING_DRIVER_BUSY", "Selected driver already has an active booking")
+        );
       }
 
       const patient = await this.resolvePatientForManualAssignment(payload, tx);
@@ -125,7 +131,9 @@ export class BookingService {
       );
 
       if (!created.bookingId) {
-        throw new BadRequestException("Booking creation failed");
+        throw new BadRequestException(
+          bookingError("BOOKING_CREATION_FAILED", "Booking creation failed")
+        );
       }
 
       await this.bookingRepository.setUserSubscribedBooking(patient.id, created.bookingId, tx);
@@ -138,7 +146,9 @@ export class BookingService {
     const dispatcherPayload = await this.buildDispatcherBookingPayload(booking.bookingId);
 
     if (!assignedPayload || !dispatcherPayload) {
-      throw new BadRequestException("Failed to build booking payload");
+      throw new BadRequestException(
+        bookingError("BOOKING_PAYLOAD_BUILD_FAILED", "Failed to build booking payload")
+      );
     }
 
     this.notificationService.notifyDispatcher(dispatcherId, "booking:assigned", dispatcherPayload);
@@ -160,19 +170,31 @@ export class BookingService {
       .where(eq(bookings.id, bookingId));
 
     if (!booking) {
-      throw new NotFoundException("Booking not found");
+      throw new NotFoundException(bookingError("BOOKING_NOT_FOUND", "Booking not found"));
     }
 
     if (!booking.providerId || booking.providerId !== dispatcher.providerId) {
-      throw new ForbiddenException("Dispatcher cannot reassign booking outside provider scope");
+      throw new ForbiddenException(
+        bookingError(
+          "BOOKING_OUTSIDE_PROVIDER_SCOPE",
+          "Dispatcher cannot reassign booking outside provider scope"
+        )
+      );
     }
 
     if (booking.dispatcherId && booking.dispatcherId !== dispatcherId) {
-      throw new ForbiddenException("Only the assigned dispatcher can reassign this booking");
+      throw new ForbiddenException(
+        bookingError(
+          "BOOKING_ASSIGNED_TO_ANOTHER_DISPATCHER",
+          "Only the assigned dispatcher can reassign this booking"
+        )
+      );
     }
 
     if (!BookingService.ACTIVE_BOOKING_STATUSES.includes(booking.status)) {
-      throw new BadRequestException("Only active bookings can be reassigned");
+      throw new BadRequestException(
+        bookingError("BOOKING_NOT_ACTIVE", "Only active bookings can be reassigned")
+      );
     }
 
     const updateData: Partial<Booking> = {};
@@ -201,7 +223,9 @@ export class BookingService {
           tx
         );
         if (activeTargetBookings.length > 0) {
-          throw new ConflictException("Selected driver already has an active booking");
+          throw new ConflictException(
+            bookingError("BOOKING_DRIVER_BUSY", "Selected driver already has an active booking")
+          );
         }
         updateData.driverId = nextDriver.id;
         nextDriverId = nextDriver.id;
@@ -238,7 +262,9 @@ export class BookingService {
     const dispatcherPayload = await this.buildDispatcherBookingPayload(bookingId);
 
     if (!assignedPayload || !dispatcherPayload) {
-      throw new BadRequestException("Failed to build booking payload");
+      throw new BadRequestException(
+        bookingError("BOOKING_PAYLOAD_BUILD_FAILED", "Failed to build booking payload")
+      );
     }
 
     if (previousDriverId && nextDriverId && previousDriverId !== nextDriverId) {
@@ -485,7 +511,9 @@ export class BookingService {
         tx
       );
       if (activeDriverBookings.length > 0) {
-        throw new ConflictException("Selected driver already has an active booking");
+        throw new ConflictException(
+          bookingError("BOOKING_DRIVER_BUSY", "Selected driver already has an active booking")
+        );
       }
 
       const booking = await this.createBooking(
@@ -501,7 +529,9 @@ export class BookingService {
         tx
       );
       if (!booking.bookingId) {
-        throw new BadRequestException("Booking creation failed");
+        throw new BadRequestException(
+          bookingError("BOOKING_CREATION_FAILED", "Booking creation failed")
+        );
       }
 
       await this.bookingRepository.setUserSubscribedBooking(patient.id, booking.bookingId, tx);
@@ -572,7 +602,9 @@ export class BookingService {
         .requestApproval(dispatcherId, driver, patient, requestId)
         .then((approved) => {
           if (!approved) {
-            throw new BadRequestException("Dispatcher declined or ignored");
+            throw new BadRequestException(
+              bookingError("BOOKING_DISPATCHER_DECLINED", "Dispatcher declined or ignored")
+            );
           }
           return {
             dispatcherId,
@@ -695,11 +727,16 @@ export class BookingService {
     const dispatcher = await this.getDispatcherOrThrow(dispatcherId);
     const [row] = await this.bookingRepository.getBookingDetailsRow(bookingId);
     if (!row) {
-      throw new NotFoundException("Booking not found");
+      throw new NotFoundException(bookingError("BOOKING_NOT_FOUND", "Booking not found"));
     }
 
     if (!row.providerId || row.providerId !== dispatcher.providerId) {
-      throw new ForbiddenException("Dispatcher cannot access booking outside provider scope");
+      throw new ForbiddenException(
+        bookingError(
+          "BOOKING_OUTSIDE_PROVIDER_SCOPE",
+          "Dispatcher cannot access booking outside provider scope"
+        )
+      );
     }
 
     return {
@@ -738,14 +775,21 @@ export class BookingService {
     const dispatcher = await this.getDispatcherOrThrow(dispatcherId);
     const [booking] = await this.bookingRepository.getBookingDetailsRow(bookingId);
     if (!booking) {
-      throw new NotFoundException("Booking not found");
+      throw new NotFoundException(bookingError("BOOKING_NOT_FOUND", "Booking not found"));
     }
 
     if (!booking.providerId || booking.providerId !== dispatcher.providerId) {
-      throw new ForbiddenException("Dispatcher cannot access booking outside provider scope");
+      throw new ForbiddenException(
+        bookingError(
+          "BOOKING_OUTSIDE_PROVIDER_SCOPE",
+          "Dispatcher cannot access booking outside provider scope"
+        )
+      );
     }
     if (!BookingService.ACTIVE_BOOKING_STATUSES.includes(booking.status)) {
-      throw new BadRequestException("Dispatcher notes are only allowed for active bookings");
+      throw new BadRequestException(
+        bookingError("BOOKING_NOT_ACTIVE", "Dispatcher notes are only allowed for active bookings")
+      );
     }
 
     const note: BookingNote = {
@@ -811,11 +855,13 @@ export class BookingService {
       .where(and(eq(users.id, dispatcherId), eq(users.role, "DISPATCHER")));
 
     if (!dispatcher) {
-      throw new NotFoundException("Dispatcher not found");
+      throw new NotFoundException(bookingError("DISPATCHER_NOT_FOUND", "Dispatcher not found"));
     }
 
     if (!dispatcher.providerId) {
-      throw new BadRequestException("Dispatcher is not attached to a provider");
+      throw new BadRequestException(
+        bookingError("DISPATCHER_PROVIDER_MISSING", "Dispatcher is not attached to a provider")
+      );
     }
 
     return {
@@ -832,11 +878,16 @@ export class BookingService {
   ) {
     const [driver] = await this.driverRepository.findDriverById(driverId, db);
     if (!driver || !driver.isActive) {
-      throw new NotFoundException("Driver not found");
+      throw new NotFoundException(bookingError("DRIVER_NOT_FOUND", "Driver not found"));
     }
 
     if (driver.providerId !== providerId) {
-      throw new ForbiddenException("Driver provider does not match dispatcher provider");
+      throw new ForbiddenException(
+        bookingError(
+          "DRIVER_PROVIDER_MISMATCH",
+          "Driver provider does not match dispatcher provider"
+        )
+      );
     }
 
     return driver;
@@ -845,7 +896,7 @@ export class BookingService {
   private async getHospitalOrThrow(hospitalId: string, db: DbExecutor = this.dbService.db) {
     const [hospital] = await this.hospitalRepository.getHospitalById(hospitalId, db);
     if (!hospital) {
-      throw new NotFoundException("Hospital not found");
+      throw new NotFoundException(bookingError("HOSPITAL_NOT_FOUND", "Hospital not found"));
     }
     return hospital;
   }
@@ -891,7 +942,9 @@ export class BookingService {
     );
 
     if (!guest) {
-      throw new BadRequestException("Failed to create guest patient");
+      throw new BadRequestException(
+        bookingError("GUEST_PATIENT_CREATE_FAILED", "Failed to create guest patient")
+      );
     }
 
     return guest;
