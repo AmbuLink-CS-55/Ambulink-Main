@@ -4,9 +4,10 @@ import { FlatList, StyleSheet, Text, View } from "react-native";
 
 type Props = {
   notes: EmtNote[];
+  currentEmtId: string;
 };
 
-export default function EmtNotesTimeline({ notes }: Props) {
+export default function EmtNotesTimeline({ notes, currentEmtId }: Props) {
   const formatter = useMemo(
     () =>
       new Intl.DateTimeFormat(undefined, {
@@ -44,8 +45,13 @@ export default function EmtNotesTimeline({ notes }: Props) {
       }
       renderItem={({ item }) => (
         <View style={styles.noteCard}>
+          <View style={styles.noteMetaRow}>
+            <View style={styles.authorTag}>
+              <Text style={styles.authorTagText}>{getNoteAuthorLabel(item, currentEmtId)}</Text>
+            </View>
+            <Text style={styles.noteTimestamp}>{item.formattedCreatedAt}</Text>
+          </View>
           <Text style={styles.noteContent}>{item.content}</Text>
-          <Text style={styles.noteTimestamp}>{item.formattedCreatedAt}</Text>
         </View>
       )}
     />
@@ -84,10 +90,43 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#000000",
     lineHeight: 20,
+    marginTop: 10,
+  },
+  noteMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  authorTag: {
+    backgroundColor: "#ECFDF5",
+    borderColor: "#A7F3D0",
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    maxWidth: "68%",
+  },
+  authorTagText: {
+    color: "#065F46",
+    fontSize: 12,
+    fontWeight: "700",
   },
   noteTimestamp: {
     fontSize: 12,
     color: "#636363",
-    marginTop: 4,
   },
 });
+
+function getNoteAuthorLabel(note: EmtNote, currentEmtId: string) {
+  if (note.authorRole === "EMT") {
+    if (note.authorId === currentEmtId) return "You";
+    return `EMT - ${note.authorName ?? shortId(note.authorId)}`;
+  }
+
+  return `Dispatcher - ${note.authorName ?? shortId(note.authorId)}`;
+}
+
+function shortId(value: string) {
+  return value.slice(0, 8);
+}

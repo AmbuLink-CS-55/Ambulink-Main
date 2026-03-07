@@ -24,13 +24,13 @@ export default function PatientInfoScreen() {
       </View>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{ padding: 16, paddingBottom: Math.max(insets.bottom + 16, 24) }}
+        contentContainerStyle={{ padding: 16, paddingBottom: Math.max(insets.bottom + 28, 40) }}
       >
         {!booking ? (
           <View className="bg-card p-4 rounded-2xl border border-border">
             <Text className="text-lg font-bold text-foreground">No Booking Selected</Text>
             <Text className="text-sm text-muted-foreground mt-2">
-              Subscribe to a booking from the EMT map screen to view patient details.
+              Subscribe to a booking from the EMT map screen to view booking details.
             </Text>
           </View>
         ) : (

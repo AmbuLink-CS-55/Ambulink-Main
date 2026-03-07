@@ -739,6 +739,7 @@ export class BookingService {
       id: randomUUID(),
       bookingId,
       authorId: dispatcherId,
+      authorName: dispatcher.fullName ?? "Dispatcher",
       authorRole: "DISPATCHER",
       content,
       createdAt: new Date().toISOString(),
@@ -764,27 +765,35 @@ export class BookingService {
   private normalizeBookingNotes(raw: unknown, bookingId: string): BookingNote[] {
     if (!Array.isArray(raw)) return [];
 
-    return raw
-      .map((entry) => {
-        if (!entry || typeof entry !== "object") return null;
-        const note = entry as Partial<BookingNote>;
-        if (!note.id || !note.authorId || !note.content || !note.createdAt) return null;
-        return {
-          id: note.id,
-          bookingId: note.bookingId ?? bookingId,
-          authorId: note.authorId,
-          authorRole: note.authorRole ?? "EMT",
-          content: note.content,
-          createdAt: note.createdAt,
-        } satisfies BookingNote;
-      })
-      .filter((note): note is BookingNote => Boolean(note))
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const normalized: BookingNote[] = [];
+
+    for (const entry of raw) {
+      if (!entry || typeof entry !== "object") continue;
+      const note = entry as Partial<BookingNote>;
+      if (!note.id || !note.authorId || !note.content || !note.createdAt) continue;
+
+      normalized.push({
+        id: note.id,
+        bookingId: note.bookingId ?? bookingId,
+        authorId: note.authorId,
+        authorName: note.authorName ?? null,
+        authorRole: note.authorRole ?? "EMT",
+        content: note.content,
+        createdAt: note.createdAt,
+      });
+    }
+
+    return normalized.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
   private async getDispatcherOrThrow(dispatcherId: string, db: DbExecutor = this.dbService.db) {
     const [dispatcher] = await db
-      .select({ id: users.id, providerId: users.providerId, role: users.role })
+      .select({
+        id: users.id,
+        fullName: users.fullName,
+        providerId: users.providerId,
+        role: users.role,
+      })
       .from(users)
       .where(and(eq(users.id, dispatcherId), eq(users.role, "DISPATCHER")));
 
@@ -798,6 +807,7 @@ export class BookingService {
 
     return {
       id: dispatcher.id,
+      fullName: dispatcher.fullName,
       providerId: dispatcher.providerId,
     };
   }

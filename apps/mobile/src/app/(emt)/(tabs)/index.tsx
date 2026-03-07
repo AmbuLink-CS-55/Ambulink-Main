@@ -105,7 +105,9 @@ export default function EmtMapScreen() {
     return (
       <SafeAreaView className="flex-1 items-center justify-center px-6">
         <Text className="text-red-500 font-semibold">Location Unavailable</Text>
-        <Text className="mt-2 text-center text-muted-foreground">{error ?? "Could not resolve location."}</Text>
+        <Text className="mt-2 text-center text-muted-foreground">
+          {error ?? "Could not resolve location."}
+        </Text>
       </SafeAreaView>
     );
   }
@@ -123,7 +125,7 @@ export default function EmtMapScreen() {
         bookingStatus={bookingStatus}
       >
         {activeBooking?.bookingId ? (
-          <View>
+          <View style={{ marginHorizontal: -12 }}>
             <EmtBottomActions
               bookingId={activeBooking.bookingId}
               status={bookingStatus}
@@ -134,7 +136,9 @@ export default function EmtMapScreen() {
         ) : (
           <View className="bg-card p-4 w-full rounded-2xl border border-border">
             <Text className="text-sm text-muted-foreground">No booking selected</Text>
-            <Text className="text-base text-foreground mt-1">Search and select an active booking ID to subscribe.</Text>
+            <Text className="text-base text-foreground mt-1">
+              Search and select an active booking ID to subscribe.
+            </Text>
           </View>
         )}
       </UserMap>
@@ -143,10 +147,10 @@ export default function EmtMapScreen() {
         className="absolute z-20"
         style={{
           ...(hasSelectedBooking
-            ? { top: Math.max(insets.top + 10, 16) }
+            ? { top: 0, paddingTop: insets.top + 10 }
             : { bottom: overlayBottom }),
-          left: Math.max(insets.left, 12),
-          right: Math.max(insets.right, 12),
+          left: insets.left + 6,
+          right: insets.right + 6,
         }}
       >
         <EmtSearchBar

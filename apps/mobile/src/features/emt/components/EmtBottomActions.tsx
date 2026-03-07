@@ -15,7 +15,7 @@ export default function EmtBottomActions({
   onOpenNotes,
 }: Props) {
   return (
-    <View className="bg-card p-5 w-full rounded-2xl shadow-lg border border-border">
+    <View className="bg-card p-4 w-full rounded-2xl shadow-lg border border-border min-w-[100%]">
       <View className="flex-row items-center mb-3">
         <View className="bg-blue-100 p-2 rounded-full mr-3">
           <Ionicons name="medkit" size={18} color="#2563eb" />
@@ -28,21 +28,17 @@ export default function EmtBottomActions({
         </View>
       </View>
 
-      <View className="border-t border-border pt-3">
-        <Text className="text-muted-foreground text-sm">
-          EMT quick actions for notes and patient profile.
-        </Text>
-      </View>
+      <View className="border-t border-border pt-3"></View>
 
-      <View className="flex-row gap-3 mt-4">
+      <View className="flex-row gap-2 mt-4">
         <Pressable
           onPress={onViewPatientInfo}
           accessibilityRole="button"
-          accessibilityLabel="Open patient information"
+          accessibilityLabel="Open booking information"
           className="flex-1 min-h-12 rounded-xl bg-blue-500 items-center justify-center flex-row p-3"
         >
           <Ionicons name="person" size={16} color="white" />
-          <Text className="text-white font-bold ml-2 text-base">Patient Info</Text>
+          <Text className="text-white font-bold ml-2 text-base">Booking Info</Text>
         </Pressable>
         <Pressable
           onPress={onOpenNotes}

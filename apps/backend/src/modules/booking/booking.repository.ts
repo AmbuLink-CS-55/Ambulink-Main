@@ -183,6 +183,11 @@ export class BookingRepository {
       .select({
         bookingId: bookings.id,
         status: bookings.status,
+        requestedAt: bookings.requestedAt,
+        assignedAt: bookings.assignedAt,
+        arrivedAt: bookings.arrivedAt,
+        pickedupAt: bookings.pickedupAt,
+        completedAt: bookings.completedAt,
         pickupLocationX: sql<number | null>`ST_X(${bookings.pickupLocation})`,
         pickupLocationY: sql<number | null>`ST_Y(${bookings.pickupLocation})`,
         patientId: users.id,

@@ -100,6 +100,7 @@ export class EmtService {
       id: randomUUID(),
       bookingId,
       authorId: emtId,
+      authorName: emt.fullName ?? "EMT",
       authorRole: "EMT",
       content,
       createdAt: new Date().toISOString(),

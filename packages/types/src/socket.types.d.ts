@@ -26,6 +26,7 @@ export type BookingNote = {
   id: string;
   bookingId: string;
   authorId: string;
+  authorName?: string | null;
   authorRole: "EMT" | "DISPATCHER";
   content: string;
   createdAt: string;
@@ -102,6 +103,11 @@ export type BookingFailedPayload = {
 export type BookingAssignedPayload = {
   bookingId: string | null;
   status: "ASSIGNED" | "ARRIVED" | "PICKEDUP";
+  requestedAt: string | null;
+  assignedAt: string | null;
+  arrivedAt: string | null;
+  pickedupAt: string | null;
+  completedAt: string | null;
   pickupLocation: {
     x: number;
     y: number;

@@ -8,6 +8,11 @@ import {
 type AssignedBookingRow = {
   bookingId: string;
   status: BookingStatus;
+  requestedAt: Date | null;
+  assignedAt: Date | null;
+  arrivedAt: Date | null;
+  pickedupAt: Date | null;
+  completedAt: Date | null;
   pickupLocationX: number | null;
   pickupLocationY: number | null;
   patientId: string;
@@ -81,6 +86,11 @@ export const mapAssignedBookingPayload = (row: AssignedBookingRow | null) => {
   const payload = {
     bookingId: row.bookingId,
     status: row.status === "REQUESTED" ? "ASSIGNED" : row.status,
+    requestedAt: row.requestedAt ? row.requestedAt.toISOString() : null,
+    assignedAt: row.assignedAt ? row.assignedAt.toISOString() : null,
+    arrivedAt: row.arrivedAt ? row.arrivedAt.toISOString() : null,
+    pickedupAt: row.pickedupAt ? row.pickedupAt.toISOString() : null,
+    completedAt: row.completedAt ? row.completedAt.toISOString() : null,
     pickupLocation,
     patient: {
       id: row.patientId,

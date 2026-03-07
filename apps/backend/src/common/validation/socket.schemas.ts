@@ -121,6 +121,7 @@ const emtNoteSchema = z.object({
   id: z.string(),
   bookingId: z.string(),
   authorId: z.string(),
+  authorName: z.string().nullable().optional(),
   authorRole: z.enum(["EMT", "DISPATCHER"]),
   content: z.string(),
   createdAt: z.string(),
@@ -130,6 +131,11 @@ export const bookingAssignedPayloadSchema = z
   .object({
     bookingId: z.string().nullable(),
     status: z.enum(["ASSIGNED", "ARRIVED", "PICKEDUP"]),
+    requestedAt: z.string().nullable(),
+    assignedAt: z.string().nullable(),
+    arrivedAt: z.string().nullable(),
+    pickedupAt: z.string().nullable(),
+    completedAt: z.string().nullable(),
     pickupLocation: locationSchema,
     patient: z
       .object({

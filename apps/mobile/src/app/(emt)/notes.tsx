@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { EmtNoteComposer, EmtNotesTimeline } from "@/features/emt/components";
 import { useEmtBookingState } from "@/features/emt/hooks/useEmtBookingState";
+import { env } from "../../../env";
 
 export default function EmtNotesScreen() {
   const router = useRouter();
@@ -62,7 +63,10 @@ export default function EmtNotesScreen() {
               </Text>
 
               <View style={styles.timelineContainer}>
-                <EmtNotesTimeline notes={booking.emtNotes ?? []} />
+                <EmtNotesTimeline
+                  notes={booking.emtNotes ?? []}
+                  currentEmtId={env.EXPO_PUBLIC_EMT_ID}
+                />
               </View>
 
               <View style={{ paddingBottom: Math.max(insets.bottom, 8) }}>
