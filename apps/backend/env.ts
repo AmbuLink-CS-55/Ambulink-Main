@@ -3,9 +3,14 @@ import { z } from "zod";
 
 dotenv.config();
 
+const emptyToUndefined = (value: unknown) => (value === "" ? undefined : value);
+
 const envSchema = z.object({
   // Database
-  DATABASE_URL: z.string().url("DATABASE_URL must be a valid URL"),
+  DATABASE_URL: z.preprocess(
+    emptyToUndefined,
+    z.string().url("DATABASE_URL must be a valid URL")
+  ),
 
   // Server
   PORT: z.coerce.number().default(3000),
@@ -18,10 +23,10 @@ const envSchema = z.object({
   AUTH_DISABLED: z.coerce.boolean().default(false),
 
   // Redis (optional)
-  REDIS_URL: z.string().url().optional(),
+  REDIS_URL: z.preprocess(emptyToUndefined, z.string().url().optional()),
 
   // Frontend CORS
-  FRONTEND_URL: z.string().url().optional(),
+  FRONTEND_URL: z.preprocess(emptyToUndefined, z.string().url().optional()),
   FRONTEND_URLS: z.string().optional(),
 
   // Logging
