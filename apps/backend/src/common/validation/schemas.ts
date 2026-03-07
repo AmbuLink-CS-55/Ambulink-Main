@@ -128,8 +128,8 @@ export const bookingAddNoteSchema = z.object({
 });
 
 export const emtBookingSearchQuerySchema = z.object({
-  q: z.string().trim().min(1),
-  limit: z.coerce.number().int().min(1).max(50).default(10),
+  q: z.string().trim().default(""),
+  limit: z.coerce.number().int().min(1).max(500).optional(),
 });
 
 export const emtSubscribeSchema = z.object({

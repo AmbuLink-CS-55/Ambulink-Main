@@ -71,10 +71,12 @@ export const useEmtBookingState = create<EmtBookingState>((set, get) => ({
         activeBooking,
         bookingStatus: assigned.status,
       });
+      return true;
     } catch (error) {
       set({
         errorMessage: error instanceof Error ? error.message : "Failed to subscribe to booking.",
       });
+      return false;
     } finally {
       set({ isSubscribing: false });
     }

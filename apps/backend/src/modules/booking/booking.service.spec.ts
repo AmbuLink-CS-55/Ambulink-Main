@@ -1,3 +1,4 @@
+import { BadRequestException } from "@nestjs/common";
 import { BookingService } from "./booking.service";
 
 describe("BookingService", () => {
@@ -9,6 +10,8 @@ describe("BookingService", () => {
       getDriverActiveBooking: jest.fn(),
       clearUserSubscribedBooking: jest.fn(),
       setUserSubscribedBooking: jest.fn(),
+      getBookingDetailsRow: jest.fn(),
+      appendBookingNote: jest.fn(),
     };
     const notificationService = {
       notifyDispatcher: jest.fn(),
@@ -152,5 +155,28 @@ describe("BookingService", () => {
       "booking:cancelled",
       expect.objectContaining({ bookingId: "booking-3" })
     );
+  });
+
+  it("rejects dispatcher note when booking is not active", async () => {
+    const { service, bookingRepository } = buildService();
+
+    (service as never).getDispatcherOrThrow = jest.fn().mockResolvedValue({
+      id: "dispatcher-1",
+      providerId: "provider-1",
+      fullName: "Dispatcher A",
+    });
+    bookingRepository.getBookingDetailsRow.mockResolvedValue([
+      {
+        bookingId: "booking-1",
+        providerId: "provider-1",
+        status: "COMPLETED",
+      },
+    ]);
+
+    await expect(
+      service.addDispatcherNote("booking-1", "dispatcher-1", "Post-completion note")
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(bookingRepository.appendBookingNote).not.toHaveBeenCalled();
   });
 });

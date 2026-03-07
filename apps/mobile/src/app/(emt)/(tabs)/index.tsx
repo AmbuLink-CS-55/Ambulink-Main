@@ -7,8 +7,6 @@ import { UserMap } from "@/features/patient/components";
 import { BookingPickerList, EmtBottomActions, EmtSearchBar } from "@/features/emt/components";
 import { useEmtBookingState } from "@/features/emt/hooks/useEmtBookingState";
 
-const SEARCH_REFRESH_DEBOUNCE_MS = 400;
-
 export default function EmtMapScreen() {
   const router = useRouter();
   const { location, loading, error } = useLocation();
@@ -48,17 +46,6 @@ export default function EmtMapScreen() {
   }, [clearTransientErrors, errorMessage]);
 
   useEffect(() => {
-    const trimmedQuery = searchTerm.trim();
-    if (!trimmedQuery) return;
-
-    const timeoutId = setTimeout(() => {
-      void loadOptions({ refresh: true });
-    }, SEARCH_REFRESH_DEBOUNCE_MS);
-
-    return () => clearTimeout(timeoutId);
-  }, [loadOptions, searchTerm]);
-
-  useEffect(() => {
     const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
     const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
 
@@ -87,7 +74,9 @@ export default function EmtMapScreen() {
   }, [bookingOptions, searchTerm]);
 
   const handleSelectBooking = async (bookingId: string) => {
-    await selectAndSubscribe(bookingId);
+    const didSubscribe = await selectAndSubscribe(bookingId);
+    if (!didSubscribe) return;
+
     setSearchTerm(bookingId.slice(0, 8));
     setPickerVisible(false);
   };

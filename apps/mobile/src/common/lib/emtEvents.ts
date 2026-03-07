@@ -2,31 +2,12 @@ import { apiGet, apiPost } from "./api";
 import { env } from "../../../env";
 import type { BookingAssignedPayload, EmtBookingSearchResult, EmtNote } from "@ambulink/types";
 
-const UUID_PREFIXES = "0123456789abcdef".split("");
-
 export async function fetchEmtBookingOptions(
   emtId: string = env.EXPO_PUBLIC_EMT_ID
 ): Promise<EmtBookingSearchResult[]> {
-  const responses = await Promise.all(
-    UUID_PREFIXES.map((prefix) =>
-      apiGet<EmtBookingSearchResult[]>("/api/emts/bookings/search", {
-        emtId,
-        q: prefix,
-        limit: 20,
-      }).catch(() => [])
-    )
-  );
-
-  const deduped = new Map<string, EmtBookingSearchResult>();
-  for (const group of responses) {
-    for (const entry of group) {
-      if (!deduped.has(entry.bookingId)) {
-        deduped.set(entry.bookingId, entry);
-      }
-    }
-  }
-
-  return Array.from(deduped.values()).sort((a, b) => a.bookingId.localeCompare(b.bookingId));
+  return apiGet<EmtBookingSearchResult[]>("/api/emts/bookings/search", {
+    emtId,
+  });
 }
 
 export async function fetchEmtCurrentBooking(

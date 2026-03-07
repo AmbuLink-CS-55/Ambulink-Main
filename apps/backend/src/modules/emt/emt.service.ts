@@ -27,7 +27,7 @@ export class EmtService {
     return emt;
   }
 
-  async searchOngoingBookings(emtId: string, query: string, limit: number) {
+  async searchOngoingBookings(emtId: string, query: string, limit?: number) {
     const emt = await this.findOne(emtId);
     if (!emt.providerId) {
       throw new BadRequestException("EMT is not attached to a provider");

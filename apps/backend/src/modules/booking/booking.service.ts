@@ -16,6 +16,7 @@ import type {
   BookingDetailsPayload,
   BookingLogEntry,
   BookingNote,
+  BookingStatus,
   DriverLocationUpdate,
   DispatcherBookingPayload,
   DispatcherBookingUpdatePayload,
@@ -32,6 +33,12 @@ import { HospitalRepository } from "../hospital/hospital.repository";
 
 @Injectable()
 export class BookingService {
+  private static readonly ACTIVE_BOOKING_STATUSES: BookingStatus[] = [
+    "ASSIGNED",
+    "ARRIVED",
+    "PICKEDUP",
+  ];
+
   constructor(
     private dbService: DbService,
     private dispatcherService: DispatcherService,
@@ -164,7 +171,7 @@ export class BookingService {
       throw new ForbiddenException("Only the assigned dispatcher can reassign this booking");
     }
 
-    if (!["ASSIGNED", "ARRIVED", "PICKEDUP"].includes(booking.status)) {
+    if (!BookingService.ACTIVE_BOOKING_STATUSES.includes(booking.status)) {
       throw new BadRequestException("Only active bookings can be reassigned");
     }
 
@@ -663,7 +670,7 @@ export class BookingService {
     await this.bookingRepository.setUserSubscribedBooking(userId, bookingId);
   }
 
-  async searchOngoingBookingsByProvider(providerId: string, query: string, limit: number) {
+  async searchOngoingBookingsByProvider(providerId: string, query: string, limit?: number) {
     return this.bookingRepository.searchOngoingBookingsByProvider(providerId, query, limit);
   }
 
@@ -733,6 +740,9 @@ export class BookingService {
 
     if (!booking.providerId || booking.providerId !== dispatcher.providerId) {
       throw new ForbiddenException("Dispatcher cannot access booking outside provider scope");
+    }
+    if (!BookingService.ACTIVE_BOOKING_STATUSES.includes(booking.status)) {
+      throw new BadRequestException("Dispatcher notes are only allowed for active bookings");
     }
 
     const note: BookingNote = {

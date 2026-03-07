@@ -370,9 +370,9 @@ export class BookingRepository {
       .where(eq(bookings.id, bookingId));
   }
 
-  searchOngoingBookingsByProvider(providerId: string, query: string, limit: number) {
+  searchOngoingBookingsByProvider(providerId: string, query: string, limit?: number) {
     const normalizedQuery = query.trim();
-    return this.dbService.db
+    const baseQuery = this.dbService.db
       .select({
         bookingId: bookings.id,
         status: bookings.status,
@@ -385,8 +385,13 @@ export class BookingRepository {
           ilike(sql<string>`${bookings.id}::text`, `${normalizedQuery}%`)
         )
       )
-      .orderBy(asc(bookings.requestedAt))
-      .limit(limit);
+      .orderBy(asc(bookings.requestedAt));
+
+    if (typeof limit === "number") {
+      return baseQuery.limit(limit);
+    }
+
+    return baseQuery;
   }
 
   appendBookingNote(bookingId: string, note: BookingNote, db: DbExecutor = this.dbService.db) {
