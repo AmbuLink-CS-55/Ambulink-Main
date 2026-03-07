@@ -3,14 +3,9 @@ import { z } from "zod";
 
 dotenv.config();
 
-const emptyToUndefined = (value: unknown) => (value === "" ? undefined : value);
-
 const envSchema = z.object({
   // Database
-  DATABASE_URL: z.preprocess(
-    emptyToUndefined,
-    z.string().url("DATABASE_URL must be a valid URL")
-  ),
+  DATABASE_URL: z.string().url("DATABASE_URL must be a valid URL"),
 
   // Server
   PORT: z.coerce.number().default(3000),
@@ -23,10 +18,10 @@ const envSchema = z.object({
   AUTH_DISABLED: z.coerce.boolean().default(false),
 
   // Redis (optional)
-  REDIS_URL: z.preprocess(emptyToUndefined, z.string().url().optional()),
+  REDIS_URL: z.string().url().optional(),
 
   // Frontend CORS
-  FRONTEND_URL: z.preprocess(emptyToUndefined, z.string().url().optional()),
+  FRONTEND_URL: z.string().url().optional(),
   FRONTEND_URLS: z.string().optional(),
 
   // Logging
@@ -45,25 +40,11 @@ export type Env = z.infer<typeof envSchema>;
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  const flattened = parsed.error.flatten();
-  const fieldErrors = Object.entries(flattened.fieldErrors)
-    .map(([key, messages]) => `- ${key}: ${(messages ?? []).join(", ")}`)
-    .join("\n");
-
   console.error(
-    "❌ Invalid environment variables in apps/backend/env.ts\n" +
-      "This file is imported during module startup (including tests), so validation fails early.\n" +
-      "Provide required vars in your runtime/CI env before bootstrapping Nest.\n\n" +
-      `${fieldErrors || JSON.stringify(parsed.error.format(), null, 2)}`
+    "Invalid environment variables:",
+    JSON.stringify(parsed.error.format(), null, 2)
   );
-
-  if (process.env.GITHUB_ACTIONS === "true") {
-    console.error(
-      "CI hint: define required vars under the job `env:` block in .github/workflows/ci.yml."
-    );
-  }
-
-  throw new Error("Environment validation failed");
+  process.exit(1);
 }
 
 export const env: Env = parsed.data;
@@ -73,7 +54,7 @@ export const seedEnv = parsedSeed;
 const isDev = env.APP_STAGE === "dev";
 
 if (isDev) {
-  console.log("🚀 Running in development mode");
+  console.log("Running in development mode");
 }
 
 export default env;
