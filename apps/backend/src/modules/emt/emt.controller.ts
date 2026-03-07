@@ -1,12 +1,28 @@
-import { BadRequestException, Body, Controller, Get, Post, Query } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from "@nestjs/common";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
 import {
+  createEmtSchema,
+  emtListQuerySchema,
   emtAddNoteSchema,
   emtBookingSearchQuerySchema,
   emtSubscribeSchema,
+  updateEmtSchema,
+  type CreateEmtDto,
   type EmtAddNoteDto,
   type EmtBookingSearchQueryDto,
+  type EmtListQueryDto,
   type EmtSubscribeDto,
+  type UpdateEmtDto,
 } from "@/common/validation/schemas";
 import {
   emtAddNoteHttpBodySchema,
@@ -21,6 +37,19 @@ export class EmtController {
     private readonly emtService: EmtService,
     private readonly emtCommandService: EmtCommandService
   ) {}
+
+  @Post()
+  create(
+    @Body(Validate(createEmtSchema))
+    body: CreateEmtDto
+  ) {
+    return this.emtService.create(body);
+  }
+
+  @Get()
+  findAll(@Query(Validate(emtListQuerySchema)) query: EmtListQueryDto) {
+    return this.emtService.findAll(query.providerId, query.isActive, query.status);
+  }
 
   @Get("bookings/search")
   searchBookings(
@@ -70,5 +99,24 @@ export class EmtController {
     const parsed = emtAddNoteSchema.parse(body);
     const note = await this.emtCommandService.addNote(emtId, parsed.bookingId, parsed.content);
     return { note };
+  }
+
+  @Get(":id")
+  findOne(@Param("id") id: string) {
+    return this.emtService.findOne(id);
+  }
+
+  @Patch(":id")
+  update(
+    @Param("id") id: string,
+    @Body(Validate(updateEmtSchema))
+    body: UpdateEmtDto
+  ) {
+    return this.emtService.update(id, body);
+  }
+
+  @Delete(":id")
+  remove(@Param("id") id: string) {
+    return this.emtService.remove(id);
   }
 }

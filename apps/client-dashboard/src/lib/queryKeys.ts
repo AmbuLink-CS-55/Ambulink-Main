@@ -8,6 +8,7 @@ export const queryKeys = {
   ongoingBookings: () => ["ongoing-bookings"] as const,
   driverLocations: () => ["driver-locations"] as const,
   drivers: (params?: Record<string, unknown>) => ["drivers", params ?? null] as const,
+  emts: (params?: Record<string, unknown>) => ["emts", params ?? null] as const,
   ambulances: (params?: Record<string, unknown>) => ["ambulances", params ?? null] as const,
   hospitals: () => ["hospitals"] as const,
 };

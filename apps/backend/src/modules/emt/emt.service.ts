@@ -9,6 +9,7 @@ import { BookingService } from "../booking/booking.service";
 import { EmtRepository } from "./emt.repository";
 import { DispatcherService } from "../dispatcher/dispatcher.service";
 import { NotificationService } from "@/core/socket/notification.service";
+import type { CreateEmtDto, UpdateEmtDto } from "@/common/validation/schemas";
 import type { BookingAssignedPayload, BookingNote, UserStatus } from "@ambulink/types";
 
 @Injectable()
@@ -22,6 +23,23 @@ export class EmtService {
 
   async setStatus(emtId: string, status: UserStatus) {
     return this.emtRepository.setEmtStatus(emtId, status);
+  }
+
+  async create(createEmtDto: CreateEmtDto) {
+    const result = await this.emtRepository.createEmt(createEmtDto);
+    const created = result[0];
+    if (created) {
+      this.notificationService.notifyAllDispatchers("emt:roster", {
+        providerId: created.providerId,
+        emt: created,
+        action: "created",
+      });
+    }
+    return created;
+  }
+
+  async findAll(providerId?: string, isActive?: boolean, status?: UserStatus) {
+    return this.emtRepository.findAllEmts(providerId, isActive, status);
   }
 
   async findOne(emtId: string) {
@@ -136,5 +154,32 @@ export class EmtService {
     }
 
     return note;
+  }
+
+  async update(id: string, updateEmtDto: UpdateEmtDto) {
+    await this.findOne(id);
+
+    const result = await this.emtRepository.updateEmt(id, updateEmtDto);
+    const updated = result[0];
+    if (!updated) {
+      throw new NotFoundException(`EMT with id ${id} not found`);
+    }
+
+    this.notificationService.notifyAllDispatchers("emt:roster", {
+      providerId: updated.providerId,
+      emt: updated,
+      action: "updated",
+    });
+    return updated;
+  }
+
+  async remove(id: string) {
+    await this.findOne(id);
+    await this.emtRepository.removeEmt(id);
+    this.notificationService.notifyAllDispatchers("emt:roster", {
+      providerId: null,
+      emt: { id },
+      action: "removed",
+    });
   }
 }

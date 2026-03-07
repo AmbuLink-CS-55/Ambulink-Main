@@ -19,6 +19,7 @@ const MENU_ITEMS = [
   { title: "Dashboard Home", path: "/", icon: Map },
   { title: "Ambulances", path: "/ambulances", icon: Ambulance },
   { title: "Drivers", path: "/drivers", icon: Users },
+  { title: "EMTs", path: "/emts", icon: Users },
   { title: "Booking Log", path: "/booking", icon: ClipboardList },
 ] as const;
 
