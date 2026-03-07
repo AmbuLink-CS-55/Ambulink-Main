@@ -18,7 +18,13 @@ export default function EmtLayout() {
   return (
     <SocketProvider type="EMT" enabled>
       <EmtSocketEventsBridge />
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: "slide_from_right",
+          presentation: "card",
+        }}
+      >
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="patient-info" />
         <Stack.Screen name="notes" />

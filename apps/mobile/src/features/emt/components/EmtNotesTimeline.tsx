@@ -18,10 +18,12 @@ export default function EmtNotesTimeline({ notes }: Props) {
 
   const formattedNotes = useMemo(
     () =>
-      notes.map((note) => ({
-        ...note,
-        formattedCreatedAt: formatter.format(new Date(note.createdAt)),
-      })),
+      [...notes]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .map((note) => ({
+          ...note,
+          formattedCreatedAt: formatter.format(new Date(note.createdAt)),
+        })),
     [formatter, notes]
   );
 

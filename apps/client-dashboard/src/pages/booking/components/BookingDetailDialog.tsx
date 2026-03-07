@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import type { BadgeVariant } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,6 +21,15 @@ type Props = {
   onOpenChange: (open: boolean) => void;
 };
 
+function statusVariant(status: string): BadgeVariant {
+  if (status === "ASSIGNED") return "assigned";
+  if (status === "ARRIVED") return "arrived";
+  if (status === "COMPLETED") return "completed";
+  if (status === "CANCELLED") return "critical";
+  if (status === "REQUESTED") return "default";
+  return "info";
+}
+
 export function BookingDetailDialog({ bookingId, dispatcherId, open, onOpenChange }: Props) {
   const [noteContent, setNoteContent] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -35,6 +45,10 @@ export function BookingDetailDialog({ bookingId, dispatcherId, open, onOpenChang
 
   const submitNote = async () => {
     if (!bookingId) return;
+    if (details?.status === "COMPLETED") {
+      setSubmitError("Notes are locked for completed bookings.");
+      return;
+    }
     if (!noteContent.trim()) {
       setSubmitError("Type a note before submitting.");
       return;
@@ -81,6 +95,7 @@ export function BookingDetailDialog({ bookingId, dispatcherId, open, onOpenChang
             submitError={submitError}
             isSubmitting={addNote.isPending}
             notes={notes}
+            isNotesLocked={details.status === "COMPLETED"}
             onClose={() => onOpenChange(false)}
           />
         ) : (
@@ -99,6 +114,7 @@ function BookingContent({
   submitNote,
   submitError,
   isSubmitting,
+  isNotesLocked,
   onClose,
 }: {
   details: BookingDetailsPayload;
@@ -108,6 +124,7 @@ function BookingContent({
   submitNote: () => Promise<void>;
   submitError: string | null;
   isSubmitting: boolean;
+  isNotesLocked: boolean;
   onClose: () => void;
 }) {
   return (
@@ -118,7 +135,7 @@ function BookingContent({
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-medium">Booking ID:</span>
             <span>{details.bookingId}</span>
-            <Badge variant={details.status === "CANCELLED" ? "critical" : "info"}>{details.status}</Badge>
+            <Badge variant={statusVariant(details.status)}>{details.status}</Badge>
           </div>
           <div className="grid grid-cols-1 gap-2 text-muted-foreground sm:grid-cols-2">
             <div>Requested: {details.requestedAt ? new Date(details.requestedAt).toLocaleString() : "-"}</div>
@@ -169,13 +186,21 @@ function BookingContent({
         <div className="space-y-2">
           <textarea
             className="min-h-[80px] max-h-[120px] w-full resize-none rounded-md border bg-background p-3 text-sm"
-            placeholder="Add dispatcher note..."
+            placeholder={
+              isNotesLocked ? "Notes are disabled for completed bookings." : "Add dispatcher note..."
+            }
             value={noteContent}
             onChange={(event) => setNoteContent(event.target.value)}
+            disabled={isNotesLocked}
           />
+          {isNotesLocked ? (
+            <p className="text-sm text-muted-foreground">
+              This booking is completed. Dispatchers can view notes but cannot add new ones.
+            </p>
+          ) : null}
           {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <Button onClick={submitNote} disabled={isSubmitting}>
+            <Button onClick={submitNote} disabled={isSubmitting || isNotesLocked}>
               {isSubmitting ? "Saving..." : "Add Note"}
             </Button>
             <Button variant="outline" onClick={onClose}>

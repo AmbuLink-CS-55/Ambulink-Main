@@ -2,7 +2,18 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-export type BadgeVariant = "default" | "success" | "warning" | "critical" | "info";
+export type BadgeVariant =
+  | "default"
+  | "success"
+  | "warning"
+  | "critical"
+  | "info"
+  | "assigned"
+  | "arrived"
+  | "completed"
+  | "available"
+  | "busy"
+  | "offline";
 
 type BadgeProps = React.ComponentProps<"span"> & {
   variant?: BadgeVariant;
@@ -16,14 +27,14 @@ const badgeVariants: Record<NonNullable<BadgeProps["variant"]>, string> = {
   warning: "bg-[color:var(--secondary)] text-[color:var(--card)]",
   critical: "bg-[color:var(--destructive)] text-[color:var(--card)]",
   info: "bg-[color:var(--accent)] text-[color:var(--card)]",
-};
-
-const dotVariants: Record<NonNullable<BadgeProps["variant"]>, string> = {
-  default: "bg-[color:var(--border)]",
-  success: "bg-[color:var(--primary)]",
-  warning: "bg-[color:var(--secondary)]",
-  critical: "bg-[color:var(--destructive)]",
-  info: "bg-[color:var(--accent)]",
+  assigned: "bg-[color:var(--status-assigned)] text-[color:var(--status-assigned-foreground)]",
+  arrived: "bg-[color:var(--status-arrived)] text-[color:var(--status-arrived-foreground)]",
+  completed:
+    "bg-[color:var(--status-completed)] text-[color:var(--status-completed-foreground)]",
+  available:
+    "bg-[color:var(--status-available)] text-[color:var(--status-available-foreground)]",
+  busy: "bg-[color:var(--status-busy)] text-[color:var(--status-busy-foreground)]",
+  offline: "bg-[color:var(--status-offline)] text-[color:var(--status-offline-foreground)]",
 };
 
 export function Badge({ className, variant = "default", label, children, ...props }: BadgeProps) {
@@ -32,13 +43,12 @@ export function Badge({ className, variant = "default", label, children, ...prop
     <span
       role="status"
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide",
+        "inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide",
         badgeVariants[variant],
         className
       )}
       {...props}
     >
-      <span aria-hidden="true" className={cn("h-2 w-2 rounded-full", dotVariants[variant])} />
       <span>{label ?? children}</span>
     </span>
   );

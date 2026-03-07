@@ -5,9 +5,11 @@ import type { BookingLogEntry } from "@/services/booking.service";
 type Status = "REQUESTED" | "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED";
 
 function statusVariant(status: Status): BadgeVariant {
-  if (status === "COMPLETED") return "success";
+  if (status === "COMPLETED") return "completed";
   if (status === "CANCELLED") return "critical";
   if (status === "REQUESTED") return "default";
+  if (status === "ASSIGNED") return "assigned";
+  if (status === "ARRIVED") return "arrived";
   return "info";
 }
 

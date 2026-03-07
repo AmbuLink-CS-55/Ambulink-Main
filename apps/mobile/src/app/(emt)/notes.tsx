@@ -2,12 +2,15 @@ import { useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { EmtNoteComposer, EmtNotesTimeline } from "@/features/emt/components";
 import { useEmtBookingState } from "@/features/emt/hooks/useEmtBookingState";
 
 export default function EmtNotesScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  // TODO: test on ios
+  insets.bottom = 0; // padding fix on android
   const booking = useEmtBookingState((state) => state.activeBooking);
   const submitNote = useEmtBookingState((state) => state.submitNote);
 
@@ -32,8 +35,8 @@ export default function EmtNotesScreen() {
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right", "bottom"]}>
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
       >
         <View style={styles.screen}>
           <Pressable
@@ -62,12 +65,14 @@ export default function EmtNotesScreen() {
                 <EmtNotesTimeline notes={booking.emtNotes ?? []} />
               </View>
 
-              <EmtNoteComposer
-                value={draft}
-                onChange={setDraft}
-                onSubmit={handleSubmit}
-                loading={isSubmitting}
-              />
+              <View style={{ paddingBottom: Math.max(insets.bottom, 8) }}>
+                <EmtNoteComposer
+                  value={draft}
+                  onChange={setDraft}
+                  onSubmit={handleSubmit}
+                  loading={isSubmitting}
+                />
+              </View>
             </View>
           )}
         </View>
@@ -76,6 +81,7 @@ export default function EmtNotesScreen() {
   );
 }
 
+// uniwind was being weired
 const styles = StyleSheet.create({
   flex: {
     flex: 1,

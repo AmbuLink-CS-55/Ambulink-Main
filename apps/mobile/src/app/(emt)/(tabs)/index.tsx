@@ -123,7 +123,7 @@ export default function EmtMapScreen() {
         bookingStatus={bookingStatus}
       >
         {activeBooking?.bookingId ? (
-          <View style={{ marginBottom: Math.max(insets.bottom, 12) }}>
+          <View>
             <EmtBottomActions
               bookingId={activeBooking.bookingId}
               status={bookingStatus}
@@ -132,10 +132,7 @@ export default function EmtMapScreen() {
             />
           </View>
         ) : (
-          <View
-            className="bg-card p-4 w-full rounded-2xl border border-border"
-            style={{ marginBottom: Math.max(insets.bottom, 12) }}
-          >
+          <View className="bg-card p-4 w-full rounded-2xl border border-border">
             <Text className="text-sm text-muted-foreground">No booking selected</Text>
             <Text className="text-base text-foreground mt-1">Search and select an active booking ID to subscribe.</Text>
           </View>
@@ -146,7 +143,7 @@ export default function EmtMapScreen() {
         className="absolute z-20"
         style={{
           ...(hasSelectedBooking
-            ? { top: Math.max(insets.top, 8) }
+            ? { top: Math.max(insets.top + 10, 16) }
             : { bottom: overlayBottom }),
           left: Math.max(insets.left, 12),
           right: Math.max(insets.right, 12),

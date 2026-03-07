@@ -51,9 +51,8 @@ export default function DriversDashboard() {
     () =>
       createDriverColumns({
         driverLocations,
-        onEdit: openForEdit,
       }),
-    [driverLocations, openForEdit]
+    [driverLocations]
   );
 
   const handleSubmit = useCallback(async () => {
@@ -102,7 +101,14 @@ export default function DriversDashboard() {
         <Button onClick={openForCreate}>Add Driver</Button>
       </div>
 
-      <DataTable columns={columns} rows={rows} height={640} rowHeight={56} />
+      <DataTable
+        columns={columns}
+        rows={rows}
+        height={640}
+        rowHeight={56}
+        rowKey={(row) => row.id}
+        onRowClick={openForEdit}
+      />
 
       {editing ? (
         <EditDriverDialog
