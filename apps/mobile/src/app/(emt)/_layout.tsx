@@ -1,40 +1,34 @@
-import { Tabs } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { Redirect, Stack } from "expo-router";
+import { SocketProvider, useSocket } from "@/common/hooks/SocketContext";
+import { useEmtSocketEvents } from "@/features/emt/hooks/useEmtSocketEvents";
+import { useAuthStore } from "@/common/hooks/AuthContext";
 
-export default function TabLayout() {
+function EmtSocketEventsBridge() {
+  const socket = useSocket();
+  useEmtSocketEvents(socket);
+  return null;
+}
+
+export default function EmtLayout() {
+  const user = useAuthStore((state) => state.user);
+
+  if (!user) return <Redirect href="/(public)/login_modern" />;
+  if (user.role !== "emt") return <Redirect href="/" />;
+
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <Tabs.Screen
-        name="medical"
-        options={{
-          title: "Medical",
-          tabBarIcon: ({ color, size }) => <Ionicons name="medical" color={color} size={size} />,
-          tabBarLabel: "Medical",
-          tabBarAccessibilityLabel: "Access medical tools",
+    <SocketProvider type="EMT" enabled>
+      <EmtSocketEventsBridge />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: "slide_from_right",
+          presentation: "card",
         }}
-      />
-      <Tabs.Screen
-        name="navigation"
-        options={{
-          title: "Navigation",
-          tabBarIcon: ({ color, size }) => <Ionicons name="navigate" color={color} size={size} />,
-          tabBarLabel: "Navigation",
-          tabBarAccessibilityLabel: "Navigate routes",
-        }}
-      />
-      <Tabs.Screen
-        name="communication"
-        options={{
-          title: "Communication",
-          tabBarIcon: ({ color, size }) => <Ionicons name="chatbubble" color={color} size={size} />,
-          tabBarLabel: "Communication",
-          tabBarAccessibilityLabel: "Communicate with team",
-        }}
-      />
-    </Tabs>
+      >
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="patient-info" />
+        <Stack.Screen name="notes" />
+      </Stack>
+    </SocketProvider>
   );
 }

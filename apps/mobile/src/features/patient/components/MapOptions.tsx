@@ -155,7 +155,6 @@ export default function MapOptions({
   // idle state
   return (
     <Pressable
-      // Primary emergency CTA uses explicit accessibility metadata for assistive tech.
       accessibilityRole="button"
       accessibilityLabel="Request ambulance"
       accessibilityHint="Sends a new emergency pickup request."

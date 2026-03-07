@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { BadgeVariant } from "@/components/ui/badge";
 import type { User, UserStatus } from "@/lib/types";
@@ -7,17 +6,15 @@ function onlineBadge(status: UserStatus | null | undefined): {
   label: string;
   variant: BadgeVariant;
 } {
-  if (status === "AVAILABLE") return { label: "Online", variant: "success" };
-  if (status === "BUSY") return { label: "Busy", variant: "warning" };
-  return { label: "Offline", variant: "default" };
+  if (status === "AVAILABLE") return { label: "Online", variant: "available" };
+  if (status === "BUSY") return { label: "Busy", variant: "busy" };
+  return { label: "Offline", variant: "offline" };
 }
 
 export function createDriverColumns({
   driverLocations,
-  onEdit,
 }: {
   driverLocations: Record<string, { x: number; y: number }>;
-  onEdit: (driver: User) => void;
 }) {
   return [
     {
@@ -65,15 +62,6 @@ export function createDriverColumns({
       header: "Updated",
       width: "180px",
       cell: (row: User) => (row.updatedAt ? new Date(row.updatedAt).toLocaleString() : "-"),
-    },
-    {
-      header: "Actions",
-      width: "120px",
-      cell: (row: User) => (
-        <Button size="sm" variant="outline" onClick={() => onEdit(row)}>
-          Edit
-        </Button>
-      ),
     },
   ];
 }

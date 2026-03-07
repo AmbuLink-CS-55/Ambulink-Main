@@ -72,7 +72,6 @@ export class DriverGateway implements OnGatewayInit {
         }
       }
     } else {
-      // Normalize online driver availability when connected and not handling an active booking.
       await this.driverService.setStatus(driverId, "AVAILABLE");
     }
 
@@ -99,7 +98,7 @@ export class DriverGateway implements OnGatewayInit {
   }
 
   handleDisconnect(client: Socket) {
-    // Network disconnects are transient; shift status should be controlled by explicit clock in/out events.
+    // Keep availability stable through transient reconnects.
     console.log("[socket] disconnected", {
       namespace: "/driver",
       clientId: client.id,

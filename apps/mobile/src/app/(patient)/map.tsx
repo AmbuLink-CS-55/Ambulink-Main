@@ -41,6 +41,7 @@ export default function Map() {
   const shouldShowNearbyMarkers = booking === null;
 
   const bookingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   usePatientEvents(socket, setBooking, setStatus, setIsCancelling, setIsBooking, setCompletedAt);
 
@@ -49,8 +50,29 @@ export default function Map() {
       if (bookingTimeoutRef.current) {
         clearTimeout(bookingTimeoutRef.current);
       }
+      if (cancelTimeoutRef.current) {
+        clearTimeout(cancelTimeoutRef.current);
+      }
     };
   }, []);
+
+  useEffect(() => {
+    if (!isCancelling) {
+      if (cancelTimeoutRef.current) {
+        clearTimeout(cancelTimeoutRef.current);
+        cancelTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    if (status === "CANCELLED") {
+      setIsCancelling(false);
+      if (cancelTimeoutRef.current) {
+        clearTimeout(cancelTimeoutRef.current);
+        cancelTimeoutRef.current = null;
+      }
+    }
+  }, [isCancelling, status]);
 
   useEffect(() => {
     if (!isBooking && bookingTimeoutRef.current) {
@@ -107,13 +129,25 @@ export default function Map() {
         style: "destructive",
         onPress: async () => {
           setIsCancelling(true);
+          if (cancelTimeoutRef.current) {
+            clearTimeout(cancelTimeoutRef.current);
+          }
           try {
             await sendPatientCancel({
               patientId: env.EXPO_PUBLIC_PATIENT_ID,
               reason: "Cancelled by patient",
             });
+
+            cancelTimeoutRef.current = setTimeout(() => {
+              setIsCancelling(false);
+              cancelTimeoutRef.current = null;
+            }, 8000);
           } catch (error) {
             setIsCancelling(false);
+            if (cancelTimeoutRef.current) {
+              clearTimeout(cancelTimeoutRef.current);
+              cancelTimeoutRef.current = null;
+            }
             Alert.alert(
               "Cancel Failed",
               error instanceof Error ? error.message : "Please try again."

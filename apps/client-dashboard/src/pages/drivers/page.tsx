@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { DataTable } from "@/components";
 import { Button } from "@/components/ui/button";
 import { useEntityFormDialog } from "@/hooks/use-entity-form-dialog";
@@ -7,7 +7,11 @@ import { queryKeys } from "@/lib/queryKeys";
 import { useCreateDriver, useGetDrivers, useUpdateDriver } from "@/services/driver.service";
 import type { User } from "@/lib/types";
 import { createDriverColumns } from "@/pages/drivers/components";
-import { CreateDriverDialog, EditDriverDialog, type DriverFormState } from "@/pages/drivers/components";
+import {
+  CreateDriverDialog,
+  EditDriverDialog,
+  type DriverFormState,
+} from "@/pages/drivers/components";
 import env from "@/../env";
 
 const initialForm: DriverFormState = {
@@ -18,13 +22,16 @@ const initialForm: DriverFormState = {
 };
 
 export default function DriversDashboard() {
-  const queryClient = useQueryClient();
+  const driverLocationsQuery = useQuery<Record<string, { x: number; y: number }>>({
+    queryKey: queryKeys.driverLocations(),
+    queryFn: async () => ({}),
+    initialData: {},
+    staleTime: Infinity,
+    enabled: false,
+  });
   const driverLocations = useMemo(
-    () =>
-      queryClient.getQueryData<Record<string, { x: number; y: number }>>(
-        queryKeys.driverLocations()
-      ) ?? {},
-    [queryClient]
+    () => driverLocationsQuery.data ?? {},
+    [driverLocationsQuery.data]
   );
 
   const drivers = useGetDrivers({ providerId: env.VITE_PROVIDER_ID });
@@ -51,9 +58,8 @@ export default function DriversDashboard() {
     () =>
       createDriverColumns({
         driverLocations,
-        onEdit: openForEdit,
       }),
-    [driverLocations, openForEdit]
+    [driverLocations]
   );
 
   const handleSubmit = useCallback(async () => {
@@ -102,7 +108,14 @@ export default function DriversDashboard() {
         <Button onClick={openForCreate}>Add Driver</Button>
       </div>
 
-      <DataTable columns={columns} rows={rows} height={640} rowHeight={56} />
+      <DataTable
+        columns={columns}
+        rows={rows}
+        height={640}
+        rowHeight={56}
+        rowKey={(row) => row.id}
+        onRowClick={openForEdit}
+      />
 
       {editing ? (
         <EditDriverDialog

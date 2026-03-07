@@ -1,4 +1,3 @@
-// src/state/useAuthStore.ts
 import { create } from "zustand";
 
 export type Role = "patient" | "driver" | "emt";

@@ -8,6 +8,11 @@ import {
 type AssignedBookingRow = {
   bookingId: string;
   status: BookingStatus;
+  requestedAt: Date | null;
+  assignedAt: Date | null;
+  arrivedAt: Date | null;
+  pickedupAt: Date | null;
+  completedAt: Date | null;
   pickupLocationX: number | null;
   pickupLocationY: number | null;
   patientId: string;
@@ -28,6 +33,8 @@ type AssignedBookingRow = {
   hospitalPhone: string | null;
   hospitalLocationX: number | null;
   hospitalLocationY: number | null;
+  patientProfileSnapshot: unknown;
+  emtNotes: unknown;
 };
 
 type DispatcherBookingRow = {
@@ -79,6 +86,11 @@ export const mapAssignedBookingPayload = (row: AssignedBookingRow | null) => {
   const payload = {
     bookingId: row.bookingId,
     status: row.status === "REQUESTED" ? "ASSIGNED" : row.status,
+    requestedAt: row.requestedAt ? row.requestedAt.toISOString() : null,
+    assignedAt: row.assignedAt ? row.assignedAt.toISOString() : null,
+    arrivedAt: row.arrivedAt ? row.arrivedAt.toISOString() : null,
+    pickedupAt: row.pickedupAt ? row.pickedupAt.toISOString() : null,
+    completedAt: row.completedAt ? row.completedAt.toISOString() : null,
     pickupLocation,
     patient: {
       id: row.patientId,
@@ -108,6 +120,14 @@ export const mapAssignedBookingPayload = (row: AssignedBookingRow | null) => {
             hotlineNumber: row.providerHotline ?? null,
           }
         : null,
+    patientProfileSnapshot: (row.patientProfileSnapshot ?? null) as Record<string, unknown> | null,
+    emtNotes: Array.isArray(row.emtNotes)
+      ? (row.emtNotes as Array<Record<string, unknown>>).map((note) => ({
+          ...note,
+          authorRole:
+            note && typeof note === "object" && "authorRole" in note ? note.authorRole : "EMT",
+        }))
+      : [],
   };
 
   const parsed = bookingAssignedPayloadSchema.safeParse(payload);

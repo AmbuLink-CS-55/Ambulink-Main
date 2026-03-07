@@ -33,7 +33,11 @@ export default function EmergencyContactModal({
                 ? i18n.t("common.edit") + " " + i18n.t("settings.emergency.title")
                 : i18n.t("settings.emergency.addEmergencyContact")}
             </Text>
-            <Pressable onPress={onClose}>
+            <Pressable
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Close emergency contact modal"
+            >
               <Ionicons name="close" size={24} color="#333" />
             </Pressable>
           </View>

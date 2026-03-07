@@ -1,9 +1,18 @@
 import { Server, Socket } from "socket.io";
-import { OnGatewayInit, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
+import {
+  OnGatewayInit,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+} from "@nestjs/websockets";
+import { OnModuleDestroy } from "@nestjs/common";
 
 import { SocketService } from "@/core/socket/socket.service";
 import { BookingService } from "../booking/booking.service";
 import { DispatcherService } from "./dispatcher.service";
+import { DispatcherPendingRequestService } from "./dispatcher-pending-request.service";
+import { dispatcherDecisionSubmitPayloadSchema } from "@/common/validation/socket.schemas";
+import type { SocketErrorPayload } from "@ambulink/types";
 
 @WebSocketGateway({
   cors: {
@@ -11,14 +20,16 @@ import { DispatcherService } from "./dispatcher.service";
   },
   namespace: "/dispatcher",
 })
-export class DispatcherGateway implements OnGatewayInit {
+export class DispatcherGateway implements OnGatewayInit, OnModuleDestroy {
   @WebSocketServer() server: Server;
   private readonly offlineTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private isShuttingDown = false;
 
   constructor(
     private dispatcherServise: DispatcherService,
     private socketService: SocketService,
-    private bookingService: BookingService
+    private bookingService: BookingService,
+    private pendingRequestService: DispatcherPendingRequestService
   ) {}
 
   afterInit() {
@@ -48,16 +59,8 @@ export class DispatcherGateway implements OnGatewayInit {
     this.clearPendingOffline(dispatcherId);
     await this.dispatcherServise.setStatus(dispatcherId, "AVAILABLE");
     client.join(`dispatcher:${dispatcherId}`);
-    this.bookingService
-      .getDispatcherActiveBookings(dispatcherId)
-      .then((bookings) => {
-        this.socketService.emitToDispatcher(dispatcherId, "booking:sync", {
-          bookings,
-        });
-      })
-      .catch((error) => {
-        console.error("[dispatcher] active booking sync failed", error);
-      });
+    this.emitActiveBookingSync(dispatcherId);
+    this.emitPendingSync(dispatcherId);
     console.log("[socket] connected", {
       namespace: "/dispatcher",
       clientId: client.id,
@@ -81,6 +84,9 @@ export class DispatcherGateway implements OnGatewayInit {
   }
 
   handleDisconnect(client: Socket) {
+    if (this.isShuttingDown) {
+      return;
+    }
     const dispatcherId = client.data.dispatcherId as string | undefined;
     if (dispatcherId) {
       this.scheduleOfflineIfStillDisconnected(dispatcherId);
@@ -103,8 +109,12 @@ export class DispatcherGateway implements OnGatewayInit {
   private scheduleOfflineIfStillDisconnected(dispatcherId: string) {
     this.clearPendingOffline(dispatcherId);
 
-    // Grace period avoids flapping status during short network drops.
+    // Grace period.
     const timer = setTimeout(async () => {
+      if (this.isShuttingDown) {
+        this.offlineTimers.delete(dispatcherId);
+        return;
+      }
       try {
         const activeSockets = await this.server.in(`dispatcher:${dispatcherId}`).fetchSockets();
         if (activeSockets.length === 0) {
@@ -116,5 +126,95 @@ export class DispatcherGateway implements OnGatewayInit {
     }, 10000);
 
     this.offlineTimers.set(dispatcherId, timer);
+  }
+
+  onModuleDestroy() {
+    this.isShuttingDown = true;
+    for (const timer of this.offlineTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.offlineTimers.clear();
+  }
+
+  @SubscribeMessage("booking:decision-submit")
+  handleBookingDecisionSubmit(client: Socket, data: { requestId: string; approved: boolean }) {
+    const parsed = dispatcherDecisionSubmitPayloadSchema.safeParse(data);
+    if (!parsed.success) {
+      client.emit("socket:error", {
+        code: "VALIDATION_ERROR",
+        message: "Invalid booking decision payload",
+      } satisfies SocketErrorPayload);
+      return;
+    }
+
+    const dispatcherId = client.data.dispatcherId as string | undefined;
+    if (!dispatcherId) {
+      client.emit("socket:error", {
+        code: "UNAUTHORIZED",
+        message: "Dispatcher identity missing on socket",
+      } satisfies SocketErrorPayload);
+      return;
+    }
+
+    const ack = this.pendingRequestService.submitDecision(
+      dispatcherId,
+      parsed.data.requestId,
+      parsed.data.approved
+    );
+    this.socketService.emitToDispatcher(dispatcherId, "booking:decision-ack", ack);
+  }
+
+  @SubscribeMessage("booking:pending-sync:request")
+  handlePendingSyncRequest(client: Socket) {
+    const dispatcherId = client.data.dispatcherId as string | undefined;
+    if (!dispatcherId) {
+      client.emit("socket:error", {
+        code: "UNAUTHORIZED",
+        message: "Dispatcher identity missing on socket",
+      } satisfies SocketErrorPayload);
+      return;
+    }
+    this.emitPendingSync(dispatcherId);
+  }
+
+  @SubscribeMessage("booking:sync:request")
+  handleActiveBookingSyncRequest(client: Socket) {
+    const dispatcherId = client.data.dispatcherId as string | undefined;
+    if (!dispatcherId) {
+      client.emit("socket:error", {
+        code: "UNAUTHORIZED",
+        message: "Dispatcher identity missing on socket",
+      } satisfies SocketErrorPayload);
+      return;
+    }
+    this.emitActiveBookingSync(dispatcherId);
+  }
+
+  private emitActiveBookingSync(dispatcherId: string) {
+    this.bookingService
+      .getDispatcherActiveBookings(dispatcherId)
+      .then((bookings) => {
+        this.socketService.emitToDispatcher(dispatcherId, "booking:sync", {
+          bookings,
+        });
+        console.info("[dispatcher] active_booking_sync", {
+          dispatcherId,
+          bookingCount: bookings.length,
+        });
+      })
+      .catch((error) => {
+        console.error("[dispatcher] active booking sync failed", error);
+      });
+  }
+
+  private emitPendingSync(dispatcherId: string) {
+    const pendingRequests = this.pendingRequestService.getPendingForDispatcher(dispatcherId);
+    this.socketService.emitToDispatcher(dispatcherId, "booking:pending-sync", {
+      requests: pendingRequests,
+    });
+    console.info("[dispatcher] pending_request_sync", {
+      dispatcherId,
+      pendingCount: pendingRequests.length,
+    });
   }
 }

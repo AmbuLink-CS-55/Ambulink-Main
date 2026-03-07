@@ -4,7 +4,11 @@ import { DataTable } from "@/components";
 import { useGetBookingLog, useManualAssignBooking } from "@/services/booking.service";
 import { useMapView } from "@/hooks/use-map-view";
 import { getBookingActionErrorMessage } from "@/lib/booking-ui-errors";
-import { bookingLogColumns, ManualBookingDialog } from "@/pages/booking/components";
+import {
+  bookingLogColumns,
+  BookingDetailDialog,
+  ManualBookingDialog,
+} from "@/pages/booking/components";
 import { useBookingLogOptions } from "@/pages/booking/hooks/use-booking-log-options";
 import { useManualBookingForm } from "@/pages/booking/hooks/use-manual-booking-form";
 import { getDispatcherId } from "@/lib/identity";
@@ -12,6 +16,7 @@ import env from "@/../env";
 
 export default function BookingLogPage() {
   const [isManualOpen, setIsManualOpen] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [manualError, setManualError] = useState<string | null>(null);
 
   const bookingLog = useGetBookingLog({ providerId: env.VITE_PROVIDER_ID });
@@ -101,7 +106,23 @@ export default function BookingLogPage() {
         onSubmit={handleManualAssign}
       />
 
-      <DataTable columns={bookingLogColumns} rows={rows} height={640} rowHeight={56} />
+      <BookingDetailDialog
+        open={Boolean(selectedBookingId)}
+        bookingId={selectedBookingId}
+        dispatcherId={getDispatcherId()}
+        onOpenChange={(open) => {
+          if (!open) setSelectedBookingId(null);
+        }}
+      />
+
+      <DataTable
+        columns={bookingLogColumns}
+        rows={rows}
+        height={640}
+        rowHeight={56}
+        rowKey={(row) => row.bookingId}
+        onRowClick={(row) => setSelectedBookingId(row.bookingId)}
+      />
     </div>
   );
 }

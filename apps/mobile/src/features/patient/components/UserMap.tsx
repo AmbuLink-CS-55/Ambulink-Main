@@ -16,6 +16,7 @@ type Props = {
   bookingStatus?: BookingStatus;
   nearbyHospitals?: NearbyHospital[];
   nearbyDrivers?: NearbyDriver[];
+  topOverlay?: React.ReactNode;
   children?: React.ReactNode;
 };
 
@@ -26,6 +27,7 @@ export default function UserMap({
   bookingStatus,
   nearbyHospitals = [],
   nearbyDrivers = [],
+  topOverlay,
   children,
 }: Props) {
   const mapRef = React.useRef<MapView>(null);
@@ -71,7 +73,7 @@ export default function UserMap({
         customMapStyle={mapStyle}
         showsPointsOfInterest={false}
       >
-        {driverLocations.filter(isValidPoint).map((d, i) => (
+        {driverLocations.filter(isValidPoint).map((d) => (
           // <Marker
           //   key={`driver:marker${i}`}
           //   coordinate={{ latitude: d.y, longitude: d.x }}
@@ -79,7 +81,7 @@ export default function UserMap({
           //   tracksViewChanges={true}
           // />
           <Marker
-            key={`d${i}`}
+            key={`driver-${d.x}-${d.y}`}
             coordinate={{ latitude: d.y, longitude: d.x }}
             anchor={{ x: 0.5, y: 0.5 }}
             tracksViewChanges={false}
@@ -113,15 +115,11 @@ export default function UserMap({
             />
           ))}
 
-        {safeHospitalLocation && safeDriverLocation && (
-          <>
-            {showDriverEta && patientDriverCord.length > 0 && (
-              <Polyline coordinates={patientDriverCord} strokeWidth={4} strokeColor="#007AFF" />
-            )}
-            {patientHospitalCord.length > 0 && (
-              <Polyline coordinates={patientHospitalCord} strokeWidth={4} strokeColor="#FF3B30" />
-            )}
-          </>
+        {safeHospitalLocation && showDriverEta && safeDriverLocation && patientDriverCord.length > 0 && (
+          <Polyline coordinates={patientDriverCord} strokeWidth={4} strokeColor="#007AFF" />
+        )}
+        {safeHospitalLocation && patientHospitalCord.length > 0 && (
+          <Polyline coordinates={patientHospitalCord} strokeWidth={4} strokeColor="#FF3B30" />
         )}
 
         {safeHospitalLocation && (
@@ -131,13 +129,10 @@ export default function UserMap({
               latitude: safeHospitalLocation.y,
               longitude: safeHospitalLocation.x,
             }}
-            anchor={{ x: 0.5, y: 1 }}
+            title="Hospital"
+            pinColor="#dc2626"
             tracksViewChanges={false}
-          >
-            <View
-              style={{ width: 40, height: 40, alignItems: "center", justifyContent: "center" }}
-            ></View>
-          </Marker>
+          />
         )}
 
         {nearbyHospitals
@@ -156,10 +151,19 @@ export default function UserMap({
             />
           ))}
       </MapView>
+      {topOverlay ? (
+        <View pointerEvents="box-none" className="absolute left-0 right-0 top-0 z-30">
+          {topOverlay}
+        </View>
+      ) : null}
       <View className="items-center flex-1 justify-end my-5 mx-10">
         <Pressable
           className="bg-card p-1 rounded-md self-end mr-0 m-3 shadow-lg"
           onPress={handleLocate}
+          accessibilityRole="button"
+          accessibilityLabel="Center map on your location"
+          accessibilityHint="Moves the map camera to your current position."
+          hitSlop={10}
         >
           <Ionicons name="locate" size={24} color="#000000" />
         </Pressable>

@@ -1,5 +1,5 @@
 import { View, ScrollView, Text } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import i18n from "@/common/i18n/i18n";
 import { SettingsProvider, useSettings } from "@/common/hooks/SettingsContext";
 
@@ -26,6 +26,7 @@ export default function Settings() {
 }
 
 function SettingsContent() {
+  const insets = useSafeAreaInsets();
   const {
     loaded,
     settings,
@@ -58,7 +59,14 @@ function SettingsContent() {
 
   return (
     <SafeAreaView className="flex-1" edges={["top", "left", "right"]}>
-      <ScrollView className="p-4" contentContainerStyle={{ paddingBottom: 4, paddingTop: 7 }}>
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 7,
+          paddingBottom: Math.max(insets.bottom + 88, 96),
+        }}
+      >
         <View>
           <Text className="text-3xl font-bold pb-5">{i18n.t("settings.title")}</Text>
         </View>
@@ -67,9 +75,6 @@ function SettingsContent() {
         <MedicalSection />
         <EmergencyContactsSection />
         <AppSettingsSection />
-
-        <View style={{ height: 40 }} />
-
         {activeModal === "bloodType" && (
           <BloodTypeModal
             visible

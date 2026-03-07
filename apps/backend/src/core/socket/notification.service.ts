@@ -17,6 +17,10 @@ export class NotificationService {
     this.socketService.emitToDispatcher(dispatcherId, event, payload);
   }
 
+  notifyEmt(emtId: string, event: string, payload: unknown) {
+    this.socketService.emitToEmt(emtId, event, payload);
+  }
+
   notifyAllDispatchers(event: string, payload: unknown) {
     this.socketService.emitToAllDispatchers(event, payload);
   }

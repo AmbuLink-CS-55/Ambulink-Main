@@ -5,14 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Bell, Check, Phone, User2, XCircle } from "lucide-react";
 import type { BookingDecisionState, BookingRequestEntity } from "@/lib/booking-types";
 
-const REQUEST_EXPIRY_MS = 30000;
-
-function getTimeLeft(now: number, timestamp: number) {
-  return Math.max(0, REQUEST_EXPIRY_MS - (now - timestamp));
+function getTimeLeft(now: number, expiresAt: number) {
+  return Math.max(0, expiresAt - now);
 }
 
-function getProgressClasses(remainingMs: number) {
-  const ratio = remainingMs / REQUEST_EXPIRY_MS;
+function getProgressClasses(remainingMs: number, totalMs: number) {
+  const ratio = totalMs > 0 ? remainingMs / totalMs : 0;
   if (ratio <= 0.33) return "bg-[color:var(--destructive)]";
   if (ratio <= 0.66) return "bg-[color:var(--secondary)]";
   return "bg-[color:var(--primary)]";
@@ -41,9 +39,10 @@ export function BookingRequestsSection({
     <>
       {bookingRequests.map((request) => {
         const decision = bookingDecisions[request.requestId];
-        const remainingMs = getTimeLeft(now, request.timestamp);
+        const remainingMs = getTimeLeft(now, request.expiresAt);
         const remainingSeconds = Math.ceil(remainingMs / 1000);
-        const progressWidth = `${Math.max(0, (remainingMs / REQUEST_EXPIRY_MS) * 100)}%`;
+        const totalDurationMs = Math.max(request.expiresAt - request.timestamp, 1);
+        const progressWidth = `${Math.max(0, (remainingMs / totalDurationMs) * 100)}%`;
 
         return (
           <Alert
@@ -112,7 +111,7 @@ export function BookingRequestsSection({
                   </div>
                   <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--border)]/40">
                     <div
-                      className={`h-full rounded-full transition-all ${getProgressClasses(remainingMs)}`}
+                      className={`h-full rounded-full transition-all ${getProgressClasses(remainingMs, totalDurationMs)}`}
                       style={{ width: progressWidth }}
                     />
                   </div>

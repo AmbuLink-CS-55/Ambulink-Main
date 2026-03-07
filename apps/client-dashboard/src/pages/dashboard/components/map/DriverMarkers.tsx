@@ -46,7 +46,8 @@ export function DriverMarkers({ ongoingBookings }: DriverMarkersProps) {
       {/* Ongoing booking drivers */}
       {ongoingList.map((booking) => {
         const patientLocation = booking.pickupLocation ?? booking.patient.location;
-        const driverLocation = booking.driver.location;
+        const liveDriverLocation = booking.driver.id ? driverLocations[booking.driver.id] : null;
+        const driverLocation = booking.driver.location ?? liveDriverLocation ?? null;
         const isCompleted = booking.status === "COMPLETED" || booking.status === "CANCELLED";
 
         return (

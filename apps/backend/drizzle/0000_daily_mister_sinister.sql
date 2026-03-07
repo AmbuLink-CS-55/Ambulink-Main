@@ -43,6 +43,8 @@ CREATE TABLE "bookings" (
 	"dispatcher_id" uuid,
 	"hospital_id" uuid,
 	"emergency_type" varchar(100),
+	"patient_profile_snapshot" jsonb,
+	"emt_notes" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"requested_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"assigned_at" timestamp with time zone,
 	"pickedup_at" timestamp with time zone,
@@ -85,7 +87,8 @@ CREATE TABLE "users" (
 	"provider_id" uuid,
 	"current_location" geometry(point),
 	"last_location_update" timestamp with time zone,
-	"status" "user_status"
+	"status" "user_status",
+	"subscribed_booking_id" uuid
 );
 --> statement-breakpoint
 ALTER TABLE "ambulances" ADD CONSTRAINT "ambulances_provider_id_ambulance_providers_id_fk" FOREIGN KEY ("provider_id") REFERENCES "public"."ambulance_providers"("id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
@@ -97,6 +100,7 @@ ALTER TABLE "bookings" ADD CONSTRAINT "bookings_emt_id_users_id_fk" FOREIGN KEY 
 ALTER TABLE "bookings" ADD CONSTRAINT "bookings_dispatcher_id_users_id_fk" FOREIGN KEY ("dispatcher_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "bookings" ADD CONSTRAINT "bookings_hospital_id_hospitals_id_fk" FOREIGN KEY ("hospital_id") REFERENCES "public"."hospitals"("id") ON DELETE set null ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "users" ADD CONSTRAINT "users_provider_id_ambulance_providers_id_fk" FOREIGN KEY ("provider_id") REFERENCES "public"."ambulance_providers"("id") ON DELETE set null ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE "users" ADD CONSTRAINT "users_subscribed_booking_id_bookings_id_fk" FOREIGN KEY ("subscribed_booking_id") REFERENCES "public"."bookings"("id") ON DELETE set null ON UPDATE cascade;--> statement-breakpoint
 CREATE UNIQUE INDEX "vehicle_number_unique" ON "ambulances" USING btree ("vehicle_number");--> statement-breakpoint
 CREATE INDEX "provider_idx_ambulances" ON "ambulances" USING btree ("provider_id");--> statement-breakpoint
 CREATE INDEX "ambulance_status_location_idx" ON "ambulances" USING btree ("status","current_location");--> statement-breakpoint
@@ -109,4 +113,5 @@ CREATE UNIQUE INDEX "phone_unique" ON "users" USING btree ("phone_number");--> s
 CREATE UNIQUE INDEX "email_unique" ON "users" USING btree ("email");--> statement-breakpoint
 CREATE INDEX "provider_idx" ON "users" USING btree ("provider_id");--> statement-breakpoint
 CREATE INDEX "role_idx" ON "users" USING btree ("role");--> statement-breakpoint
+CREATE INDEX "subscribed_booking_idx" ON "users" USING btree ("subscribed_booking_id");--> statement-breakpoint
 CREATE INDEX "driver_status_location_idx" ON "users" USING btree ("role","is_active","status","current_location");

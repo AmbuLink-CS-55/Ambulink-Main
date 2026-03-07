@@ -20,10 +20,8 @@ const buttonVariants = cva(
           "bg-[color:var(--primary)] text-[color:var(--card)] hover:brightness-110 focus-visible:ring-offset-[color:var(--background)]",
         secondary:
           "border border-[color:var(--border)] bg-[color:var(--card)] text-[color:var(--foreground)] hover:border-[color:var(--secondary)]",
-        destructive:
-          "bg-[color:var(--destructive)] text-[color:var(--card)] hover:brightness-105",
-        ghost:
-          "bg-transparent text-[color:var(--foreground)] hover:bg-[color:var(--card)]",
+        destructive: "bg-[color:var(--destructive)] text-[color:var(--card)] hover:brightness-105",
+        ghost: "bg-transparent text-[color:var(--foreground)] hover:bg-[color:var(--card)]",
         outline:
           "border border-[color:var(--border)] bg-transparent text-[color:var(--foreground)] hover:border-[color:var(--secondary)] focus-visible:ring-offset-[color:var(--background)]",
         link: "bg-transparent px-0 text-[color:var(--primary)] underline-offset-4 hover:underline",

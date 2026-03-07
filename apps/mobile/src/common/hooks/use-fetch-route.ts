@@ -18,10 +18,15 @@ export const useFetchRoute = (start?: Point, end?: Point) => {
       return;
     }
 
+    let isCancelled = false;
+
     const fetchRoute = async () => {
       try {
         const url = `https://router.project-osrm.org/route/v1/driving/${startX},${startY};${endX},${endY}?overview=full&geometries=geojson`;
         const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Route request failed with status ${response.status}`);
+        }
         const data = await response.json();
         const route = data.routes?.[0];
 
@@ -30,19 +35,30 @@ export const useFetchRoute = (start?: Point, end?: Point) => {
             latitude: coord[1],
             longitude: coord[0],
           }));
-          setRouteCoords(formattedCoords);
-          setDurationSeconds(Number.isFinite(route.duration) ? route.duration : null);
+          if (!isCancelled) {
+            setRouteCoords(formattedCoords);
+            setDurationSeconds(Number.isFinite(route.duration) ? route.duration : null);
+          }
         } else {
-          setRouteCoords([]);
-          setDurationSeconds(null);
+          if (!isCancelled) {
+            setRouteCoords([]);
+            setDurationSeconds(null);
+          }
         }
       } catch (error) {
         console.error("Error fetching route:", error);
-        setDurationSeconds(null);
+        if (!isCancelled) {
+          setRouteCoords([]);
+          setDurationSeconds(null);
+        }
       }
     };
 
     fetchRoute();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [startX, startY, endX, endY]);
 
   return { routeCoords, durationSeconds };

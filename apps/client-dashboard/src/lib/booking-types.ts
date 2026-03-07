@@ -4,6 +4,7 @@ export type BookingRequestEntity = {
   requestId: string;
   data: BookingNewPayload;
   timestamp: number;
+  expiresAt: number;
 };
 
 export type BookingDecisionState = {

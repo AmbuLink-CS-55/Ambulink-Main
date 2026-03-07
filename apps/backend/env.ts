@@ -40,10 +40,7 @@ export type Env = z.infer<typeof envSchema>;
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  console.error(
-    "❌ Invalid environment variables:",
-    JSON.stringify(parsed.error.format(), null, 2)
-  );
+  console.error("Invalid environment variables:", JSON.stringify(parsed.error.format(), null, 2));
   process.exit(1);
 }
 
@@ -54,7 +51,7 @@ export const seedEnv = parsedSeed;
 const isDev = env.APP_STAGE === "dev";
 
 if (isDev) {
-  console.log("🚀 Running in development mode");
+  console.log("Running in development mode");
 }
 
 export default env;

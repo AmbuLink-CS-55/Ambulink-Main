@@ -1,5 +1,6 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import type { BadgeVariant } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Phone, Truck, User2 } from "lucide-react";
 import type { DispatcherBookingPayload } from "@/lib/socket-types";
@@ -9,6 +10,13 @@ function formatEta(durationSeconds: number) {
   const minutes = Math.round(durationSeconds / 60);
   if (minutes <= 1) return "<1 min";
   return `${minutes} min`;
+}
+
+function statusVariant(status: DispatcherBookingPayload["status"]): BadgeVariant {
+  if (status === "ASSIGNED") return "assigned";
+  if (status === "ARRIVED") return "arrived";
+  if (status === "COMPLETED") return "completed";
+  return "info";
 }
 
 export function OngoingBookingsSection({
@@ -29,7 +37,7 @@ export function OngoingBookingsSection({
         const phase = booking.status === "ASSIGNED" ? "patient" : "hospital";
         const routeKey = `${booking.bookingId}:${phase}`;
         const eta = formatEta(etaDurations[routeKey]);
-        const statusVariant = booking.status === "ARRIVED" ? "warning" : "info";
+        const badgeVariant = statusVariant(booking.status);
 
         return (
           <Alert
@@ -82,7 +90,7 @@ export function OngoingBookingsSection({
 
                 <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                   <span>Status</span>
-                  <Badge variant={statusVariant}>{booking.status}</Badge>
+                  <Badge variant={badgeVariant}>{booking.status}</Badge>
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                   <span>ETA</span>

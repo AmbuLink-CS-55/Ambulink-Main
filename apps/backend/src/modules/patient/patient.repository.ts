@@ -22,6 +22,7 @@ export class PatientRepository {
     currentLocation: users.currentLocation,
     lastLocationUpdate: users.lastLocationUpdate,
     status: users.status,
+    subscribedBookingId: users.subscribedBookingId,
   };
 
   createPatient(patient: Omit<NewUser, "role">, db: DbExecutor = this.dbService.db) {

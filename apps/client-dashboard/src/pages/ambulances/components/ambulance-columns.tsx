@@ -1,15 +1,14 @@
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { BadgeVariant } from "@/components/ui/badge";
 import type { Ambulance } from "@/lib/types";
 
 function statusVariant(status: string): BadgeVariant {
-  if (status === "AVAILABLE") return "success";
-  if (status === "BUSY") return "warning";
-  return "default";
+  if (status === "AVAILABLE") return "available";
+  if (status === "BUSY") return "busy";
+  return "offline";
 }
 
-export function createAmbulanceColumns({ onEdit }: { onEdit: (ambulance: Ambulance) => void }) {
+export function createAmbulanceColumns() {
   return [
     {
       header: "Vehicle",
@@ -35,15 +34,6 @@ export function createAmbulanceColumns({ onEdit }: { onEdit: (ambulance: Ambulan
       header: "Updated",
       width: "180px",
       cell: (row: Ambulance) => (row.updatedAt ? new Date(row.updatedAt).toLocaleString() : "-"),
-    },
-    {
-      header: "Actions",
-      width: "120px",
-      cell: (row: Ambulance) => (
-        <Button size="sm" variant="outline" onClick={() => onEdit(row)}>
-          Edit
-        </Button>
-      ),
     },
   ];
 }

@@ -44,9 +44,7 @@ export default function EmergencyContactsSection() {
                 <Ionicons name="trash" size={18} color="#E74C3C" />
               </Pressable>
             </View>
-            {index !== settings.emergencyContacts.length - 1 && (
-              <View className="h-px bg-muted" />
-            )}
+            {index !== settings.emergencyContacts.length - 1 && <View className="h-px bg-muted" />}
           </View>
         ))}
       </View>

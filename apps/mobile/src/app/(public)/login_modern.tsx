@@ -9,6 +9,7 @@ import {
   Platform,
   ScrollView,
   Button,
+  StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Redirect, useRouter } from "expo-router";
@@ -27,10 +28,9 @@ export default function LoginModern() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // If already logged in, redirect
   if (user?.role === "patient") return <Redirect href="/(patient)/map" />;
   if (user?.role === "driver") return <Redirect href="/(driver)" />;
-  if (user?.role === "emt") return <Redirect href="/(emt)/medical" />;
+  if (user?.role === "emt") return <Redirect href={"/(emt)" as never} />;
 
   const handleSignIn = () => {
     setLoading(true);
@@ -41,83 +41,55 @@ export default function LoginModern() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
+    <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
+        style={styles.flex1}
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          style={{ paddingHorizontal: 24 }}
+          contentContainerStyle={styles.scrollContent}
+          style={styles.scrollView}
           showsVerticalScrollIndicator={false}
         >
-          {/* Header Section */}
-          <View style={{ alignItems: "center" }}>
-            <Image
-              // source={require("../../../assets/images/Gemini_Generated_Image_obcq05obcq05obcq-removebg-preview.png")}
-              style={{ width: 600, height: 600, marginTop: -195 }}
-              contentFit="contain"
-            />
+          <View style={styles.headerSection}>
+            <Image style={styles.headerImage} contentFit="contain" />
           </View>
 
-          {/* Form Section */}
-          <View style={{ paddingHorizontal: 20, marginTop: -150 }}>
-            <Text
-              style={{ fontSize: 22, fontWeight: "bold", color: "#205fb7ff", marginBottom: 30 }}
-            >
-              Log in
-            </Text>
+          <View style={styles.formSection}>
+            <Text style={styles.heading}>Log in</Text>
 
-            {/* Email Input */}
-            <View
-              style={{
-                backgroundColor: "#d9e9fdff",
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: "#79a5fcff",
-                marginBottom: 16,
-                paddingHorizontal: 16,
-                height: 56,
-                flexDirection: "row",
-                alignItems: "center",
-              }}
-            >
+            <View style={styles.inputRow}>
               <Ionicons name="mail-outline" size={22} color="#9CA3AF" />
               <TextInput
-                style={{ flex: 1, marginLeft: 12, fontSize: 16, color: "#1F2937" }}
+                style={styles.input}
                 placeholder="Email"
                 placeholderTextColor="#9CA3AF"
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
+                spellCheck={false}
+                accessibilityLabel="Email"
               />
             </View>
 
-            {/* Password Input */}
-            <View
-              style={{
-                backgroundColor: "#d9e9fdff",
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: "#79a5fcff",
-                marginBottom: 12,
-                paddingHorizontal: 16,
-                height: 56,
-                flexDirection: "row",
-                alignItems: "center",
-              }}
-            >
+            <View style={styles.inputRow}>
               <Ionicons name="lock-closed-outline" size={22} color="#9CA3AF" />
               <TextInput
-                style={{ flex: 1, marginLeft: 12, fontSize: 16, color: "#1F2937" }}
+                style={styles.input}
                 placeholder="Password"
                 placeholderTextColor="#9CA3AF"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
+                accessibilityLabel="Password"
               />
-              <Pressable onPress={() => setShowPassword(!showPassword)}>
+              <Pressable
+                onPress={() => setShowPassword(!showPassword)}
+                accessibilityRole="button"
+                accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                hitSlop={10}
+              >
                 <Ionicons
                   name={showPassword ? "eye-off-outline" : "eye-outline"}
                   size={22}
@@ -126,97 +98,50 @@ export default function LoginModern() {
               </Pressable>
             </View>
 
-            {/* Forgot Password */}
             <Pressable
               onPress={() => Alert.alert("Coming Soon", "Password reset is not implemented yet.")}
-              style={{ alignItems: "flex-start", marginBottom: 24 }}
+              style={styles.forgotButton}
+              accessibilityRole="button"
+              accessibilityLabel="Forgot password"
             >
-              <Text style={{ color: "#205fb7ff", fontSize: 13, fontWeight: "500" }}>
-                Forgot Password?
-              </Text>
+              <Text style={styles.forgotText}>Forgot Password?</Text>
             </Pressable>
 
-            {/* Sign In Button */}
             <Pressable
               onPress={handleSignIn}
-              style={{
-                backgroundColor: "#205fb7ff",
-                borderRadius: 12,
-                height: 56,
-                justifyContent: "center",
-                alignItems: "center",
-                shadowColor: "#205fb7ff",
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.3,
-                shadowRadius: 8,
-                elevation: 4,
-              }}
+              style={styles.signInButton}
+              accessibilityRole="button"
+              accessibilityLabel="Sign in"
             >
-              <Text style={{ color: "white", fontSize: 18, fontWeight: "bold" }}>
-                {loading ? "Signing in..." : "Sign In"}
-              </Text>
+              <Text style={styles.signInText}>{loading ? "Signing in..." : "Sign In"}</Text>
             </Pressable>
           </View>
 
-          {/* Divider with "Continue with" */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              marginVertical: 20,
-              paddingHorizontal: 20,
-            }}
-          >
-            <View style={{ flex: 1, height: 1, backgroundColor: "#E5E7EB" }} />
-            <Text style={{ marginHorizontal: 16, color: "#9CA3AF", fontSize: 14 }}>
-              Continue with
-            </Text>
-            <View style={{ flex: 1, height: 1, backgroundColor: "#E5E7EB" }} />
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>Continue with</Text>
+            <View style={styles.dividerLine} />
           </View>
 
-          {/* Google Sign In Button */}
-          <View style={{ paddingHorizontal: 20 }}>
+          <View style={styles.socialSection}>
             <Pressable
-              style={{
-                backgroundColor: "white",
-                borderRadius: 12,
-                height: 56,
-                flexDirection: "row",
-                justifyContent: "center",
-                alignItems: "center",
-                borderWidth: 1,
-                borderColor: "#E5E7EB",
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.1,
-                shadowRadius: 2,
-                elevation: 2,
-              }}
+              style={styles.googleButton}
+              accessibilityRole="button"
+              accessibilityLabel="Sign in with Google"
             >
               <Image
                 source={{
                   uri: "https://www.google.com/images/branding/googleg/1x/googleg_standard_color_128dp.png",
                 }}
-                style={{ width: 24, height: 24, marginRight: 12 }}
+                style={styles.googleLogo}
                 contentFit="contain"
               />
-              <Text style={{ color: "#1F2937", fontSize: 16, fontWeight: "600" }}>
-                Sign in with Google
-              </Text>
+              <Text style={styles.googleText}>Sign in with Google</Text>
             </Pressable>
           </View>
 
-          {/* Footer */}
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "center",
-              alignItems: "center",
-              marginTop: 32,
-              marginBottom: 40,
-            }}
-          >
-            <Text style={{ color: "#6B7280", fontSize: 15 }}>Don`t have an account? </Text>
+          <View style={styles.footerRow}>
+            <Text style={styles.footerText}>Don&apos;t have an account? </Text>
             <Button
               title={i18n.t("login.loginAsPatient")}
               onPress={() => {
@@ -240,7 +165,7 @@ export default function LoginModern() {
             />
 
             <Pressable onPress={() => router.push("/(public)/signup")}>
-              <Text style={{ color: "#205fb7ff", fontSize: 15, fontWeight: "600" }}>Sign Up</Text>
+              <Text style={styles.signupText}>Sign Up</Text>
             </Pressable>
           </View>
         </ScrollView>
@@ -248,3 +173,76 @@ export default function LoginModern() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: "white" },
+  flex1: { flex: 1 },
+  scrollView: { paddingHorizontal: 24 },
+  scrollContent: { flexGrow: 1 },
+  headerSection: { alignItems: "center" },
+  headerImage: { width: 600, height: 600, marginTop: -195 },
+  formSection: { paddingHorizontal: 20, marginTop: -150 },
+  heading: { fontSize: 22, fontWeight: "bold", color: "#205fb7ff", marginBottom: 30 },
+  inputRow: {
+    backgroundColor: "#d9e9fdff",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#79a5fcff",
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    height: 56,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  input: { flex: 1, marginLeft: 12, fontSize: 16, color: "#1F2937" },
+  forgotButton: { alignItems: "flex-start", marginBottom: 24 },
+  forgotText: { color: "#205fb7ff", fontSize: 13, fontWeight: "500" },
+  signInButton: {
+    backgroundColor: "#205fb7ff",
+    borderRadius: 12,
+    height: 56,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#205fb7ff",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  signInText: { color: "white", fontSize: 18, fontWeight: "bold" },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20,
+    paddingHorizontal: 20,
+  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: "#E5E7EB" },
+  dividerText: { marginHorizontal: 16, color: "#9CA3AF", fontSize: 14 },
+  socialSection: { paddingHorizontal: 20 },
+  googleButton: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    height: 56,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  googleLogo: { width: 24, height: 24, marginRight: 12 },
+  googleText: { color: "#1F2937", fontSize: 16, fontWeight: "600" },
+  footerRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 32,
+    marginBottom: 40,
+  },
+  footerText: { color: "#6B7280", fontSize: 15 },
+  signupText: { color: "#205fb7ff", fontSize: 15, fontWeight: "600" },
+});

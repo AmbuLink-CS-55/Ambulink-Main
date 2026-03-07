@@ -22,6 +22,7 @@ export class DriverRepository {
     currentLocation: users.currentLocation,
     lastLocationUpdate: users.lastLocationUpdate,
     status: users.status,
+    subscribedBookingId: users.subscribedBookingId,
   };
 
   createDriver(driver: Omit<NewUser, "role">) {
@@ -128,7 +129,8 @@ export class DriverRepository {
         lastLocationUpdate: new Date(),
         updatedAt: new Date(),
       })
-      .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")));
+      .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")))
+      .returning({ id: users.id });
   }
 
   clearDriverLocation(driverId: string) {
@@ -139,7 +141,8 @@ export class DriverRepository {
         lastLocationUpdate: null,
         updatedAt: new Date(),
       })
-      .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")));
+      .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")))
+      .returning({ id: users.id });
   }
 
   findDriversByLocation(lat: number, lng: number) {
@@ -156,9 +159,7 @@ export class DriverRepository {
           eq(users.role, "DRIVER"),
           eq(users.isActive, true),
           eq(users.status, "AVAILABLE"),
-          isNotNull(users.currentLocation),
-          isNotNull(users.lastLocationUpdate),
-          sql`${users.lastLocationUpdate} > NOW() - INTERVAL '60 seconds'`
+          isNotNull(users.currentLocation)
         )
       )
       .orderBy(asc(distanceExpr))
@@ -186,9 +187,7 @@ export class DriverRepository {
           eq(users.role, "DRIVER"),
           eq(users.isActive, true),
           eq(users.status, "AVAILABLE"),
-          isNotNull(users.currentLocation),
-          isNotNull(users.lastLocationUpdate),
-          sql`${users.lastLocationUpdate} > NOW() - INTERVAL '60 seconds'`
+          isNotNull(users.currentLocation)
         )
       )
       .orderBy(asc(distanceExpr))

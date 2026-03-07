@@ -1,10 +1,17 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import { setBookingDecision, upsertBookingRequest } from "@/lib/booking-cache-ops";
-import { setBookingRequestCallback } from "@/lib/booking-request-callbacks";
+import {
+  clearBookingDecision,
+  removeBookingRequest,
+  setBookingDecision,
+  upsertBookingRequest,
+} from "@/lib/booking-cache-ops";
+import type { BookingRequestEntity } from "@/lib/booking-types";
 import type {
+  BookingNote,
   BookingNewPayload,
-  DispatcherApprovalResponse,
+  DispatcherDecisionAckPayload,
+  DispatcherPendingSyncPayload,
   DispatcherBookingLogPayload,
   DispatcherBookingPayload,
   DispatcherBookingUpdatePayload,
@@ -20,6 +27,41 @@ type DispatcherSocket = import("socket.io-client").Socket<
   DispatcherToServerEvents
 >;
 
+function parseTimestamp(value: string, fallbackMs: number) {
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : fallbackMs;
+}
+
+function toBookingRequestEntity(payload: BookingNewPayload): BookingRequestEntity {
+  const now = Date.now();
+  return {
+    requestId: payload.requestId,
+    data: payload,
+    timestamp: parseTimestamp(payload.createdAt, now),
+    expiresAt: parseTimestamp(payload.expiresAt, now + 30_000),
+  };
+}
+
+function applyStatusTimestamp(
+  entry: BookingLogEntry,
+  status: BookingLogEntry["status"],
+  timestamp: string
+) {
+  if (status === "ASSIGNED") {
+    return { ...entry, assignedAt: entry.assignedAt ?? timestamp };
+  }
+  if (status === "ARRIVED") {
+    return { ...entry, arrivedAt: entry.arrivedAt ?? timestamp };
+  }
+  if (status === "PICKEDUP") {
+    return { ...entry, pickedupAt: entry.pickedupAt ?? timestamp };
+  }
+  if (status === "COMPLETED") {
+    return { ...entry, completedAt: entry.completedAt ?? timestamp };
+  }
+  return entry;
+}
+
 export function registerDispatcherSocketHandlers({
   queryClient,
   socket,
@@ -29,26 +71,70 @@ export function registerDispatcherSocketHandlers({
   socket: DispatcherSocket;
   providerId?: string;
 }) {
-  socket.on(
-    "booking:new",
-    (data: BookingNewPayload, callback: (res: DispatcherApprovalResponse) => void) => {
-      setBookingRequestCallback(data.requestId, callback);
-      upsertBookingRequest(queryClient, {
-        requestId: data.requestId,
-        data,
-        timestamp: Date.now(),
-      });
-    }
-  );
+  socket.on("booking:new", (data: BookingNewPayload) => {
+    upsertBookingRequest(queryClient, toBookingRequestEntity(data));
+  });
+
+  socket.on("booking:pending-sync", (payload: DispatcherPendingSyncPayload) => {
+    const nextEntities = payload.requests.map(toBookingRequestEntity);
+    const nextIds = nextEntities.map((item) => item.requestId);
+    const prevIds = queryClient.getQueryData<string[]>(queryKeys.bookingRequestIds()) ?? [];
+
+    prevIds.forEach((requestId) => {
+      if (nextIds.includes(requestId)) return;
+      queryClient.removeQueries({ queryKey: queryKeys.bookingRequest(requestId), exact: true });
+      clearBookingDecision(queryClient, requestId);
+    });
+
+    nextEntities.forEach((request) => {
+      queryClient.setQueryData(queryKeys.bookingRequest(request.requestId), request);
+    });
+    queryClient.setQueryData(queryKeys.bookingRequestIds(), nextIds);
+  });
 
   socket.on("booking:decision", (payload) => setBookingDecision(queryClient, payload));
 
+  socket.on("booking:decision-ack", (payload: DispatcherDecisionAckPayload) => {
+    if (!payload.accepted) {
+      removeBookingRequest(queryClient, payload.requestId);
+      clearBookingDecision(queryClient, payload.requestId);
+      return;
+    }
+
+    // Rejected decisions should disappear immediately for this dispatcher.
+    if (!payload.approved) {
+      removeBookingRequest(queryClient, payload.requestId);
+      clearBookingDecision(queryClient, payload.requestId);
+    }
+  });
+
   socket.on("booking:sync", (data: { bookings: DispatcherBookingPayload[] }) => {
     const next: Record<string, DispatcherBookingPayload> = {};
+    const nextDriverLocations: Record<string, { x: number; y: number }> = {};
     data.bookings.forEach((booking) => {
       next[booking.bookingId] = booking;
+      if (
+        booking.driver.id &&
+        booking.driver.location &&
+        Number.isFinite(booking.driver.location.x) &&
+        Number.isFinite(booking.driver.location.y)
+      ) {
+        nextDriverLocations[booking.driver.id] = {
+          x: booking.driver.location.x,
+          y: booking.driver.location.y,
+        };
+      }
     });
     queryClient.setQueryData(queryKeys.ongoingBookings(), next);
+    if (Object.keys(nextDriverLocations).length > 0) {
+      queryClient.setQueryData<Record<string, { x: number; y: number }>>(
+        queryKeys.driverLocations(),
+        (prev = {}) => ({
+          ...prev,
+          ...nextDriverLocations,
+        })
+      );
+    }
   });
 
   socket.on("booking:assigned", (payload: DispatcherBookingPayload) => {
@@ -59,6 +145,24 @@ export function registerDispatcherSocketHandlers({
         [payload.bookingId]: { ...prev[payload.bookingId], ...payload },
       })
     );
+    if (
+      payload.driver.id &&
+      payload.driver.location &&
+      Number.isFinite(payload.driver.location.x) &&
+      Number.isFinite(payload.driver.location.y)
+    ) {
+      queryClient.setQueryData<Record<string, { x: number; y: number }>>(
+        queryKeys.driverLocations(),
+        (prev = {}) => ({
+          ...prev,
+          [payload.driver.id]: {
+            x: payload.driver.location!.x,
+            y: payload.driver.location!.y,
+          },
+        })
+      );
+    }
+    queryClient.invalidateQueries({ queryKey: ["booking-log"] });
   });
 
   socket.on("booking:update", (payload: DispatcherBookingUpdatePayload) => {
@@ -84,6 +188,23 @@ export function registerDispatcherSocketHandlers({
         };
       }
     );
+
+    queryClient.setQueryData<BookingLogEntry[]>(
+      queryKeys.bookingLog(providerId ?? null),
+      (prev = []) => {
+        const index = prev.findIndex((entry) => entry.bookingId === payload.bookingId);
+        if (index === -1) return prev;
+        const next = [...prev];
+        const updated = applyStatusTimestamp(
+          { ...next[index], status: payload.status, updatedAt: payload.updatedAt },
+          payload.status,
+          payload.updatedAt
+        );
+        next[index] = updated;
+        return next;
+      }
+    );
+    queryClient.invalidateQueries({ queryKey: ["booking-log"] });
   });
 
   socket.on("driver:update", (payload: DriverLocationUpdate) => {
@@ -132,7 +253,7 @@ export function registerDispatcherSocketHandlers({
       (prev = []) => {
         const index = prev.findIndex((entry) => entry.bookingId === payload.bookingId);
         if (index === -1) {
-          return [
+          const nextEntry = applyStatusTimestamp(
             {
               bookingId: payload.bookingId,
               status: payload.status,
@@ -157,23 +278,47 @@ export function registerDispatcherSocketHandlers({
               hospitalId: null,
               hospitalName: null,
             },
-            ...prev,
-          ];
+            payload.status,
+            payload.updatedAt
+          );
+          return [nextEntry, ...prev];
         }
 
         const next = [...prev];
-        next[index] = {
-          ...next[index],
-          status: payload.status,
-          updatedAt: payload.updatedAt,
-        };
+        const updated = applyStatusTimestamp(
+          {
+            ...next[index],
+            status: payload.status,
+            updatedAt: payload.updatedAt,
+          },
+          payload.status,
+          payload.updatedAt
+        );
+        next[index] = updated;
         return next;
+      }
+    );
+    queryClient.invalidateQueries({ queryKey: ["booking-log"] });
+  });
+
+  socket.on("booking:notes", (payload: { bookingId: string; note: BookingNote }) => {
+    queryClient.setQueryData<{ notes: BookingNote[] } | undefined>(
+      queryKeys.bookingDetails(payload.bookingId),
+      (prev) => {
+        if (!prev) return prev;
+        if ((prev.notes ?? []).some((note) => note.id === payload.note.id)) return prev;
+        return {
+          ...prev,
+          notes: [payload.note, ...(prev.notes ?? [])],
+        };
       }
     );
   });
 
   return () => {
     socket.off("booking:new");
+    socket.off("booking:pending-sync");
+    socket.off("booking:decision-ack");
     socket.off("booking:decision");
     socket.off("booking:sync");
     socket.off("booking:assigned");
@@ -181,5 +326,6 @@ export function registerDispatcherSocketHandlers({
     socket.off("driver:update");
     socket.off("driver:roster");
     socket.off("booking:log");
+    socket.off("booking:notes");
   };
 }

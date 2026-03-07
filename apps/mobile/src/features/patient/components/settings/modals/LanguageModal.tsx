@@ -30,7 +30,11 @@ export default function LanguageModal({
             <Text className="text-lg font-semibold text-foreground">
               {i18n.t("settings.appSettings.selectLanguage")}
             </Text>
-            <Pressable onPress={onClose}>
+            <Pressable
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Close language modal"
+            >
               <Ionicons name="close" size={24} color="#333" />
             </Pressable>
           </View>
@@ -60,7 +64,6 @@ export default function LanguageModal({
               </Pressable>
             )}
             keyExtractor={(item) => item.id}
-            scrollEnabled={false}
           />
         </View>
       </View>

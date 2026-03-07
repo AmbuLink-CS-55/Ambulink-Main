@@ -70,6 +70,10 @@ export class DriverService {
   async setStatus(driverId: string, status: UserStatus) {
     const result = await this.driverRepository.setDriverStatus(driverId, status);
     const updated = result[0];
+    if (!updated) {
+      throw new NotFoundException(`Driver with id ${driverId} not found`);
+    }
+
     if (updated) {
       this.notificationService.notifyAllDispatchers("driver:roster", {
         providerId: updated.providerId,
@@ -94,11 +98,17 @@ export class DriverService {
   async setDriverLocation(driverId: string, lat: number, lng: number) {
     if (lat === undefined || lng === undefined) return;
 
-    await this.driverRepository.setDriverLocation(driverId, lat, lng);
+    const result = await this.driverRepository.setDriverLocation(driverId, lat, lng);
+    if (result.length === 0) {
+      throw new NotFoundException(`Driver with id ${driverId} not found`);
+    }
   }
 
   async clearDriverLocation(driverId: string) {
-    await this.driverRepository.clearDriverLocation(driverId);
+    const result = await this.driverRepository.clearDriverLocation(driverId);
+    if (result.length === 0) {
+      throw new NotFoundException(`Driver with id ${driverId} not found`);
+    }
   }
 
   async findDriverByLocation(lat: number, lng: number) {

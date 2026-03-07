@@ -48,6 +48,7 @@ export interface User {
   currentLocation?: Point;
   lastLocationUpdate?: string;
   status?: UserStatus;
+  subscribedBookingId?: string;
 }
 export interface NewUser {
   fullName?: string;
@@ -63,6 +64,7 @@ export interface NewUser {
   currentLocation?: Point;
   lastLocationUpdate?: string;
   status?: UserStatus;
+  subscribedBookingId?: string;
 }
 export interface Ambulance {
   id: string;
@@ -129,6 +131,8 @@ export interface Booking {
   dispatcherId?: string;
   hospitalId?: string;
   emergencyType?: string;
+  patientProfileSnapshot?: Record<string, unknown> | null;
+  emtNotes?: Array<Record<string, unknown>>;
   requestedAt: string;
   assignedAt?: string;
   pickedupAt?: string;
@@ -150,6 +154,8 @@ export interface NewBooking {
   dispatcherId?: string;
   hospitalId?: string;
   emergencyType?: string;
+  patientProfileSnapshot?: Record<string, unknown> | null;
+  emtNotes?: Array<Record<string, unknown>>;
   requestedAt?: string;
   assignedAt?: string;
   pickedupAt?: string;

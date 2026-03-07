@@ -42,13 +42,7 @@ export default function AmbulancesDashboard() {
 
   const rows = useMemo(() => ambulances.data ?? [], [ambulances.data]);
 
-  const columns = useMemo(
-    () =>
-      createAmbulanceColumns({
-        onEdit: openForEdit,
-      }),
-    [openForEdit]
-  );
+  const columns = useMemo(() => createAmbulanceColumns(), []);
 
   const handleSubmit = useCallback(async () => {
     const payload = {
@@ -89,7 +83,14 @@ export default function AmbulancesDashboard() {
         </Button>
       </div>
 
-      <DataTable columns={columns} rows={rows} height={640} rowHeight={56} />
+      <DataTable
+        columns={columns}
+        rows={rows}
+        height={640}
+        rowHeight={56}
+        rowKey={(row) => row.id}
+        onRowClick={openForEdit}
+      />
 
       {editing ? (
         <EditAmbulanceDialog

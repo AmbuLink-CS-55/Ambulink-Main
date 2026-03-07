@@ -10,37 +10,26 @@ export function BookingRoutesLayer({
   routes: Record<string, [number, number][]>;
 }) {
   return ongoingList.map((booking) => {
-    const patientLocation = booking.pickupLocation ?? booking.patient.location;
-    const driverLocation = booking.driver.location;
-    const hospitalLocation = booking.hospital.location;
     const phase = booking.status === "ASSIGNED" ? "patient" : "hospital";
     const routeKey = `${booking.bookingId}:${phase}`;
     const isCompleted = booking.status === "COMPLETED" || booking.status === "CANCELLED";
 
     return (
       <Fragment key={booking.bookingId}>
-        {!isCompleted &&
-        phase === "patient" &&
-        driverLocation &&
-        patientLocation &&
-        routes[routeKey] ? (
+        {!isCompleted && phase === "patient" && routes[routeKey] ? (
           <MapRoute
             id={`route-${booking.bookingId}-patient`}
             coordinates={routes[routeKey]}
-            color="var(--secondary)"
+            color="#007AFF"
             width={4}
             opacity={0.85}
           />
         ) : null}
-        {!isCompleted &&
-        phase === "hospital" &&
-        driverLocation &&
-        hospitalLocation &&
-        routes[routeKey] ? (
+        {!isCompleted && phase === "hospital" && routes[routeKey] ? (
           <MapRoute
             id={`route-${booking.bookingId}-hospital`}
             coordinates={routes[routeKey]}
-            color="var(--destructive)"
+            color="#FF3B30"
             width={4}
             opacity={0.85}
           />

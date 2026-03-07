@@ -13,6 +13,7 @@ export const createPatientSchema = createInsertSchema(users).omit({
   currentLocation: true,
   lastLocationUpdate: true,
   status: true,
+  subscribedBookingId: true,
 });
 
 export const updatePatientSchema = createPatientSchema.partial();
@@ -27,9 +28,25 @@ export const createDriverSchema = createInsertSchema(users).omit({
   currentLocation: true,
   lastLocationUpdate: true,
   status: true,
+  subscribedBookingId: true,
 });
 
 export const updateDriverSchema = createDriverSchema.partial();
+
+export const createEmtSchema = createInsertSchema(users).omit({
+  id: true,
+  role: true,
+  isActive: true,
+  createdAt: true,
+  updatedAt: true,
+  lastLoginAt: true,
+  currentLocation: true,
+  lastLocationUpdate: true,
+  status: true,
+  subscribedBookingId: true,
+});
+
+export const updateEmtSchema = createEmtSchema.partial();
 
 export const createAmbulanceSchema = createInsertSchema(ambulance).omit({
   id: true,
@@ -109,6 +126,15 @@ export const driverListQuerySchema = z.object({
   status: z.enum(["AVAILABLE", "BUSY", "OFFLINE"]).optional(),
 });
 
+export const emtListQuerySchema = z.object({
+  providerId: z.string().uuid().optional(),
+  isActive: z
+    .enum(["true", "false"])
+    .transform((value) => value === "true")
+    .optional(),
+  status: z.enum(["AVAILABLE", "BUSY", "OFFLINE"]).optional(),
+});
+
 export const bookingListQuerySchema = z.object({
   providerId: z.string().uuid().optional(),
   status: z
@@ -116,11 +142,36 @@ export const bookingListQuerySchema = z.object({
     .optional(),
 });
 
+export const bookingDetailsQuerySchema = z.object({
+  dispatcherId: z.string().uuid(),
+});
+
+export const bookingAddNoteSchema = z.object({
+  dispatcherId: z.string().uuid(),
+  content: z.string().trim().min(1).max(2000),
+});
+
+export const emtBookingSearchQuerySchema = z.object({
+  q: z.string().trim().default(""),
+  limit: z.coerce.number().int().min(1).max(500).optional(),
+});
+
+export const emtSubscribeSchema = z.object({
+  bookingId: z.string().uuid(),
+});
+
+export const emtAddNoteSchema = z.object({
+  bookingId: z.string().uuid(),
+  content: z.string().trim().min(1).max(2000),
+});
+
 export type CreatePatientDto = z.infer<typeof createPatientSchema>;
 export type UpdatePatientDto = z.infer<typeof updatePatientSchema>;
 
 export type CreateDriverDto = z.infer<typeof createDriverSchema>;
 export type UpdateDriverDto = z.infer<typeof updateDriverSchema>;
+export type CreateEmtDto = z.infer<typeof createEmtSchema>;
+export type UpdateEmtDto = z.infer<typeof updateEmtSchema>;
 
 export type CreateAmbulanceDto = z.infer<typeof createAmbulanceSchema>;
 export type UpdateAmbulanceDto = z.infer<typeof updateAmbulanceSchema>;
@@ -132,4 +183,10 @@ export type ReassignBookingDto = z.infer<typeof reassignBookingSchema>;
 export type DriverNearbyQueryDto = z.infer<typeof driverNearbyQuerySchema>;
 export type HospitalNearbyQueryDto = z.infer<typeof hospitalNearbyQuerySchema>;
 export type DriverListQueryDto = z.infer<typeof driverListQuerySchema>;
+export type EmtListQueryDto = z.infer<typeof emtListQuerySchema>;
 export type BookingListQueryDto = z.infer<typeof bookingListQuerySchema>;
+export type BookingDetailsQueryDto = z.infer<typeof bookingDetailsQuerySchema>;
+export type BookingAddNoteDto = z.infer<typeof bookingAddNoteSchema>;
+export type EmtBookingSearchQueryDto = z.infer<typeof emtBookingSearchQuerySchema>;
+export type EmtSubscribeDto = z.infer<typeof emtSubscribeSchema>;
+export type EmtAddNoteDto = z.infer<typeof emtAddNoteSchema>;

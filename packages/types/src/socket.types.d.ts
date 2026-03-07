@@ -22,6 +22,23 @@ export type DriverLocationPayload = {
   x: number;
   y: number;
 };
+export type BookingNote = {
+  id: string;
+  bookingId: string;
+  authorId: string;
+  authorName?: string | null;
+  authorRole: "EMT" | "DISPATCHER";
+  content: string;
+  createdAt: string;
+};
+export type EmtNote = BookingNote;
+export type EmtSubscribePayload = {
+  bookingId: string;
+};
+export type EmtAddNotePayload = {
+  bookingId: string;
+  content: string;
+};
 /**
  * Driver location update data
  */
@@ -86,6 +103,11 @@ export type BookingFailedPayload = {
 export type BookingAssignedPayload = {
   bookingId: string | null;
   status: "ASSIGNED" | "ARRIVED" | "PICKEDUP";
+  requestedAt: string | null;
+  assignedAt: string | null;
+  arrivedAt: string | null;
+  pickedupAt: string | null;
+  completedAt: string | null;
   pickupLocation: {
     x: number;
     y: number;
@@ -126,6 +148,8 @@ export type BookingAssignedPayload = {
     name: string;
     hotlineNumber: string | null;
   } | null;
+  patientProfileSnapshot?: PatientSettingsData | null;
+  emtNotes?: BookingNote[];
 };
 /**
  * Booking request payload sent to dispatchers for approval
@@ -133,8 +157,11 @@ export type BookingAssignedPayload = {
  */
 export type BookingNewPayload = {
   requestId: string;
+  createdAt: string;
+  expiresAt: string;
   driver: {
     id: string;
+    providerId?: string | null;
     phoneNumber: string | null;
     fullName?: string | null;
     currentLocation?: {
@@ -162,6 +189,19 @@ export type BookingNewPayload = {
  */
 export type DispatcherApprovalResponse = {
   approved: boolean;
+};
+export type DispatcherDecisionSubmitPayload = {
+  requestId: string;
+  approved: boolean;
+};
+export type DispatcherDecisionAckPayload = {
+  requestId: string;
+  approved: boolean;
+  accepted: boolean;
+  reason?: "not_found" | "expired" | "forbidden" | "already_resolved";
+};
+export type DispatcherPendingSyncPayload = {
+  requests: BookingNewPayload[];
 };
 export type BookingDecisionPayload = {
   requestId: string;
@@ -271,17 +311,19 @@ export interface ServerToDriverEvents {
 }
 /**
  * Events that dispatchers can send to the server
- * Currently none - dispatchers respond via acknowledgment callbacks
  */
-export interface DispatcherToServerEvents {}
+export interface DispatcherToServerEvents {
+  "booking:decision-submit": (data: DispatcherDecisionSubmitPayload) => void;
+  "booking:pending-sync:request": () => void;
+  "booking:sync:request": () => void;
+}
 /**
  * Events that the server can send to dispatchers
  */
 export interface ServerToDispatcherEvents {
-  "booking:new": (
-    data: BookingNewPayload,
-    callback: (response: DispatcherApprovalResponse) => void,
-  ) => void;
+  "booking:new": (data: BookingNewPayload) => void;
+  "booking:pending-sync": (data: DispatcherPendingSyncPayload) => void;
+  "booking:decision-ack": (data: DispatcherDecisionAckPayload) => void;
   "booking:assigned": (data: DispatcherBookingPayload) => void;
   "booking:sync": (data: { bookings: DispatcherBookingPayload[] }) => void;
   "booking:update": (data: DispatcherBookingUpdatePayload) => void;
@@ -289,5 +331,21 @@ export interface ServerToDispatcherEvents {
   "booking:log": (data: DispatcherBookingLogPayload) => void;
   "driver:update": (data: DriverLocationUpdate) => void;
   "driver:roster": (data: DriverRosterPayload) => void;
+  "booking:notes": (data: { bookingId: string; note: BookingNote }) => void;
+  "socket:error": (data: SocketErrorPayload) => void;
+}
+
+export interface EmtToServerEvents {
+  "emt:subscribe": (data: EmtSubscribePayload) => void;
+  "emt:note:add": (data: EmtAddNotePayload) => void;
+}
+
+export interface ServerToEmtEvents {
+  "booking:assigned": (data: BookingAssignedPayload) => void;
+  "booking:arrived": (data: BookingEventPayload) => void;
+  "booking:completed": (data: BookingEventPayload) => void;
+  "booking:cancelled": (data: BookingCancelledPayload) => void;
+  "driver:update": (data: DriverLocationUpdate) => void;
+  "booking:notes": (data: { bookingId: string; note: BookingNote }) => void;
   "socket:error": (data: SocketErrorPayload) => void;
 }

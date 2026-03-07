@@ -36,7 +36,11 @@ export default function AllergiesModal({
             <Text className="text-lg font-semibold text-foreground">
               {i18n.t("settings.medical.selectAllergies")}
             </Text>
-            <Pressable onPress={onClose}>
+            <Pressable
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Close allergies modal"
+            >
               <Ionicons name="close" size={24} color="#333" />
             </Pressable>
           </View>
@@ -66,7 +70,7 @@ export default function AllergiesModal({
               </Pressable>
             )}
             keyExtractor={(item) => item}
-            scrollEnabled={false}
+            keyboardShouldPersistTaps="handled"
           />
 
           <Pressable

@@ -19,6 +19,8 @@ type VirtualizedTableProps<T> = {
   rows: T[];
   height?: number;
   rowHeight?: number;
+  onRowClick?: (row: T) => void;
+  rowKey?: (row: T, index: number) => string;
 };
 
 export function DataTable<T>({
@@ -26,6 +28,8 @@ export function DataTable<T>({
   rows,
   height = 520,
   rowHeight = 52,
+  onRowClick,
+  rowKey,
 }: VirtualizedTableProps<T>) {
   return (
     <div className="rounded-lg border bg-card overflow-auto relative" style={{ height }}>
@@ -51,7 +55,24 @@ export function DataTable<T>({
             </TableRow>
           ) : (
             rows.map((row, rowIndex) => (
-              <TableRow key={rowIndex} style={{ height: rowHeight }}>
+              <TableRow
+                key={rowKey ? rowKey(row, rowIndex) : rowIndex}
+                style={{ height: rowHeight }}
+                className={onRowClick ? "cursor-pointer" : undefined}
+                tabIndex={onRowClick ? 0 : undefined}
+                role={onRowClick ? "button" : undefined}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                onKeyDown={
+                  onRowClick
+                    ? (event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          onRowClick(row);
+                        }
+                      }
+                    : undefined
+                }
+              >
                 {columns.map((column, columnIndex) => (
                   <TableCell key={columnIndex}>{column.cell(row)}</TableCell>
                 ))}

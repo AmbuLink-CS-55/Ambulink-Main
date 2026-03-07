@@ -55,6 +55,8 @@ export function RideMapCard({
         className={`p-4 items-center justify-center ${currentRide && isOnShift ? "bg-green-500" : "bg-muted"}`}
         onPress={onOpenOnMap}
         disabled={!currentRide || !isOnShift}
+        accessibilityRole="button"
+        accessibilityLabel="Open navigation"
       >
         <Text className="text-white font-bold text-lg">Open in Navigation</Text>
       </Pressable>

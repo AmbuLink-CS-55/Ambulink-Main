@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { DispatcherBookingPayload } from "@/lib/socket-types";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 
 type RouteData = {
   coordinates: [number, number][];
@@ -32,67 +34,89 @@ async function fetchRoute(start: [number, number], end: [number, number]) {
 export function useOngoingBookingRoutes(ongoingBookings: Record<string, DispatcherBookingPayload>) {
   const [routes, setRoutes] = useState<Record<string, [number, number][]>>({});
   const [durations, setDurations] = useState<Record<string, number>>({});
+  const driverLocationsQuery = useQuery<Record<string, { x: number; y: number }>>({
+    queryKey: queryKeys.driverLocations(),
+    queryFn: async () => ({}),
+    initialData: {},
+    staleTime: Infinity,
+    enabled: false,
+  });
+  const driverLocations = useMemo(
+    () => driverLocationsQuery.data ?? {},
+    [driverLocationsQuery.data]
+  );
   const ongoingList = useMemo(() => Object.values(ongoingBookings), [ongoingBookings]);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadRoutes = async () => {
-      const nextRoutes: Record<string, [number, number][]> = {};
-      const nextDurations: Record<string, number> = {};
+      const routeResults = await Promise.all(
+        ongoingList.map(async (booking) => {
+          const patientLocation = booking.pickupLocation ?? booking.patient.location;
+          const liveDriverLocation = booking.driver.id ? driverLocations[booking.driver.id] : null;
+          const driverLocation = booking.driver.location ?? liveDriverLocation ?? null;
+          const phase = booking.status === "ASSIGNED" ? "patient" : "hospital";
+          const hospitalLocation = booking.hospital.location;
+          if (!patientLocation) return null;
+          if (!Number.isFinite(patientLocation.x) || !Number.isFinite(patientLocation.y))
+            return null;
 
-      for (const booking of ongoingList) {
-        const patientLocation = booking.pickupLocation ?? booking.patient.location;
-        if (!booking.driver.location || !patientLocation) continue;
-        if (
-          !Number.isFinite(booking.driver.location.x) ||
-          !Number.isFinite(booking.driver.location.y)
-        ) {
-          continue;
-        }
-        if (!Number.isFinite(patientLocation.x) || !Number.isFinite(patientLocation.y)) {
-          continue;
-        }
+          // ASSIGNED: driver -> patient. ARRIVED/PICKEDUP: patient -> hospital.
+          const startPoint = phase === "patient" ? driverLocation : patientLocation;
+          const endPoint = phase === "patient" ? patientLocation : hospitalLocation;
+          if (!startPoint || !endPoint) return null;
+          if (!Number.isFinite(startPoint.x) || !Number.isFinite(startPoint.y)) return null;
+          if (!Number.isFinite(endPoint.x) || !Number.isFinite(endPoint.y)) return null;
 
-        const phase = booking.status === "ASSIGNED" ? "patient" : "hospital";
-        const target = phase === "hospital" ? booking.hospital.location : patientLocation;
-        if (!target) continue;
-        if (!Number.isFinite(target.x) || !Number.isFinite(target.y)) continue;
-
-        const start: [number, number] = [booking.driver.location.x, booking.driver.location.y];
-        const end: [number, number] = [target.x, target.y];
-        const routeKey = `${booking.bookingId}:${phase}`;
-        const cached = routeCache.get(routeKey);
-        if (cached && Date.now() - cached.updatedAt < ROUTE_TTL) {
-          nextRoutes[routeKey] = cached.coordinates;
-          nextDurations[routeKey] = cached.durationSeconds;
-          continue;
-        }
-
-        try {
-          const routePromise =
-            inflightRequests.get(routeKey) ??
-            fetchRoute(start, end).finally(() => {
-              inflightRequests.delete(routeKey);
-            });
-          if (!inflightRequests.has(routeKey)) {
-            inflightRequests.set(routeKey, routePromise);
+          const start: [number, number] = [startPoint.x, startPoint.y];
+          const end: [number, number] = [endPoint.x, endPoint.y];
+          const routeKey = `${booking.bookingId}:${phase}`;
+          const cached = routeCache.get(routeKey);
+          if (cached && Date.now() - cached.updatedAt < ROUTE_TTL) {
+            return {
+              routeKey,
+              routeData: {
+                coordinates: cached.coordinates,
+                durationSeconds: cached.durationSeconds,
+              },
+            };
           }
 
-          const routeData = await routePromise;
-          if (routeData) {
+          try {
+            const routePromise =
+              inflightRequests.get(routeKey) ??
+              fetchRoute(start, end).finally(() => {
+                inflightRequests.delete(routeKey);
+              });
+            if (!inflightRequests.has(routeKey)) {
+              inflightRequests.set(routeKey, routePromise);
+            }
+
+            const routeData = await routePromise;
+            if (!routeData) return null;
+
             routeCache.set(routeKey, {
               coordinates: routeData.coordinates,
               durationSeconds: routeData.durationSeconds,
               updatedAt: Date.now(),
             });
-            nextRoutes[routeKey] = routeData.coordinates;
-            nextDurations[routeKey] = routeData.durationSeconds;
+
+            return { routeKey, routeData };
+          } catch (routeError) {
+            console.error("Route fetch failed", routeError);
+            return null;
           }
-        } catch (routeError) {
-          console.error("Route fetch failed", routeError);
-        }
-      }
+        })
+      );
+
+      const nextRoutes: Record<string, [number, number][]> = {};
+      const nextDurations: Record<string, number> = {};
+      routeResults.forEach((result) => {
+        if (!result) return;
+        nextRoutes[result.routeKey] = result.routeData.coordinates;
+        nextDurations[result.routeKey] = result.routeData.durationSeconds;
+      });
 
       if (isMounted) {
         setRoutes((prev) => ({ ...prev, ...nextRoutes }));
@@ -107,7 +131,7 @@ export function useOngoingBookingRoutes(ongoingBookings: Record<string, Dispatch
     return () => {
       isMounted = false;
     };
-  }, [ongoingList]);
+  }, [driverLocations, ongoingList]);
 
   return { routes, durations, ongoingList };
 }

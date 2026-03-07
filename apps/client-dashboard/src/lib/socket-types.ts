@@ -1,4 +1,6 @@
 export type {
+  BookingDetailsPayload,
+  BookingNote,
   BookingAssignedPayload,
   BookingCancelledPayload,
   BookingDecisionPayload,
@@ -8,6 +10,9 @@ export type {
   DispatcherBookingLogPayload,
   DispatcherBookingPayload,
   DispatcherBookingUpdatePayload,
+  DispatcherDecisionAckPayload,
+  DispatcherDecisionSubmitPayload,
+  DispatcherPendingSyncPayload,
   DispatcherApprovalResponse,
   DispatcherToServerEvents,
   DriverLocationPayload,

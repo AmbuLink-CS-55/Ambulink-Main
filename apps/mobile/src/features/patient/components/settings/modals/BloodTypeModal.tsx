@@ -26,7 +26,11 @@ export default function BloodTypeModal({
             <Text className="text-lg font-semibold text-foreground">
               {i18n.t("settings.medical.selectBloodType")}
             </Text>
-            <Pressable onPress={onClose}>
+            <Pressable
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Close blood type modal"
+            >
               <Ionicons name="close" size={24} color="#333" />
             </Pressable>
           </View>
@@ -54,7 +58,6 @@ export default function BloodTypeModal({
               </Pressable>
             )}
             keyExtractor={(item) => item}
-            scrollEnabled={false}
           />
         </View>
       </View>

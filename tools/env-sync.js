@@ -11,6 +11,7 @@ const REQUIRED_KEYS = [
   "DISPATCHER_ID",
   "PATIENT_ID",
   "DRIVER_ID",
+  "EMT_ID",
   "APP_STAGE",
   "DATABASE_URL",
 ];
@@ -49,6 +50,25 @@ function requireKeys(env, keys) {
   }
 }
 
+function assertValidUrl(key, value, allowedProtocols) {
+  let parsed;
+  try {
+    parsed = new URL(value);
+  } catch {
+    throw new Error(`${key} must be a valid URL. Received: ${value}`);
+  }
+
+  if (!parsed.host) {
+    throw new Error(`${key} must include a host. Received: ${value}`);
+  }
+
+  if (allowedProtocols.length > 0 && !allowedProtocols.includes(parsed.protocol)) {
+    throw new Error(
+      `${key} must use one of: ${allowedProtocols.join(", ")}. Received: ${parsed.protocol}`
+    );
+  }
+}
+
 function formatEnvFile(entries) {
   return entries.map(([key, value]) => `${key}=${value}`).join("\n") + "\n";
 }
@@ -71,6 +91,17 @@ function main() {
     rootEnv.FRONTEND_URLS || `${frontendUrl},http://127.0.0.1:5173`;
 
   requireKeys(rootEnv, REQUIRED_KEYS);
+  assertValidUrl("API_SERVER_URL", rootEnv.API_SERVER_URL, ["http:", "https:"]);
+  assertValidUrl("WS_SERVER_URL", rootEnv.WS_SERVER_URL, ["ws:", "wss:"]);
+  assertValidUrl("FRONTEND_URL", frontendUrl, ["http:", "https:"]);
+
+  if (frontendUrls) {
+    const urls = frontendUrls
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+    urls.forEach((value) => assertValidUrl("FRONTEND_URLS", value, ["http:", "https:"]));
+  }
 
   writeEnvFile("./apps/client-dashboard/.env", [
     ["VITE_API_SERVER_URL", rootEnv.API_SERVER_URL],
@@ -84,6 +115,7 @@ function main() {
     ["EXPO_PUBLIC_WS_SERVER_URL", rootEnv.WS_SERVER_URL],
     ["EXPO_PUBLIC_PATIENT_ID", rootEnv.PATIENT_ID],
     ["EXPO_PUBLIC_DRIVER_ID", rootEnv.DRIVER_ID],
+    ["EXPO_PUBLIC_EMT_ID", rootEnv.EMT_ID],
     ["EXPO_PUBLIC_APP_STAGE", rootEnv.APP_STAGE],
   ]);
 
@@ -91,6 +123,7 @@ function main() {
     ["DATABASE_URL", rootEnv.DATABASE_URL],
     ["PATIENT_ID", rootEnv.PATIENT_ID],
     ["DRIVER_ID", rootEnv.DRIVER_ID],
+    ["EMT_ID", rootEnv.EMT_ID],
     ["DISPATCHER_ID", rootEnv.DISPATCHER_ID],
     ["APP_STAGE", rootEnv.APP_STAGE],
     ["PROVIDER_ID", rootEnv.PROVIDER_ID],

@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { ConflictException, Injectable } from "@nestjs/common";
 import type { PatientCancelRequest, PatientPickupRequest } from "@ambulink/types";
 import { BookingService } from "../booking/booking.service";
 import { DriverService } from "../driver/driver.service";
@@ -20,6 +20,12 @@ export class PatientCommandService {
     const { x, y, patientSettings } = data;
     console.info("[patient] sent settings: ", patientSettings);
     console.info("[patient] request_help_start", { patientId, x, y });
+
+    const activeBooking = await this.bookingService.getActiveBookingForPatient(patientId);
+    if (activeBooking) {
+      throw new ConflictException("Patient already has an active booking");
+    }
+
     const patient = await this.patientService.findOne(patientId);
 
     patient.currentLocation = { x, y };
@@ -43,7 +49,20 @@ export class PatientCommandService {
       driverIds: nearestDrivers.map((driver) => driver.id),
     });
 
-    const result = await this.bookingService.askDispatchers(nearestDrivers, patient);
+    const result = await this.bookingService.askDispatchers(
+      nearestDrivers as Array<{
+        id: string;
+        providerId: string | null;
+        currentLocation: { x: number; y: number } | null;
+      }>,
+      patient as {
+        id: string;
+        fullName: string | null;
+        phoneNumber: string | null;
+        email: string | null;
+        currentLocation: { x: number; y: number } | null;
+      }
+    );
     if (result.status === "failed") {
       console.warn("[patient] booking_failed", {
         patientId,
@@ -77,7 +96,8 @@ export class PatientCommandService {
       { x, y },
       hospital,
       pickedDriver,
-      dispatcherId
+      dispatcherId,
+      patientSettings
     );
 
     const assignedPayload = booking.bookingId
