@@ -94,7 +94,9 @@ export const useAddBookingNote = () => {
       return data;
     },
     onSuccess: async (_note, variables) => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.bookingDetails(variables.bookingId) });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.bookingDetails(variables.bookingId),
+      });
     },
   });
 };

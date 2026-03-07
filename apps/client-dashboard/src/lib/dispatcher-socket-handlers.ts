@@ -42,7 +42,11 @@ function toBookingRequestEntity(payload: BookingNewPayload): BookingRequestEntit
   };
 }
 
-function applyStatusTimestamp(entry: BookingLogEntry, status: BookingLogEntry["status"], timestamp: string) {
+function applyStatusTimestamp(
+  entry: BookingLogEntry,
+  status: BookingLogEntry["status"],
+  timestamp: string
+) {
   if (status === "ASSIGNED") {
     return { ...entry, assignedAt: entry.assignedAt ?? timestamp };
   }
@@ -277,10 +281,7 @@ export function registerDispatcherSocketHandlers({
             payload.status,
             payload.updatedAt
           );
-          return [
-            nextEntry,
-            ...prev,
-          ];
+          return [nextEntry, ...prev];
         }
 
         const next = [...prev];

@@ -124,7 +124,11 @@ export default function LoginModern() {
           </View>
 
           <View style={styles.socialSection}>
-            <Pressable style={styles.googleButton} accessibilityRole="button" accessibilityLabel="Sign in with Google">
+            <Pressable
+              style={styles.googleButton}
+              accessibilityRole="button"
+              accessibilityLabel="Sign in with Google"
+            >
               <Image
                 source={{
                   uri: "https://www.google.com/images/branding/googleg/1x/googleg_standard_color_128dp.png",
@@ -160,7 +164,7 @@ export default function LoginModern() {
               }}
             />
 
-            <Pressable onPress={() => router.push("/(public)/signup")}> 
+            <Pressable onPress={() => router.push("/(public)/signup")}>
               <Text style={styles.signupText}>Sign Up</Text>
             </Pressable>
           </View>

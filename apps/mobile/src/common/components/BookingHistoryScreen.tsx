@@ -81,7 +81,9 @@ export default function BookingHistoryScreen({
         createdAt={item.createdAt}
         status={item.status}
         personName={
-          role === "PATIENT" ? (item.driverName ?? unknownPerson) : (item.patientName ?? unknownPerson)
+          role === "PATIENT"
+            ? (item.driverName ?? unknownPerson)
+            : (item.patientName ?? unknownPerson)
         }
         hospitalName={item.hospitalName ?? "Unknown"}
         providerName={item.providerName}

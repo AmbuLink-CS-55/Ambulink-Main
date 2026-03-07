@@ -29,7 +29,10 @@ describe("BookingService", () => {
 
     const service = new BookingService(
       dbService as never,
-      { findLiveDispatchersByProvider: jest.fn(), findAllLiveDispatchersByProvider: jest.fn() } as never,
+      {
+        findLiveDispatchersByProvider: jest.fn(),
+        findAllLiveDispatchersByProvider: jest.fn(),
+      } as never,
       notificationService as never,
       { requestApproval: jest.fn(), notifyDecision: jest.fn() } as never,
       bookingRepository as never,
@@ -61,7 +64,11 @@ describe("BookingService", () => {
 
     expect(bookingRepository.updateBooking).toHaveBeenCalledWith(
       "booking-1",
-      expect.objectContaining({ status: "COMPLETED", ongoing: false, completedAt: expect.any(Date) }),
+      expect.objectContaining({
+        status: "COMPLETED",
+        ongoing: false,
+        completedAt: expect.any(Date),
+      }),
       expect.anything()
     );
     expect(bookingRepository.clearSubscribedBookingForBooking).toHaveBeenCalledWith(
@@ -124,12 +131,14 @@ describe("BookingService", () => {
     (service as never).getDriverForDispatcherOrThrow = jest
       .fn()
       .mockResolvedValue({ id: "driver-new", providerId: "provider-1", isActive: true });
-    (service as never).buildAssignedBookingPayload = jest.fn().mockResolvedValue({ bookingId: "booking-3" });
-    (service as never).buildDispatcherBookingPayload = jest.fn().mockResolvedValue({ bookingId: "booking-3" });
+    (service as never).buildAssignedBookingPayload = jest
+      .fn()
+      .mockResolvedValue({ bookingId: "booking-3" });
+    (service as never).buildDispatcherBookingPayload = jest
+      .fn()
+      .mockResolvedValue({ bookingId: "booking-3" });
 
-    bookingRepository.getDriverActiveBooking
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]);
+    bookingRepository.getDriverActiveBooking.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
     bookingRepository.updateBooking.mockResolvedValue([booking]);
     bookingRepository.getEmtsSubscribedToBooking.mockResolvedValue([]);
 

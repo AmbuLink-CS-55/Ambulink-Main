@@ -208,7 +208,9 @@ export const bookings = pgTable(
 
     emergencyType: varchar("emergency_type", { length: 100 }),
     patientProfileSnapshot: jsonb("patient_profile_snapshot"),
-    emtNotes: jsonb("emt_notes").notNull().default(sql`'[]'::jsonb`),
+    emtNotes: jsonb("emt_notes")
+      .notNull()
+      .default(sql`'[]'::jsonb`),
 
     requestedAt: timestamp("requested_at", { withTimezone: true }).notNull().defaultNow(),
     assignedAt: timestamp("assigned_at", { withTimezone: true }),

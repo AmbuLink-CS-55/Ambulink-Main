@@ -59,7 +59,8 @@ export function useOngoingBookingRoutes(ongoingBookings: Record<string, Dispatch
           const phase = booking.status === "ASSIGNED" ? "patient" : "hospital";
           const hospitalLocation = booking.hospital.location;
           if (!patientLocation) return null;
-          if (!Number.isFinite(patientLocation.x) || !Number.isFinite(patientLocation.y)) return null;
+          if (!Number.isFinite(patientLocation.x) || !Number.isFinite(patientLocation.y))
+            return null;
 
           // ASSIGNED: driver -> patient. ARRIVED/PICKEDUP: patient -> hospital.
           const startPoint = phase === "patient" ? driverLocation : patientLocation;

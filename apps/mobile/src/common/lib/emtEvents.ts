@@ -13,9 +13,12 @@ export async function fetchEmtBookingOptions(
 export async function fetchEmtCurrentBooking(
   emtId: string = env.EXPO_PUBLIC_EMT_ID
 ): Promise<BookingAssignedPayload | null> {
-  const response = await apiGet<{ booking: BookingAssignedPayload | null }>("/api/emts/events/current", {
-    emtId,
-  });
+  const response = await apiGet<{ booking: BookingAssignedPayload | null }>(
+    "/api/emts/events/current",
+    {
+      emtId,
+    }
+  );
 
   return response.booking;
 }

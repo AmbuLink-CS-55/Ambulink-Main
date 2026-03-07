@@ -9,6 +9,7 @@ npm run env:sync
 ```
 
 Generated keys:
+
 - `VITE_API_SERVER_URL`
 - `VITE_WS_SERVER_URL`
 - `VITE_DISPATCHER_ID`

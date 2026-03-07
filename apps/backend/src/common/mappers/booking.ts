@@ -120,9 +120,7 @@ export const mapAssignedBookingPayload = (row: AssignedBookingRow | null) => {
             hotlineNumber: row.providerHotline ?? null,
           }
         : null,
-    patientProfileSnapshot: (row.patientProfileSnapshot ?? null) as
-      | Record<string, unknown>
-      | null,
+    patientProfileSnapshot: (row.patientProfileSnapshot ?? null) as Record<string, unknown> | null,
     emtNotes: Array.isArray(row.emtNotes)
       ? (row.emtNotes as Array<Record<string, unknown>>).map((note) => ({
           ...note,

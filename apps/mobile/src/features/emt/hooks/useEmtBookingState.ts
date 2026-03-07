@@ -1,7 +1,12 @@
 import { create } from "zustand";
 import type { BookingAssignedPayload, BookingStatus, EmtNote } from "@ambulink/types";
 import { env } from "../../../../env";
-import { fetchEmtBookingOptions, fetchEmtCurrentBooking, postEmtNote, postEmtSubscribe } from "@/common/lib/emtEvents";
+import {
+  fetchEmtBookingOptions,
+  fetchEmtCurrentBooking,
+  postEmtNote,
+  postEmtSubscribe,
+} from "@/common/lib/emtEvents";
 import type { EmtActiveBooking, EmtBookingState } from "./types";
 
 const toActiveBooking = (payload: BookingAssignedPayload): EmtActiveBooking => ({

@@ -29,10 +29,8 @@ const badgeVariants: Record<NonNullable<BadgeProps["variant"]>, string> = {
   info: "bg-[color:var(--accent)] text-[color:var(--card)]",
   assigned: "bg-[color:var(--status-assigned)] text-[color:var(--status-assigned-foreground)]",
   arrived: "bg-[color:var(--status-arrived)] text-[color:var(--status-arrived-foreground)]",
-  completed:
-    "bg-[color:var(--status-completed)] text-[color:var(--status-completed-foreground)]",
-  available:
-    "bg-[color:var(--status-available)] text-[color:var(--status-available-foreground)]",
+  completed: "bg-[color:var(--status-completed)] text-[color:var(--status-completed-foreground)]",
+  available: "bg-[color:var(--status-available)] text-[color:var(--status-available-foreground)]",
   busy: "bg-[color:var(--status-busy)] text-[color:var(--status-busy-foreground)]",
   offline: "bg-[color:var(--status-offline)] text-[color:var(--status-offline-foreground)]",
 };

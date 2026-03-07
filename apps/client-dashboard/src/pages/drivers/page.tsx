@@ -7,7 +7,11 @@ import { queryKeys } from "@/lib/queryKeys";
 import { useCreateDriver, useGetDrivers, useUpdateDriver } from "@/services/driver.service";
 import type { User } from "@/lib/types";
 import { createDriverColumns } from "@/pages/drivers/components";
-import { CreateDriverDialog, EditDriverDialog, type DriverFormState } from "@/pages/drivers/components";
+import {
+  CreateDriverDialog,
+  EditDriverDialog,
+  type DriverFormState,
+} from "@/pages/drivers/components";
 import env from "@/../env";
 
 const initialForm: DriverFormState = {
@@ -25,7 +29,10 @@ export default function DriversDashboard() {
     staleTime: Infinity,
     enabled: false,
   });
-  const driverLocations = useMemo(() => driverLocationsQuery.data ?? {}, [driverLocationsQuery.data]);
+  const driverLocations = useMemo(
+    () => driverLocationsQuery.data ?? {},
+    [driverLocationsQuery.data]
+  );
 
   const drivers = useGetDrivers({ providerId: env.VITE_PROVIDER_ID });
   const createDriver = useCreateDriver();

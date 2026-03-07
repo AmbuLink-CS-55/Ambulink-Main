@@ -24,7 +24,9 @@ export class DispatcherApprovalService {
       driver,
       patient
     );
-    this.socketService.dispatcherServer?.to(`dispatcher:${dispatcherId}`).emit("booking:new", payload);
+    this.socketService.dispatcherServer
+      ?.to(`dispatcher:${dispatcherId}`)
+      .emit("booking:new", payload);
     return decisionPromise;
   }
 

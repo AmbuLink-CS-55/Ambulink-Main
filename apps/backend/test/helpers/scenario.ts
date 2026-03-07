@@ -39,7 +39,8 @@ export class ScenarioTimeline {
   }
 
   async flush(filename: string) {
-    const logDir = process.env.SCENARIO_LOG_DIR ?? path.resolve(process.cwd(), "test-results/scenario");
+    const logDir =
+      process.env.SCENARIO_LOG_DIR ?? path.resolve(process.cwd(), "test-results/scenario");
     await fs.mkdir(logDir, { recursive: true });
     const fullPath = path.join(logDir, filename);
     await fs.writeFile(fullPath, JSON.stringify(this.records, null, 2), "utf8");

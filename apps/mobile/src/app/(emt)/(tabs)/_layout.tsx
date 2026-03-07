@@ -9,6 +9,7 @@ export default function EmtTabsLayout() {
         lazy: true,
         freezeOnBlur: true,
         tabBarHideOnKeyboard: true,
+        tabBarStyle: { display: "none" },
       }}
     >
       <Tabs.Screen

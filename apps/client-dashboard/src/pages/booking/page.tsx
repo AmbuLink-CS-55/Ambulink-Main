@@ -4,7 +4,11 @@ import { DataTable } from "@/components";
 import { useGetBookingLog, useManualAssignBooking } from "@/services/booking.service";
 import { useMapView } from "@/hooks/use-map-view";
 import { getBookingActionErrorMessage } from "@/lib/booking-ui-errors";
-import { bookingLogColumns, BookingDetailDialog, ManualBookingDialog } from "@/pages/booking/components";
+import {
+  bookingLogColumns,
+  BookingDetailDialog,
+  ManualBookingDialog,
+} from "@/pages/booking/components";
 import { useBookingLogOptions } from "@/pages/booking/hooks/use-booking-log-options";
 import { useManualBookingForm } from "@/pages/booking/hooks/use-manual-booking-form";
 import { getDispatcherId } from "@/lib/identity";

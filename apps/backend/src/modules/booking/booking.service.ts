@@ -410,7 +410,10 @@ export class BookingService {
         return { booking: null, emtSubscriberIds: [] as string[] };
       }
 
-      const emtSubscribers = await this.bookingRepository.getEmtsSubscribedToBooking(booking.id, tx);
+      const emtSubscribers = await this.bookingRepository.getEmtsSubscribedToBooking(
+        booking.id,
+        tx
+      );
       await this.bookingRepository.clearSubscribedBookingForBooking(booking.id, tx);
 
       if (booking.driverId) {

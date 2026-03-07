@@ -74,7 +74,8 @@ describe("EmtService", () => {
   });
 
   it("sends note notifications to dispatchers and emt subscribers", async () => {
-    const { service, emtRepository, bookingService, dispatcherService, notificationService } = buildService();
+    const { service, emtRepository, bookingService, dispatcherService, notificationService } =
+      buildService();
 
     emtRepository.findEmtById.mockResolvedValue([
       {
@@ -91,8 +92,14 @@ describe("EmtService", () => {
       providerId: "provider-A",
       status: "ASSIGNED",
     });
-    bookingService.getEmtSubscribersForBooking.mockResolvedValue([{ emtId: "emt-1" }, { emtId: "emt-2" }]);
-    dispatcherService.findAllLiveDispatchersByProvider.mockResolvedValue(["dispatcher-1", "dispatcher-2"]);
+    bookingService.getEmtSubscribersForBooking.mockResolvedValue([
+      { emtId: "emt-1" },
+      { emtId: "emt-2" },
+    ]);
+    dispatcherService.findAllLiveDispatchersByProvider.mockResolvedValue([
+      "dispatcher-1",
+      "dispatcher-2",
+    ]);
 
     await service.addNote("emt-1", "booking-1", "Patient stabilized");
 

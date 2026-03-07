@@ -109,7 +109,7 @@ export class DispatcherGateway implements OnGatewayInit, OnModuleDestroy {
   private scheduleOfflineIfStillDisconnected(dispatcherId: string) {
     this.clearPendingOffline(dispatcherId);
 
-    // Grace period avoids flapping status during short network drops.
+    // Grace period.
     const timer = setTimeout(async () => {
       if (this.isShuttingDown) {
         this.offlineTimers.delete(dispatcherId);
@@ -137,10 +137,7 @@ export class DispatcherGateway implements OnGatewayInit, OnModuleDestroy {
   }
 
   @SubscribeMessage("booking:decision-submit")
-  handleBookingDecisionSubmit(
-    client: Socket,
-    data: { requestId: string; approved: boolean }
-  ) {
+  handleBookingDecisionSubmit(client: Socket, data: { requestId: string; approved: boolean }) {
     const parsed = dispatcherDecisionSubmitPayloadSchema.safeParse(data);
     if (!parsed.success) {
       client.emit("socket:error", {

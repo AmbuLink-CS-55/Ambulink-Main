@@ -1,4 +1,3 @@
-// hooks/usePatientEvents.ts
 import { BookingStatus, Point, User, Hospital } from "@ambulink/types";
 import { Alert } from "react-native";
 import { addBookingHistory } from "@/common/utils/bookingHistory";

@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { randomUUID } from "node:crypto";
 import { BookingService } from "../booking/booking.service";
 import { EmtRepository } from "./emt.repository";
@@ -33,7 +38,11 @@ export class EmtService {
       throw new BadRequestException("EMT is not attached to a provider");
     }
 
-    const rows = await this.bookingService.searchOngoingBookingsByProvider(emt.providerId, query, limit);
+    const rows = await this.bookingService.searchOngoingBookingsByProvider(
+      emt.providerId,
+      query,
+      limit
+    );
     return rows.map((row) => ({
       bookingId: row.bookingId,
       shortId: row.bookingId.slice(0, 8),
@@ -116,7 +125,9 @@ export class EmtService {
       });
     }
 
-    const dispatcherIds = await this.dispatcherService.findAllLiveDispatchersByProvider(emt.providerId);
+    const dispatcherIds = await this.dispatcherService.findAllLiveDispatchersByProvider(
+      emt.providerId
+    );
     for (const dispatcherId of dispatcherIds) {
       this.notificationService.notifyDispatcher(dispatcherId, "booking:notes", {
         bookingId,

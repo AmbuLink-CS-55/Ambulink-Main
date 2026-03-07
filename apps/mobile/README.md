@@ -9,6 +9,7 @@ npm run env:sync
 ```
 
 Required generated keys:
+
 - `EXPO_PUBLIC_API_SERVER_URL`
 - `EXPO_PUBLIC_WS_SERVER_URL`
 - `EXPO_PUBLIC_PATIENT_ID`

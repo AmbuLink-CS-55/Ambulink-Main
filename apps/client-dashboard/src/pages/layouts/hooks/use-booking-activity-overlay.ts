@@ -6,7 +6,11 @@ import { useOngoingBookingRoutes } from "@/pages/dashboard/hooks/use-ongoing-boo
 import { setPendingBookingDecision } from "@/lib/booking-cache-ops";
 import type { BookingDecisionState } from "@/lib/booking-types";
 import { queryKeys } from "@/lib/queryKeys";
-import type { DispatcherBookingPayload, DispatcherToServerEvents, ServerToDispatcherEvents } from "@/lib/socket-types";
+import type {
+  DispatcherBookingPayload,
+  DispatcherToServerEvents,
+  ServerToDispatcherEvents,
+} from "@/lib/socket-types";
 
 type DispatcherSocket = import("socket.io-client").Socket<
   ServerToDispatcherEvents,

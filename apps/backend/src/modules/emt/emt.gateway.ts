@@ -9,7 +9,10 @@ import {
 import { SocketService } from "@/core/socket/socket.service";
 import { EmtService } from "./emt.service";
 import { EmtCommandService } from "./emt-command.service";
-import { emtAddNotePayloadSchema, emtSubscribePayloadSchema } from "@/common/validation/socket.schemas";
+import {
+  emtAddNotePayloadSchema,
+  emtSubscribePayloadSchema,
+} from "@/common/validation/socket.schemas";
 import type { SocketErrorPayload } from "@ambulink/types";
 
 @WebSocketGateway({

@@ -1,6 +1,11 @@
 import { useEffect } from "react";
 import { Alert } from "react-native";
-import type { BookingAssignedPayload, DriverLocationUpdate, EmtNote, SocketErrorPayload } from "@ambulink/types";
+import type {
+  BookingAssignedPayload,
+  DriverLocationUpdate,
+  EmtNote,
+  SocketErrorPayload,
+} from "@ambulink/types";
 import type { Socket } from "socket.io-client";
 import { useEmtBookingState } from "./useEmtBookingState";
 
@@ -61,5 +66,12 @@ export const useEmtSocketEvents = (socket: Socket | null) => {
       socket.off("booking:notes", onNotes);
       socket.off("socket:error", onSocketError);
     };
-  }, [appendNote, clearActiveBooking, setAssignedBooking, setDriverLocation, setStatusOnly, socket]);
+  }, [
+    appendNote,
+    clearActiveBooking,
+    setAssignedBooking,
+    setDriverLocation,
+    setStatusOnly,
+    socket,
+  ]);
 };

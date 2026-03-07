@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
-import { ActivityIndicator, Alert, Keyboard, Platform, Text, View } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { ActivityIndicator, Alert, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useLocation } from "@/common/hooks/useLocation";
 import { UserMap } from "@/features/patient/components";
@@ -26,14 +26,7 @@ export default function EmtMapScreen() {
   const selectAndSubscribe = useEmtBookingState((state) => state.selectAndSubscribe);
 
   const [isPickerVisible, setPickerVisible] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const insets = useSafeAreaInsets();
-  const hasSelectedBooking = Boolean(activeBooking?.bookingId);
-  const pickerBottomOffset = activeBooking?.bookingId
-    ? Math.max(insets.bottom + 170, 190)
-    : Math.max(insets.bottom + 92, 110);
-  const overlayBottom = pickerBottomOffset + Math.max(0, keyboardHeight - insets.bottom);
-  const shouldShowPicker = isPickerVisible || (!hasSelectedBooking && searchTerm.length > 0);
+  const shouldShowPicker = isPickerVisible || (!activeBooking?.bookingId && searchTerm.length > 0);
 
   useEffect(() => {
     loadOptions();
@@ -44,23 +37,6 @@ export default function EmtMapScreen() {
     if (!errorMessage) return;
     Alert.alert("EMT", errorMessage, [{ text: "OK", onPress: clearTransientErrors }]);
   }, [clearTransientErrors, errorMessage]);
-
-  useEffect(() => {
-    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-
-    const showSub = Keyboard.addListener(showEvent, (event) => {
-      setKeyboardHeight(event.endCoordinates.height);
-    });
-    const hideSub = Keyboard.addListener(hideEvent, () => {
-      setKeyboardHeight(0);
-    });
-
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
 
   const filteredOptions = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -112,6 +88,37 @@ export default function EmtMapScreen() {
         driverLocations={driverLocations}
         hospitalLocation={hospitalLocation}
         bookingStatus={bookingStatus}
+        topOverlay={
+          <SafeAreaView edges={["top", "left", "right"]} className="px-1.5 pt-2">
+            <EmtSearchBar
+              value={searchTerm}
+              onFocus={() => setPickerVisible(true)}
+              onBlur={() => {
+                if (!searchTerm.trim()) {
+                  setPickerVisible(false);
+                }
+              }}
+              onChangeText={(value) => {
+                setSearchTerm(value);
+                setPickerVisible(true);
+              }}
+              onClear={() => {
+                setSearchTerm("");
+                setPickerVisible(false);
+              }}
+            />
+
+            {shouldShowPicker && (
+              <BookingPickerList
+                data={filteredOptions}
+                onSelect={handleSelectBooking}
+                refreshing={isRefreshingOptions}
+                onRefresh={() => loadOptions({ refresh: true })}
+                isSubscribing={isSubscribing || isLoadingOptions}
+              />
+            )}
+          </SafeAreaView>
+        }
       >
         {activeBooking?.bookingId ? (
           <View style={{ marginHorizontal: -12 }}>
@@ -131,45 +138,6 @@ export default function EmtMapScreen() {
           </View>
         )}
       </UserMap>
-
-      <View
-        className="absolute z-20"
-        style={{
-          ...(hasSelectedBooking
-            ? { top: 0, paddingTop: insets.top + 10 }
-            : { bottom: overlayBottom }),
-          left: insets.left + 6,
-          right: insets.right + 6,
-        }}
-      >
-        <EmtSearchBar
-          value={searchTerm}
-          onFocus={() => setPickerVisible(true)}
-          onBlur={() => {
-            if (!searchTerm.trim()) {
-              setPickerVisible(false);
-            }
-          }}
-          onChangeText={(value) => {
-            setSearchTerm(value);
-            setPickerVisible(true);
-          }}
-          onClear={() => {
-            setSearchTerm("");
-            setPickerVisible(false);
-          }}
-        />
-
-        {shouldShowPicker && (
-          <BookingPickerList
-            data={filteredOptions}
-            onSelect={handleSelectBooking}
-            refreshing={isRefreshingOptions}
-            onRefresh={() => loadOptions({ refresh: true })}
-            isSubscribing={isSubscribing || isLoadingOptions}
-          />
-        )}
-      </View>
     </SafeAreaView>
   );
 }

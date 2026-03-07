@@ -47,23 +47,46 @@ describe("Booking lifecycle scenarios", () => {
 
       const patientSocket = connectActorSocket(baseUrl, "patient", USER_SEED_IDS.patientPrimary);
       const driverSocket = connectActorSocket(baseUrl, "driver", USER_SEED_IDS.driverOne);
-      const dispatcherSocket = connectActorSocket(baseUrl, "dispatcher", USER_SEED_IDS.dispatcherOne);
+      const dispatcherSocket = connectActorSocket(
+        baseUrl,
+        "dispatcher",
+        USER_SEED_IDS.dispatcherOne
+      );
       const emtSocket = connectActorSocket(baseUrl, "emt", USER_SEED_IDS.emtOne);
       const sockets = [patientSocket, driverSocket, dispatcherSocket, emtSocket];
 
-      const record = (actor: "patient" | "driver" | "dispatcher" | "emt", event: string, payload: unknown) =>
-        timeline.add({ actor, channel: "socket", event, payload });
+      const record = (
+        actor: "patient" | "driver" | "dispatcher" | "emt",
+        event: string,
+        payload: unknown
+      ) => timeline.add({ actor, channel: "socket", event, payload });
 
-      patientSocket.on("booking:assigned", (payload) => record("patient", "booking:assigned", payload));
-      patientSocket.on("booking:arrived", (payload) => record("patient", "booking:arrived", payload));
-      patientSocket.on("booking:completed", (payload) => record("patient", "booking:completed", payload));
+      patientSocket.on("booking:assigned", (payload) =>
+        record("patient", "booking:assigned", payload)
+      );
+      patientSocket.on("booking:arrived", (payload) =>
+        record("patient", "booking:arrived", payload)
+      );
+      patientSocket.on("booking:completed", (payload) =>
+        record("patient", "booking:completed", payload)
+      );
 
-      driverSocket.on("booking:assigned", (payload) => record("driver", "booking:assigned", payload));
-      driverSocket.on("booking:completed", (payload) => record("driver", "booking:completed", payload));
-      driverSocket.on("booking:cancelled", (payload) => record("driver", "booking:cancelled", payload));
+      driverSocket.on("booking:assigned", (payload) =>
+        record("driver", "booking:assigned", payload)
+      );
+      driverSocket.on("booking:completed", (payload) =>
+        record("driver", "booking:completed", payload)
+      );
+      driverSocket.on("booking:cancelled", (payload) =>
+        record("driver", "booking:cancelled", payload)
+      );
 
-      dispatcherSocket.on("booking:assigned", (payload) => record("dispatcher", "booking:assigned", payload));
-      dispatcherSocket.on("booking:update", (payload) => record("dispatcher", "booking:update", payload));
+      dispatcherSocket.on("booking:assigned", (payload) =>
+        record("dispatcher", "booking:assigned", payload)
+      );
+      dispatcherSocket.on("booking:update", (payload) =>
+        record("dispatcher", "booking:update", payload)
+      );
 
       emtSocket.on("booking:assigned", (payload) => record("emt", "booking:assigned", payload));
       emtSocket.on("booking:arrived", (payload) => record("emt", "booking:arrived", payload));
@@ -85,7 +108,12 @@ describe("Booking lifecycle scenarios", () => {
           })
           .expect(201);
 
-        timeline.add({ actor: "system", channel: "http", event: "booking:manual-assign", payload: assignResponse.body });
+        timeline.add({
+          actor: "system",
+          channel: "http",
+          event: "booking:manual-assign",
+          payload: assignResponse.body,
+        });
 
         const bookingId: string = assignResponse.body.bookingId;
 
@@ -95,21 +123,36 @@ describe("Booking lifecycle scenarios", () => {
           .send({ bookingId })
           .expect(201);
 
-        timeline.add({ actor: "system", channel: "http", event: "emt:subscribe", payload: { bookingId } });
+        timeline.add({
+          actor: "system",
+          channel: "http",
+          event: "emt:subscribe",
+          payload: { bookingId },
+        });
 
         await request(app.getHttpServer())
           .post("/api/drivers/events/arrived")
           .query({ driverId: USER_SEED_IDS.driverOne })
           .expect(201);
 
-        timeline.add({ actor: "system", channel: "http", event: "driver:arrived", payload: { bookingId } });
+        timeline.add({
+          actor: "system",
+          channel: "http",
+          event: "driver:arrived",
+          payload: { bookingId },
+        });
 
         await request(app.getHttpServer())
           .post("/api/drivers/events/completed")
           .query({ driverId: USER_SEED_IDS.driverOne })
           .expect(201);
 
-        timeline.add({ actor: "system", channel: "http", event: "driver:completed", payload: { bookingId } });
+        timeline.add({
+          actor: "system",
+          channel: "http",
+          event: "driver:completed",
+          payload: { bookingId },
+        });
 
         await delay(350);
 
@@ -124,13 +167,34 @@ describe("Booking lifecycle scenarios", () => {
           diagnostics: JSON.stringify(completedBooking ?? null),
         });
 
-        expectations.push({ name: "patient receives assigned", pass: timeline.has("patient", "booking:assigned") });
-        expectations.push({ name: "patient receives arrived", pass: timeline.has("patient", "booking:arrived") });
-        expectations.push({ name: "patient receives completed", pass: timeline.has("patient", "booking:completed") });
-        expectations.push({ name: "driver receives assigned", pass: timeline.has("driver", "booking:assigned") });
-        expectations.push({ name: "emt receives assigned", pass: timeline.has("emt", "booking:assigned") });
-        expectations.push({ name: "emt receives arrived", pass: timeline.has("emt", "booking:arrived") });
-        expectations.push({ name: "emt receives completed", pass: timeline.has("emt", "booking:completed") });
+        expectations.push({
+          name: "patient receives assigned",
+          pass: timeline.has("patient", "booking:assigned"),
+        });
+        expectations.push({
+          name: "patient receives arrived",
+          pass: timeline.has("patient", "booking:arrived"),
+        });
+        expectations.push({
+          name: "patient receives completed",
+          pass: timeline.has("patient", "booking:completed"),
+        });
+        expectations.push({
+          name: "driver receives assigned",
+          pass: timeline.has("driver", "booking:assigned"),
+        });
+        expectations.push({
+          name: "emt receives assigned",
+          pass: timeline.has("emt", "booking:assigned"),
+        });
+        expectations.push({
+          name: "emt receives arrived",
+          pass: timeline.has("emt", "booking:arrived"),
+        });
+        expectations.push({
+          name: "emt receives completed",
+          pass: timeline.has("emt", "booking:completed"),
+        });
 
         if (STRICT_EVENT_ORDER) {
           const patientEvents = timeline.all
@@ -149,7 +213,12 @@ describe("Booking lifecycle scenarios", () => {
       } finally {
         const timelinePath = await timeline.flush("scenario-happy-path.timeline.json");
         await writeSummary("scenario-happy-path.summary.json", expectations);
-        timeline.add({ actor: "system", channel: "http", event: "timeline:flushed", payload: { timelinePath } });
+        timeline.add({
+          actor: "system",
+          channel: "http",
+          event: "timeline:flushed",
+          payload: { timelinePath },
+        });
         await closeSockets(sockets);
       }
 
@@ -166,15 +235,26 @@ describe("Booking lifecycle scenarios", () => {
 
       const patientSocket = connectActorSocket(baseUrl, "patient", USER_SEED_IDS.patientPrimary);
       const driverSocket = connectActorSocket(baseUrl, "driver", USER_SEED_IDS.driverOne);
-      const dispatcherSocket = connectActorSocket(baseUrl, "dispatcher", USER_SEED_IDS.dispatcherOne);
+      const dispatcherSocket = connectActorSocket(
+        baseUrl,
+        "dispatcher",
+        USER_SEED_IDS.dispatcherOne
+      );
       const emtSocket = connectActorSocket(baseUrl, "emt", USER_SEED_IDS.emtOne);
       const sockets = [patientSocket, driverSocket, dispatcherSocket, emtSocket];
 
-      const record = (actor: "patient" | "driver" | "dispatcher" | "emt", event: string, payload: unknown) =>
-        timeline.add({ actor, channel: "socket", event, payload });
+      const record = (
+        actor: "patient" | "driver" | "dispatcher" | "emt",
+        event: string,
+        payload: unknown
+      ) => timeline.add({ actor, channel: "socket", event, payload });
 
-      driverSocket.on("booking:cancelled", (payload) => record("driver", "booking:cancelled", payload));
-      patientSocket.on("booking:cancelled", (payload) => record("patient", "booking:cancelled", payload));
+      driverSocket.on("booking:cancelled", (payload) =>
+        record("driver", "booking:cancelled", payload)
+      );
+      patientSocket.on("booking:cancelled", (payload) =>
+        record("patient", "booking:cancelled", payload)
+      );
       emtSocket.on("booking:cancelled", (payload) => record("emt", "booking:cancelled", payload));
 
       try {
@@ -234,8 +314,14 @@ describe("Booking lifecycle scenarios", () => {
           name: "patient subscription cleared",
           pass: subscriptions.length === 0,
         });
-        expectations.push({ name: "driver receives cancel event", pass: timeline.has("driver", "booking:cancelled") });
-        expectations.push({ name: "emt receives cancel event", pass: timeline.has("emt", "booking:cancelled") });
+        expectations.push({
+          name: "driver receives cancel event",
+          pass: timeline.has("driver", "booking:cancelled"),
+        });
+        expectations.push({
+          name: "emt receives cancel event",
+          pass: timeline.has("emt", "booking:cancelled"),
+        });
       } finally {
         await timeline.flush("scenario-cancel.timeline.json");
         await writeSummary("scenario-cancel.summary.json", expectations);
@@ -261,15 +347,32 @@ describe("Booking lifecycle scenarios", () => {
       const patientSocket = connectActorSocket(baseUrl, "patient", USER_SEED_IDS.patientPrimary);
       const driverOneSocket = connectActorSocket(baseUrl, "driver", USER_SEED_IDS.driverOne);
       const driverTwoSocket = connectActorSocket(baseUrl, "driver", USER_SEED_IDS.driverTwo);
-      const dispatcherSocket = connectActorSocket(baseUrl, "dispatcher", USER_SEED_IDS.dispatcherOne);
+      const dispatcherSocket = connectActorSocket(
+        baseUrl,
+        "dispatcher",
+        USER_SEED_IDS.dispatcherOne
+      );
       const emtSocket = connectActorSocket(baseUrl, "emt", USER_SEED_IDS.emtOne);
-      const sockets = [patientSocket, driverOneSocket, driverTwoSocket, dispatcherSocket, emtSocket];
+      const sockets = [
+        patientSocket,
+        driverOneSocket,
+        driverTwoSocket,
+        dispatcherSocket,
+        emtSocket,
+      ];
 
-      const record = (actor: "patient" | "driver" | "dispatcher" | "emt", event: string, payload: unknown) =>
-        timeline.add({ actor, channel: "socket", event, payload });
+      const record = (
+        actor: "patient" | "driver" | "dispatcher" | "emt",
+        event: string,
+        payload: unknown
+      ) => timeline.add({ actor, channel: "socket", event, payload });
 
-      driverOneSocket.on("booking:cancelled", (payload) => record("driver", "booking:cancelled", payload));
-      driverTwoSocket.on("booking:assigned", (payload) => record("driver", "driver-two:booking:assigned", payload));
+      driverOneSocket.on("booking:cancelled", (payload) =>
+        record("driver", "booking:cancelled", payload)
+      );
+      driverTwoSocket.on("booking:assigned", (payload) =>
+        record("driver", "driver-two:booking:assigned", payload)
+      );
       emtSocket.on("booking:assigned", (payload) => record("emt", "booking:assigned", payload));
 
       try {
@@ -313,9 +416,18 @@ describe("Booking lifecycle scenarios", () => {
           pass: reassigned?.driverId === USER_SEED_IDS.driverTwo,
           diagnostics: JSON.stringify(reassigned ?? null),
         });
-        expectations.push({ name: "old driver receives cancel", pass: timeline.has("driver", "booking:cancelled") });
-        expectations.push({ name: "new driver receives assigned", pass: timeline.has("driver", "driver-two:booking:assigned") });
-        expectations.push({ name: "emt receives assignment update", pass: timeline.has("emt", "booking:assigned") });
+        expectations.push({
+          name: "old driver receives cancel",
+          pass: timeline.has("driver", "booking:cancelled"),
+        });
+        expectations.push({
+          name: "new driver receives assigned",
+          pass: timeline.has("driver", "driver-two:booking:assigned"),
+        });
+        expectations.push({
+          name: "emt receives assignment update",
+          pass: timeline.has("emt", "booking:assigned"),
+        });
       } finally {
         await timeline.flush("scenario-reassign.timeline.json");
         await writeSummary("scenario-reassign.summary.json", expectations);
@@ -339,7 +451,8 @@ function assertExpectations(expectations: ScenarioExpectationResult[]) {
 }
 
 async function writeSummary(filename: string, summary: ScenarioExpectationResult[]) {
-  const logDir = process.env.SCENARIO_LOG_DIR ?? path.resolve(process.cwd(), "test-results/scenario");
+  const logDir =
+    process.env.SCENARIO_LOG_DIR ?? path.resolve(process.cwd(), "test-results/scenario");
   await fs.mkdir(logDir, { recursive: true });
   await fs.writeFile(path.join(logDir, filename), JSON.stringify(summary, null, 2), "utf8");
 }

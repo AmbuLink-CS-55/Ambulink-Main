@@ -138,21 +138,53 @@ function BookingContent({
             <Badge variant={statusVariant(details.status)}>{details.status}</Badge>
           </div>
           <div className="grid grid-cols-1 gap-2 text-muted-foreground sm:grid-cols-2">
-            <div>Requested: {details.requestedAt ? new Date(details.requestedAt).toLocaleString() : "-"}</div>
-            <div>Assigned: {details.assignedAt ? new Date(details.assignedAt).toLocaleString() : "-"}</div>
-            <div>Arrived: {details.arrivedAt ? new Date(details.arrivedAt).toLocaleString() : "-"}</div>
-            <div>Picked up: {details.pickedupAt ? new Date(details.pickedupAt).toLocaleString() : "-"}</div>
-            <div>Completed: {details.completedAt ? new Date(details.completedAt).toLocaleString() : "-"}</div>
+            <div>
+              Requested:{" "}
+              {details.requestedAt ? new Date(details.requestedAt).toLocaleString() : "-"}
+            </div>
+            <div>
+              Assigned: {details.assignedAt ? new Date(details.assignedAt).toLocaleString() : "-"}
+            </div>
+            <div>
+              Arrived: {details.arrivedAt ? new Date(details.arrivedAt).toLocaleString() : "-"}
+            </div>
+            <div>
+              Picked up: {details.pickedupAt ? new Date(details.pickedupAt).toLocaleString() : "-"}
+            </div>
+            <div>
+              Completed:{" "}
+              {details.completedAt ? new Date(details.completedAt).toLocaleString() : "-"}
+            </div>
             <div>Cancelled reason: {details.cancellationReason ?? "-"}</div>
           </div>
         </div>
       </section>
 
       <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <EntityCard title="Patient" id={details.patient.id} name={details.patient.fullName} phone={details.patient.phoneNumber} />
-        <EntityCard title="Driver" id={details.driver.id} name={details.driver.fullName} phone={details.driver.phoneNumber} />
-        <EntityCard title="Hospital" id={details.hospital.id} name={details.hospital.name} phone={details.hospital.phoneNumber} />
-        <EntityCard title="Provider" id={details.provider.id} name={details.provider.name} phone={null} />
+        <EntityCard
+          title="Patient"
+          id={details.patient.id}
+          name={details.patient.fullName}
+          phone={details.patient.phoneNumber}
+        />
+        <EntityCard
+          title="Driver"
+          id={details.driver.id}
+          name={details.driver.fullName}
+          phone={details.driver.phoneNumber}
+        />
+        <EntityCard
+          title="Hospital"
+          id={details.hospital.id}
+          name={details.hospital.name}
+          phone={details.hospital.phoneNumber}
+        />
+        <EntityCard
+          title="Provider"
+          id={details.provider.id}
+          name={details.provider.name}
+          phone={null}
+        />
       </section>
 
       <section className="space-y-3 rounded-md border p-4">
@@ -187,7 +219,9 @@ function BookingContent({
           <textarea
             className="min-h-[80px] max-h-[120px] w-full resize-none rounded-md border bg-background p-3 text-sm"
             placeholder={
-              isNotesLocked ? "Notes are disabled for completed bookings." : "Add dispatcher note..."
+              isNotesLocked
+                ? "Notes are disabled for completed bookings."
+                : "Add dispatcher note..."
             }
             value={noteContent}
             onChange={(event) => setNoteContent(event.target.value)}

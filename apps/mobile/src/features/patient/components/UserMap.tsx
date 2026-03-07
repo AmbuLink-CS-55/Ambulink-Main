@@ -16,6 +16,7 @@ type Props = {
   bookingStatus?: BookingStatus;
   nearbyHospitals?: NearbyHospital[];
   nearbyDrivers?: NearbyDriver[];
+  topOverlay?: React.ReactNode;
   children?: React.ReactNode;
 };
 
@@ -26,6 +27,7 @@ export default function UserMap({
   bookingStatus,
   nearbyHospitals = [],
   nearbyDrivers = [],
+  topOverlay,
   children,
 }: Props) {
   const mapRef = React.useRef<MapView>(null);
@@ -113,15 +115,11 @@ export default function UserMap({
             />
           ))}
 
-        {safeHospitalLocation && safeDriverLocation && (
-          <>
-            {showDriverEta && patientDriverCord.length > 0 && (
-              <Polyline coordinates={patientDriverCord} strokeWidth={4} strokeColor="#007AFF" />
-            )}
-            {patientHospitalCord.length > 0 && (
-              <Polyline coordinates={patientHospitalCord} strokeWidth={4} strokeColor="#FF3B30" />
-            )}
-          </>
+        {safeHospitalLocation && showDriverEta && safeDriverLocation && patientDriverCord.length > 0 && (
+          <Polyline coordinates={patientDriverCord} strokeWidth={4} strokeColor="#007AFF" />
+        )}
+        {safeHospitalLocation && patientHospitalCord.length > 0 && (
+          <Polyline coordinates={patientHospitalCord} strokeWidth={4} strokeColor="#FF3B30" />
         )}
 
         {safeHospitalLocation && (
@@ -153,6 +151,11 @@ export default function UserMap({
             />
           ))}
       </MapView>
+      {topOverlay ? (
+        <View pointerEvents="box-none" className="absolute left-0 right-0 top-0 z-30">
+          {topOverlay}
+        </View>
+      ) : null}
       <View className="items-center flex-1 justify-end my-5 mx-10">
         <Pressable
           className="bg-card p-1 rounded-md self-end mr-0 m-3 shadow-lg"
