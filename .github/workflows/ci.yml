@@ -45,7 +45,7 @@ jobs:
     permissions:
       contents: read
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/ambulink_test
       NODE_ENV: test
       APP_STAGE: test
       JWT_SECRET: 12345678901234567890123456789012
@@ -86,7 +86,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ambulink_test
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/ambulink_test
       NODE_ENV: test
       APP_STAGE: test
       JWT_SECRET: 12345678901234567890123456789012
