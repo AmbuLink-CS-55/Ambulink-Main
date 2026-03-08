@@ -8,12 +8,12 @@ import { DataTable } from "@/components";
 import { Button } from "@/components/ui/button";
 import { useEntityFormDialog } from "@/hooks/use-entity-form-dialog";
 import type { Ambulance } from "@/lib/types";
+import { createAmbulanceColumns } from "@/pages/ambulances/components/ambulance-columns";
 import {
-  createAmbulanceColumns,
   CreateAmbulanceDialog,
   EditAmbulanceDialog,
   type AmbulanceFormState,
-} from "@/pages/ambulances/components";
+} from "@/pages/ambulances/components/AmbulanceFormDialog";
 import env from "@/../env";
 
 const initialForm: AmbulanceFormState = {

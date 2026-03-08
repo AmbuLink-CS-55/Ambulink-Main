@@ -6,12 +6,12 @@ import { useEntityFormDialog } from "@/hooks/use-entity-form-dialog";
 import { queryKeys } from "@/lib/queryKeys";
 import { useCreateDriver, useGetDrivers, useUpdateDriver } from "@/services/driver.service";
 import type { User } from "@/lib/types";
-import { createDriverColumns } from "@/pages/drivers/components";
+import { createDriverColumns } from "@/pages/drivers/components/driver-columns";
 import {
   CreateDriverDialog,
   EditDriverDialog,
   type DriverFormState,
-} from "@/pages/drivers/components";
+} from "@/pages/drivers/components/DriverFormDialog";
 import env from "@/../env";
 
 const initialForm: DriverFormState = {

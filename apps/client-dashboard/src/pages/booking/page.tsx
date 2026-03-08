@@ -4,11 +4,9 @@ import { DataTable } from "@/components";
 import { useGetBookingLog, useManualAssignBooking } from "@/services/booking.service";
 import { useMapView } from "@/hooks/use-map-view";
 import { getBookingActionErrorMessage } from "@/lib/booking-ui-errors";
-import {
-  bookingLogColumns,
-  BookingDetailDialog,
-  ManualBookingDialog,
-} from "@/pages/booking/components";
+import { bookingLogColumns } from "@/pages/booking/components/booking-log-columns";
+import { BookingDetailDialog } from "@/pages/booking/components/BookingDetailDialog";
+import { ManualBookingDialog } from "@/pages/booking/components/ManualBookingDialog";
 import { useBookingLogOptions } from "@/pages/booking/hooks/use-booking-log-options";
 import { useManualBookingForm } from "@/pages/booking/hooks/use-manual-booking-form";
 import { getDispatcherId } from "@/lib/identity";

@@ -189,7 +189,7 @@ function BookingContent({
 
       <section className="space-y-3 rounded-md border p-4">
         <h3 className="text-sm font-semibold">Shared Notes (EMT + Dispatcher)</h3>
-        <div className="max-h-[240px] space-y-3 overflow-y-auto pr-1">
+        <div className="max-h-60 space-y-3 overflow-y-auto pr-1">
           {notes.length === 0 ? (
             <p className="text-sm text-muted-foreground">No notes yet.</p>
           ) : (
@@ -217,7 +217,7 @@ function BookingContent({
 
         <div className="space-y-2">
           <textarea
-            className="min-h-[80px] max-h-[120px] w-full resize-none rounded-md border bg-background p-3 text-sm"
+            className="min-h-20 max-h-[120px] w-full resize-none rounded-md border bg-background p-3 text-sm"
             placeholder={
               isNotesLocked
                 ? "Notes are disabled for completed bookings."
