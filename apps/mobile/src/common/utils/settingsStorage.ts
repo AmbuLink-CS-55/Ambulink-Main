@@ -10,6 +10,7 @@ export type EmergencyContact = {
 export type SettingsData = {
   profileName: string;
   profileMobile: string;
+  age: number | null;
   profileImage: string | null;
   bloodType: BloodType;
   selectedAllergies: Allergie[];
@@ -22,6 +23,7 @@ export type SettingsData = {
 export const defaultSettings: SettingsData = {
   profileName: "",
   profileMobile: "",
+  age: null,
   profileImage: null,
   bloodType: "",
   selectedAllergies: [],

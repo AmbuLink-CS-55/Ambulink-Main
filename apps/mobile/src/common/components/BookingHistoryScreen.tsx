@@ -1,7 +1,8 @@
 import { memo, useCallback } from "react";
 import { ActivityIndicator, FlatList, Pressable, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useBookingHistory } from "@/common/hooks/useBookingHistory";
 import type { BookingHistoryRole } from "@/common/utils/bookingHistory";
 
@@ -48,6 +49,8 @@ export default function BookingHistoryScreen({
   role,
   title = "Booking History",
 }: BookingHistoryScreenProps) {
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const { items, loading, reload, clear } = useBookingHistory(role);
   const unknownPerson = role === "PATIENT" ? "Unknown Driver" : "Unknown Patient";
 
@@ -110,7 +113,12 @@ export default function BookingHistoryScreen({
         <FlatList
           data={items}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: 16, flexGrow: 1 }}
+          contentContainerStyle={{
+            paddingTop: 16,
+            paddingHorizontal: 16,
+            paddingBottom: 16 + tabBarHeight + insets.bottom,
+            flexGrow: 1,
+          }}
           ListEmptyComponent={
             <View className="items-center justify-center mt-24">
               <Text className="text-muted-foreground">No past bookings yet.</Text>

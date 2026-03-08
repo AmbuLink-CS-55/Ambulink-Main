@@ -26,6 +26,11 @@ export type EmtBookingState = {
   hydrateCurrentBooking: () => Promise<void>;
   selectAndSubscribe: (bookingId: string) => Promise<boolean>;
   submitNote: (content: string) => Promise<boolean>;
+  submitMediaNote: (params: {
+    content?: string;
+    files: { uri: string; name: string; type: string }[];
+    durationMs?: number;
+  }) => Promise<boolean>;
   setAssignedBooking: (payload: BookingAssignedPayload) => void;
   setDriverLocation: (location: { x: number; y: number }) => void;
   setStatusOnly: (status: BookingStatus) => void;

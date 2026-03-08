@@ -13,6 +13,7 @@ import {
 import { getBookingActionErrorMessage } from "@/lib/booking-ui-errors";
 import type { BookingDetailsPayload } from "@/lib/socket-types";
 import { useAddBookingNote, useGetBookingDetails } from "@/services/booking.service";
+import env from "../../../../env";
 
 type Props = {
   bookingId: string | null;
@@ -89,6 +90,7 @@ export function BookingDetailDialog({ bookingId, dispatcherId, open, onOpenChang
         ) : details ? (
           <BookingContent
             details={details}
+            dispatcherId={dispatcherId}
             noteContent={noteContent}
             setNoteContent={setNoteContent}
             submitNote={submitNote}
@@ -108,6 +110,7 @@ export function BookingDetailDialog({ bookingId, dispatcherId, open, onOpenChang
 
 function BookingContent({
   details,
+  dispatcherId,
   notes,
   noteContent,
   setNoteContent,
@@ -118,6 +121,7 @@ function BookingContent({
   onClose,
 }: {
   details: BookingDetailsPayload;
+  dispatcherId: string;
   notes: BookingDetailsPayload["notes"];
   noteContent: string;
   setNoteContent: (value: string) => void;
@@ -127,8 +131,29 @@ function BookingContent({
   isNotesLocked: boolean;
   onClose: () => void;
 }) {
+  const [previewAttachment, setPreviewAttachment] = useState<{
+    filename: string;
+    mimeType: string;
+    kind: string;
+    sizeBytes: number;
+    url: string;
+  } | null>(null);
+
+  const apiOrigin = env.VITE_API_SERVER_URL.replace(/\/api\/?$/, "");
+  const toAttachmentUrl = (rawUrl: string) => {
+    const absolute = rawUrl.startsWith("http://") || rawUrl.startsWith("https://");
+    const url = absolute ? rawUrl : `${apiOrigin}${rawUrl}`;
+    return `${url}?dispatcherId=${dispatcherId}`;
+  };
+
+  const previewUrl = previewAttachment ? toAttachmentUrl(previewAttachment.url) : null;
+  const displayName = previewAttachment
+    ? formatAttachmentName(previewAttachment.filename)
+    : null;
+
   return (
-    <div className="space-y-6 text-sm">
+    <>
+      <div className="space-y-6 text-sm">
       <section className="space-y-2">
         <h3 className="text-sm font-semibold">Summary</h3>
         <div className="space-y-3 rounded-md border p-4">
@@ -200,16 +225,72 @@ function BookingContent({
                     className={
                       note.authorRole === "EMT"
                         ? "bg-slate-300 text-slate-900 hover:bg-slate-300"
+                        : note.authorRole === "PATIENT"
+                          ? "bg-emerald-600 text-white hover:bg-emerald-600"
                         : "bg-blue-600 text-white hover:bg-blue-600"
                     }
                   >
-                    {note.authorRole === "EMT" ? "EMT" : "DISPATCHER"}
+                    {note.authorRole}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
                     {new Date(note.createdAt).toLocaleString()}
                   </span>
                 </div>
                 <p className="text-sm leading-6">{note.content}</p>
+                {(note.attachments ?? []).length > 0 ? (
+                  <div className="space-y-2">
+                    {note.attachments?.map((attachment) => (
+                      <div
+                        key={attachment.id}
+                        className="space-y-2 rounded-md border p-2 text-xs"
+                      >
+                        <div className="text-slate-700">
+                          {attachment.kind} - {formatAttachmentName(attachment.filename)} (
+                          {Math.ceil(attachment.sizeBytes / 1024)} KB)
+                        </div>
+                        {attachment.mimeType.startsWith("image/") ? (
+                          <button
+                            type="button"
+                            className="block w-full overflow-hidden rounded-md border"
+                            onClick={() =>
+                              setPreviewAttachment({
+                                filename: attachment.filename,
+                                mimeType: attachment.mimeType,
+                                kind: attachment.kind,
+                                sizeBytes: attachment.sizeBytes,
+                                url: attachment.url,
+                              })
+                            }
+                          >
+                            <img
+                              src={toAttachmentUrl(attachment.url)}
+                              alt={attachment.filename}
+                              className="h-36 w-full object-cover"
+                            />
+                          </button>
+                        ) : null}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            onClick={() =>
+                              setPreviewAttachment({
+                                filename: attachment.filename,
+                                mimeType: attachment.mimeType,
+                                kind: attachment.kind,
+                                sizeBytes: attachment.sizeBytes,
+                                url: attachment.url,
+                              })
+                            }
+                          >
+                            Preview
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             ))
           )}
@@ -243,7 +324,50 @@ function BookingContent({
           </div>
         </div>
       </section>
-    </div>
+      </div>
+
+      <Dialog
+        open={Boolean(previewAttachment)}
+        onOpenChange={(open) => !open && setPreviewAttachment(null)}
+      >
+        <DialogContent className="max-h-[92vh] w-[96vw] max-w-6xl overflow-hidden p-0">
+          <DialogHeader className="border-b px-6 py-4">
+            <DialogTitle>Attachment Preview</DialogTitle>
+            <DialogDescription>
+              <span className="inline-block max-w-full truncate align-bottom">
+                {displayName} {previewAttachment ? `(${previewAttachment.kind})` : ""}
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+
+          {previewAttachment && previewUrl ? (
+            <div className="space-y-3 px-6 py-4">
+              {previewAttachment.mimeType.startsWith("image/") ? (
+                <div className="flex min-h-[56vh] items-center justify-center rounded-md border bg-black/90 p-2">
+                  <img
+                    src={previewUrl}
+                    alt={previewAttachment.filename}
+                    className="max-h-[75vh] max-w-full object-contain"
+                  />
+                </div>
+              ) : previewAttachment.mimeType.startsWith("video/") ? (
+                <video
+                  src={previewUrl}
+                  controls
+                  className="max-h-[70vh] w-full rounded-md border bg-black"
+                />
+              ) : previewAttachment.mimeType.startsWith("audio/") ? (
+                <audio src={previewUrl} controls className="w-full" />
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Inline preview is not available for this file type.
+                </p>
+              )}
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -266,4 +390,9 @@ function EntityCard({
       {phone !== null ? <div>Phone: {phone ?? "-"}</div> : null}
     </div>
   );
+}
+
+function formatAttachmentName(filename: string) {
+  const cleaned = filename.replace(/^[0-9a-f]{8}-[0-9a-f-]{27,}[_-]/i, "");
+  return cleaned.length > 60 ? `${cleaned.slice(0, 57)}...` : cleaned;
 }

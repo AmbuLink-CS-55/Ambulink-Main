@@ -49,7 +49,9 @@
       "title": "Personal",
       "name": "Name",
       "enterName": "Enter name",
-      "enterMobile": "Enter mobile"
+      "enterMobile": "Enter mobile",
+      "age": "Age",
+      "enterAge": "Enter age"
     },
     "medical": {
       "title": "Medical Information",

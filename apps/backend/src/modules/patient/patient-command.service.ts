@@ -5,6 +5,7 @@ import { DriverService } from "../driver/driver.service";
 import { HospitalService } from "../hospital/hospital.service";
 import { NotificationService } from "@/core/socket/notification.service";
 import { PatientService } from "./patient.service";
+import type { UploadedMediaFile } from "../booking/booking-media.service";
 
 @Injectable()
 export class PatientCommandService {
@@ -100,6 +101,10 @@ export class PatientCommandService {
       patientSettings
     );
 
+    if (booking.bookingId) {
+      await this.bookingService.bindPatientDraftUploads(patientId, booking.bookingId);
+    }
+
     const assignedPayload = booking.bookingId
       ? await this.bookingService.buildAssignedBookingPayload(booking.bookingId)
       : null;
@@ -147,6 +152,42 @@ export class PatientCommandService {
     this.notificationService.notifyPatient(patientId, "booking:cancelled", {
       bookingId: bookingData.id,
       message: "Booking cancelled successfully",
+    });
+  }
+
+  async startUploadSession(patientId: string) {
+    return this.bookingService.startPatientUploadSession(patientId);
+  }
+
+  async uploadSessionFiles(params: {
+    patientId: string;
+    sessionId: string;
+    content?: string;
+    files: UploadedMediaFile[];
+    durationMs?: number;
+  }) {
+    return this.bookingService.appendPatientUploadSessionFiles({
+      patientId: params.patientId,
+      sessionId: params.sessionId,
+      content: params.content,
+      files: params.files,
+      durationMs: params.durationMs,
+    });
+  }
+
+  async addBookingNote(params: {
+    bookingId: string;
+    patientId: string;
+    content?: string;
+    files: UploadedMediaFile[];
+    durationMs?: number;
+  }) {
+    return this.bookingService.addPatientBookingNote({
+      bookingId: params.bookingId,
+      patientId: params.patientId,
+      content: params.content,
+      files: params.files,
+      durationMs: params.durationMs,
     });
   }
 }

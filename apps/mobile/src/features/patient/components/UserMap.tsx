@@ -1,6 +1,7 @@
 import React from "react";
 import { View, StyleSheet, Pressable, Text } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE, Region, Polyline } from "react-native-maps";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { BookingStatus, Point } from "@ambulink/types";
 import ambulanceIcon from "../../../../assets/images/ambu.png";
@@ -30,6 +31,7 @@ export default function UserMap({
   topOverlay,
   children,
 }: Props) {
+  const insets = useSafeAreaInsets();
   const mapRef = React.useRef<MapView>(null);
   const isValidPoint = (point?: Point) =>
     Boolean(point && Number.isFinite(point.x) && Number.isFinite(point.y));
@@ -156,7 +158,10 @@ export default function UserMap({
           {topOverlay}
         </View>
       ) : null}
-      <View className="items-center flex-1 justify-end my-5 mx-10">
+      <View
+        className="items-center flex-1 justify-end mx-10"
+        style={{ paddingBottom: Math.max(insets.bottom, 12), paddingTop: 20 }}
+      >
         <Pressable
           className="bg-card p-1 rounded-md self-end mr-0 m-3 shadow-lg"
           onPress={handleLocate}

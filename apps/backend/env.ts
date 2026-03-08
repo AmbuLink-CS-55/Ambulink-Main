@@ -26,6 +26,10 @@ const envSchema = z.object({
 
   // Logging
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+
+  // Booking media uploads
+  BOOKING_MEDIA_ROOT: z.string().optional(),
+  BOOKING_UPLOAD_SESSION_TTL_HOURS: z.coerce.number().int().positive().default(24),
 });
 
 const seedSchema = z.object({

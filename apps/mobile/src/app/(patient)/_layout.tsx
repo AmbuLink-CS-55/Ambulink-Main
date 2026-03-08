@@ -1,8 +1,13 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SocketProvider } from "@/common/hooks/SocketContext";
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+  const tabBarBaseHeight = 56;
+  const tabBarBottomPadding = Math.max(insets.bottom, 8);
+
   return (
     <SocketProvider type="PATIENT" enabled>
       <Tabs
@@ -12,9 +17,9 @@ export default function TabLayout() {
           freezeOnBlur: true,
           tabBarHideOnKeyboard: true,
           tabBarStyle: {
-            height: 64,
+            height: tabBarBaseHeight + tabBarBottomPadding,
             paddingTop: 6,
-            paddingBottom: 8,
+            paddingBottom: tabBarBottomPadding,
           },
         }}
       >

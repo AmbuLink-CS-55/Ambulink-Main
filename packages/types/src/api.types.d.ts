@@ -1,6 +1,6 @@
 import type { BookingStatus } from "./database.types";
 import type { Point } from "./common.types";
-import type { BookingNote, EmtNote, PatientSettingsData } from "./socket.types";
+import type { BookingAttachment, BookingNote, EmtNote, PatientSettingsData } from "./socket.types";
 
 export type NearbyDriver = {
   id: string;
@@ -132,4 +132,22 @@ export type BookingDetailsPayload = {
     name: string | null;
   };
   notes: BookingNote[];
+};
+
+export type StartUploadSessionResponse = {
+  uploadSessionId: string;
+  expiresAt: string;
+};
+
+export type PatientBookingNoteResponse = {
+  note: BookingNote;
+};
+
+export type UploadSessionFilesResponse = {
+  notes: BookingNote[];
+};
+
+export type UploadSessionDraftFile = {
+  attachment: BookingAttachment;
+  content: string;
 };

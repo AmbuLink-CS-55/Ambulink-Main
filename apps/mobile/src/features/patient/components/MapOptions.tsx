@@ -17,6 +17,7 @@ interface MapOptionsProps {
   isCancelling?: boolean;
   isBooking?: boolean;
   completedAt?: number | null;
+  onOpenUploads?: () => void;
 }
 
 export default function MapOptions({
@@ -28,6 +29,7 @@ export default function MapOptions({
   isCancelling = false,
   isBooking = false,
   completedAt = null,
+  onOpenUploads,
 }: MapOptionsProps) {
   const handleCall = (phone?: string) => {
     if (!phone) return Alert.alert("Error", "No phone number available");
@@ -73,6 +75,16 @@ export default function MapOptions({
           <Text className="text-muted-foreground text-sm">Destination</Text>
           <Text className="font-semibold">{booking?.hospital.name}</Text>
         </View>
+        {onOpenUploads ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Upload updates"
+            className="mt-4 min-h-11 items-center justify-center rounded-xl border border-blue-200 bg-blue-50"
+            onPress={onOpenUploads}
+          >
+            <Text className="font-semibold text-blue-700">Chat</Text>
+          </Pressable>
+        ) : null}
       </View>
     );
   }
@@ -148,28 +160,51 @@ export default function MapOptions({
             </View>
           )}
         </Pressable>
+
+        {onOpenUploads ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Upload updates"
+            className="mt-3 min-h-11 items-center justify-center rounded-xl border border-blue-200 bg-blue-50"
+            onPress={onOpenUploads}
+          >
+            <Text className="font-semibold text-blue-700">Chat</Text>
+          </Pressable>
+        ) : null}
       </View>
     );
   }
 
   // idle state
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="Request ambulance"
-      accessibilityHint="Sends a new emergency pickup request."
-      className={`justify-center items-center min-h-12 p-4 w-full rounded-2xl shadow-lg border border-border ${isBooking ? "bg-muted" : "bg-card"}`}
-      onPress={onHelpRequest}
-      disabled={isBooking}
-    >
-      {isBooking ? (
-        <View className="flex-row items-center">
-          <ActivityIndicator size="small" color="#ef4444" />
-          <Text className="text-foreground font-semibold ml-2">Requesting ambulance...</Text>
-        </View>
-      ) : (
-        <Text className="text-foreground font-bold text-xl uppercase">Book</Text>
-      )}
-    </Pressable>
+    <View className="w-full gap-3">
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Request ambulance"
+        accessibilityHint="Sends a new emergency pickup request."
+        className={`justify-center items-center min-h-12 p-4 w-full rounded-2xl shadow-lg border border-border ${isBooking ? "bg-muted" : "bg-card"}`}
+        onPress={onHelpRequest}
+        disabled={isBooking}
+      >
+        {isBooking ? (
+          <View className="flex-row items-center">
+            <ActivityIndicator size="small" color="#ef4444" />
+            <Text className="text-foreground font-semibold ml-2">Requesting ambulance...</Text>
+          </View>
+        ) : (
+          <Text className="text-foreground font-bold text-xl uppercase">Book</Text>
+        )}
+      </Pressable>
+      {isBooking && onOpenUploads ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Upload updates"
+          className="min-h-11 items-center justify-center rounded-xl border border-blue-200 bg-blue-50"
+          onPress={onOpenUploads}
+        >
+          <Text className="font-semibold text-blue-700">Chat</Text>
+        </Pressable>
+      ) : null}
+    </View>
   );
 }

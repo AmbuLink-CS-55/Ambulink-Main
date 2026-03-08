@@ -62,3 +62,37 @@ export async function apiPost<TResponse, TBody = unknown>(
 
   return (await response.json()) as TResponse;
 }
+
+export async function apiPostForm<TResponse>(
+  path: string,
+  formData: FormData,
+  query?: Record<string, QueryValue>
+): Promise<TResponse> {
+  const url = new URL(path, env.EXPO_PUBLIC_API_SERVER_URL);
+  if (query) {
+    Object.entries(query).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        url.searchParams.set(key, String(value));
+      }
+    });
+  }
+
+  const response = await fetch(url.toString(), {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Request failed (${response.status}): ${text || response.statusText}`);
+  }
+
+  if (response.status === 204) {
+    return {} as TResponse;
+  }
+
+  return (await response.json()) as TResponse;
+}

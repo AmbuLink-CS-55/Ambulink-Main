@@ -11,6 +11,7 @@ import { DispatcherService } from "../dispatcher/dispatcher.service";
 import { NotificationService } from "@/core/socket/notification.service";
 import type { CreateEmtDto, UpdateEmtDto } from "@/common/validation/schemas";
 import type { BookingAssignedPayload, BookingNote, UserStatus } from "@ambulink/types";
+import type { UploadedMediaFile } from "../booking/booking-media.service";
 
 @Injectable()
 export class EmtService {
@@ -104,7 +105,13 @@ export class EmtService {
     return this.bookingService.buildAssignedBookingPayload(booking.id);
   }
 
-  async addNote(emtId: string, bookingId: string, content: string): Promise<BookingNote> {
+  async addNote(
+    emtId: string,
+    bookingId: string,
+    content: string,
+    files: UploadedMediaFile[] = [],
+    durationMs?: number
+  ): Promise<BookingNote> {
     const emt = await this.findOne(emtId);
     if (!emt.providerId) {
       throw new BadRequestException("EMT is not attached to a provider");
@@ -123,15 +130,31 @@ export class EmtService {
       throw new ForbiddenException("EMT cannot access booking outside provider scope");
     }
 
-    const note: BookingNote = {
-      id: randomUUID(),
-      bookingId,
-      authorId: emtId,
-      authorName: emt.fullName ?? "EMT",
-      authorRole: "EMT",
-      content,
-      createdAt: new Date().toISOString(),
-    };
+    const hasContent = Boolean(content.trim().length > 0);
+    if (!hasContent && files.length === 0) {
+      throw new BadRequestException("Note text or at least one file is required");
+    }
+    const note: BookingNote =
+      files.length > 0
+        ? await this.bookingService.buildEmtMediaNote({
+            bookingId,
+            emtId,
+            emtName: emt.fullName ?? "EMT",
+            content,
+            files,
+            durationMs: durationMs ?? null,
+          })
+        : {
+            id: randomUUID(),
+            bookingId,
+            authorId: emtId,
+            authorName: emt.fullName ?? "EMT",
+            authorRole: "EMT",
+            content,
+            type: "TEXT",
+            attachments: [],
+            createdAt: new Date().toISOString(),
+          };
 
     await this.bookingService.appendBookingNote(bookingId, note);
 
@@ -148,6 +171,13 @@ export class EmtService {
     );
     for (const dispatcherId of dispatcherIds) {
       this.notificationService.notifyDispatcher(dispatcherId, "booking:notes", {
+        bookingId,
+        note,
+      });
+    }
+
+    if (booking.patientId) {
+      this.notificationService.notifyPatient(booking.patientId, "booking:notes", {
         bookingId,
         note,
       });

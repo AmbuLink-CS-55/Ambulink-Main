@@ -36,6 +36,13 @@ describe("BookingService", () => {
       notificationService as never,
       { requestApproval: jest.fn(), notifyDecision: jest.fn() } as never,
       bookingRepository as never,
+      {
+        createBookingMediaNote: jest.fn(),
+        bindSessionsToBooking: jest.fn(),
+        getAttachmentFile: jest.fn(),
+        startUploadSession: jest.fn(),
+        appendSessionFiles: jest.fn(),
+      } as never,
       { setDriverStatus: jest.fn(), findDriverById: jest.fn() } as never,
       { findPatientById: jest.fn(), createPatient: jest.fn() } as never,
       { getHospitalById: jest.fn() } as never
@@ -187,5 +194,52 @@ describe("BookingService", () => {
     ).rejects.toBeInstanceOf(BadRequestException);
 
     expect(bookingRepository.appendBookingNote).not.toHaveBeenCalled();
+  });
+
+  it("normalizes legacy notes with default type and attachments", async () => {
+    const { service, bookingRepository } = buildService();
+
+    (service as never).getDispatcherOrThrow = jest.fn().mockResolvedValue({
+      id: "dispatcher-1",
+      providerId: "provider-1",
+      fullName: "Dispatcher A",
+    });
+    bookingRepository.getBookingDetailsRow.mockResolvedValue([
+      {
+        bookingId: "booking-1",
+        providerId: "provider-1",
+        status: "ASSIGNED",
+        requestedAt: null,
+        assignedAt: null,
+        arrivedAt: null,
+        pickedupAt: null,
+        completedAt: null,
+        cancellationReason: null,
+        patientId: "patient-1",
+        patientName: "Patient",
+        patientPhone: null,
+        driverId: "driver-1",
+        driverName: "Driver",
+        driverPhone: null,
+        hospitalId: "hospital-1",
+        hospitalName: "Hospital",
+        hospitalPhone: null,
+        notes: [
+          {
+            id: "legacy-note",
+            bookingId: "booking-1",
+            authorId: "emt-1",
+            authorRole: "EMT",
+            content: "Legacy note",
+            createdAt: new Date().toISOString(),
+          },
+        ],
+      },
+    ]);
+
+    const details = await service.getBookingDetailsForDispatcher("booking-1", "dispatcher-1");
+    expect(details.notes).toHaveLength(1);
+    expect(details.notes[0]?.type).toBe("TEXT");
+    expect(details.notes[0]?.attachments).toEqual([]);
   });
 });
