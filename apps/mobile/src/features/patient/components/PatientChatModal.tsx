@@ -33,7 +33,13 @@ type Props = {
   }) => Promise<void>;
 };
 
-export default function PatientChatModal({ visible, onClose, notes, sending = false, onSend }: Props) {
+export default function PatientChatModal({
+  visible,
+  onClose,
+  notes,
+  sending = false,
+  onSend,
+}: Props) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const slideProgress = useRef(new Animated.Value(1)).current;
@@ -67,17 +73,22 @@ export default function PatientChatModal({ visible, onClose, notes, sending = fa
     soundRef.current = null;
   }, []);
   const submit = useMemo(
-    () => async (payload: { content?: string; files: { uri: string; name?: string; type?: string }[]; durationMs?: number }) => {
-      await onSend({
-        content: payload.content,
-        files: payload.files.map((file) => ({
-          uri: file.uri,
-          name: file.name ?? `patient-media-${Date.now()}`,
-          type: file.type ?? "application/octet-stream",
-        })),
-        durationMs: payload.durationMs,
-      });
-    },
+    () =>
+      async (payload: {
+        content?: string;
+        files: { uri: string; name?: string; type?: string }[];
+        durationMs?: number;
+      }) => {
+        await onSend({
+          content: payload.content,
+          files: payload.files.map((file) => ({
+            uri: file.uri,
+            name: file.name ?? `patient-media-${Date.now()}`,
+            type: file.type ?? "application/octet-stream",
+          })),
+          durationMs: payload.durationMs,
+        });
+      },
     [onSend]
   );
 
@@ -88,7 +99,8 @@ export default function PatientChatModal({ visible, onClose, notes, sending = fa
   const { dispose } = actions;
 
   const sortedNotes = useMemo(
-    () => [...notes].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    () =>
+      [...notes].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
     [notes]
   );
 
@@ -223,7 +235,7 @@ export default function PatientChatModal({ visible, onClose, notes, sending = fa
         >
           <KeyboardAvoidingView
             style={styles.flex}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
             keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
           >
             <View className="flex-row items-center justify-between mb-2">
@@ -244,6 +256,8 @@ export default function PatientChatModal({ visible, onClose, notes, sending = fa
               keyExtractor={(item) => item.id}
               className="flex-1 mt-3"
               contentContainerStyle={{ paddingBottom: 12 }}
+              maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+              keyboardDismissMode="on-drag"
               ListEmptyComponent={
                 <Text className="p-3 text-sm text-muted-foreground">No messages yet.</Text>
               }
@@ -251,7 +265,9 @@ export default function PatientChatModal({ visible, onClose, notes, sending = fa
                 <View className="w-full rounded-2xl border border-border bg-card p-4 mb-3 gap-2">
                   <View className="flex-row items-center justify-between gap-2">
                     <View className="bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1 max-w-[68%]">
-                      <Text className="text-xs font-bold text-emerald-700">{getAuthorLabel(item)}</Text>
+                      <Text className="text-xs font-bold text-emerald-700">
+                        {getAuthorLabel(item)}
+                      </Text>
                     </View>
                     <Text className="text-xs text-muted-foreground">
                       {new Date(item.createdAt).toLocaleString()}
@@ -263,7 +279,9 @@ export default function PatientChatModal({ visible, onClose, notes, sending = fa
                   {(item.attachments ?? []).map((attachment) => (
                     <View key={attachment.id} className="mb-2">
                       {attachment.mimeType.startsWith("image/") ? (
-                        <Pressable onPress={() => setPreviewImageUrl(toAttachmentUrl(attachment.url))}>
+                        <Pressable
+                          onPress={() => setPreviewImageUrl(toAttachmentUrl(attachment.url))}
+                        >
                           <AppImage
                             source={{ uri: toAttachmentUrl(attachment.url) }}
                             style={styles.imageThumb}
@@ -300,26 +318,28 @@ export default function PatientChatModal({ visible, onClose, notes, sending = fa
               )}
             />
 
-            <MediaNoteComposerCard
-              value={state.text}
-              onChange={actions.setText}
-              onSubmit={() => void actions.submit()}
-              onCaptureMedia={() => void actions.captureMedia()}
-              onToggleAudio={() => void actions.toggleRecording()}
-              onRemoveAttachment={actions.removeFile}
-              files={state.files}
-              isRecordingAudio={state.isRecordingAudio}
-              loading={sending || state.isSubmitting}
-              recordingStatusText={`Recording audio... ${formatMs(state.recordingElapsedMs)}`}
-              errorText={state.error}
-              copy={{
-                placeholder: "Type message...",
-                cameraButtonLabel: "Camera",
-                audioStartLabel: "Audio",
-                audioStopLabel: "Stop Audio",
-                sendLabel: "Send",
-              }}
-            />
+            <View style={{ paddingBottom: Math.max(insets.bottom, 8) }}>
+              <MediaNoteComposerCard
+                value={state.text}
+                onChange={actions.setText}
+                onSubmit={() => void actions.submit()}
+                onCaptureMedia={() => void actions.captureMedia()}
+                onToggleAudio={() => void actions.toggleRecording()}
+                onRemoveAttachment={actions.removeFile}
+                files={state.files}
+                isRecordingAudio={state.isRecordingAudio}
+                loading={sending || state.isSubmitting}
+                recordingStatusText={`Recording audio... ${formatMs(state.recordingElapsedMs)}`}
+                errorText={state.error}
+                copy={{
+                  placeholder: "Type message...",
+                  cameraButtonLabel: "Camera",
+                  audioStartLabel: "Audio",
+                  audioStopLabel: "Stop Audio",
+                  sendLabel: "Send",
+                }}
+              />
+            </View>
           </KeyboardAvoidingView>
         </Animated.View>
       </Modal>
@@ -328,7 +348,11 @@ export default function PatientChatModal({ visible, onClose, notes, sending = fa
         <Pressable style={styles.previewOverlay} onPress={() => setPreviewImageUrl(null)}>
           <Pressable style={styles.previewContent} onPress={(event) => event.stopPropagation()}>
             {previewImageUrl ? (
-              <AppImage source={{ uri: previewImageUrl }} style={styles.previewImage} contentFit="contain" />
+              <AppImage
+                source={{ uri: previewImageUrl }}
+                style={styles.previewImage}
+                contentFit="contain"
+              />
             ) : null}
           </Pressable>
         </Pressable>

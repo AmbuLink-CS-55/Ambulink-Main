@@ -77,28 +77,26 @@ export default function EmtNotesScreen() {
                 />
               </View>
 
-              <View style={{ paddingBottom: Math.max(insets.bottom, 8) }}>
-                <MediaNoteComposerCard
-                  value={state.text}
-                  onChange={actions.setText}
-                  onSubmit={() => void actions.submit()}
-                  onCaptureMedia={() => void actions.captureMedia()}
-                  onToggleAudio={() => void actions.toggleRecording()}
-                  onRemoveAttachment={actions.removeFile}
-                  files={state.files}
-                  isRecordingAudio={state.isRecordingAudio}
-                  recordingStatusText={`Recording audio... ${formatMs(state.recordingElapsedMs)}`}
-                  loading={state.isSubmitting}
-                  errorText={state.error}
-                  copy={{
-                    placeholder: "Type a situation update...",
-                    cameraButtonLabel: "Camera",
-                    audioStartLabel: "Audio",
-                    audioStopLabel: "Stop Audio",
-                    sendLabel: "Send",
-                  }}
-                />
-              </View>
+              <MediaNoteComposerCard
+                value={state.text}
+                onChange={actions.setText}
+                onSubmit={() => void actions.submit()}
+                onCaptureMedia={() => void actions.captureMedia()}
+                onToggleAudio={() => void actions.toggleRecording()}
+                onRemoveAttachment={actions.removeFile}
+                files={state.files}
+                isRecordingAudio={state.isRecordingAudio}
+                recordingStatusText={`Recording audio... ${formatMs(state.recordingElapsedMs)}`}
+                loading={state.isSubmitting}
+                errorText={state.error}
+                copy={{
+                  placeholder: "Type a situation update...",
+                  cameraButtonLabel: "Camera",
+                  audioStartLabel: "Audio",
+                  audioStopLabel: "Stop Audio",
+                  sendLabel: "Send",
+                }}
+              />
             </View>
           )}
         </View>
