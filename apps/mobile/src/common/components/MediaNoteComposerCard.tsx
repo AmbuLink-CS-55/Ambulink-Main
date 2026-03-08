@@ -32,9 +32,9 @@ const formatAttachmentLabel = (file: MediaAttachmentInput) => {
     return `Audio - ${file.name ?? "recording"}`;
   }
   if (type.startsWith("video/")) {
-    return `Video - ${file.name ?? "video"}`;
+    return `Video - ${file.name ?? "recording"}`;
   }
-  return `Image - ${file.name ?? "image"}`;
+  return `Image - ${file.name ?? ""}`;
 };
 
 export default function MediaNoteComposerCard({

@@ -3,7 +3,7 @@ import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } fro
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { MediaNoteComposerCard } from "@/common/components";
+import MediaNoteComposerCard from "@/common/components/MediaNoteComposerCard";
 import EmtNotesTimeline from "@/features/emt/components/EmtNotesTimeline";
 import { useEmtBookingState } from "@/features/emt/hooks/useEmtBookingState";
 import { useMediaNoteComposer } from "@/common/hooks/useMediaNoteComposer";

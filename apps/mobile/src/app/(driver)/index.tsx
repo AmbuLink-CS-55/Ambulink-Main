@@ -6,14 +6,11 @@ import type { BookingAssignedPayload } from "@ambulink/types";
 import { env } from "../../../env";
 import { postDriverArrived, postDriverCompleted, postDriverShift } from "@/common/lib/driverEvents";
 import { useDriverShift } from "@/features/driver/hooks/useDriverShift";
-import {
-  RideActions,
-  RideDetailsCard,
-  RideMapCard,
-  ShiftCard,
-  isValidPoint,
-  type Ride,
-} from "@/features/driver/components";
+import { RideActions } from "@/features/driver/components/RideActions";
+import { RideDetailsCard } from "@/features/driver/components/RideDetailsCard";
+import { RideMapCard } from "@/features/driver/components/RideMapCard";
+import { ShiftCard } from "@/features/driver/components/ShiftCard";
+import { isValidPoint, type Ride } from "@/features/driver/components/types";
 
 const SRI_LANKA_REGION = {
   latitude: 7.8731,

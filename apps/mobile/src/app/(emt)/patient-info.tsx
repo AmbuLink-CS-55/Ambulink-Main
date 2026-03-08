@@ -2,7 +2,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { PatientProfileCard } from "@/features/emt/components";
+import PatientProfileCard from "@/features/emt/components/PatientProfileCard";
 import { useEmtBookingState } from "@/features/emt/hooks/useEmtBookingState";
 
 export default function PatientInfoScreen() {

@@ -1,4 +1,4 @@
-import { ChatComposer } from "@/common/components";
+import ChatComposer from "@/common/components/ChatComposer";
 
 type Props = {
   value: string;

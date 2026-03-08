@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { EmtNote } from "@ambulink/types";
 import { FlatList, Linking, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { env } from "../../../../env";
-import { AppImage } from "@/common/components";
+import { AppImage } from "@/common/components/AppImage";
 import { Audio } from "expo-av";
 
 type Props = {

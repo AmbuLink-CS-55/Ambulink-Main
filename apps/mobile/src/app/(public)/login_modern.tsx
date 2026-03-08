@@ -16,7 +16,7 @@ import { Redirect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "@/common/hooks/AuthContext";
 import i18n from "@/common/i18n/i18n";
-import { AppImage as Image } from "@/common/components";
+import { AppImage as Image } from "@/common/components/AppImage";
 
 export default function LoginModern() {
   const router = useRouter();

@@ -8,7 +8,7 @@ import ambulanceIcon from "../../../../assets/images/ambu.png";
 import { useFetchRoute } from "@/common/hooks/use-fetch-route";
 import type { NearbyHospital } from "@/common/lib/hospitals";
 import type { NearbyDriver } from "@/common/lib/drivers";
-import { AppImage as Image } from "@/common/components";
+import { AppImage as Image } from "@/common/components/AppImage";
 
 type Props = {
   userLocation: Point;

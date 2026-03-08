@@ -13,7 +13,8 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AppImage, MediaNoteComposerCard } from "@/common/components";
+import { AppImage } from "@/common/components/AppImage";
+import MediaNoteComposerCard from "@/common/components/MediaNoteComposerCard";
 import { useMediaNoteComposer } from "@/common/hooks/useMediaNoteComposer";
 import { env } from "../../../../env";
 import type { BookingNote } from "@ambulink/types";
