@@ -15,7 +15,7 @@ export const patientSettingsSchema = z
   .object({
     profileName: z.string(),
     profileMobile: z.string(),
-    age: z.number().int().min(0).max(130).nullable(),
+    age: z.number().int().min(0).nullable(),
     profileImage: z.string().nullable(),
     bloodType: z.string(),
     selectedAllergies: z.array(z.string()),
