@@ -92,7 +92,9 @@ export default function MediaNoteComposerCard({
           disabled={loading || !onToggleAudio}
         >
           <Text style={[styles.actionText, isRecordingAudio ? styles.recordingText : null]}>
-            {isRecordingAudio ? (copy?.audioStopLabel ?? "Stop Audio") : (copy?.audioStartLabel ?? "Audio")}
+            {isRecordingAudio
+              ? (copy?.audioStopLabel ?? "Stop Audio")
+              : (copy?.audioStartLabel ?? "Audio")}
           </Text>
         </Pressable>
         <Pressable

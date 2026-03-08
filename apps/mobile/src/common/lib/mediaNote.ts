@@ -47,7 +47,8 @@ const defaultFilename = (type: string) => {
 };
 
 export const normalizeMediaFile = (file: MediaAttachmentInput) => {
-  const normalizedType = AUDIO_MIME_NORMALIZATION[file.type ?? ""] ?? file.type ?? inferMimeType(file.name);
+  const normalizedType =
+    AUDIO_MIME_NORMALIZATION[file.type ?? ""] ?? file.type ?? inferMimeType(file.name);
   const normalizedName = file.name?.trim() || defaultFilename(normalizedType);
 
   return {

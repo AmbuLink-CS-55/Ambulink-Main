@@ -1,7 +1,11 @@
 import { apiGet, apiPost, apiPostForm } from "./api";
 import { env } from "../../../env";
 import type { BookingAssignedPayload, EmtBookingSearchResult, EmtNote } from "@ambulink/types";
-import { buildMediaFormData, type MediaAttachmentInput, type MediaNoteSubmitPayload } from "./mediaNote";
+import {
+  buildMediaFormData,
+  type MediaAttachmentInput,
+  type MediaNoteSubmitPayload,
+} from "./mediaNote";
 
 export async function fetchEmtBookingOptions(
   emtId: string = env.EXPO_PUBLIC_EMT_ID
@@ -53,11 +57,9 @@ export async function submitEmtMediaNote(payload: {
     files: payload.files ?? [],
   });
 
-  const response = await apiPostForm<{ note: EmtNote }>(
-    "/api/emts/events/notes",
-    formData,
-    { emtId: payload.emtId ?? env.EXPO_PUBLIC_EMT_ID }
-  );
+  const response = await apiPostForm<{ note: EmtNote }>("/api/emts/events/notes", formData, {
+    emtId: payload.emtId ?? env.EXPO_PUBLIC_EMT_ID,
+  });
 
   return response.note;
 }
@@ -73,8 +75,7 @@ export async function postEmtNote(payload: {
 }
 
 export const createEmtMediaSubmitAdapter =
-  (params: { bookingId: string; emtId?: string }) =>
-  async (payload: MediaNoteSubmitPayload) => {
+  (params: { bookingId: string; emtId?: string }) => async (payload: MediaNoteSubmitPayload) => {
     await submitEmtMediaNote({
       bookingId: params.bookingId,
       emtId: params.emtId ?? env.EXPO_PUBLIC_EMT_ID,

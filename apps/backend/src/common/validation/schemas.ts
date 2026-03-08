@@ -168,7 +168,12 @@ export const emtAddNoteSchema = z.object({
 export const emtAddNoteMediaBodySchema = z.object({
   bookingId: z.string().uuid(),
   content: z.string().trim().max(2000).optional(),
-  durationMs: z.coerce.number().int().positive().max(60 * 60 * 1000).optional(),
+  durationMs: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(60 * 60 * 1000)
+    .optional(),
 });
 
 export const patientUploadSessionStartSchema = z.object({
@@ -185,7 +190,12 @@ export const patientBookingNoteQuerySchema = z.object({
 
 export const patientBookingNoteBodySchema = z.object({
   content: z.string().trim().max(2000).optional(),
-  durationMs: z.coerce.number().int().positive().max(60 * 60 * 1000).optional(),
+  durationMs: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(60 * 60 * 1000)
+    .optional(),
 });
 
 export const bookingAttachmentAccessQuerySchema = z

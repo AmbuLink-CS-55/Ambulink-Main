@@ -841,7 +841,10 @@ export class BookingService {
     }
 
     if (booking.patientId) {
-      this.notificationService.notifyPatient(booking.patientId, "booking:notes", { bookingId, note });
+      this.notificationService.notifyPatient(booking.patientId, "booking:notes", {
+        bookingId,
+        note,
+      });
     }
 
     return note;
@@ -1029,19 +1032,17 @@ export class BookingService {
             const candidate = entry as Partial<BookingAttachment>;
             return Boolean(
               candidate.id &&
-                candidate.filename &&
-                candidate.mimeType &&
-                typeof candidate.sizeBytes === "number" &&
-                candidate.kind &&
-                candidate.url
+              candidate.filename &&
+              candidate.mimeType &&
+              typeof candidate.sizeBytes === "number" &&
+              candidate.kind &&
+              candidate.url
             );
           })
         : [];
       const normalizedType = note.type === "MEDIA" || attachments.length > 0 ? "MEDIA" : "TEXT";
       const normalizedRole =
-        note.authorRole === "DISPATCHER" || note.authorRole === "PATIENT"
-          ? note.authorRole
-          : "EMT";
+        note.authorRole === "DISPATCHER" || note.authorRole === "PATIENT" ? note.authorRole : "EMT";
 
       normalized.push({
         id: note.id,

@@ -122,8 +122,7 @@ export class PatientController {
     @Body() body: Record<string, unknown>
   ) {
     const content = typeof body.content === "string" ? body.content : undefined;
-    const durationMs =
-      typeof body.durationMs === "string" ? Number(body.durationMs) : undefined;
+    const durationMs = typeof body.durationMs === "string" ? Number(body.durationMs) : undefined;
 
     return this.patientCommandService.uploadSessionFiles({
       patientId: query.patientId,

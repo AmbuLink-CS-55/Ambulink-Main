@@ -117,9 +117,12 @@ export default function UserMap({
             />
           ))}
 
-        {safeHospitalLocation && showDriverEta && safeDriverLocation && patientDriverCord.length > 0 && (
-          <Polyline coordinates={patientDriverCord} strokeWidth={4} strokeColor="#007AFF" />
-        )}
+        {safeHospitalLocation &&
+          showDriverEta &&
+          safeDriverLocation &&
+          patientDriverCord.length > 0 && (
+            <Polyline coordinates={patientDriverCord} strokeWidth={4} strokeColor="#007AFF" />
+          )}
         {safeHospitalLocation && patientHospitalCord.length > 0 && (
           <Polyline coordinates={patientHospitalCord} strokeWidth={4} strokeColor="#FF3B30" />
         )}

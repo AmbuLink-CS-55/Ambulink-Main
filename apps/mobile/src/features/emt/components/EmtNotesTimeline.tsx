@@ -162,7 +162,9 @@ export default function EmtNotesTimeline({ notes, currentEmtId }: Props) {
         contentContainerStyle={formattedNotes.length === 0 ? styles.emptyContent : styles.content}
         ListEmptyComponent={
           <View className="py-6">
-            <Text className="text-sm text-muted-foreground">No notes yet. Add the first update.</Text>
+            <Text className="text-sm text-muted-foreground">
+              No notes yet. Add the first update.
+            </Text>
           </View>
         }
         renderItem={({ item }) => (

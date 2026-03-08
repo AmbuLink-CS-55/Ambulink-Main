@@ -1,7 +1,11 @@
 import { apiPost, apiPostForm } from "./api";
 import type { PatientCancelCommand, PatientHelpCommand } from "@ambulink/types";
 import { env } from "../../../env";
-import { buildMediaFormData, type MediaAttachmentInput, type MediaNoteSubmitPayload } from "./mediaNote";
+import {
+  buildMediaFormData,
+  type MediaAttachmentInput,
+  type MediaNoteSubmitPayload,
+} from "./mediaNote";
 
 export async function sendPatientHelp(payload: PatientHelpCommand) {
   return apiPost<{ accepted: boolean }, PatientHelpCommand>("/api/patients/events/help", payload, {

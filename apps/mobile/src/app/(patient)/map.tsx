@@ -8,7 +8,13 @@ import { usePatientEvents } from "@/features/patient/hooks/usePatientEvents";
 import { useNearbyHospitals } from "@/features/patient/hooks/useNearbyHospitals";
 import { useNearbyDrivers } from "@/features/patient/hooks/useNearbyDrivers";
 import { loadSettings } from "@/common/utils/settingsStorage";
-import type { BookingNote, BookingStatus, User, Hospital, PatientSettingsData } from "@ambulink/types";
+import type {
+  BookingNote,
+  BookingStatus,
+  User,
+  Hospital,
+  PatientSettingsData,
+} from "@ambulink/types";
 import {
   sendPatientCancel,
   sendPatientHelp,

@@ -1,9 +1,6 @@
 import React, { useEffect, useMemo } from "react";
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import {
-  startPatientUploadSession,
-  submitPatientMediaNote,
-} from "@/common/lib/patientEvents";
+import { startPatientUploadSession, submitPatientMediaNote } from "@/common/lib/patientEvents";
 import MediaNoteComposerCard from "@/common/components/MediaNoteComposerCard";
 import { useMediaNoteComposer } from "@/common/hooks/useMediaNoteComposer";
 import type { MediaNoteSubmitPayload } from "@/common/lib/mediaNote";

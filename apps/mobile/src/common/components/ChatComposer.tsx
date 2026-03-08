@@ -83,7 +83,9 @@ export default function ChatComposer({
           ))}
         </View>
       ) : null}
-      {showAttachmentSummary ? <Text style={styles.attachmentText}>{attachmentSummaryText}</Text> : null}
+      {showAttachmentSummary ? (
+        <Text style={styles.attachmentText}>{attachmentSummaryText}</Text>
+      ) : null}
       {isRecordingAudio && recordingStatusText ? (
         <View style={styles.recordingStatusRow}>
           <View style={styles.recordingDot} />

@@ -61,10 +61,7 @@ export class BookingMediaService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     await fs.mkdir(this.sessionsDir, { recursive: true });
     await fs.mkdir(this.bookingsDir, { recursive: true });
-    this.cleanupTimer = setInterval(
-      () => void this.cleanupExpiredSessions(),
-      30 * 60 * 1000
-    );
+    this.cleanupTimer = setInterval(() => void this.cleanupExpiredSessions(), 30 * 60 * 1000);
   }
 
   onModuleDestroy() {
@@ -174,7 +171,11 @@ export class BookingMediaService implements OnModuleInit, OnModuleDestroy {
   }
 
   buildAttachmentStoragePath(bookingId: string, attachmentId: string, filename: string) {
-    return path.join(this.bookingsDir, bookingId, `${attachmentId}__${this.sanitizeFilename(filename)}`);
+    return path.join(
+      this.bookingsDir,
+      bookingId,
+      `${attachmentId}__${this.sanitizeFilename(filename)}`
+    );
   }
 
   buildAttachmentUrl(bookingId: string, attachmentId: string) {
@@ -196,7 +197,12 @@ export class BookingMediaService implements OnModuleInit, OnModuleDestroy {
 
   private async saveDraftNoteToSession(
     sessionId: string,
-    params: { content: string; createdAt: string; files: UploadedMediaFile[]; durationMs: number | null }
+    params: {
+      content: string;
+      createdAt: string;
+      files: UploadedMediaFile[];
+      durationMs: number | null;
+    }
   ): Promise<DraftNote> {
     const filesDir = this.getSessionFilesDir(sessionId);
     await fs.mkdir(filesDir, { recursive: true });
@@ -257,9 +263,7 @@ export class BookingMediaService implements OnModuleInit, OnModuleDestroy {
         sizeBytes: file.size,
         filename,
         url: this.buildAttachmentUrl(bookingId, id),
-        ...(kind === "AUDIO" && durationMs && !firstAudioDurationApplied
-          ? { durationMs }
-          : {}),
+        ...(kind === "AUDIO" && durationMs && !firstAudioDurationApplied ? { durationMs } : {}),
       });
       if (kind === "AUDIO") {
         firstAudioDurationApplied = true;
@@ -281,7 +285,10 @@ export class BookingMediaService implements OnModuleInit, OnModuleDestroy {
 
     const moved: BookingAttachment[] = [];
     for (const attachment of draftAttachments) {
-      const sourcePath = path.join(sourceDir, `${attachment.id}__${this.sanitizeFilename(attachment.filename)}`);
+      const sourcePath = path.join(
+        sourceDir,
+        `${attachment.id}__${this.sanitizeFilename(attachment.filename)}`
+      );
       const targetPath = this.buildAttachmentStoragePath(
         bookingId,
         attachment.id,
@@ -367,7 +374,11 @@ export class BookingMediaService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async writeSessionManifest(manifest: UploadSessionManifest) {
-    await fs.writeFile(this.getSessionManifestPath(manifest.id), JSON.stringify(manifest, null, 2), "utf-8");
+    await fs.writeFile(
+      this.getSessionManifestPath(manifest.id),
+      JSON.stringify(manifest, null, 2),
+      "utf-8"
+    );
   }
 
   private async readOwnedSession(sessionId: string, patientId: string) {
