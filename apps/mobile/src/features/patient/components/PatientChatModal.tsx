@@ -1,9 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Audio } from "expo-av";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   FlatList,
   KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -37,6 +39,33 @@ export default function PatientChatModal({ visible, onClose, notes, sending = fa
   const slideProgress = useRef(new Animated.Value(1)).current;
 
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [previewAudio, setPreviewAudio] = useState<{ url: string; filename: string } | null>(null);
+  const [isAudioPlaying, setAudioPlaying] = useState(false);
+  const [audioPositionMs, setAudioPositionMs] = useState(0);
+  const [audioDurationMs, setAudioDurationMs] = useState(0);
+  const [audioLoading, setAudioLoading] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
+  const soundRef = useRef<Audio.Sound | null>(null);
+  const releaseSound = useCallback(async () => {
+    const sound = soundRef.current;
+    if (!sound) return;
+    try {
+      await sound.stopAsync();
+    } catch {
+      // ignore
+    }
+    try {
+      await sound.setPositionAsync(0);
+    } catch {
+      // ignore
+    }
+    try {
+      await sound.unloadAsync();
+    } catch {
+      // ignore
+    }
+    soundRef.current = null;
+  }, []);
   const submit = useMemo(
     () => async (payload: { content?: string; files: { uri: string; name?: string; type?: string }[]; durationMs?: number }) => {
       await onSend({
@@ -78,6 +107,51 @@ export default function PatientChatModal({ visible, onClose, notes, sending = fa
     const absolute = url.startsWith("http://") || url.startsWith("https://");
     return `${absolute ? url : `${apiOrigin}${url}`}?patientId=${env.EXPO_PUBLIC_PATIENT_ID}`;
   };
+  const onAudioStatus = (status: Audio.AVPlaybackStatus) => {
+    if (!status.isLoaded) return;
+    setAudioPlaying(status.isPlaying);
+    setAudioPositionMs(status.positionMillis ?? 0);
+    setAudioDurationMs(status.durationMillis ?? 0);
+  };
+
+  useEffect(() => {
+    const handlePreviewChange = async () => {
+      await releaseSound();
+      setAudioPlaying(false);
+      setAudioPositionMs(0);
+      setAudioDurationMs(0);
+      setAudioError(null);
+    };
+    void handlePreviewChange();
+  }, [previewAudio?.url, releaseSound]);
+
+  useEffect(() => {
+    if (!previewAudio) return;
+    const autoPlay = async () => {
+      setAudioLoading(true);
+      setAudioError(null);
+      try {
+        const created = await Audio.Sound.createAsync(
+          { uri: previewAudio.url },
+          { shouldPlay: true },
+          onAudioStatus
+        );
+        soundRef.current = created.sound;
+      } catch (error) {
+        setAudioError(error instanceof Error ? error.message : "Failed to play audio");
+      } finally {
+        setAudioLoading(false);
+      }
+    };
+    void autoPlay();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewAudio?.url]);
+
+  useEffect(() => {
+    return () => {
+      void releaseSound();
+    };
+  }, [releaseSound]);
 
   useEffect(() => {
     if (visible) return;
@@ -97,6 +171,36 @@ export default function PatientChatModal({ visible, onClose, notes, sending = fa
       duration: 220,
       useNativeDriver: true,
     }).start(() => onClose());
+  };
+
+  const toggleAudioPlayback = async () => {
+    if (!previewAudio) return;
+    setAudioLoading(true);
+    setAudioError(null);
+    try {
+      if (!soundRef.current) {
+        return;
+      }
+      const status = await soundRef.current.getStatusAsync();
+      if (status.isLoaded && status.isPlaying) {
+        await soundRef.current.pauseAsync();
+      } else {
+        await soundRef.current.playAsync();
+      }
+    } catch (error) {
+      setAudioError(error instanceof Error ? error.message : "Failed to play audio");
+    } finally {
+      setAudioLoading(false);
+    }
+  };
+
+  const closeAudioModal = async () => {
+    await releaseSound();
+    setPreviewAudio(null);
+    setAudioPlaying(false);
+    setAudioPositionMs(0);
+    setAudioDurationMs(0);
+    setAudioError(null);
   };
 
   return (
@@ -122,36 +226,42 @@ export default function PatientChatModal({ visible, onClose, notes, sending = fa
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
           >
-            <View style={styles.headerRow}>
+            <View className="flex-row items-center justify-between mb-2">
               <Pressable
                 onPress={handleClose}
                 accessibilityRole="button"
                 accessibilityLabel="Go back"
-                style={styles.backButton}
+                className="h-10 w-10 rounded-full bg-white border border-[#E5E5E5] items-center justify-center"
               >
                 <Ionicons name="arrow-back" size={20} color="#111827" />
               </Pressable>
-              <Text style={styles.title}>Chat</Text>
-              <View style={styles.headerSpacer} />
+              <Text className="text-[22px] font-bold text-foreground">Chat</Text>
+              <View className="w-10 h-10" />
             </View>
 
             <FlatList
               data={sortedNotes}
               keyExtractor={(item) => item.id}
-              style={styles.timeline}
-              contentContainerStyle={styles.timelineContent}
-              ListEmptyComponent={<Text style={styles.emptyText}>No messages yet.</Text>}
+              className="flex-1 mt-3"
+              contentContainerStyle={{ paddingBottom: 12 }}
+              ListEmptyComponent={
+                <Text className="p-3 text-sm text-muted-foreground">No messages yet.</Text>
+              }
               renderItem={({ item }) => (
-                <View style={styles.noteCard}>
-                  <View style={styles.noteMetaRow}>
-                    <View style={styles.authorTag}>
-                      <Text style={styles.authorTagText}>{getAuthorLabel(item)}</Text>
+                <View className="w-full rounded-2xl border border-border bg-card p-4 mb-3 gap-2">
+                  <View className="flex-row items-center justify-between gap-2">
+                    <View className="bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1 max-w-[68%]">
+                      <Text className="text-xs font-bold text-emerald-700">{getAuthorLabel(item)}</Text>
                     </View>
-                    <Text style={styles.noteTimestamp}>{new Date(item.createdAt).toLocaleString()}</Text>
+                    <Text className="text-xs text-muted-foreground">
+                      {new Date(item.createdAt).toLocaleString()}
+                    </Text>
                   </View>
-                  {item.content ? <Text style={styles.noteContent}>{item.content}</Text> : null}
+                  {item.content ? (
+                    <Text className="text-base text-foreground leading-6">{item.content}</Text>
+                  ) : null}
                   {(item.attachments ?? []).map((attachment) => (
-                    <View key={attachment.id} style={styles.attachmentWrap}>
+                    <View key={attachment.id} className="mb-2">
                       {attachment.mimeType.startsWith("image/") ? (
                         <Pressable onPress={() => setPreviewImageUrl(toAttachmentUrl(attachment.url))}>
                           <AppImage
@@ -160,12 +270,29 @@ export default function PatientChatModal({ visible, onClose, notes, sending = fa
                             contentFit="cover"
                           />
                         </Pressable>
-                      ) : (
-                        <View style={styles.fileChip}>
-                          <Text style={styles.fileLabel}>
+                      ) : attachment.mimeType.startsWith("audio/") ? (
+                        <Pressable
+                          className="min-h-[34px] rounded-xl border border-slate-300 bg-slate-100 justify-center px-3"
+                          onPress={() => {
+                            setPreviewAudio({
+                              url: toAttachmentUrl(attachment.url),
+                              filename: attachment.filename,
+                            });
+                          }}
+                        >
+                          <Text className="text-[12px] font-semibold text-foreground">
                             {attachment.kind} • {attachment.filename}
                           </Text>
-                        </View>
+                        </Pressable>
+                      ) : (
+                        <Pressable
+                          className="min-h-[34px] rounded-xl border border-slate-300 bg-slate-100 justify-center px-3"
+                          onPress={() => void Linking.openURL(toAttachmentUrl(attachment.url))}
+                        >
+                          <Text className="text-[12px] font-semibold text-foreground">
+                            {attachment.kind} • {attachment.filename}
+                          </Text>
+                        </Pressable>
                       )}
                     </View>
                   ))}
@@ -206,6 +333,29 @@ export default function PatientChatModal({ visible, onClose, notes, sending = fa
           </Pressable>
         </Pressable>
       </Modal>
+      <Modal visible={Boolean(previewAudio)} transparent animationType="fade">
+        <Pressable style={styles.previewOverlay} onPress={() => void closeAudioModal()}>
+          <Pressable style={styles.audioCard} onPress={(event) => event.stopPropagation()}>
+            <Text style={styles.audioTitle}>Audio Attachment</Text>
+            <Text style={styles.audioFileName}>{previewAudio?.filename}</Text>
+            <Text style={styles.audioTime}>
+              {formatMs(audioPositionMs)} / {formatMs(audioDurationMs)}
+            </Text>
+            {audioError ? <Text style={styles.audioError}>{audioError}</Text> : null}
+            <View style={styles.audioActions}>
+              <Pressable
+                style={styles.audioActionButton}
+                onPress={() => void toggleAudioPlayback()}
+                disabled={audioLoading}
+              >
+                <Text style={styles.audioActionText}>
+                  {audioLoading ? "Loading..." : isAudioPlaying ? "Pause" : "Play"}
+                </Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </>
   );
 }
@@ -213,79 +363,14 @@ export default function PatientChatModal({ visible, onClose, notes, sending = fa
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { flex: 1, backgroundColor: "#FCFCFC", paddingTop: 12, paddingHorizontal: 16 },
-  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 },
-  backButton: {
-    height: 40,
-    width: 40,
-    borderRadius: 20,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerSpacer: { width: 40, height: 40 },
-  title: { fontSize: 22, fontWeight: "700", color: "#111827" },
-  timeline: { flex: 1, marginTop: 12 },
-  timelineContent: { paddingBottom: 12, gap: 8 },
-  emptyText: { color: "#64748B" },
-  noteCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    backgroundColor: "#FFFFFF",
-    padding: 16,
-    marginBottom: 10,
-    gap: 8,
-  },
-  noteMetaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 10,
-  },
-  authorTag: {
-    backgroundColor: "#ECFDF5",
-    borderColor: "#A7F3D0",
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    maxWidth: "68%",
-  },
-  authorTagText: {
-    color: "#065F46",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  noteTimestamp: {
-    fontSize: 12,
-    color: "#636363",
-  },
-  noteContent: {
-    fontSize: 14,
-    color: "#000000",
-    lineHeight: 20,
-  },
-  attachmentWrap: { gap: 6 },
   imageThumb: {
     width: "100%",
     height: 160,
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "#CBD5E1",
     backgroundColor: "#E2E8F0",
   },
-  fileChip: {
-    minHeight: 34,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#CBD5E1",
-    justifyContent: "center",
-    paddingHorizontal: 10,
-    backgroundColor: "#F8FAFC",
-  },
-  fileLabel: { color: "#0F172A", fontSize: 12, fontWeight: "500" },
   previewOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.85)",
@@ -295,6 +380,48 @@ const styles = StyleSheet.create({
   },
   previewContent: { width: "100%", height: "80%" },
   previewImage: { width: "100%", height: "100%", borderRadius: 12 },
+  audioCard: {
+    width: "100%",
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    padding: 16,
+    gap: 10,
+  },
+  audioTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#111827",
+  },
+  audioFileName: {
+    color: "#334155",
+    fontSize: 13,
+  },
+  audioTime: {
+    color: "#0F172A",
+    fontWeight: "600",
+  },
+  audioError: {
+    color: "#DC2626",
+    fontSize: 12,
+  },
+  audioActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  audioActionButton: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: 8,
+    backgroundColor: "#EEF2FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  audioActionText: {
+    color: "#3730A3",
+    fontWeight: "700",
+  },
 });
 
 function getAuthorLabel(note: BookingNote) {

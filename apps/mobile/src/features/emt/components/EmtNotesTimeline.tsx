@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { EmtNote } from "@ambulink/types";
 import { FlatList, Linking, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { env } from "../../../../env";
@@ -19,6 +19,26 @@ export default function EmtNotesTimeline({ notes, currentEmtId }: Props) {
   const [audioLoading, setAudioLoading] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
   const soundRef = useRef<Audio.Sound | null>(null);
+  const releaseSound = useCallback(async () => {
+    const sound = soundRef.current;
+    if (!sound) return;
+    try {
+      await sound.stopAsync();
+    } catch {
+      // ignore
+    }
+    try {
+      await sound.setPositionAsync(0);
+    } catch {
+      // ignore
+    }
+    try {
+      await sound.unloadAsync();
+    } catch {
+      // ignore
+    }
+    soundRef.current = null;
+  }, []);
 
   const apiOrigin = env.EXPO_PUBLIC_API_SERVER_URL.replace(/\/api\/?$/, "");
   const toAttachmentUrl = (rawUrl: string) => {
@@ -47,20 +67,15 @@ export default function EmtNotesTimeline({ notes, currentEmtId }: Props) {
   );
 
   useEffect(() => {
-    const release = async () => {
-      if (!soundRef.current) return;
-      try {
-        await soundRef.current.unloadAsync();
-      } finally {
-        soundRef.current = null;
-      }
+    const handlePreviewChange = async () => {
+      await releaseSound();
+      setAudioPlaying(false);
+      setAudioPositionMs(0);
+      setAudioDurationMs(0);
+      setAudioError(null);
     };
-    void release();
-    setAudioPlaying(false);
-    setAudioPositionMs(0);
-    setAudioDurationMs(0);
-    setAudioError(null);
-  }, [previewAudio?.url]);
+    void handlePreviewChange();
+  }, [previewAudio?.url, releaseSound]);
 
   useEffect(() => {
     if (!previewAudio) return;
@@ -86,12 +101,9 @@ export default function EmtNotesTimeline({ notes, currentEmtId }: Props) {
 
   useEffect(() => {
     return () => {
-      if (soundRef.current) {
-        void soundRef.current.unloadAsync();
-        soundRef.current = null;
-      }
+      void releaseSound();
     };
-  }, []);
+  }, [releaseSound]);
 
   const onAudioStatus = (status: Audio.AVPlaybackStatus) => {
     if (!status.isLoaded) return;
@@ -121,19 +133,13 @@ export default function EmtNotesTimeline({ notes, currentEmtId }: Props) {
     }
   };
 
-  const stopAudioPlayback = async () => {
-    if (!soundRef.current) return;
-    try {
-      await soundRef.current.stopAsync();
-      await soundRef.current.setPositionAsync(0);
-    } catch {
-      // ignore playback stop errors
-    }
-  };
-
   const closeAudioModal = async () => {
-    await stopAudioPlayback();
+    await releaseSound();
     setPreviewAudio(null);
+    setAudioPlaying(false);
+    setAudioPositionMs(0);
+    setAudioDurationMs(0);
+    setAudioError(null);
   };
 
   const formatMs = (value: number) => {
@@ -155,65 +161,71 @@ export default function EmtNotesTimeline({ notes, currentEmtId }: Props) {
         style={styles.list}
         contentContainerStyle={formattedNotes.length === 0 ? styles.emptyContent : styles.content}
         ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No notes yet. Add the first update.</Text>
+          <View className="py-6">
+            <Text className="text-sm text-muted-foreground">No notes yet. Add the first update.</Text>
           </View>
         }
         renderItem={({ item }) => (
-          <View style={styles.noteCard}>
-            <View style={styles.noteMetaRow}>
-              <View style={styles.authorTag}>
-                <Text style={styles.authorTagText}>{getNoteAuthorLabel(item, currentEmtId)}</Text>
+          <View className="mb-3 rounded-2xl border border-border bg-white p-4">
+            <View className="flex-row items-center justify-between gap-2.5">
+              <View className="max-w-[68%] rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1">
+                <Text className="text-xs font-bold text-emerald-800">
+                  {getNoteAuthorLabel(item, currentEmtId)}
+                </Text>
               </View>
-              <Text style={styles.noteTimestamp}>{item.formattedCreatedAt}</Text>
+              <Text className="text-xs text-muted-foreground">{item.formattedCreatedAt}</Text>
             </View>
-            <Text style={styles.noteContent}>{item.content}</Text>
+            <Text className="mt-2.5 leading-5 text-sm text-foreground">{item.content}</Text>
             {(item.attachments ?? []).length > 0 ? (
-              <View style={styles.attachments}>
-                {item.attachments?.map((attachment) => (
-                  <View key={attachment.id} style={styles.attachmentWrap}>
-                    {attachment.mimeType.startsWith("image/") ? (
-                      <Pressable
-                        onPress={() => setPreviewImageUrl(toAttachmentUrl(attachment.url))}
-                      >
-                        <AppImage
-                          source={{
-                            uri: toAttachmentUrl(attachment.url),
-                          }}
-                          style={styles.imageThumb}
-                          contentFit="cover"
-                        />
-                      </Pressable>
-                    ) : (
-                      <Pressable
-                        style={styles.attachmentChip}
-                        onPress={() => {
-                          if (attachment.mimeType.startsWith("audio/")) {
-                            setPreviewAudio({
-                              url: toAttachmentUrl(attachment.url),
-                              filename: attachment.filename,
-                            });
-                            return;
-                          }
-                          Linking.openURL(toAttachmentUrl(attachment.url));
+              <View className="mt-2.5 flex-col gap-1.5">
+                {item.attachments?.map((attachment) =>
+                  attachment.mimeType.startsWith("image/") ? (
+                    <Pressable
+                      key={attachment.id}
+                      onPress={() => setPreviewImageUrl(toAttachmentUrl(attachment.url))}
+                      className="overflow-hidden rounded-xl"
+                    >
+                      <AppImage
+                        source={{
+                          uri: toAttachmentUrl(attachment.url),
                         }}
-                      >
-                        <Text style={styles.attachmentText}>
-                          {attachment.kind} • {attachment.filename}
-                        </Text>
-                      </Pressable>
-                    )}
-                  </View>
-                ))}
+                        style={styles.imageThumb}
+                        contentFit="cover"
+                      />
+                    </Pressable>
+                  ) : (
+                    <Pressable
+                      key={attachment.id}
+                      className="min-h-[34px] rounded-xl border border-border bg-slate-50 items-center justify-center px-3"
+                      onPress={() => {
+                        if (attachment.mimeType.startsWith("audio/")) {
+                          setPreviewAudio({
+                            url: toAttachmentUrl(attachment.url),
+                            filename: attachment.filename,
+                          });
+                          return;
+                        }
+                        Linking.openURL(toAttachmentUrl(attachment.url));
+                      }}
+                    >
+                      <Text className="text-xs font-medium text-slate-900">
+                        {attachment.kind} • {attachment.filename}
+                      </Text>
+                    </Pressable>
+                  )
+                )}
               </View>
             ) : null}
           </View>
         )}
       />
       <Modal visible={Boolean(previewImageUrl)} transparent animationType="fade">
-        <View style={styles.previewOverlay}>
-          <Pressable style={styles.previewClose} onPress={() => setPreviewImageUrl(null)}>
-            <Text style={styles.previewCloseText}>Close</Text>
+        <View className="flex-1 items-center justify-center bg-black/85 p-5">
+          <Pressable
+            className="absolute top-14 right-5 z-10 rounded-xl bg-white/95 px-3 py-2"
+            onPress={() => setPreviewImageUrl(null)}
+          >
+            <Text className="font-bold text-gray-900">Close</Text>
           </Pressable>
           {previewImageUrl ? (
             <AppImage
@@ -225,21 +237,29 @@ export default function EmtNotesTimeline({ notes, currentEmtId }: Props) {
         </View>
       </Modal>
       <Modal visible={Boolean(previewAudio)} transparent animationType="fade">
-        <Pressable style={styles.previewOverlay} onPress={() => void closeAudioModal()}>
-          <Pressable style={styles.audioCard} onPress={(event) => event.stopPropagation()}>
-            <Text style={styles.audioTitle}>Audio Attachment</Text>
-            <Text style={styles.audioFileName}>{previewAudio?.filename}</Text>
-            <Text style={styles.audioTime}>
+        <Pressable
+          className="flex-1 items-center justify-center bg-black/85 p-5"
+          onPress={() => void closeAudioModal()}
+        >
+          <Pressable
+            className="w-full rounded-2xl border border-border bg-white p-4 gap-2.5"
+            onPress={(event) => event.stopPropagation()}
+          >
+            <Text className="text-lg font-bold text-foreground">Audio Attachment</Text>
+            <Text className="text-sm text-slate-600">{previewAudio?.filename}</Text>
+            <Text className="text-base font-semibold text-foreground">
               {formatMs(audioPositionMs)} / {formatMs(audioDurationMs)}
             </Text>
-            {audioError ? <Text style={styles.audioError}>{audioError}</Text> : null}
-            <View style={styles.audioActions}>
+            {audioError ? (
+              <Text className="text-xs font-semibold text-destructive">{audioError}</Text>
+            ) : null}
+            <View className="flex-row gap-2">
               <Pressable
-                style={styles.audioActionButton}
+                className="flex-1 min-h-[40px] rounded-xl bg-indigo-100 items-center justify-center"
                 onPress={() => void toggleAudioPlayback()}
                 disabled={audioLoading}
               >
-                <Text style={styles.audioActionText}>
+                <Text className="text-indigo-700 font-bold">
                   {audioLoading ? "Loading..." : isAudioPlaying ? "Pause" : "Play"}
                 </Text>
               </Pressable>
@@ -264,58 +284,6 @@ const styles = StyleSheet.create({
     paddingTop: 4,
     paddingBottom: 10,
   },
-  emptyState: {
-    paddingVertical: 24,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: "#636363",
-  },
-  noteCard: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-  },
-  noteContent: {
-    fontSize: 14,
-    color: "#000000",
-    lineHeight: 20,
-    marginTop: 10,
-  },
-  noteMetaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 10,
-  },
-  authorTag: {
-    backgroundColor: "#ECFDF5",
-    borderColor: "#A7F3D0",
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    maxWidth: "68%",
-  },
-  authorTagText: {
-    color: "#065F46",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  noteTimestamp: {
-    fontSize: 12,
-    color: "#636363",
-  },
-  attachments: {
-    marginTop: 10,
-    gap: 6,
-  },
-  attachmentWrap: {
-    gap: 6,
-  },
   imageThumb: {
     width: "100%",
     height: 160,
@@ -324,87 +292,10 @@ const styles = StyleSheet.create({
     borderColor: "#CBD5E1",
     backgroundColor: "#E2E8F0",
   },
-  attachmentChip: {
-    minHeight: 34,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#CBD5E1",
-    justifyContent: "center",
-    paddingHorizontal: 10,
-    backgroundColor: "#F8FAFC",
-  },
-  attachmentText: {
-    color: "#0F172A",
-    fontSize: 12,
-    fontWeight: "500",
-  },
-  previewOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.85)",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-  },
   previewImage: {
     width: "100%",
     height: "80%",
     borderRadius: 12,
-  },
-  previewClose: {
-    position: "absolute",
-    top: 54,
-    right: 20,
-    zIndex: 3,
-    backgroundColor: "rgba(255,255,255,0.95)",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  previewCloseText: {
-    color: "#111827",
-    fontWeight: "700",
-  },
-  audioCard: {
-    width: "100%",
-    borderRadius: 12,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    padding: 16,
-    gap: 10,
-  },
-  audioTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#111827",
-  },
-  audioFileName: {
-    color: "#334155",
-    fontSize: 13,
-  },
-  audioTime: {
-    color: "#0F172A",
-    fontWeight: "600",
-  },
-  audioError: {
-    color: "#DC2626",
-    fontSize: 12,
-  },
-  audioActions: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  audioActionButton: {
-    flex: 1,
-    minHeight: 40,
-    borderRadius: 8,
-    backgroundColor: "#EEF2FF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  audioActionText: {
-    color: "#3730A3",
-    fontWeight: "700",
   },
 });
 
