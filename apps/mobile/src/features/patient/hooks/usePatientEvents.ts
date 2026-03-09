@@ -1,4 +1,4 @@
-import { BookingStatus, Point, User, Hospital } from "@ambulink/types";
+import { BookingStatus, Point, User, Hospital, BookingNote } from "@ambulink/types";
 import { Alert } from "react-native";
 import { addBookingHistory } from "@/common/utils/bookingHistory";
 import { useCallback, useEffect } from "react";
@@ -10,7 +10,8 @@ export const usePatientEvents = (
   setStatus: React.Dispatch<React.SetStateAction<BookingStatus>>,
   setIsCancelling: React.Dispatch<React.SetStateAction<boolean>>,
   setIsBooking: React.Dispatch<React.SetStateAction<boolean>>,
-  setCompletedAt: React.Dispatch<React.SetStateAction<number | null>>
+  setCompletedAt: React.Dispatch<React.SetStateAction<number | null>>,
+  appendNote: (bookingId: string, note: BookingNote) => void
 ) => {
   const onBookingAssigned = useCallback(
     (data: {
@@ -36,6 +37,7 @@ export const usePatientEvents = (
         location: Point | null;
       };
       provider: { id: string; name: string; hotlineNumber: string | null } | null;
+      emtNotes?: BookingNote[];
     }) => {
       if (!data) return;
       setBooking({
@@ -66,6 +68,7 @@ export const usePatientEvents = (
               hotlineNumber: data.provider.hotlineNumber ?? undefined,
             }
           : null,
+        notes: data.emtNotes ?? [],
       });
       setStatus(data.status);
       setIsBooking(false);
@@ -176,6 +179,14 @@ export const usePatientEvents = (
     [setIsBooking, setBooking, setCompletedAt]
   );
 
+  const onBookingNotes = useCallback(
+    (payload: { bookingId: string; note: BookingNote }) => {
+      if (!payload?.bookingId || !payload.note) return;
+      appendNote(payload.bookingId, payload.note);
+    },
+    [appendNote]
+  );
+
   useEffect(() => {
     if (!socket) return;
 
@@ -186,6 +197,7 @@ export const usePatientEvents = (
     socket.on("booking:cancelled", onBookingCancelled);
     socket.on("booking:cancel:error", onBookingCancelError);
     socket.on("booking:failed", onBookingFailed);
+    socket.on("booking:notes", onBookingNotes);
 
     return () => {
       socket.off("booking:assigned", onBookingAssigned);
@@ -195,6 +207,7 @@ export const usePatientEvents = (
       socket.off("booking:cancelled", onBookingCancelled);
       socket.off("booking:cancel:error", onBookingCancelError);
       socket.off("booking:failed", onBookingFailed);
+      socket.off("booking:notes", onBookingNotes);
     };
   }, [
     socket,
@@ -204,6 +217,7 @@ export const usePatientEvents = (
     onBookingCancelled,
     onBookingCompleted,
     onBookingFailed,
+    onBookingNotes,
     onDriverUpdate,
   ]);
 };
@@ -214,4 +228,5 @@ type PatientBooking = {
   pickedDriver: User;
   hospital: Hospital;
   provider?: { id: string; name: string; hotlineNumber?: string } | null;
+  notes?: BookingNote[];
 };

@@ -47,6 +47,22 @@ export default function PersonalSection() {
           />
         </View>
 
+        <View className="mb-4">
+          <Text className="text-sm font-medium text-muted-foreground mb-1.5">
+            {i18n.t("settings.personal.age")}
+          </Text>
+          <TextInput
+            className="border border-border rounded-xl p-3 text-sm text-foreground"
+            keyboardType="numeric"
+            value={settings.age === null ? "" : String(settings.age)}
+            onChangeText={(v) => {
+              const digits = v.replace(/[^0-9]/g, "");
+              updateSetting("age", digits === "" ? null : Number(digits));
+            }}
+            placeholder={i18n.t("settings.personal.enterAge")}
+          />
+        </View>
+
         {/* Email Static View */}
         <View className="mb-4">
           <Text className="text-sm font-medium text-muted-foreground mb-1.5">

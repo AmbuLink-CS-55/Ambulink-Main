@@ -3,8 +3,10 @@ import { ActivityIndicator, Alert, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useLocation } from "@/common/hooks/useLocation";
-import { UserMap } from "@/features/patient/components";
-import { BookingPickerList, EmtBottomActions, EmtSearchBar } from "@/features/emt/components";
+import UserMap from "@/features/patient/components/UserMap";
+import BookingPickerList from "@/features/emt/components/BookingPickerList";
+import EmtBottomActions from "@/features/emt/components/EmtBottomActions";
+import EmtSearchBar from "@/features/emt/components/EmtSearchBar";
 import { useEmtBookingState } from "@/features/emt/hooks/useEmtBookingState";
 
 export default function EmtMapScreen() {

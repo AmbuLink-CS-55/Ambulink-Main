@@ -1,5 +1,6 @@
 import { View, ScrollView, Text } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import i18n from "@/common/i18n/i18n";
 import { SettingsProvider, useSettings } from "@/common/hooks/SettingsContext";
 
@@ -27,6 +28,7 @@ export default function Settings() {
 
 function SettingsContent() {
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const {
     loaded,
     settings,
@@ -64,7 +66,7 @@ function SettingsContent() {
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingTop: 7,
-          paddingBottom: Math.max(insets.bottom + 88, 96),
+          paddingBottom: Math.max(tabBarHeight + insets.bottom + 16, 96),
         }}
       >
         <View>

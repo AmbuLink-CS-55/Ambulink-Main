@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { useEntityFormDialog } from "@/hooks/use-entity-form-dialog";
 import { useCreateEmt, useGetEmts, useUpdateEmt } from "@/services/emt.service";
 import type { User } from "@/lib/types";
-import { createEmtColumns } from "@/pages/emts/components";
+import { createEmtColumns } from "@/pages/emts/components/emt-columns";
 import {
   CreateEmtDialog,
   EditEmtDialog,
   type EmtFormState,
-} from "@/pages/emts/components";
+} from "@/pages/emts/components/EmtFormDialog";
 import env from "@/../env";
 
 const initialForm: EmtFormState = {

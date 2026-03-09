@@ -8,28 +8,31 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFiles,
+  UseInterceptors,
 } from "@nestjs/common";
+import { FilesInterceptor } from "@nestjs/platform-express";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
 import {
   createEmtSchema,
   emtListQuerySchema,
   emtAddNoteSchema,
+  emtAddNoteMediaBodySchema,
   emtBookingSearchQuerySchema,
   emtSubscribeSchema,
   updateEmtSchema,
   type CreateEmtDto,
   type EmtAddNoteDto,
+  type EmtAddNoteMediaBodyDto,
   type EmtBookingSearchQueryDto,
   type EmtListQueryDto,
   type EmtSubscribeDto,
   type UpdateEmtDto,
 } from "@/common/validation/schemas";
-import {
-  emtAddNoteHttpBodySchema,
-  emtSubscribeHttpBodySchema,
-} from "@/common/validation/socket.schemas";
+import { emtSubscribeHttpBodySchema } from "@/common/validation/socket.schemas";
 import { EmtCommandService } from "./emt-command.service";
 import { EmtService } from "./emt.service";
+import type { UploadedMediaFile } from "../booking/booking-media.service";
 
 @Controller("api/emts")
 export class EmtController {
@@ -88,16 +91,28 @@ export class EmtController {
   }
 
   @Post("events/notes")
+  @UseInterceptors(FilesInterceptor("files", 5))
   async addNote(
     @Query("emtId") emtId: string | undefined,
-    @Body(Validate(emtAddNoteHttpBodySchema)) body: EmtAddNoteDto
+    @Body() rawBody: Record<string, unknown>,
+    @UploadedFiles() files: UploadedMediaFile[]
   ) {
     if (!emtId) {
       throw new BadRequestException("emtId is required");
     }
 
-    const parsed = emtAddNoteSchema.parse(body);
-    const note = await this.emtCommandService.addNote(emtId, parsed.bookingId, parsed.content);
+    const isMultipart = Array.isArray(files) && files.length > 0;
+    const parsed = isMultipart
+      ? (emtAddNoteMediaBodySchema.parse(rawBody) as EmtAddNoteMediaBodyDto)
+      : (emtAddNoteSchema.parse(rawBody as EmtAddNoteDto) as EmtAddNoteDto);
+
+    const note = await this.emtCommandService.addNote({
+      emtId,
+      bookingId: parsed.bookingId,
+      content: parsed.content,
+      files: files ?? [],
+      durationMs: "durationMs" in parsed ? parsed.durationMs : undefined,
+    });
     return { note };
   }
 

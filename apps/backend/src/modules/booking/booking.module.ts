@@ -6,6 +6,7 @@ import { BookingRepository } from "./booking.repository";
 import { DriverRepository } from "../driver/driver.repository";
 import { PatientRepository } from "../patient/patient.repository";
 import { HospitalRepository } from "../hospital/hospital.repository";
+import { BookingMediaService } from "./booking-media.service";
 
 @Module({
   imports: [DispatcherCoreModule],
@@ -13,10 +14,11 @@ import { HospitalRepository } from "../hospital/hospital.repository";
   providers: [
     BookingService,
     BookingRepository,
+    BookingMediaService,
     DriverRepository,
     PatientRepository,
     HospitalRepository,
   ],
-  exports: [BookingService],
+  exports: [BookingService, BookingMediaService],
 })
 export class BookingModule {}

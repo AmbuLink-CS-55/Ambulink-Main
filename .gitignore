@@ -7,3 +7,5 @@ dist
 node_modules
 .expo
 apps/backend/test-results
+ambulink-booking-media/
+apps/backend/booking-media/

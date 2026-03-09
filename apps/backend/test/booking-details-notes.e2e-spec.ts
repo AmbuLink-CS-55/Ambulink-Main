@@ -120,4 +120,92 @@ describe("Booking details and notes (integration)", () => {
     expect(booking?.status).toBe("COMPLETED");
     expect(booking?.ongoing).toBe(false);
   });
+
+  it("binds patient draft uploads on booking assignment and protects attachment access", async () => {
+    const [hospital] = await dbService.db.select({ id: hospitals.id }).from(hospitals).limit(1);
+
+    const sessionResponse = await request(app.getHttpServer())
+      .post("/api/patients/events/upload-session/start")
+      .query({ patientId: USER_SEED_IDS.patientPrimary })
+      .expect(201);
+
+    const sessionId: string = sessionResponse.body.uploadSessionId;
+    expect(sessionId).toBeDefined();
+
+    await request(app.getHttpServer())
+      .post(`/api/patients/events/upload-session/${sessionId}/files`)
+      .query({ patientId: USER_SEED_IDS.patientPrimary })
+      .field("content", "Patient uploaded before assignment")
+      .attach("files", Buffer.from("fake-image"), {
+        filename: "pre-assign.jpg",
+        contentType: "image/jpeg",
+      })
+      .expect(201);
+
+    const assignResponse = await request(app.getHttpServer())
+      .post("/api/booking/manual-assign")
+      .send({
+        dispatcherId: USER_SEED_IDS.dispatcherOne,
+        patientId: USER_SEED_IDS.patientPrimary,
+        driverId: USER_SEED_IDS.driverOne,
+        hospitalId: hospital.id,
+        pickupLocation: { x: 79.86, y: 6.92 },
+      })
+      .expect(201);
+
+    const bookingId: string = assignResponse.body.bookingId;
+    const detailsResponse = await request(app.getHttpServer())
+      .get(`/api/booking/${bookingId}/details`)
+      .query({ dispatcherId: USER_SEED_IDS.dispatcherOne })
+      .expect(200);
+
+    const patientMediaNote = detailsResponse.body.notes.find(
+      (entry: { authorRole: string; attachments?: Array<{ id: string }> }) =>
+        entry.authorRole === "PATIENT" && (entry.attachments?.length ?? 0) > 0
+    );
+    expect(patientMediaNote).toBeDefined();
+
+    const attachmentId = patientMediaNote.attachments[0].id;
+    await request(app.getHttpServer())
+      .get(`/api/booking/${bookingId}/attachments/${attachmentId}`)
+      .query({ dispatcherId: USER_SEED_IDS.dispatcherOne })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get(`/api/booking/${bookingId}/attachments/${attachmentId}`)
+      .query({ dispatcherId: USER_SEED_IDS.dispatcherTwo })
+      .expect(403);
+  });
+
+  it("rejects patient media uploads when booking is completed", async () => {
+    const [hospital] = await dbService.db.select({ id: hospitals.id }).from(hospitals).limit(1);
+
+    const assignResponse = await request(app.getHttpServer())
+      .post("/api/booking/manual-assign")
+      .send({
+        dispatcherId: USER_SEED_IDS.dispatcherOne,
+        patientId: USER_SEED_IDS.patientPrimary,
+        driverId: USER_SEED_IDS.driverOne,
+        hospitalId: hospital.id,
+        pickupLocation: { x: 79.86, y: 6.92 },
+      })
+      .expect(201);
+
+    const bookingId: string = assignResponse.body.bookingId;
+
+    await request(app.getHttpServer())
+      .post("/api/drivers/events/completed")
+      .query({ driverId: USER_SEED_IDS.driverOne })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post(`/api/patients/events/booking/${bookingId}/notes`)
+      .query({ patientId: USER_SEED_IDS.patientPrimary })
+      .field("content", "Late upload")
+      .attach("files", Buffer.from("audio"), {
+        filename: "late.m4a",
+        contentType: "audio/mp4",
+      })
+      .expect(400);
+  });
 });

@@ -15,6 +15,8 @@ export default defineConfig({
     tailwindcss(),
   ],
   resolve: {
+    // dashboard dependencies should share the root React copy.
+    dedupe: ["react", "react-dom", "scheduler"],
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },

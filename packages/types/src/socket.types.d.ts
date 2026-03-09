@@ -1,6 +1,7 @@
 export type PatientSettingsData = {
   profileName: string;
   profileMobile: string;
+  age: number | null;
   profileImage: string | null;
   bloodType: string;
   selectedAllergies: string[];
@@ -27,11 +28,22 @@ export type BookingNote = {
   bookingId: string;
   authorId: string;
   authorName?: string | null;
-  authorRole: "EMT" | "DISPATCHER";
+  authorRole: "EMT" | "DISPATCHER" | "PATIENT";
   content: string;
+  type?: "TEXT" | "MEDIA";
+  attachments?: BookingAttachment[];
   createdAt: string;
 };
 export type EmtNote = BookingNote;
+export type BookingAttachment = {
+  id: string;
+  kind: "IMAGE" | "VIDEO" | "AUDIO";
+  mimeType: string;
+  sizeBytes: number;
+  filename: string;
+  url: string;
+  durationMs?: number;
+};
 export type EmtSubscribePayload = {
   bookingId: string;
 };
@@ -289,6 +301,7 @@ export interface ServerToPatientEvents {
   "booking:assigned": (data: BookingAssignedPayload) => void;
   "booking:arrived": (data: BookingEventPayload) => void;
   "booking:completed": (data: BookingEventPayload) => void;
+  "booking:notes": (data: { bookingId: string; note: BookingNote }) => void;
   "booking:cancelled": (data: { bookingId: string; message: string }) => void;
   "booking:cancel:error": (data: ErrorPayload) => void;
   "socket:error": (data: SocketErrorPayload) => void;

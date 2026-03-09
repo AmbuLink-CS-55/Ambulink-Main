@@ -13,6 +13,7 @@ import { DbExecutor, DbService } from "@/core/database/db.service";
 import { DispatcherService } from "../dispatcher/dispatcher.service";
 import { NotificationService } from "@/core/socket/notification.service";
 import type {
+  BookingAttachment,
   BookingDetailsPayload,
   BookingLogEntry,
   BookingNote,
@@ -30,6 +31,8 @@ import { BookingRepository } from "./booking.repository";
 import { DriverRepository } from "../driver/driver.repository";
 import { PatientRepository } from "../patient/patient.repository";
 import { HospitalRepository } from "../hospital/hospital.repository";
+import { BookingMediaService } from "./booking-media.service";
+import type { UploadedMediaFile } from "./booking-media.service";
 
 const bookingError = (code: string, message: string) => ({ code, message });
 
@@ -47,6 +50,7 @@ export class BookingService {
     private notificationService: NotificationService,
     private dispatcherApprovalService: DispatcherApprovalService,
     private bookingRepository: BookingRepository,
+    private bookingMediaService: BookingMediaService,
     private driverRepository: DriverRepository,
     private patientRepository: PatientRepository,
     private hospitalRepository: HospitalRepository
@@ -141,6 +145,8 @@ export class BookingService {
       await this.driverRepository.setDriverStatus(driver.id, "BUSY", tx);
       return { bookingId: created.bookingId, patientId: patient.id };
     });
+
+    await this.bindPatientDraftUploads(booking.patientId, booking.bookingId);
 
     const assignedPayload = await this.buildAssignedBookingPayload(booking.bookingId);
     const dispatcherPayload = await this.buildDispatcherBookingPayload(booking.bookingId);
@@ -713,6 +719,22 @@ export class BookingService {
     return this.bookingRepository.getEmtsSubscribedToBooking(bookingId);
   }
 
+  async startPatientUploadSession(patientId: string) {
+    await this.getPatientOrThrow(patientId);
+    return this.bookingMediaService.startUploadSession(patientId);
+  }
+
+  async appendPatientUploadSessionFiles(params: {
+    patientId: string;
+    sessionId: string;
+    content?: string | null;
+    files: UploadedMediaFile[];
+    durationMs?: number | null;
+  }) {
+    await this.getPatientOrThrow(params.patientId);
+    return this.bookingMediaService.appendSessionFiles(params);
+  }
+
   async appendBookingNote(bookingId: string, note: BookingNote) {
     const [updated] = await this.bookingRepository.appendBookingNote(bookingId, note);
     return updated;
@@ -799,6 +821,8 @@ export class BookingService {
       authorName: dispatcher.fullName ?? "Dispatcher",
       authorRole: "DISPATCHER",
       content,
+      type: "TEXT",
+      attachments: [],
       createdAt: new Date().toISOString(),
     };
 
@@ -816,7 +840,178 @@ export class BookingService {
       this.notificationService.notifyEmt(subscriber.emtId, "booking:notes", { bookingId, note });
     }
 
+    if (booking.patientId) {
+      this.notificationService.notifyPatient(booking.patientId, "booking:notes", {
+        bookingId,
+        note,
+      });
+    }
+
     return note;
+  }
+
+  async addPatientBookingNote(params: {
+    bookingId: string;
+    patientId: string;
+    content?: string | null;
+    files: UploadedMediaFile[];
+    durationMs?: number | null;
+  }) {
+    const [booking] = await this.bookingRepository.getBookingDetailsRow(params.bookingId);
+    if (!booking) {
+      throw new NotFoundException(bookingError("BOOKING_NOT_FOUND", "Booking not found"));
+    }
+    if (booking.patientId !== params.patientId) {
+      throw new ForbiddenException(
+        bookingError("BOOKING_PATIENT_SCOPE", "Patient cannot access this booking")
+      );
+    }
+    if (!BookingService.ACTIVE_BOOKING_STATUSES.includes(booking.status)) {
+      throw new BadRequestException(
+        bookingError("BOOKING_NOT_ACTIVE", "Patient uploads are only allowed for active bookings")
+      );
+    }
+
+    const hasContent = Boolean(params.content && params.content.trim().length > 0);
+    if (!hasContent && params.files.length === 0) {
+      throw new BadRequestException(
+        bookingError("BOOKING_NOTE_EMPTY", "Text note or at least one file is required")
+      );
+    }
+
+    const patient = await this.getPatientOrThrow(params.patientId);
+    const note = await this.bookingMediaService.createBookingMediaNote({
+      bookingId: params.bookingId,
+      authorId: params.patientId,
+      authorName: patient.fullName ?? "Patient",
+      authorRole: "PATIENT",
+      content: params.content ?? "",
+      files: params.files,
+      durationMs: params.durationMs ?? null,
+    });
+
+    await this.bookingRepository.appendBookingNote(params.bookingId, note);
+    await this.notifyBookingNoteParticipants(
+      params.bookingId,
+      note,
+      booking.providerId ?? null,
+      booking.patientId
+    );
+    return note;
+  }
+
+  async buildEmtMediaNote(params: {
+    bookingId: string;
+    emtId: string;
+    emtName: string;
+    content?: string | null;
+    files: UploadedMediaFile[];
+    durationMs?: number | null;
+  }) {
+    return this.bookingMediaService.createBookingMediaNote({
+      bookingId: params.bookingId,
+      authorId: params.emtId,
+      authorName: params.emtName,
+      authorRole: "EMT",
+      content: params.content ?? "",
+      files: params.files,
+      durationMs: params.durationMs ?? null,
+    });
+  }
+
+  async bindPatientDraftUploads(patientId: string, bookingId: string) {
+    const patient = await this.getPatientOrThrow(patientId);
+    const notes = await this.bookingMediaService.bindSessionsToBooking({
+      patientId,
+      bookingId,
+      patientName: patient.fullName ?? "Patient",
+    });
+
+    if (notes.length === 0) return;
+    for (const note of notes) {
+      await this.bookingRepository.appendBookingNote(bookingId, note);
+    }
+  }
+
+  async getAttachmentForActor(
+    bookingId: string,
+    attachmentId: string,
+    actor: { patientId?: string; dispatcherId?: string; emtId?: string }
+  ) {
+    const [booking] = await this.bookingRepository.getBookingDetailsRow(bookingId);
+    if (!booking) {
+      throw new NotFoundException(bookingError("BOOKING_NOT_FOUND", "Booking not found"));
+    }
+
+    const notes = this.normalizeBookingNotes(booking.notes, bookingId);
+    const attachment = notes
+      .flatMap((note) => note.attachments ?? [])
+      .find((entry) => entry.id === attachmentId);
+
+    if (!attachment) {
+      throw new NotFoundException(bookingError("ATTACHMENT_NOT_FOUND", "Attachment not found"));
+    }
+
+    if (actor.patientId) {
+      if (booking.patientId !== actor.patientId) {
+        throw new ForbiddenException(
+          bookingError("BOOKING_PATIENT_SCOPE", "Patient cannot access this booking")
+        );
+      }
+      return this.bookingMediaService.getAttachmentFile(bookingId, attachment);
+    }
+
+    if (actor.dispatcherId) {
+      const dispatcher = await this.getDispatcherOrThrow(actor.dispatcherId);
+      if (!booking.providerId || booking.providerId !== dispatcher.providerId) {
+        throw new ForbiddenException(
+          bookingError(
+            "BOOKING_OUTSIDE_PROVIDER_SCOPE",
+            "Dispatcher cannot access booking outside provider scope"
+          )
+        );
+      }
+      return this.bookingMediaService.getAttachmentFile(bookingId, attachment);
+    }
+
+    if (actor.emtId) {
+      const emt = await this.getEmtOrThrow(actor.emtId);
+      if (emt.subscribedBookingId !== bookingId) {
+        throw new ForbiddenException(
+          bookingError("BOOKING_EMT_SCOPE", "EMT can only access subscribed booking attachments")
+        );
+      }
+      if (!booking.providerId || booking.providerId !== emt.providerId) {
+        throw new ForbiddenException(
+          bookingError("BOOKING_OUTSIDE_PROVIDER_SCOPE", "EMT cannot access outside provider scope")
+        );
+      }
+      return this.bookingMediaService.getAttachmentFile(bookingId, attachment);
+    }
+
+    throw new ForbiddenException(bookingError("BOOKING_ACCESS_DENIED", "Access denied"));
+  }
+
+  private async notifyBookingNoteParticipants(
+    bookingId: string,
+    note: BookingNote,
+    providerId: string | null,
+    patientId?: string | null
+  ) {
+    const emtSubscribers = await this.bookingRepository.getEmtsSubscribedToBooking(bookingId);
+    for (const subscriber of emtSubscribers) {
+      this.notificationService.notifyEmt(subscriber.emtId, "booking:notes", { bookingId, note });
+    }
+
+    if (patientId) {
+      this.notificationService.notifyPatient(patientId, "booking:notes", { bookingId, note });
+    }
+
+    if (!providerId) return;
+    const dispatcherIds = await this.dispatcherService.findAllLiveDispatchersByProvider(providerId);
+    for (const dispatcherId of dispatcherIds) {
+      this.notificationService.notifyDispatcher(dispatcherId, "booking:notes", { bookingId, note });
+    }
   }
 
   private normalizeBookingNotes(raw: unknown, bookingId: string): BookingNote[] {
@@ -827,15 +1022,37 @@ export class BookingService {
     for (const entry of raw) {
       if (!entry || typeof entry !== "object") continue;
       const note = entry as Partial<BookingNote>;
-      if (!note.id || !note.authorId || !note.content || !note.createdAt) continue;
+      if (!note.id || !note.authorId || typeof note.content !== "string" || !note.createdAt) {
+        continue;
+      }
+
+      const attachments = Array.isArray(note.attachments)
+        ? note.attachments.filter((entry): entry is BookingAttachment => {
+            if (!entry || typeof entry !== "object") return false;
+            const candidate = entry as Partial<BookingAttachment>;
+            return Boolean(
+              candidate.id &&
+              candidate.filename &&
+              candidate.mimeType &&
+              typeof candidate.sizeBytes === "number" &&
+              candidate.kind &&
+              candidate.url
+            );
+          })
+        : [];
+      const normalizedType = note.type === "MEDIA" || attachments.length > 0 ? "MEDIA" : "TEXT";
+      const normalizedRole =
+        note.authorRole === "DISPATCHER" || note.authorRole === "PATIENT" ? note.authorRole : "EMT";
 
       normalized.push({
         id: note.id,
         bookingId: note.bookingId ?? bookingId,
         authorId: note.authorId,
         authorName: note.authorName ?? null,
-        authorRole: note.authorRole ?? "EMT",
+        authorRole: normalizedRole,
         content: note.content,
+        type: normalizedType,
+        attachments,
         createdAt: note.createdAt,
       });
     }
@@ -869,6 +1086,41 @@ export class BookingService {
       fullName: dispatcher.fullName,
       providerId: dispatcher.providerId,
     };
+  }
+
+  private async getPatientOrThrow(patientId: string, db: DbExecutor = this.dbService.db) {
+    const [patient] = await db
+      .select({
+        id: users.id,
+        fullName: users.fullName,
+        role: users.role,
+      })
+      .from(users)
+      .where(and(eq(users.id, patientId), eq(users.role, "PATIENT")));
+
+    if (!patient) {
+      throw new NotFoundException(bookingError("PATIENT_NOT_FOUND", "Patient not found"));
+    }
+
+    return patient;
+  }
+
+  private async getEmtOrThrow(emtId: string, db: DbExecutor = this.dbService.db) {
+    const [emt] = await db
+      .select({
+        id: users.id,
+        providerId: users.providerId,
+        subscribedBookingId: users.subscribedBookingId,
+        role: users.role,
+      })
+      .from(users)
+      .where(and(eq(users.id, emtId), eq(users.role, "EMT")));
+
+    if (!emt) {
+      throw new NotFoundException(bookingError("EMT_NOT_FOUND", "EMT not found"));
+    }
+
+    return emt;
   }
 
   private async getDriverForDispatcherOrThrow(

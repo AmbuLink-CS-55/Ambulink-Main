@@ -2,7 +2,7 @@ import { Suspense, lazy } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { DashboardLayout } from "./pages/layouts/DashboardLayout";
 
 const Dashboard = lazy(() => import("./pages/dashboard/page"));
@@ -25,12 +25,13 @@ const queryClient = new QueryClient({
   },
 });
 
-const persister = createSyncStoragePersister({
-  storage: globalThis.localStorage,
+const persister = createAsyncStoragePersister({
+  // passing undifined skips the persister on builds
+  storage: typeof window !== "undefined" ? window.localStorage : undefined,
 });
 
 function PageLoader() {
-  return <></>;
+  return null;
 }
 
 export function App() {
@@ -49,15 +50,10 @@ export function App() {
 
             <Route element={<DashboardLayout />}>
               <Route path="/" element={<Dashboard />} />
-
               <Route path="/ambulances" element={<AmbulancesDashboard />} />
-
               <Route path="/drivers" element={<DriversDashboard />} />
-
               <Route path="/emts" element={<EmtsDashboard />} />
-
               <Route path="/patients" element={<PatientsDashboard />} />
-
               <Route path="/booking" element={<BookingLogPage />} />
             </Route>
           </Routes>

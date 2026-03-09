@@ -165,6 +165,49 @@ export const emtAddNoteSchema = z.object({
   content: z.string().trim().min(1).max(2000),
 });
 
+export const emtAddNoteMediaBodySchema = z.object({
+  bookingId: z.string().uuid(),
+  content: z.string().trim().max(2000).optional(),
+  durationMs: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(60 * 60 * 1000)
+    .optional(),
+});
+
+export const patientUploadSessionStartSchema = z.object({
+  patientId: z.string().uuid(),
+});
+
+export const patientSessionUploadQuerySchema = z.object({
+  patientId: z.string().uuid(),
+});
+
+export const patientBookingNoteQuerySchema = z.object({
+  patientId: z.string().uuid(),
+});
+
+export const patientBookingNoteBodySchema = z.object({
+  content: z.string().trim().max(2000).optional(),
+  durationMs: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(60 * 60 * 1000)
+    .optional(),
+});
+
+export const bookingAttachmentAccessQuerySchema = z
+  .object({
+    patientId: z.string().uuid().optional(),
+    dispatcherId: z.string().uuid().optional(),
+    emtId: z.string().uuid().optional(),
+  })
+  .refine((value) => Boolean(value.patientId || value.dispatcherId || value.emtId), {
+    message: "One actor id is required",
+  });
+
 export type CreatePatientDto = z.infer<typeof createPatientSchema>;
 export type UpdatePatientDto = z.infer<typeof updatePatientSchema>;
 
@@ -190,3 +233,9 @@ export type BookingAddNoteDto = z.infer<typeof bookingAddNoteSchema>;
 export type EmtBookingSearchQueryDto = z.infer<typeof emtBookingSearchQuerySchema>;
 export type EmtSubscribeDto = z.infer<typeof emtSubscribeSchema>;
 export type EmtAddNoteDto = z.infer<typeof emtAddNoteSchema>;
+export type EmtAddNoteMediaBodyDto = z.infer<typeof emtAddNoteMediaBodySchema>;
+export type PatientUploadSessionStartDto = z.infer<typeof patientUploadSessionStartSchema>;
+export type PatientSessionUploadQueryDto = z.infer<typeof patientSessionUploadQuerySchema>;
+export type PatientBookingNoteQueryDto = z.infer<typeof patientBookingNoteQuerySchema>;
+export type PatientBookingNoteBodyDto = z.infer<typeof patientBookingNoteBodySchema>;
+export type BookingAttachmentAccessQueryDto = z.infer<typeof bookingAttachmentAccessQuerySchema>;

@@ -1,7 +1,9 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Query, Res } from "@nestjs/common";
+import type { Response } from "express";
 import { BookingService } from "./booking.service";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
 import {
+  bookingAttachmentAccessQuerySchema,
   bookingAddNoteSchema,
   bookingDetailsQuerySchema,
   bookingListQuerySchema,
@@ -50,5 +52,19 @@ export class BookingController {
     @Body(Validate(bookingAddNoteSchema)) body: BookingAddNoteDto
   ) {
     return this.bookingService.addDispatcherNote(bookingId, body.dispatcherId, body.content);
+  }
+
+  @Get(":id/attachments/:attachmentId")
+  async attachment(
+    @Param("id") bookingId: string,
+    @Param("attachmentId") attachmentId: string,
+    @Query(Validate(bookingAttachmentAccessQuerySchema))
+    query: { patientId?: string; dispatcherId?: string; emtId?: string },
+    @Res() res: Response
+  ) {
+    const file = await this.bookingService.getAttachmentForActor(bookingId, attachmentId, query);
+    res.setHeader("Content-Type", file.mimeType);
+    res.setHeader("Content-Disposition", `inline; filename="${file.filename}"`);
+    res.sendFile(file.filePath);
   }
 }

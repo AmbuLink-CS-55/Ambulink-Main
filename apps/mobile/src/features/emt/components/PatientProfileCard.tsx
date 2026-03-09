@@ -61,6 +61,12 @@ export default function PatientProfileCard({ booking }: Props) {
 
         <SectionTitle title="Patient Profile" />
         <View className="gap-2">
+          <Row
+            label="Age"
+            value={
+              profile?.age === null || profile?.age === undefined ? "N/A" : String(profile.age)
+            }
+          />
           <Row label="Blood Type" value={profile?.bloodType ?? "N/A"} />
           <Row
             label="Allergies"

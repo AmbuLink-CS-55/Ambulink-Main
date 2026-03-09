@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { DispatcherBookingPayload } from "@/lib/socket-types";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 
 type RouteData = {
@@ -8,130 +8,68 @@ type RouteData = {
   durationSeconds: number;
 };
 
-const routeCache = new globalThis.Map<
-  string,
-  { coordinates: [number, number][]; durationSeconds: number; updatedAt: number }
->();
-const inflightRequests = new globalThis.Map<string, Promise<RouteData | null>>();
-const ROUTE_TTL = 1000 * 30;
-
-async function fetchRoute(start: [number, number], end: [number, number]) {
+async function fetchRoute(start: [number, number], end: [number, number]): Promise<RouteData | null> {
   const url = `https://router.project-osrm.org/route/v1/driving/${start[0]},${start[1]};${end[0]},${end[1]}?overview=full&geometries=geojson`;
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error("Failed to fetch route");
-  }
-  const data = await response.json();
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to fetch route");
+
+  const data = await res.json();
   const route = data.routes?.[0];
   const coordinates = route?.geometry?.coordinates as [number, number][] | undefined;
   const durationSeconds = route?.duration;
-  if (!coordinates || coordinates.length < 2 || !Number.isFinite(durationSeconds)) {
-    return null;
-  }
+
+  if (!coordinates || coordinates.length < 2 || !Number.isFinite(durationSeconds)) return null;
   return { coordinates, durationSeconds };
 }
 
 export function useOngoingBookingRoutes(ongoingBookings: Record<string, DispatcherBookingPayload>) {
-  const [routes, setRoutes] = useState<Record<string, [number, number][]>>({});
-  const [durations, setDurations] = useState<Record<string, number>>({});
-  const driverLocationsQuery = useQuery<Record<string, { x: number; y: number }>>({
+  const ongoingList = useMemo(() => Object.values(ongoingBookings), [ongoingBookings]);
+
+  const driverLocations = useQuery<Record<string, { x: number; y: number }>>({
     queryKey: queryKeys.driverLocations(),
     queryFn: async () => ({}),
     initialData: {},
     staleTime: Infinity,
     enabled: false,
-  });
-  const driverLocations = useMemo(
-    () => driverLocationsQuery.data ?? {},
-    [driverLocationsQuery.data]
-  );
-  const ongoingList = useMemo(() => Object.values(ongoingBookings), [ongoingBookings]);
+  }).data ?? {};
 
-  useEffect(() => {
-    let isMounted = true;
+  const routeQueries = useQueries({
+    queries: ongoingList.map((booking) => {
+      const phase = booking.status === "ASSIGNED" ? "patient" : "hospital";
+      const patientLocation = booking.pickupLocation ?? booking.patient.location;
+      const driverLocation = booking.driver.location ?? (booking.driver.id ? driverLocations[booking.driver.id] : null);
 
-    const loadRoutes = async () => {
-      const routeResults = await Promise.all(
-        ongoingList.map(async (booking) => {
-          const patientLocation = booking.pickupLocation ?? booking.patient.location;
-          const liveDriverLocation = booking.driver.id ? driverLocations[booking.driver.id] : null;
-          const driverLocation = booking.driver.location ?? liveDriverLocation ?? null;
-          const phase = booking.status === "ASSIGNED" ? "patient" : "hospital";
-          const hospitalLocation = booking.hospital.location;
-          if (!patientLocation) return null;
-          if (!Number.isFinite(patientLocation.x) || !Number.isFinite(patientLocation.y))
-            return null;
+      const startPoint = phase === "patient" ? driverLocation : patientLocation;
+      const endPoint = phase === "patient" ? patientLocation : booking.hospital.location;
 
-          // ASSIGNED: driver -> patient. ARRIVED/PICKEDUP: patient -> hospital.
-          const startPoint = phase === "patient" ? driverLocation : patientLocation;
-          const endPoint = phase === "patient" ? patientLocation : hospitalLocation;
-          if (!startPoint || !endPoint) return null;
-          if (!Number.isFinite(startPoint.x) || !Number.isFinite(startPoint.y)) return null;
-          if (!Number.isFinite(endPoint.x) || !Number.isFinite(endPoint.y)) return null;
-
-          const start: [number, number] = [startPoint.x, startPoint.y];
-          const end: [number, number] = [endPoint.x, endPoint.y];
-          const routeKey = `${booking.bookingId}:${phase}`;
-          const cached = routeCache.get(routeKey);
-          if (cached && Date.now() - cached.updatedAt < ROUTE_TTL) {
-            return {
-              routeKey,
-              routeData: {
-                coordinates: cached.coordinates,
-                durationSeconds: cached.durationSeconds,
-              },
-            };
-          }
-
-          try {
-            const routePromise =
-              inflightRequests.get(routeKey) ??
-              fetchRoute(start, end).finally(() => {
-                inflightRequests.delete(routeKey);
-              });
-            if (!inflightRequests.has(routeKey)) {
-              inflightRequests.set(routeKey, routePromise);
-            }
-
-            const routeData = await routePromise;
-            if (!routeData) return null;
-
-            routeCache.set(routeKey, {
-              coordinates: routeData.coordinates,
-              durationSeconds: routeData.durationSeconds,
-              updatedAt: Date.now(),
-            });
-
-            return { routeKey, routeData };
-          } catch (routeError) {
-            console.error("Route fetch failed", routeError);
-            return null;
-          }
-        })
+      const isValid = [startPoint, endPoint].every(
+        (p) => p && Number.isFinite(p.x) && Number.isFinite(p.y)
       );
 
-      const nextRoutes: Record<string, [number, number][]> = {};
-      const nextDurations: Record<string, number> = {};
-      routeResults.forEach((result) => {
-        if (!result) return;
-        nextRoutes[result.routeKey] = result.routeData.coordinates;
-        nextDurations[result.routeKey] = result.routeData.durationSeconds;
-      });
+      const start: [number, number] = [startPoint?.x ?? 0, startPoint?.y ?? 0];
+      const end: [number, number] = [endPoint?.x ?? 0, endPoint?.y ?? 0];
 
-      if (isMounted) {
-        setRoutes((prev) => ({ ...prev, ...nextRoutes }));
-        setDurations((prev) => ({ ...prev, ...nextDurations }));
-      }
-    };
+      return {
+        queryKey: ["route", booking.bookingId, phase],
+        queryFn: () => fetchRoute(start, end),
+        enabled: isValid,
+        staleTime: 1000 * 30,
+      };
+    }),
+  });
 
-    if (ongoingList.length > 0) {
-      loadRoutes();
+  const routes: Record<string, [number, number][]> = {};
+  const durations: Record<string, number> = {};
+
+  ongoingList.forEach((booking, i) => {
+    const phase = booking.status === "ASSIGNED" ? "patient" : "hospital";
+    const routeKey = `${booking.bookingId}:${phase}`;
+    const data = routeQueries[i]?.data;
+    if (data) {
+      routes[routeKey] = data.coordinates;
+      durations[routeKey] = data.durationSeconds;
     }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [driverLocations, ongoingList]);
+  });
 
   return { routes, durations, ongoingList };
 }

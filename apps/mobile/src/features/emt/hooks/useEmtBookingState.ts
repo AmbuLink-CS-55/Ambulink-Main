@@ -117,6 +117,38 @@ export const useEmtBookingState = create<EmtBookingState>((set, get) => ({
     }
   },
 
+  submitMediaNote: async ({ content, files, durationMs }) => {
+    const booking = get().activeBooking;
+    if (!booking?.bookingId) {
+      set({ errorMessage: "No active booking selected." });
+      return false;
+    }
+
+    const hasContent = Boolean(content && content.trim().length > 0);
+    if (!hasContent && files.length === 0) {
+      set({ errorMessage: "Please add a note or at least one file." });
+      return false;
+    }
+
+    try {
+      const created = await postEmtNote({
+        bookingId: booking.bookingId,
+        content: content?.trim(),
+        files,
+        durationMs,
+        emtId: env.EXPO_PUBLIC_EMT_ID,
+      });
+
+      get().appendNote(booking.bookingId, created);
+      return true;
+    } catch (error) {
+      set({
+        errorMessage: error instanceof Error ? error.message : "Failed to submit media note.",
+      });
+      return false;
+    }
+  },
+
   setAssignedBooking: (payload) => {
     const activeBooking = toActiveBooking(payload);
     set({

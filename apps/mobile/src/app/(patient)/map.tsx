@@ -1,13 +1,26 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Text, Alert, View, ActivityIndicator } from "react-native";
-import { MapOptions, UserMap } from "@/features/patient/components";
+import MapOptions from "@/features/patient/components/MapOptions";
+import PatientChatModal from "@/features/patient/components/PatientChatModal";
+import UserMap from "@/features/patient/components/UserMap";
 import { useLocation } from "@/common/hooks/useLocation";
 import { usePatientEvents } from "@/features/patient/hooks/usePatientEvents";
 import { useNearbyHospitals } from "@/features/patient/hooks/useNearbyHospitals";
 import { useNearbyDrivers } from "@/features/patient/hooks/useNearbyDrivers";
 import { loadSettings } from "@/common/utils/settingsStorage";
-import type { BookingStatus, User, Hospital, PatientSettingsData } from "@ambulink/types";
-import { sendPatientCancel, sendPatientHelp } from "@/common/lib/patientEvents";
+import type {
+  BookingNote,
+  BookingStatus,
+  User,
+  Hospital,
+  PatientSettingsData,
+} from "@ambulink/types";
+import {
+  sendPatientCancel,
+  sendPatientHelp,
+  startPatientUploadSession,
+  submitPatientMediaNote,
+} from "@/common/lib/patientEvents";
 import { env } from "../../../env";
 import { useSocket } from "@/common/hooks/SocketContext";
 const PATIENT_BOOKING_TIMEOUT_MS = 40000;
@@ -31,19 +44,43 @@ export default function Map() {
   const [isCancelling, setIsCancelling] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
   const [completedAt, setCompletedAt] = useState<number | null>(null);
+  const [uploadSessionId, setUploadSessionId] = useState<string | null>(null);
+  const [isChatOpen, setChatOpen] = useState(false);
+  const [isChatSending, setChatSending] = useState(false);
   const [booking, setBooking] = useState<{
     bookingId?: string | null;
     patient: User;
     pickedDriver: User;
     hospital: Hospital;
     provider?: { id: string; name: string; hotlineNumber?: string } | null;
+    notes?: BookingNote[];
   } | null>(null);
   const shouldShowNearbyMarkers = booking === null;
 
   const bookingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  usePatientEvents(socket, setBooking, setStatus, setIsCancelling, setIsBooking, setCompletedAt);
+  const appendPatientNote = useCallback((bookingId: string, note: BookingNote) => {
+    setBooking((prev) => {
+      if (!prev || prev.bookingId !== bookingId) return prev;
+      const existing = prev.notes ?? [];
+      if (existing.some((entry) => entry.id === note.id)) return prev;
+      return {
+        ...prev,
+        notes: [note, ...existing],
+      };
+    });
+  }, []);
+
+  usePatientEvents(
+    socket,
+    setBooking,
+    setStatus,
+    setIsCancelling,
+    setIsBooking,
+    setCompletedAt,
+    appendPatientNote
+  );
 
   useEffect(() => {
     return () => {
@@ -94,6 +131,14 @@ export default function Map() {
     if (!locationState?.location) return;
 
     setIsBooking(true);
+    if (!uploadSessionId) {
+      try {
+        const session = await startPatientUploadSession(env.EXPO_PUBLIC_PATIENT_ID);
+        setUploadSessionId(session.uploadSessionId);
+      } catch {
+        // Session creation is best-effort; uploads can still start later from composer.
+      }
+    }
     if (bookingTimeoutRef.current) {
       clearTimeout(bookingTimeoutRef.current);
     }
@@ -158,6 +203,39 @@ export default function Map() {
     ]);
   };
 
+  useEffect(() => {
+    if (status === "COMPLETED" || status === "CANCELLED") {
+      setChatOpen(false);
+      setUploadSessionId(null);
+    }
+  }, [status]);
+
+  const handleChatSend = async (params: {
+    content?: string;
+    files: { uri: string; name?: string; type?: string }[];
+    durationMs?: number;
+  }) => {
+    setChatSending(true);
+    try {
+      let sessionId = uploadSessionId;
+      if (!booking?.bookingId && !sessionId) {
+        const created = await startPatientUploadSession(env.EXPO_PUBLIC_PATIENT_ID);
+        sessionId = created.uploadSessionId;
+        setUploadSessionId(sessionId);
+      }
+
+      await submitPatientMediaNote({
+        bookingId: booking?.bookingId ?? undefined,
+        sessionId: sessionId ?? undefined,
+        content: params.content,
+        files: params.files,
+        durationMs: params.durationMs,
+      });
+    } finally {
+      setChatSending(false);
+    }
+  };
+
   if (locationState?.loading) {
     return (
       <View className="flex-1 items-center justify-center">
@@ -201,6 +279,14 @@ export default function Map() {
         isCancelling={isCancelling}
         isBooking={isBooking}
         completedAt={completedAt}
+        onOpenUploads={() => setChatOpen(true)}
+      />
+      <PatientChatModal
+        visible={isChatOpen}
+        onClose={() => setChatOpen(false)}
+        notes={booking?.notes ?? []}
+        sending={isChatSending}
+        onSend={handleChatSend}
       />
     </UserMap>
   );

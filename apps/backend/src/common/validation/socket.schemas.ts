@@ -15,6 +15,7 @@ export const patientSettingsSchema = z
   .object({
     profileName: z.string(),
     profileMobile: z.string(),
+    age: z.number().int().min(0).nullable(),
     profileImage: z.string().nullable(),
     bloodType: z.string(),
     selectedAllergies: z.array(z.string()),
@@ -117,13 +118,25 @@ const locationSchema = z
   })
   .nullable();
 
+const bookingAttachmentSchema = z.object({
+  id: z.string(),
+  kind: z.enum(["IMAGE", "VIDEO", "AUDIO"]),
+  mimeType: z.string(),
+  sizeBytes: z.number(),
+  filename: z.string(),
+  url: z.string(),
+  durationMs: z.number().optional(),
+});
+
 const emtNoteSchema = z.object({
   id: z.string(),
   bookingId: z.string(),
   authorId: z.string(),
   authorName: z.string().nullable().optional(),
-  authorRole: z.enum(["EMT", "DISPATCHER"]),
+  authorRole: z.enum(["EMT", "DISPATCHER", "PATIENT"]),
   content: z.string(),
+  type: z.enum(["TEXT", "MEDIA"]).optional(),
+  attachments: z.array(bookingAttachmentSchema).optional(),
   createdAt: z.string(),
 });
 

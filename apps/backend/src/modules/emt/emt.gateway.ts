@@ -132,11 +132,12 @@ export class EmtGateway implements OnGatewayInit, OnModuleDestroy {
     }
 
     try {
-      await this.emtCommandService.addNote(
-        client.data.emtId,
-        parsed.data.bookingId,
-        parsed.data.content
-      );
+      await this.emtCommandService.addNote({
+        emtId: client.data.emtId,
+        bookingId: parsed.data.bookingId,
+        content: parsed.data.content,
+        files: [],
+      });
     } catch (error) {
       client.emit("socket:error", {
         code: "NOTE_ADD_FAILED",

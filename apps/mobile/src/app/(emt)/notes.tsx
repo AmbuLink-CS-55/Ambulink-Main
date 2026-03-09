@@ -1,35 +1,43 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { EmtNoteComposer, EmtNotesTimeline } from "@/features/emt/components";
+import MediaNoteComposerCard from "@/common/components/MediaNoteComposerCard";
+import EmtNotesTimeline from "@/features/emt/components/EmtNotesTimeline";
 import { useEmtBookingState } from "@/features/emt/hooks/useEmtBookingState";
+import { useMediaNoteComposer } from "@/common/hooks/useMediaNoteComposer";
+import { createEmtMediaSubmitAdapter } from "@/common/lib/emtEvents";
 import { env } from "../../../env";
 
 export default function EmtNotesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  // TODO: test on ios
-  insets.bottom = 0; // padding fix on android
   const booking = useEmtBookingState((state) => state.activeBooking);
-  const submitNote = useEmtBookingState((state) => state.submitNote);
+  const submit = useMemo(() => {
+    if (!booking?.bookingId) return null;
+    return createEmtMediaSubmitAdapter({
+      bookingId: booking.bookingId,
+      emtId: env.EXPO_PUBLIC_EMT_ID,
+    });
+  }, [booking?.bookingId]);
 
-  const [draft, setDraft] = useState("");
-  const [isSubmitting, setSubmitting] = useState(false);
-
-  const handleSubmit = async () => {
-    if (!booking || !draft.trim() || isSubmitting) return;
-
-    setSubmitting(true);
-    try {
-      const success = await submitNote(draft.trim());
-      if (success) {
-        setDraft("");
+  const { state, actions } = useMediaNoteComposer({
+    submit: async (payload) => {
+      if (!submit) {
+        throw new Error("No active booking selected.");
       }
-    } finally {
-      setSubmitting(false);
-    }
+      await submit(payload);
+      useEmtBookingState.getState().hydrateCurrentBooking();
+    },
+    maxFiles: 5,
+  });
+
+  const formatMs = (value: number) => {
+    const total = Math.floor(value / 1000);
+    const mins = Math.floor(total / 60);
+    const secs = total % 60;
+    return `${mins}:${String(secs).padStart(2, "0")}`;
   };
 
   return (
@@ -69,14 +77,26 @@ export default function EmtNotesScreen() {
                 />
               </View>
 
-              <View style={{ paddingBottom: Math.max(insets.bottom, 8) }}>
-                <EmtNoteComposer
-                  value={draft}
-                  onChange={setDraft}
-                  onSubmit={handleSubmit}
-                  loading={isSubmitting}
-                />
-              </View>
+              <MediaNoteComposerCard
+                value={state.text}
+                onChange={actions.setText}
+                onSubmit={() => void actions.submit()}
+                onCaptureMedia={() => void actions.captureMedia()}
+                onToggleAudio={() => void actions.toggleRecording()}
+                onRemoveAttachment={actions.removeFile}
+                files={state.files}
+                isRecordingAudio={state.isRecordingAudio}
+                recordingStatusText={`Recording audio... ${formatMs(state.recordingElapsedMs)}`}
+                loading={state.isSubmitting}
+                errorText={state.error}
+                copy={{
+                  placeholder: "Type a situation update...",
+                  cameraButtonLabel: "Camera",
+                  audioStartLabel: "Audio",
+                  audioStopLabel: "Stop Audio",
+                  sendLabel: "Send",
+                }}
+              />
             </View>
           )}
         </View>
