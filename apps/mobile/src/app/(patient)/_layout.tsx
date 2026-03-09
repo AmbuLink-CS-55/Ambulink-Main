@@ -2,6 +2,7 @@ import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SocketProvider } from "@/common/hooks/SocketContext";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
@@ -47,6 +48,16 @@ export default function TabLayout() {
             title: "Settings",
             tabBarAccessibilityLabel: "Open settings",
             tabBarIcon: ({ color, size }) => <Ionicons name="settings" size={size} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="firstAid"
+          options={{
+            title: "First-Aid",
+            tabBarAccessibilityLabel: "Open first-aid",
+            tabBarIcon: ({ color, size }) => (
+              <FontAwesome5 name="first-aid" size={size} color={color} />
+            ),
           }}
         />
       </Tabs>
