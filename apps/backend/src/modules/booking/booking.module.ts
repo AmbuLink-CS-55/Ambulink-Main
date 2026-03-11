@@ -1,24 +1,32 @@
 import { Module } from "@nestjs/common";
-import { BookingService } from "./booking.service";
-import { BookingController } from "./booking.controller";
 import { DispatcherCoreModule } from "../dispatcher/dispatcher-core.module";
-import { BookingRepository } from "./booking.repository";
-import { DriverRepository } from "../driver/driver.repository";
-import { PatientRepository } from "../patient/patient.repository";
-import { HospitalRepository } from "../hospital/hospital.repository";
+import { DriverFlowRepository } from "../driver/flow/driver.flow.repository";
+import { PatientFlowRepository } from "../patient/flow/patient.flow.repository";
+import { HospitalFlowRepository } from "../hospital/flow/hospital.flow.repository";
 import { BookingMediaService } from "./booking-media.service";
+import { BookingApiController } from "./api/booking.api.controller";
+import { BookingApiService } from "./api/booking.api.service";
+import { BookingApiRepository } from "./api/booking.api.repository";
+import { BookingFlowService } from "./flow/booking.flow.service";
+import { BookingFlowRepository } from "./flow/booking.flow.repository";
+import { BookingCoreService } from "./common/booking.core.service";
+import { BookingSharedRepository } from "./common/booking.shared.repository";
 
 @Module({
   imports: [DispatcherCoreModule],
-  controllers: [BookingController],
+  controllers: [BookingApiController],
   providers: [
-    BookingService,
-    BookingRepository,
+    BookingSharedRepository,
+    BookingApiRepository,
+    BookingFlowRepository,
+    BookingCoreService,
+    BookingApiService,
+    BookingFlowService,
     BookingMediaService,
-    DriverRepository,
-    PatientRepository,
-    HospitalRepository,
+    DriverFlowRepository,
+    PatientFlowRepository,
+    HospitalFlowRepository,
   ],
-  exports: [BookingService, BookingMediaService],
+  exports: [BookingApiService, BookingFlowService, BookingMediaService],
 })
 export class BookingModule {}

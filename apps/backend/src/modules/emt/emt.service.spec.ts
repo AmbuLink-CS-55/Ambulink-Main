@@ -1,5 +1,5 @@
 import { ForbiddenException } from "@nestjs/common";
-import { EmtService } from "./emt.service";
+import { EmtFlowService } from "./flow/emt.flow.service";
 
 describe("EmtService", () => {
   const buildService = () => {
@@ -21,7 +21,7 @@ describe("EmtService", () => {
       publish: jest.fn(),
     };
 
-    const service = new EmtService(
+    const service = new EmtFlowService(
       emtRepository as never,
       bookingService as never,
       dispatcherService as never,

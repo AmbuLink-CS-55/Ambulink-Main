@@ -1,15 +1,23 @@
 import { Module } from "@nestjs/common";
-import { DriverController } from "./driver.controller";
-import { DriverService } from "./driver.service";
-import { DriverGateway } from "./driver.gateway";
-import { DriverCommandService } from "./driver-command.service";
 import { BookingModule } from "../booking/booking.module";
-import { DriverRepository } from "./driver.repository";
+import { DriverApiController } from "./api/driver.api.controller";
+import { DriverApiService } from "./api/driver.api.service";
+import { DriverApiRepository } from "./api/driver.api.repository";
+import { DriverFlowController } from "./flow/driver.flow.controller";
+import { DriverFlowGateway } from "./flow/driver.flow.gateway";
+import { DriverFlowService } from "./flow/driver.flow.service";
+import { DriverFlowRepository } from "./flow/driver.flow.repository";
 
 @Module({
-  controllers: [DriverController],
-  providers: [DriverService, DriverGateway, DriverCommandService, DriverRepository],
+  controllers: [DriverApiController, DriverFlowController],
+  providers: [
+    DriverApiService,
+    DriverApiRepository,
+    DriverFlowGateway,
+    DriverFlowService,
+    DriverFlowRepository,
+  ],
   imports: [BookingModule],
-  exports: [DriverService, DriverGateway],
+  exports: [DriverApiService, DriverFlowService, DriverFlowGateway],
 })
 export class DriverModule {}
