@@ -1,25 +1,26 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { DriverModule } from "../driver/driver.module";
 import { BookingModule } from "../booking/booking.module";
 import { HospitalModule } from "../hospital/hospital.module";
+import { DispatcherCoreModule } from "../dispatcher/dispatcher-core.module";
 import { PatientApiController } from "./api/patient.api.controller";
 import { PatientApiService } from "./api/patient.api.service";
 import { PatientApiRepository } from "./api/patient.api.repository";
-import { PatientFlowController } from "./flow/patient.flow.controller";
-import { PatientFlowGateway } from "./flow/patient.flow.gateway";
-import { PatientFlowService } from "./flow/patient.flow.service";
-import { PatientFlowRepository } from "./flow/patient.flow.repository";
+import { PatientWsController } from "./ws/patient.ws.controller";
+import { PatientWsGateway } from "./ws/patient.ws.gateway";
+import { PatientWsService } from "./ws/patient.ws.service";
+import { PatientWsRepository } from "./ws/patient.ws.repository";
 
 @Module({
-  controllers: [PatientApiController, PatientFlowController],
+  controllers: [PatientApiController, PatientWsController],
   providers: [
     PatientApiService,
     PatientApiRepository,
-    PatientFlowGateway,
-    PatientFlowService,
-    PatientFlowRepository,
+    PatientWsGateway,
+    PatientWsService,
+    PatientWsRepository,
   ],
-  imports: [DriverModule, BookingModule, HospitalModule],
-  exports: [PatientApiService, PatientFlowService, PatientFlowGateway],
+  imports: [DriverModule, forwardRef(() => BookingModule), HospitalModule, DispatcherCoreModule],
+  exports: [PatientApiService, PatientWsService, PatientWsGateway],
 })
 export class PatientModule {}

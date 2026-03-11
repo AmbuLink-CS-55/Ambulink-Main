@@ -1,13 +1,22 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import type { NearbyHospital } from "@ambulink/types";
-import { HospitalFlowRepository } from "./hospital.flow.repository";
+import { DbExecutor } from "@/core/database/db.service";
+import { HospitalWsRepository } from "./hospital.ws.repository";
 
 @Injectable()
-export class HospitalFlowService {
-  constructor(private hospitalRepository: HospitalFlowRepository) {}
+export class HospitalWsService {
+  constructor(private hospitalRepository: HospitalWsRepository) {}
 
   async getAll() {
     return this.hospitalRepository.getAllHospitals();
+  }
+
+  async getByIdOrThrow(hospitalId: string, db?: DbExecutor) {
+    const [hospital] = await this.hospitalRepository.getHospitalById(hospitalId, db);
+    if (!hospital) {
+      throw new NotFoundException({ code: "HOSPITAL_NOT_FOUND", message: "Hospital not found" });
+    }
+    return hospital;
   }
 
   async findTheNearestHospital(lat: number, lng: number) {

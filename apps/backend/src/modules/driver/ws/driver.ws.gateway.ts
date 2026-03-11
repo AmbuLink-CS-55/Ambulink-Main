@@ -8,8 +8,8 @@ import {
 import { SocketService } from "@/core/socket/socket.service";
 import type { DriverLocationPayload, SocketErrorPayload } from "@ambulink/types";
 import { driverLocationPayloadSchema } from "@/common/validation/socket.schemas";
-import { DriverFlowService } from "./driver.flow.service";
-import { BookingFlowService } from "@/modules/booking/flow/booking.flow.service";
+import { DriverWsService } from "./driver.ws.service";
+import { BookingWsService } from "@/modules/booking/ws/booking.ws.service";
 
 @WebSocketGateway({
   cors: {
@@ -17,13 +17,13 @@ import { BookingFlowService } from "@/modules/booking/flow/booking.flow.service"
   },
   namespace: "/driver",
 })
-export class DriverFlowGateway implements OnGatewayInit {
+export class DriverWsGateway implements OnGatewayInit {
   @WebSocketServer()
   server: Server;
 
   constructor(
-    private driverFlowService: DriverFlowService,
-    private bookingService: BookingFlowService,
+    private driverWsService: DriverWsService,
+    private bookingService: BookingWsService,
     private socketService: SocketService
   ) {}
 
@@ -56,7 +56,7 @@ export class DriverFlowGateway implements OnGatewayInit {
     const activeBooking = await this.bookingService.getActiveBookingForDriver(driverId);
 
     if (activeBooking) {
-      await this.driverFlowService.setStatus(driverId, "BUSY");
+      await this.driverWsService.setStatus(driverId, "BUSY");
       if (
         activeBooking.status === "ASSIGNED" ||
         activeBooking.status === "ARRIVED" ||
@@ -70,7 +70,7 @@ export class DriverFlowGateway implements OnGatewayInit {
         }
       }
     } else {
-      await this.driverFlowService.setStatus(driverId, "AVAILABLE");
+      await this.driverWsService.setStatus(driverId, "AVAILABLE");
     }
 
     console.log("[socket] connected", {
@@ -114,14 +114,14 @@ export class DriverFlowGateway implements OnGatewayInit {
       return;
     }
     const driverId = client.data.driverId;
-    await this.driverFlowService.updateLocation(driverId, parsed.data);
+    await this.driverWsService.updateLocation(driverId, parsed.data);
   }
 
   @SubscribeMessage("driver:arrived")
   async driverArrived(client: Socket) {
     const driverId = client.data.driverId;
     try {
-      await this.driverFlowService.arrived(driverId);
+      await this.driverWsService.arrived(driverId);
     } catch (_error) {
       client.emit("socket:error", {
         code: "NOT_FOUND",
@@ -134,7 +134,7 @@ export class DriverFlowGateway implements OnGatewayInit {
   async driverCompleted(client: Socket) {
     const driverId = client.data.driverId;
     try {
-      await this.driverFlowService.completed(driverId);
+      await this.driverWsService.completed(driverId);
     } catch (_error) {
       client.emit("socket:error", {
         code: "NOT_FOUND",

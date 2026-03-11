@@ -20,14 +20,14 @@ import {
 import { emtSubscribeHttpBodySchema } from "@/common/validation/socket.schemas";
 import type { UploadedMediaFile } from "@/modules/booking/booking-media.service";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
-import { EmtFlowCommandService } from "./emt.flow-command.service";
-import { EmtFlowService } from "./emt.flow.service";
+import { EmtWsCommandService } from "./emt.ws-command.service";
+import { EmtWsService } from "./emt.ws.service";
 
 @Controller("api/emts/events")
-export class EmtFlowController {
+export class EmtWsController {
   constructor(
-    private readonly emtFlowService: EmtFlowService,
-    private readonly emtCommandService: EmtFlowCommandService
+    private readonly emtWsService: EmtWsService,
+    private readonly emtCommandService: EmtWsCommandService
   ) {}
 
   @Get("current")
@@ -36,7 +36,7 @@ export class EmtFlowController {
       throw new BadRequestException("emtId is required");
     }
 
-    const booking = await this.emtFlowService.getCurrentBooking(emtId);
+    const booking = await this.emtWsService.getCurrentBooking(emtId);
     return { booking };
   }
 

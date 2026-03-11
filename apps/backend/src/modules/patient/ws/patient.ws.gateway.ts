@@ -2,10 +2,10 @@ import { Server, Socket } from "socket.io";
 import { OnGatewayInit, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import { OnModuleDestroy } from "@nestjs/common";
 
-import { BookingFlowService } from "@/modules/booking/flow/booking.flow.service";
+import { BookingWsService } from "@/modules/booking/ws/booking.ws.service";
 import { SocketService } from "@/core/socket/socket.service";
 import { EventBusService } from "@/core/events/event-bus.service";
-import { PatientFlowService } from "./patient.flow.service";
+import { PatientWsService } from "./patient.ws.service";
 
 @WebSocketGateway({
   cors: {
@@ -13,14 +13,14 @@ import { PatientFlowService } from "./patient.flow.service";
   },
   namespace: "/patient",
 })
-export class PatientFlowGateway implements OnGatewayInit, OnModuleDestroy {
+export class PatientWsGateway implements OnGatewayInit, OnModuleDestroy {
   @WebSocketServer() server: Server;
   private readonly offlineTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private isShuttingDown = false;
 
   constructor(
-    private patientFlowService: PatientFlowService,
-    private bookingService: BookingFlowService,
+    private patientWsService: PatientWsService,
+    private bookingService: BookingWsService,
     private socketService: SocketService,
     private eventBus: EventBusService
   ) {}
@@ -50,7 +50,7 @@ export class PatientFlowGateway implements OnGatewayInit, OnModuleDestroy {
     client.data.patientId = patientId;
     this.clearPendingOffline(patientId);
     client.join(`patient:${patientId}`);
-    await this.patientFlowService.updateStatus(patientId, "AVAILABLE");
+    await this.patientWsService.updateStatus(patientId, "AVAILABLE");
 
     const activeBooking = await this.bookingService.getActiveBookingForPatient(patientId);
     if (activeBooking) {
@@ -131,7 +131,7 @@ export class PatientFlowGateway implements OnGatewayInit, OnModuleDestroy {
       try {
         const activeSockets = await this.server.in(`patient:${patientId}`).fetchSockets();
         if (activeSockets.length === 0) {
-          await this.patientFlowService.updateStatus(patientId, "OFFLINE");
+          await this.patientWsService.updateStatus(patientId, "OFFLINE");
         }
       } finally {
         this.offlineTimers.delete(patientId);

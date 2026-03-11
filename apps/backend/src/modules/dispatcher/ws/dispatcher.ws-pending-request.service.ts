@@ -12,7 +12,7 @@ type PendingRequestEntry = {
 };
 
 @Injectable()
-export class DispatcherFlowPendingRequestService {
+export class DispatcherWsPendingRequestService {
   private static readonly REQUEST_TIMEOUT_MS = 30_000;
   private static readonly EXPIRED_TOMBSTONE_TTL_MS = 60_000;
 
@@ -27,7 +27,7 @@ export class DispatcherFlowPendingRequestService {
     patient: Pick<User, "id" | "fullName" | "phoneNumber" | "email" | "currentLocation">
   ) {
     const createdAtMs = Date.now();
-    const expiresAtMs = createdAtMs + DispatcherFlowPendingRequestService.REQUEST_TIMEOUT_MS;
+    const expiresAtMs = createdAtMs + DispatcherWsPendingRequestService.REQUEST_TIMEOUT_MS;
 
     let resolveDecision: (approved: boolean) => void = () => undefined;
     const decisionPromise = new Promise<boolean>((resolve) => {
@@ -55,7 +55,7 @@ export class DispatcherFlowPendingRequestService {
 
     const timer = setTimeout(() => {
       this.expireRequest(requestId);
-    }, DispatcherFlowPendingRequestService.REQUEST_TIMEOUT_MS);
+    }, DispatcherWsPendingRequestService.REQUEST_TIMEOUT_MS);
 
     const entry: PendingRequestEntry = {
       payload,
@@ -142,7 +142,7 @@ export class DispatcherFlowPendingRequestService {
     this.resolveAndCleanup(requestId, false);
     this.expiredTombstones.set(
       requestId,
-      Date.now() + DispatcherFlowPendingRequestService.EXPIRED_TOMBSTONE_TTL_MS
+      Date.now() + DispatcherWsPendingRequestService.EXPIRED_TOMBSTONE_TTL_MS
     );
     console.info("[dispatcher-pending] expired", {
       dispatcherId: entry.dispatcherId,

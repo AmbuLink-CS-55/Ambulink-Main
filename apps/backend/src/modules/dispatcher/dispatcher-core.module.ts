@@ -1,21 +1,21 @@
 import { Module } from "@nestjs/common";
-import { DispatcherFlowService } from "./flow/dispatcher.flow.service";
-import { DispatcherFlowApprovalService } from "./flow/dispatcher.flow-approval.service";
-import { DispatcherFlowRepository } from "./flow/dispatcher.flow.repository";
-import { DispatcherFlowPendingRequestService } from "./flow/dispatcher.flow-pending-request.service";
+import { DispatcherWsService } from "./ws/dispatcher.ws.service";
+import { DispatcherWsApprovalService } from "./ws/dispatcher.ws-approval.service";
+import { DispatcherWsRepository } from "./ws/dispatcher.ws.repository";
+import { DispatcherWsPendingRequestService } from "./ws/dispatcher.ws-pending-request.service";
 
 @Module({
   providers: [
-    DispatcherFlowService,
-    DispatcherFlowApprovalService,
-    DispatcherFlowRepository,
-    DispatcherFlowPendingRequestService,
+    DispatcherWsService,
+    DispatcherWsApprovalService,
+    DispatcherWsRepository,
+    DispatcherWsPendingRequestService,
   ],
   exports: [
-    DispatcherFlowService,
-    DispatcherFlowApprovalService,
-    DispatcherFlowRepository,
-    DispatcherFlowPendingRequestService,
+    DispatcherWsService,
+    DispatcherWsApprovalService,
+    DispatcherWsRepository,
+    DispatcherWsPendingRequestService,
   ],
 })
 export class DispatcherCoreModule {}

@@ -5,7 +5,7 @@ import { users } from "@/core/database/schema";
 import type { NewUser, UserStatus } from "@/core/database/schema";
 
 @Injectable()
-export class EmtFlowRepository {
+export class EmtWsRepository {
   constructor(private dbService: DbService) {}
 
   private readonly safeUserColumns = {

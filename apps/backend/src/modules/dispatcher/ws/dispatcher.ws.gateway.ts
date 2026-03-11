@@ -9,9 +9,9 @@ import { OnModuleDestroy } from "@nestjs/common";
 
 import { EventBusService } from "@/core/events/event-bus.service";
 import { SocketService } from "@/core/socket/socket.service";
-import { BookingFlowService } from "../../booking/flow/booking.flow.service";
-import { DispatcherFlowService } from "./dispatcher.flow.service";
-import { DispatcherFlowPendingRequestService } from "./dispatcher.flow-pending-request.service";
+import { BookingWsService } from "../../booking/ws/booking.ws.service";
+import { DispatcherWsService } from "./dispatcher.ws.service";
+import { DispatcherWsPendingRequestService } from "./dispatcher.ws-pending-request.service";
 import { dispatcherDecisionSubmitPayloadSchema } from "@/common/validation/socket.schemas";
 import type { SocketErrorPayload } from "@ambulink/types";
 
@@ -21,17 +21,17 @@ import type { SocketErrorPayload } from "@ambulink/types";
   },
   namespace: "/dispatcher",
 })
-export class DispatcherFlowGateway implements OnGatewayInit, OnModuleDestroy {
+export class DispatcherWsGateway implements OnGatewayInit, OnModuleDestroy {
   @WebSocketServer() server: Server;
   private readonly offlineTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private isShuttingDown = false;
 
   constructor(
-    private dispatcherServise: DispatcherFlowService,
+    private dispatcherServise: DispatcherWsService,
     private socketService: SocketService,
     private eventBus: EventBusService,
-    private bookingService: BookingFlowService,
-    private pendingRequestService: DispatcherFlowPendingRequestService
+    private bookingService: BookingWsService,
+    private pendingRequestService: DispatcherWsPendingRequestService
   ) {}
 
   afterInit() {

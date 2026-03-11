@@ -1,23 +1,26 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
+  forwardRef,
 } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
 import type { BookingAssignedPayload, BookingNote, UserStatus } from "@ambulink/types";
-import { BookingFlowService } from "@/modules/booking/flow/booking.flow.service";
-import { DispatcherFlowService } from "@/modules/dispatcher/flow/dispatcher.flow.service";
+import { BookingWsService } from "@/modules/booking/ws/booking.ws.service";
+import { DispatcherWsService } from "@/modules/dispatcher/ws/dispatcher.ws.service";
 import type { UploadedMediaFile } from "@/modules/booking/booking-media.service";
 import { EventBusService } from "@/core/events/event-bus.service";
-import { EmtFlowRepository } from "./emt.flow.repository";
+import { EmtWsRepository } from "./emt.ws.repository";
 
 @Injectable()
-export class EmtFlowService {
+export class EmtWsService {
   constructor(
-    private emtRepository: EmtFlowRepository,
-    private bookingService: BookingFlowService,
-    private dispatcherService: DispatcherFlowService,
+    private emtRepository: EmtWsRepository,
+    @Inject(forwardRef(() => BookingWsService))
+    private bookingService: BookingWsService,
+    private dispatcherService: DispatcherWsService,
     private eventBus: EventBusService
   ) {}
 
@@ -31,6 +34,29 @@ export class EmtFlowService {
       throw new NotFoundException("EMT not found");
     }
     return emt;
+  }
+
+  async getEmtOrThrow(emtId: string) {
+    const [emt] = await this.emtRepository.findEmtById(emtId);
+    if (!emt) {
+      throw new NotFoundException({ code: "EMT_NOT_FOUND", message: "EMT not found" });
+    }
+    return emt;
+  }
+
+  assertBookingAttachmentScope(emt: { subscribedBookingId: string | null; providerId: string | null }, bookingId: string, providerId: string | null) {
+    if (emt.subscribedBookingId !== bookingId) {
+      throw new ForbiddenException({
+        code: "BOOKING_EMT_SCOPE",
+        message: "EMT can only access subscribed booking attachments",
+      });
+    }
+    if (!providerId || providerId !== emt.providerId) {
+      throw new ForbiddenException({
+        code: "BOOKING_OUTSIDE_PROVIDER_SCOPE",
+        message: "EMT cannot access outside provider scope",
+      });
+    }
   }
 
   async subscribeToBooking(emtId: string, bookingId: string): Promise<BookingAssignedPayload> {

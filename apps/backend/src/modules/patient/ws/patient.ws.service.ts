@@ -1,21 +1,103 @@
-import { ConflictException, Injectable } from "@nestjs/common";
+import {
+  ConflictException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  forwardRef,
+} from "@nestjs/common";
+import { and, eq } from "drizzle-orm";
 import type { PatientCancelRequest, PatientPickupRequest } from "@ambulink/types";
 import { EventBusService } from "@/core/events/event-bus.service";
-import { BookingFlowService } from "@/modules/booking/flow/booking.flow.service";
-import { DriverFlowService } from "@/modules/driver/flow/driver.flow.service";
-import { HospitalFlowService } from "@/modules/hospital/flow/hospital.flow.service";
+import { DbExecutor, DbService } from "@/core/database/db.service";
+import { users } from "@/core/database/schema";
+import { BookingWsService } from "@/modules/booking/ws/booking.ws.service";
+import { DriverWsService } from "@/modules/driver/ws/driver.ws.service";
+import { HospitalWsService } from "@/modules/hospital/ws/hospital.ws.service";
+import { DispatcherWsApprovalService } from "@/modules/dispatcher/ws/dispatcher.ws-approval.service";
 import type { UploadedMediaFile } from "@/modules/booking/booking-media.service";
-import { PatientFlowRepository } from "./patient.flow.repository";
+import type { ManualAssignBookingDto } from "@/common/validation/schemas";
+import { PatientWsRepository } from "./patient.ws.repository";
 
 @Injectable()
-export class PatientFlowService {
+export class PatientWsService {
   constructor(
-    private patientRepository: PatientFlowRepository,
-    private driverFlowService: DriverFlowService,
-    private bookingService: BookingFlowService,
-    private hospitalService: HospitalFlowService,
+    private patientRepository: PatientWsRepository,
+    private driverWsService: DriverWsService,
+    @Inject(forwardRef(() => BookingWsService))
+    private bookingService: BookingWsService,
+    private hospitalService: HospitalWsService,
+    private dispatcherApprovalService: DispatcherWsApprovalService,
+    private dbService: DbService,
     private eventBus: EventBusService
   ) {}
+
+  async getPatientOrThrow(patientId: string, db: DbExecutor = this.dbService.db) {
+    const [patient] = await this.patientRepository.findPatientById(patientId, db);
+    if (!patient) {
+      throw new NotFoundException({ code: "PATIENT_NOT_FOUND", message: "Patient not found" });
+    }
+    return patient;
+  }
+
+  assertBookingPatientScope(bookingPatientId: string | null, patientId: string) {
+    if (bookingPatientId !== patientId) {
+      throw new ForbiddenException({
+        code: "BOOKING_PATIENT_SCOPE",
+        message: "Patient cannot access this booking",
+      });
+    }
+  }
+
+  async resolveOrCreateManualAssignmentPatient(
+    payload: ManualAssignBookingDto,
+    db: DbExecutor = this.dbService.db
+  ) {
+    if (payload.patientId) {
+      const [patient] = await this.patientRepository.findPatientById(payload.patientId, db);
+      if (patient) {
+        return patient;
+      }
+    }
+
+    if (payload.patientPhoneNumber) {
+      const [existingGuest] = await db
+        .select()
+        .from(users)
+        .where(
+          and(
+            eq(users.role, "PATIENT"),
+            eq(users.fullName, "Guest"),
+            eq(users.phoneNumber, payload.patientPhoneNumber)
+          )
+        );
+
+      if (existingGuest) {
+        return existingGuest;
+      }
+    }
+
+    const [guest] = await this.patientRepository.createPatient(
+      {
+        fullName: "Guest",
+        phoneNumber: payload.patientPhoneNumber ?? null,
+        email: payload.patientEmail ?? null,
+        passwordHash: `guest_${Date.now()}`,
+        providerId: null,
+        currentLocation: payload.pickupLocation,
+      },
+      db
+    );
+
+    if (!guest) {
+      throw new ConflictException({
+        code: "GUEST_PATIENT_CREATE_FAILED",
+        message: "Failed to create guest patient",
+      });
+    }
+
+    return guest;
+  }
 
   async updateStatus(patientId: string, status: "AVAILABLE" | "OFFLINE") {
     return this.patientRepository.updateUserStatus(patientId, status);
@@ -45,7 +127,7 @@ export class PatientFlowService {
     patient.currentLocation = { x, y };
     await this.updateLocation(patientId, { x, y });
 
-    const nearestDrivers = await this.driverFlowService.findDriverByLocation(y, x);
+    const nearestDrivers = await this.driverWsService.findDriverByLocation(y, x);
     if (nearestDrivers.length === 0) {
       this.eventBus.publish({
         type: "realtime.patient",
@@ -58,7 +140,7 @@ export class PatientFlowService {
       return;
     }
 
-    const result = await this.bookingService.askDispatchers(
+    const result = await this.dispatcherApprovalService.pickDriverThroughDispatchers(
       nearestDrivers as Array<{
         id: string;
         providerId: string | null;
@@ -85,7 +167,7 @@ export class PatientFlowService {
     }
 
     const { dispatcherId, pickedDriver, requestId } = result;
-    const isDriverAvailable = await this.driverFlowService.isAvailable(pickedDriver.id);
+    const isDriverAvailable = await this.driverWsService.isAvailable(pickedDriver.id);
     if (!isDriverAvailable) {
       this.eventBus.publish({
         type: "realtime.patient",

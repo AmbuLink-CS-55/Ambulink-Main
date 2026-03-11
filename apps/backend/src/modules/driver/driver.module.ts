@@ -1,23 +1,23 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { BookingModule } from "../booking/booking.module";
 import { DriverApiController } from "./api/driver.api.controller";
 import { DriverApiService } from "./api/driver.api.service";
 import { DriverApiRepository } from "./api/driver.api.repository";
-import { DriverFlowController } from "./flow/driver.flow.controller";
-import { DriverFlowGateway } from "./flow/driver.flow.gateway";
-import { DriverFlowService } from "./flow/driver.flow.service";
-import { DriverFlowRepository } from "./flow/driver.flow.repository";
+import { DriverWsController } from "./ws/driver.ws.controller";
+import { DriverWsGateway } from "./ws/driver.ws.gateway";
+import { DriverWsService } from "./ws/driver.ws.service";
+import { DriverWsRepository } from "./ws/driver.ws.repository";
 
 @Module({
-  controllers: [DriverApiController, DriverFlowController],
+  controllers: [DriverApiController, DriverWsController],
   providers: [
     DriverApiService,
     DriverApiRepository,
-    DriverFlowGateway,
-    DriverFlowService,
-    DriverFlowRepository,
+    DriverWsGateway,
+    DriverWsService,
+    DriverWsRepository,
   ],
-  imports: [BookingModule],
-  exports: [DriverApiService, DriverFlowService, DriverFlowGateway],
+  imports: [forwardRef(() => BookingModule)],
+  exports: [DriverApiService, DriverWsService, DriverWsGateway],
 })
 export class DriverModule {}

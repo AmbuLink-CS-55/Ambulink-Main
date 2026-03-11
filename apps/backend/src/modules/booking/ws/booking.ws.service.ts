@@ -2,7 +2,6 @@ import { Injectable } from "@nestjs/common";
 import type { Booking, Hospital, User } from "@/core/database/schema";
 import type {
   BookingNote,
-  DriverLocationUpdate,
   EmtNote,
   PatientSettingsData,
 } from "@ambulink/types";
@@ -10,7 +9,7 @@ import type { UploadedMediaFile } from "../booking-media.service";
 import { BookingCoreService } from "../common/booking.core.service";
 
 @Injectable()
-export class BookingFlowService {
+export class BookingWsService {
   constructor(private bookingCoreService: BookingCoreService) {}
 
   createApprovedBooking(
@@ -29,23 +28,6 @@ export class BookingFlowService {
       dispatcherId,
       patientProfileSnapshot
     );
-  }
-
-  askDispatchers(
-    nearByDrivers: Array<{
-      id: string;
-      providerId: string | null;
-      currentLocation: User["currentLocation"];
-    }>,
-    patient: {
-      id: string;
-      fullName: string | null;
-      phoneNumber: string | null;
-      email: string | null;
-      currentLocation: User["currentLocation"];
-    }
-  ) {
-    return this.bookingCoreService.askDispatchers(nearByDrivers, patient);
   }
 
   getActiveBookingForPatient(patientId: string) {
@@ -100,10 +82,6 @@ export class BookingFlowService {
     return this.bookingCoreService.updateBooking(bookingId, booking);
   }
 
-  sendDriverLocation(driverId: string, data: DriverLocationUpdate) {
-    return this.bookingCoreService.sendDriverLocation(driverId, data);
-  }
-
   getDispatcherActiveBookings(dispatcherId: string) {
     return this.bookingCoreService.getDispatcherActiveBookings(dispatcherId);
   }
@@ -126,6 +104,10 @@ export class BookingFlowService {
 
   getEmtSubscribersForBooking(bookingId: string) {
     return this.bookingCoreService.getEmtSubscribersForBooking(bookingId);
+  }
+
+  getOngoingBookingDispatchInfoForDriver(driverId: string) {
+    return this.bookingCoreService.getOngoingBookingDispatchInfoForDriver(driverId);
   }
 
   appendBookingNote(bookingId: string, note: BookingNote) {
