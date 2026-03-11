@@ -3,9 +3,9 @@ import type { PatientCancelRequest, PatientPickupRequest } from "@ambulink/types
 import { BookingService } from "../booking/booking.service";
 import { DriverService } from "../driver/driver.service";
 import { HospitalService } from "../hospital/hospital.service";
-import { NotificationService } from "@/core/socket/notification.service";
 import { PatientService } from "./patient.service";
 import type { UploadedMediaFile } from "../booking/booking-media.service";
+import { EventBusService } from "@/core/events/event-bus.service";
 
 @Injectable()
 export class PatientCommandService {
@@ -14,7 +14,7 @@ export class PatientCommandService {
     private driverService: DriverService,
     private bookingService: BookingService,
     private hospitalService: HospitalService,
-    private notificationService: NotificationService
+    private eventBus: EventBusService
   ) {}
 
   async requestHelp(patientId: string, data: PatientPickupRequest) {
@@ -39,8 +39,13 @@ export class PatientCommandService {
         reason: "no_drivers",
         stage: "nearby_search",
       });
-      this.notificationService.notifyPatient(patientId, "booking:failed", {
-        reason: "no drivers near patient",
+      this.eventBus.publish({
+        type: "realtime.patient",
+        patientId,
+        event: "booking:failed",
+        payload: {
+          reason: "no drivers near patient",
+        },
       });
       return;
     }
@@ -70,8 +75,13 @@ export class PatientCommandService {
         reason: result.reason,
         stage: "dispatcher_approval",
       });
-      this.notificationService.notifyPatient(patientId, "booking:failed", {
-        reason: result.reason,
+      this.eventBus.publish({
+        type: "realtime.patient",
+        patientId,
+        event: "booking:failed",
+        payload: {
+          reason: result.reason,
+        },
       });
       return;
     }
@@ -87,7 +97,12 @@ export class PatientCommandService {
         dispatcherId,
         requestId,
       });
-      this.notificationService.notifyPatient(patientId, "booking:failed", { reason: "no_drivers" });
+      this.eventBus.publish({
+        type: "realtime.patient",
+        patientId,
+        event: "booking:failed",
+        payload: { reason: "no_drivers" },
+      });
       return;
     }
 
@@ -113,15 +128,26 @@ export class PatientCommandService {
       : null;
 
     if (dispatcherPayload) {
-      this.notificationService.notifyDispatcher(
+      this.eventBus.publish({
+        type: "realtime.dispatcher",
         dispatcherId,
-        "booking:assigned",
-        dispatcherPayload
-      );
+        event: "booking:assigned",
+        payload: dispatcherPayload,
+      });
     }
     if (assignedPayload) {
-      this.notificationService.notifyDriver(pickedDriver.id, "booking:assigned", assignedPayload);
-      this.notificationService.notifyPatient(patientId, "booking:assigned", assignedPayload);
+      this.eventBus.publish({
+        type: "realtime.driver",
+        driverId: pickedDriver.id,
+        event: "booking:assigned",
+        payload: assignedPayload,
+      });
+      this.eventBus.publish({
+        type: "realtime.patient",
+        patientId,
+        event: "booking:assigned",
+        payload: assignedPayload,
+      });
       console.info("[patient] booking_assigned", {
         patientId,
         bookingId: assignedPayload.bookingId,
@@ -136,22 +162,37 @@ export class PatientCommandService {
     const bookingData = await this.bookingService.cancelByPatient(patientId, cancellationReason);
 
     if (!bookingData) {
-      this.notificationService.notifyPatient(patientId, "booking:cancel:error", {
-        message: "No active booking to cancel",
+      this.eventBus.publish({
+        type: "realtime.patient",
+        patientId,
+        event: "booking:cancel:error",
+        payload: {
+          message: "No active booking to cancel",
+        },
       });
       return;
     }
 
     if (bookingData.driverId) {
-      this.notificationService.notifyDriver(bookingData.driverId, "booking:cancelled", {
-        bookingId: bookingData.id,
-        reason: cancellationReason,
+      this.eventBus.publish({
+        type: "realtime.driver",
+        driverId: bookingData.driverId,
+        event: "booking:cancelled",
+        payload: {
+          bookingId: bookingData.id,
+          reason: cancellationReason,
+        },
       });
     }
 
-    this.notificationService.notifyPatient(patientId, "booking:cancelled", {
-      bookingId: bookingData.id,
-      message: "Booking cancelled successfully",
+    this.eventBus.publish({
+      type: "realtime.patient",
+      patientId,
+      event: "booking:cancelled",
+      payload: {
+        bookingId: bookingData.id,
+        message: "Booking cancelled successfully",
+      },
     });
   }
 

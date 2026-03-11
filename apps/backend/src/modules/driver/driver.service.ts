@@ -1,25 +1,29 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { UserStatus } from "@/core/database/schema";
-import { NotificationService } from "@/core/socket/notification.service";
 import type { CreateDriverDto, UpdateDriverDto } from "@/common/validation/schemas";
 import type { NearbyDriver } from "@ambulink/types";
 import { DriverRepository } from "./driver.repository";
+import { EventBusService } from "@/core/events/event-bus.service";
 
 @Injectable()
 export class DriverService {
   constructor(
     private driverRepository: DriverRepository,
-    private notificationService: NotificationService
+    private eventBus: EventBusService
   ) {}
 
   async create(createDriverDto: CreateDriverDto) {
     const result = await this.driverRepository.createDriver(createDriverDto);
     const created = result[0];
     if (created) {
-      this.notificationService.notifyAllDispatchers("driver:roster", {
-        providerId: created.providerId,
-        driver: created,
-        action: "created",
+      this.eventBus.publish({
+        type: "realtime.dispatchers",
+        event: "driver:roster",
+        payload: {
+          providerId: created.providerId,
+          driver: created,
+          action: "created",
+        },
       });
     }
     return created;
@@ -48,10 +52,14 @@ export class DriverService {
     }
     const updated = result[0];
     if (updated) {
-      this.notificationService.notifyAllDispatchers("driver:roster", {
-        providerId: updated.providerId,
-        driver: updated,
-        action: "updated",
+      this.eventBus.publish({
+        type: "realtime.dispatchers",
+        event: "driver:roster",
+        payload: {
+          providerId: updated.providerId,
+          driver: updated,
+          action: "updated",
+        },
       });
     }
     return updated;
@@ -60,10 +68,14 @@ export class DriverService {
   async remove(id: string) {
     await this.findOne(id);
     await this.driverRepository.removeDriver(id);
-    this.notificationService.notifyAllDispatchers("driver:roster", {
-      providerId: null,
-      driver: { id },
-      action: "removed",
+    this.eventBus.publish({
+      type: "realtime.dispatchers",
+      event: "driver:roster",
+      payload: {
+        providerId: null,
+        driver: { id },
+        action: "removed",
+      },
     });
   }
 
@@ -75,10 +87,14 @@ export class DriverService {
     }
 
     if (updated) {
-      this.notificationService.notifyAllDispatchers("driver:roster", {
-        providerId: updated.providerId,
-        driver: updated,
-        action: "updated",
+      this.eventBus.publish({
+        type: "realtime.dispatchers",
+        event: "driver:roster",
+        payload: {
+          providerId: updated.providerId,
+          driver: updated,
+          action: "updated",
+        },
       });
     }
     return updated;

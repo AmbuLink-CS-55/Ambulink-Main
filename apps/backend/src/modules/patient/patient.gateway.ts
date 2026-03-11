@@ -5,6 +5,7 @@ import { OnModuleDestroy } from "@nestjs/common";
 import { PatientService } from "./patient.service";
 import { BookingService } from "../booking/booking.service";
 import { SocketService } from "@/core/socket/socket.service";
+import { EventBusService } from "@/core/events/event-bus.service";
 
 @WebSocketGateway({
   cors: {
@@ -20,7 +21,8 @@ export class PatientGateway implements OnGatewayInit, OnModuleDestroy {
   constructor(
     private patientService: PatientService,
     private bookingService: BookingService,
-    private socketService: SocketService
+    private socketService: SocketService,
+    private eventBus: EventBusService
   ) {}
 
   afterInit() {
@@ -57,11 +59,21 @@ export class PatientGateway implements OnGatewayInit, OnModuleDestroy {
         activeBooking.id
       );
       if (bookingPayload) {
-        this.socketService.emitToPatient(patientId, "booking:assigned", bookingPayload);
+        this.eventBus.publish({
+          type: "realtime.patient",
+          patientId,
+          event: "booking:assigned",
+          payload: bookingPayload,
+        });
       }
       if (activeBooking.status === "ARRIVED") {
-        this.socketService.emitToPatient(patientId, "booking:arrived", {
-          bookingId: activeBooking.id,
+        this.eventBus.publish({
+          type: "realtime.patient",
+          patientId,
+          event: "booking:arrived",
+          payload: {
+            bookingId: activeBooking.id,
+          },
         });
       }
     }

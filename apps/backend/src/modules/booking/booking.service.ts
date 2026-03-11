@@ -11,7 +11,6 @@ import { bookings, users } from "@/core/database/schema";
 import type { Booking, Hospital, User } from "@/core/database/schema";
 import { DbExecutor, DbService } from "@/core/database/db.service";
 import { DispatcherService } from "../dispatcher/dispatcher.service";
-import { NotificationService } from "@/core/socket/notification.service";
 import type {
   BookingAttachment,
   BookingDetailsPayload,
@@ -33,6 +32,7 @@ import { PatientRepository } from "../patient/patient.repository";
 import { HospitalRepository } from "../hospital/hospital.repository";
 import { BookingMediaService } from "./booking-media.service";
 import type { UploadedMediaFile } from "./booking-media.service";
+import { EventBusService } from "@/core/events/event-bus.service";
 
 const bookingError = (code: string, message: string) => ({ code, message });
 
@@ -47,7 +47,7 @@ export class BookingService {
   constructor(
     private dbService: DbService,
     private dispatcherService: DispatcherService,
-    private notificationService: NotificationService,
+    private eventBus: EventBusService,
     private dispatcherApprovalService: DispatcherApprovalService,
     private bookingRepository: BookingRepository,
     private bookingMediaService: BookingMediaService,
@@ -157,9 +157,9 @@ export class BookingService {
       );
     }
 
-    this.notificationService.notifyDispatcher(dispatcherId, "booking:assigned", dispatcherPayload);
-    this.notificationService.notifyDriver(driver.id, "booking:assigned", assignedPayload);
-    this.notificationService.notifyPatient(booking.patientId, "booking:assigned", assignedPayload);
+    this.emitDispatcher(dispatcherId, "booking:assigned", dispatcherPayload);
+    this.emitDriver(driver.id, "booking:assigned", assignedPayload);
+    this.emitPatient(booking.patientId, "booking:assigned", assignedPayload);
 
     return {
       bookingId: booking.bookingId,
@@ -274,17 +274,17 @@ export class BookingService {
     }
 
     if (previousDriverId && nextDriverId && previousDriverId !== nextDriverId) {
-      this.notificationService.notifyDriver(previousDriverId, "booking:cancelled", {
+      this.emitDriver(previousDriverId, "booking:cancelled", {
         bookingId,
         reason: "Reassigned by dispatcher",
       });
     }
 
     if (nextDriverId) {
-      this.notificationService.notifyDriver(nextDriverId, "booking:assigned", assignedPayload);
+      this.emitDriver(nextDriverId, "booking:assigned", assignedPayload);
     }
     if (booking.patientId) {
-      this.notificationService.notifyPatient(
+      this.emitPatient(
         booking.patientId,
         "booking:assigned",
         assignedPayload
@@ -292,9 +292,9 @@ export class BookingService {
     }
     const emtSubscribers = await this.bookingRepository.getEmtsSubscribedToBooking(bookingId);
     for (const subscriber of emtSubscribers) {
-      this.notificationService.notifyEmt(subscriber.emtId, "booking:assigned", assignedPayload);
+      this.emitEmt(subscriber.emtId, "booking:assigned", assignedPayload);
     }
-    this.notificationService.notifyDispatcher(dispatcherId, "booking:assigned", dispatcherPayload);
+    this.emitDispatcher(dispatcherId, "booking:assigned", dispatcherPayload);
 
     return {
       bookingId,
@@ -337,7 +337,7 @@ export class BookingService {
       if (updatedBooking.status === "REQUESTED") {
         return updatedBooking;
       }
-      this.notificationService.notifyDispatcher(updatedBooking.dispatcherId, "booking:update", {
+      this.emitDispatcher(updatedBooking.dispatcherId, "booking:update", {
         bookingId: updatedBooking.id,
         status: updatedBooking.status,
         updatedAt: new Date().toISOString(),
@@ -346,7 +346,7 @@ export class BookingService {
     }
 
     if (updatedBooking?.providerId) {
-      this.notificationService.notifyAllDispatchers("booking:log", {
+      this.emitAllDispatchers("booking:log", {
         providerId: updatedBooking.providerId,
         bookingId: updatedBooking.id,
         status: updatedBooking.status,
@@ -355,25 +355,25 @@ export class BookingService {
     }
 
     if (updatedBooking?.patientId && updatedBooking.status === "ARRIVED") {
-      this.notificationService.notifyPatient(updatedBooking.patientId, "booking:arrived", {
+      this.emitPatient(updatedBooking.patientId, "booking:arrived", {
         bookingId: updatedBooking.id,
       });
     }
 
     if (updatedBooking?.patientId && updatedBooking.status === "COMPLETED") {
-      this.notificationService.notifyPatient(updatedBooking.patientId, "booking:completed", {
+      this.emitPatient(updatedBooking.patientId, "booking:completed", {
         bookingId: updatedBooking.id,
       });
     }
 
     if (updatedBooking?.driverId && updatedBooking.status === "COMPLETED") {
-      this.notificationService.notifyDriver(updatedBooking.driverId, "booking:completed", {
+      this.emitDriver(updatedBooking.driverId, "booking:completed", {
         bookingId: updatedBooking.id,
       });
     }
 
     if (updatedBooking?.driverId && updatedBooking.status === "CANCELLED") {
-      this.notificationService.notifyDriver(updatedBooking.driverId, "booking:cancelled", {
+      this.emitDriver(updatedBooking.driverId, "booking:cancelled", {
         bookingId: updatedBooking.id,
         reason: updatedBooking.cancellationReason ?? "Booking cancelled",
       });
@@ -386,15 +386,15 @@ export class BookingService {
     ) {
       for (const emtId of emtSubscriberIds) {
         if (updatedBooking.status === "ARRIVED") {
-          this.notificationService.notifyEmt(emtId, "booking:arrived", {
+          this.emitEmt(emtId, "booking:arrived", {
             bookingId: updatedBooking.id,
           });
         } else if (updatedBooking.status === "COMPLETED") {
-          this.notificationService.notifyEmt(emtId, "booking:completed", {
+          this.emitEmt(emtId, "booking:completed", {
             bookingId: updatedBooking.id,
           });
         } else {
-          this.notificationService.notifyEmt(emtId, "booking:cancelled", {
+          this.emitEmt(emtId, "booking:cancelled", {
             bookingId: updatedBooking.id,
             reason: updatedBooking.cancellationReason ?? "Booking cancelled",
           });
@@ -469,7 +469,7 @@ export class BookingService {
     }
 
     if (booking.dispatcherId) {
-      this.notificationService.notifyDispatcher(booking.dispatcherId, "booking:update", {
+      this.emitDispatcher(booking.dispatcherId, "booking:update", {
         bookingId: booking.id,
         status: "CANCELLED",
         updatedAt: new Date().toISOString(),
@@ -484,8 +484,8 @@ export class BookingService {
         updatedAt: new Date().toISOString(),
         providerId: booking.providerId,
       } satisfies DispatcherBookingUpdatePayload;
-      this.notificationService.notifyAllDispatchers("booking:update", providerUpdatePayload);
-      this.notificationService.notifyAllDispatchers("booking:log", {
+      this.emitAllDispatchers("booking:update", providerUpdatePayload);
+      this.emitAllDispatchers("booking:log", {
         providerId: booking.providerId,
         bookingId: booking.id,
         status: booking.status,
@@ -494,7 +494,7 @@ export class BookingService {
     }
 
     for (const emtId of emtSubscriberIds) {
-      this.notificationService.notifyEmt(emtId, "booking:cancelled", {
+      this.emitEmt(emtId, "booking:cancelled", {
         bookingId: booking.id,
         reason,
       });
@@ -652,13 +652,13 @@ export class BookingService {
     if (!patientId || !dispatcherId) {
       return;
     }
-    this.notificationService.notifyDispatcher(dispatcherId, "driver:update", data);
-    this.notificationService.notifyPatient(patientId, "driver:update", data);
+    this.emitDispatcher(dispatcherId, "driver:update", data);
+    this.emitPatient(patientId, "driver:update", data);
     const emtSubscribers = await this.bookingRepository.getEmtsSubscribedToBooking(
       booking.bookingId
     );
     for (const subscriber of emtSubscribers) {
-      this.notificationService.notifyEmt(subscriber.emtId, "driver:update", data);
+      this.emitEmt(subscriber.emtId, "driver:update", data);
     }
   }
 
@@ -832,16 +832,16 @@ export class BookingService {
       dispatcher.providerId
     );
     for (const id of dispatcherIds) {
-      this.notificationService.notifyDispatcher(id, "booking:notes", { bookingId, note });
+      this.emitDispatcher(id, "booking:notes", { bookingId, note });
     }
 
     const emtSubscribers = await this.bookingRepository.getEmtsSubscribedToBooking(bookingId);
     for (const subscriber of emtSubscribers) {
-      this.notificationService.notifyEmt(subscriber.emtId, "booking:notes", { bookingId, note });
+      this.emitEmt(subscriber.emtId, "booking:notes", { bookingId, note });
     }
 
     if (booking.patientId) {
-      this.notificationService.notifyPatient(booking.patientId, "booking:notes", {
+      this.emitPatient(booking.patientId, "booking:notes", {
         bookingId,
         note,
       });
@@ -1000,18 +1000,62 @@ export class BookingService {
   ) {
     const emtSubscribers = await this.bookingRepository.getEmtsSubscribedToBooking(bookingId);
     for (const subscriber of emtSubscribers) {
-      this.notificationService.notifyEmt(subscriber.emtId, "booking:notes", { bookingId, note });
+      this.emitEmt(subscriber.emtId, "booking:notes", { bookingId, note });
     }
 
     if (patientId) {
-      this.notificationService.notifyPatient(patientId, "booking:notes", { bookingId, note });
+      this.emitPatient(patientId, "booking:notes", { bookingId, note });
     }
 
     if (!providerId) return;
     const dispatcherIds = await this.dispatcherService.findAllLiveDispatchersByProvider(providerId);
     for (const dispatcherId of dispatcherIds) {
-      this.notificationService.notifyDispatcher(dispatcherId, "booking:notes", { bookingId, note });
+      this.emitDispatcher(dispatcherId, "booking:notes", { bookingId, note });
     }
+  }
+
+  private emitDispatcher(dispatcherId: string, event: string, payload: unknown) {
+    this.eventBus.publish({
+      type: "realtime.dispatcher",
+      dispatcherId,
+      event,
+      payload,
+    });
+  }
+
+  private emitAllDispatchers(event: string, payload: unknown) {
+    this.eventBus.publish({
+      type: "realtime.dispatchers",
+      event,
+      payload,
+    });
+  }
+
+  private emitDriver(driverId: string, event: string, payload: unknown) {
+    this.eventBus.publish({
+      type: "realtime.driver",
+      driverId,
+      event,
+      payload,
+    });
+  }
+
+  private emitPatient(patientId: string, event: string, payload: unknown) {
+    this.eventBus.publish({
+      type: "realtime.patient",
+      patientId,
+      event,
+      payload,
+    });
+  }
+
+  private emitEmt(emtId: string, event: string, payload: unknown) {
+    this.eventBus.publish({
+      type: "realtime.emt",
+      emtId,
+      event,
+      payload,
+    });
   }
 
   private normalizeBookingNotes(raw: unknown, bookingId: string): BookingNote[] {

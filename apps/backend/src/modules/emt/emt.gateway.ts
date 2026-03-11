@@ -7,6 +7,7 @@ import {
   WebSocketServer,
 } from "@nestjs/websockets";
 import { SocketService } from "@/core/socket/socket.service";
+import { EventBusService } from "@/core/events/event-bus.service";
 import { EmtService } from "./emt.service";
 import { EmtCommandService } from "./emt-command.service";
 import {
@@ -28,6 +29,7 @@ export class EmtGateway implements OnGatewayInit, OnModuleDestroy {
 
   constructor(
     private socketService: SocketService,
+    private eventBus: EventBusService,
     private emtService: EmtService,
     private emtCommandService: EmtCommandService
   ) {}
@@ -64,7 +66,12 @@ export class EmtGateway implements OnGatewayInit, OnModuleDestroy {
 
       const bookingPayload = await this.emtService.getCurrentBooking(emtId);
       if (bookingPayload) {
-        this.socketService.emitToEmt(emtId, "booking:assigned", bookingPayload);
+        this.eventBus.publish({
+          type: "realtime.emt",
+          emtId,
+          event: "booking:assigned",
+          payload: bookingPayload,
+        });
       }
     } catch (error) {
       console.warn("[socket] invalid_emt_connection", {

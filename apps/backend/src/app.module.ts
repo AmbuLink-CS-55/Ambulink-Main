@@ -10,11 +10,13 @@ import { DispatcherModule } from "./modules/dispatcher/dispatcher.module";
 import { HealthController } from "./core/health/health.controller";
 import { HospitalModule } from "./modules/hospital/hospital.module";
 import { EmtModule } from "./modules/emt/emt.module";
+import { EventsModule } from "./core/events/events.module";
 
 @Module({
   imports: [
     DbModule,
     SocketModule,
+    EventsModule,
     AmbulanceProviderModule,
     PatientModule,
     DriverModule,

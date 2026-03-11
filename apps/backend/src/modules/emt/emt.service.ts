@@ -8,10 +8,10 @@ import { randomUUID } from "node:crypto";
 import { BookingService } from "../booking/booking.service";
 import { EmtRepository } from "./emt.repository";
 import { DispatcherService } from "../dispatcher/dispatcher.service";
-import { NotificationService } from "@/core/socket/notification.service";
 import type { CreateEmtDto, UpdateEmtDto } from "@/common/validation/schemas";
 import type { BookingAssignedPayload, BookingNote, UserStatus } from "@ambulink/types";
 import type { UploadedMediaFile } from "../booking/booking-media.service";
+import { EventBusService } from "@/core/events/event-bus.service";
 
 @Injectable()
 export class EmtService {
@@ -19,7 +19,7 @@ export class EmtService {
     private emtRepository: EmtRepository,
     private bookingService: BookingService,
     private dispatcherService: DispatcherService,
-    private notificationService: NotificationService
+    private eventBus: EventBusService
   ) {}
 
   async setStatus(emtId: string, status: UserStatus) {
@@ -30,10 +30,14 @@ export class EmtService {
     const result = await this.emtRepository.createEmt(createEmtDto);
     const created = result[0];
     if (created) {
-      this.notificationService.notifyAllDispatchers("emt:roster", {
-        providerId: created.providerId,
-        emt: created,
-        action: "created",
+      this.eventBus.publish({
+        type: "realtime.dispatchers",
+        event: "emt:roster",
+        payload: {
+          providerId: created.providerId,
+          emt: created,
+          action: "created",
+        },
       });
     }
     return created;
@@ -91,7 +95,12 @@ export class EmtService {
       throw new NotFoundException("Booking payload unavailable");
     }
 
-    this.notificationService.notifyEmt(emtId, "booking:assigned", payload);
+    this.eventBus.publish({
+      type: "realtime.emt",
+      emtId,
+      event: "booking:assigned",
+      payload,
+    });
     return payload;
   }
 
@@ -160,9 +169,14 @@ export class EmtService {
 
     const emtSubscribers = await this.bookingService.getEmtSubscribersForBooking(bookingId);
     for (const subscriber of emtSubscribers) {
-      this.notificationService.notifyEmt(subscriber.emtId, "booking:notes", {
-        bookingId,
-        note,
+      this.eventBus.publish({
+        type: "realtime.emt",
+        emtId: subscriber.emtId,
+        event: "booking:notes",
+        payload: {
+          bookingId,
+          note,
+        },
       });
     }
 
@@ -170,16 +184,26 @@ export class EmtService {
       emt.providerId
     );
     for (const dispatcherId of dispatcherIds) {
-      this.notificationService.notifyDispatcher(dispatcherId, "booking:notes", {
-        bookingId,
-        note,
+      this.eventBus.publish({
+        type: "realtime.dispatcher",
+        dispatcherId,
+        event: "booking:notes",
+        payload: {
+          bookingId,
+          note,
+        },
       });
     }
 
     if (booking.patientId) {
-      this.notificationService.notifyPatient(booking.patientId, "booking:notes", {
-        bookingId,
-        note,
+      this.eventBus.publish({
+        type: "realtime.patient",
+        patientId: booking.patientId,
+        event: "booking:notes",
+        payload: {
+          bookingId,
+          note,
+        },
       });
     }
 
@@ -195,10 +219,14 @@ export class EmtService {
       throw new NotFoundException(`EMT with id ${id} not found`);
     }
 
-    this.notificationService.notifyAllDispatchers("emt:roster", {
-      providerId: updated.providerId,
-      emt: updated,
-      action: "updated",
+    this.eventBus.publish({
+      type: "realtime.dispatchers",
+      event: "emt:roster",
+      payload: {
+        providerId: updated.providerId,
+        emt: updated,
+        action: "updated",
+      },
     });
     return updated;
   }
@@ -206,10 +234,14 @@ export class EmtService {
   async remove(id: string) {
     await this.findOne(id);
     await this.emtRepository.removeEmt(id);
-    this.notificationService.notifyAllDispatchers("emt:roster", {
-      providerId: null,
-      emt: { id },
-      action: "removed",
+    this.eventBus.publish({
+      type: "realtime.dispatchers",
+      event: "emt:roster",
+      payload: {
+        providerId: null,
+        emt: { id },
+        action: "removed",
+      },
     });
   }
 }

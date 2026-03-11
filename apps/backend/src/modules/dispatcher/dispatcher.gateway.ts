@@ -7,6 +7,7 @@ import {
 } from "@nestjs/websockets";
 import { OnModuleDestroy } from "@nestjs/common";
 
+import { EventBusService } from "@/core/events/event-bus.service";
 import { SocketService } from "@/core/socket/socket.service";
 import { BookingService } from "../booking/booking.service";
 import { DispatcherService } from "./dispatcher.service";
@@ -28,6 +29,7 @@ export class DispatcherGateway implements OnGatewayInit, OnModuleDestroy {
   constructor(
     private dispatcherServise: DispatcherService,
     private socketService: SocketService,
+    private eventBus: EventBusService,
     private bookingService: BookingService,
     private pendingRequestService: DispatcherPendingRequestService
   ) {}
@@ -161,7 +163,12 @@ export class DispatcherGateway implements OnGatewayInit, OnModuleDestroy {
       parsed.data.requestId,
       parsed.data.approved
     );
-    this.socketService.emitToDispatcher(dispatcherId, "booking:decision-ack", ack);
+    this.eventBus.publish({
+      type: "realtime.dispatcher",
+      dispatcherId,
+      event: "booking:decision-ack",
+      payload: ack,
+    });
   }
 
   @SubscribeMessage("booking:pending-sync:request")
@@ -194,8 +201,13 @@ export class DispatcherGateway implements OnGatewayInit, OnModuleDestroy {
     this.bookingService
       .getDispatcherActiveBookings(dispatcherId)
       .then((bookings) => {
-        this.socketService.emitToDispatcher(dispatcherId, "booking:sync", {
-          bookings,
+        this.eventBus.publish({
+          type: "realtime.dispatcher",
+          dispatcherId,
+          event: "booking:sync",
+          payload: {
+            bookings,
+          },
         });
         console.info("[dispatcher] active_booking_sync", {
           dispatcherId,
@@ -209,8 +221,13 @@ export class DispatcherGateway implements OnGatewayInit, OnModuleDestroy {
 
   private emitPendingSync(dispatcherId: string) {
     const pendingRequests = this.pendingRequestService.getPendingForDispatcher(dispatcherId);
-    this.socketService.emitToDispatcher(dispatcherId, "booking:pending-sync", {
-      requests: pendingRequests,
+    this.eventBus.publish({
+      type: "realtime.dispatcher",
+      dispatcherId,
+      event: "booking:pending-sync",
+      payload: {
+        requests: pendingRequests,
+      },
     });
     console.info("[dispatcher] pending_request_sync", {
       dispatcherId,

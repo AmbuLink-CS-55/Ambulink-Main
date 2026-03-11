@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import type { DriverLocationPayload } from "@ambulink/types";
 import { BookingService } from "../booking/booking.service";
 import { DriverService } from "./driver.service";
-import { NotificationService } from "@/core/socket/notification.service";
+import { EventBusService } from "@/core/events/event-bus.service";
 
 @Injectable()
 export class DriverCommandService {
@@ -11,7 +11,7 @@ export class DriverCommandService {
   constructor(
     private driverService: DriverService,
     private bookingService: BookingService,
-    private notificationService: NotificationService
+    private eventBus: EventBusService
   ) {}
 
   async setShift(driverId: string, onShift: boolean) {
@@ -42,10 +42,14 @@ export class DriverCommandService {
     const now = Date.now();
     const lastEmit = this.lastEmitTimes.get(driverId) || 0;
     if (now - lastEmit > 1000) {
-      this.notificationService.notifyAllDispatchers("driver:update", {
-        id: driverId,
-        x,
-        y,
+      this.eventBus.publish({
+        type: "realtime.dispatchers",
+        event: "driver:update",
+        payload: {
+          id: driverId,
+          x,
+          y,
+        },
       });
       this.lastEmitTimes.set(driverId, now);
     }
