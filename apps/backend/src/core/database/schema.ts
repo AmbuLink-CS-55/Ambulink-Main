@@ -10,6 +10,7 @@ import {
   pgEnum,
   geometry,
   jsonb,
+  text,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { sql } from "drizzle-orm";
@@ -59,6 +60,7 @@ export const users = pgTable(
     fullName: varchar("full_name", { length: 255 }),
     phoneNumber: varchar("phone_number", { length: 50 }),
     email: varchar("email", { length: 255 }),
+    emailVerified: boolean("email_verified").notNull().default(false),
     passwordHash: varchar("password_hash", { length: 255 }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -107,6 +109,37 @@ export const users = pgTable(
 );
 export type User = InferSelectModel<typeof users>;
 export type NewUser = InferInsertModel<typeof users>;
+
+//Required for tracking the user login
+export const sessions = pgTable("sessions", {
+    id: varchar("id", { length: 255 }).primaryKey(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    token: varchar("token", { length: 255 }).notNull().unique(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    ipAddress: varchar("ip_address", { length: 255 }),
+    userAgent: varchar("user_agent", { length: 255 }),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  });
+export type Session = InferSelectModel<typeof sessions>;
+
+//table to track user login method 
+export const accounts = pgTable("accounts", {
+    id: varchar("id", { length: 255 }).primaryKey(),
+    accountId: varchar("account_id", { length: 255 }).notNull(),
+    providerId: varchar("provider_id", { length: 255 }).notNull(),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    accessToken: varchar("access_token", { length: 255 }),
+    refreshToken: varchar("refresh_token", { length: 255 }),
+    idToken: text("id_token"),
+    accessTokenExpiresAt: timestamp("access_token_expires_at", { withTimezone: true }),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { withTimezone: true }),
+    scope: varchar("scope", { length: 255 }),
+    password: varchar("password", { length: 255 }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  });
+export type Account = InferSelectModel<typeof accounts>;
 
 export const ambulance = pgTable(
   "ambulances",

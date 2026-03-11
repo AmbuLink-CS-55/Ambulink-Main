@@ -32,13 +32,14 @@
     "seed:test": "node -r ts-node/register -r tsconfig-paths/register src/core/database/seed/seed.test.ts"
   },
   "dependencies": {
-    "@clerk/express": "^2.0.2",
+    "@better-auth/drizzle-adapter": "^1.5.4",
     "@nestjs/common": "^11.1.14",
     "@nestjs/core": "^11.1.14",
     "@nestjs/platform-express": "^11.1.14",
     "@nestjs/platform-socket.io": "^11.1.14",
     "@nestjs/swagger": "^11.2.5",
     "@nestjs/websockets": "^11.1.14",
+    "better-auth": "^1.5.4",
     "dotenv": "^17.3.1",
     "drizzle-orm": "^0.45.1",
     "drizzle-seed": "^0.3.1",
