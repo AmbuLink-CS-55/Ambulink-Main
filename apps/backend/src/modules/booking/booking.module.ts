@@ -6,9 +6,7 @@ import { HospitalFlowRepository } from "../hospital/flow/hospital.flow.repositor
 import { BookingMediaService } from "./booking-media.service";
 import { BookingApiController } from "./api/booking.api.controller";
 import { BookingApiService } from "./api/booking.api.service";
-import { BookingApiRepository } from "./api/booking.api.repository";
 import { BookingFlowService } from "./flow/booking.flow.service";
-import { BookingFlowRepository } from "./flow/booking.flow.repository";
 import { BookingCoreService } from "./common/booking.core.service";
 import { BookingSharedRepository } from "./common/booking.shared.repository";
 
@@ -17,8 +15,6 @@ import { BookingSharedRepository } from "./common/booking.shared.repository";
   controllers: [BookingApiController],
   providers: [
     BookingSharedRepository,
-    BookingApiRepository,
-    BookingFlowRepository,
     BookingCoreService,
     BookingApiService,
     BookingFlowService,
