@@ -25,6 +25,12 @@ jobs:
           node-version: 20
           cache: npm
 
+      - name: Use npm 11.8.0
+        run: |
+          corepack enable
+          corepack prepare npm@11.8.0 --activate
+          npm --version
+
       - name: Install dependencies
         run: npm ci
 
