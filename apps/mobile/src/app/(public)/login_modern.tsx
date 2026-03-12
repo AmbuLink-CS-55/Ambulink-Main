@@ -146,31 +146,48 @@ export default function LoginModern() {
 
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Don&apos;t have an account? </Text>
-            <Button
-              title={i18n.t("login.loginAsPatient")}
-              onPress={() => {
-                signInAs("patient");
-                router.replace("/");
-              }}
-            />
-            <Button
-              title={i18n.t("login.loginAsDriver")}
-              onPress={() => {
-                signInAs("driver");
-                router.replace("/");
-              }}
-            />
-            <Button
-              title={i18n.t("login.loginAsEMT")}
-              onPress={() => {
-                signInAs("emt");
-                router.replace("/");
-              }}
-            />
-
             <Pressable onPress={() => router.push("/(public)/signup")}>
               <Text style={styles.signupText}>Sign Up</Text>
             </Pressable>
+          </View>
+
+          <View style={styles.devModeBox}>
+            <View style={styles.devModeHeader}>
+              <Ionicons name="construct" size={14} color="#ed8936" />
+              <Text style={styles.devModeHeaderText}>  DEV MODE — QUICK SIGN-IN</Text>
+            </View>
+            <View style={styles.devModeRow}>
+              <Pressable
+                style={[styles.devModeBtn, { backgroundColor: "#1e5bb5" }]}
+                onPress={() => {
+                  signInAs("patient");
+                  router.replace("/");
+                }}
+              >
+                <Ionicons name="person" size={24} color="white" />
+                <Text style={styles.devModeBtnText}>Patient</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.devModeBtn, { backgroundColor: "#22a95c" }]}
+                onPress={() => {
+                  signInAs("driver");
+                  router.replace("/");
+                }}
+              >
+                <Ionicons name="car" size={24} color="white" />
+                <Text style={styles.devModeBtnText}>Driver</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.devModeBtn, { backgroundColor: "#8d4af9" }]}
+                onPress={() => {
+                  signInAs("emt");
+                  router.replace("/");
+                }}
+              >
+                <Ionicons name="grid" size={24} color="white" />
+                <Text style={styles.devModeBtnText}>Dashboard</Text>
+              </Pressable>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -186,12 +203,12 @@ const styles = StyleSheet.create({
   headerSection: { width: "100%", alignItems: "center" },
   headerImage: { width: "180%", aspectRatio: 1.0, alignSelf: "center", marginTop: -220 },
   formSection: { paddingHorizontal: 20, marginTop: -150 },
-  heading: { fontSize: 22, fontWeight: "bold", color: "#205fb7ff", marginBottom: 30 },
+  heading: { fontSize: 26, fontWeight: "900", color: "#1e5bb5", marginBottom: 30 },
   inputRow: {
-    backgroundColor: "#d9e9fdff",
+    backgroundColor: "#e2eefa",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#79a5fcff",
+    borderColor: "#a8c7fa",
     marginBottom: 16,
     paddingHorizontal: 16,
     height: 56,
@@ -200,14 +217,14 @@ const styles = StyleSheet.create({
   },
   input: { flex: 1, marginLeft: 12, fontSize: 16, color: "#1F2937" },
   forgotButton: { alignItems: "flex-start", marginBottom: 24 },
-  forgotText: { color: "#205fb7ff", fontSize: 13, fontWeight: "500" },
+  forgotText: { color: "#1e5bb5", fontSize: 13, fontWeight: "700" },
   signInButton: {
-    backgroundColor: "#205fb7ff",
+    backgroundColor: "#1e5bb5",
     borderRadius: 12,
     height: 56,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#205fb7ff",
+    shadowColor: "#1e5bb5",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -244,9 +261,49 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 32,
-    marginBottom: 40,
+    marginTop: 24,
+    marginBottom: 20,
   },
   footerText: { color: "#6B7280", fontSize: 15 },
-  signupText: { color: "#205fb7ff", fontSize: 15, fontWeight: "600" },
+  signupText: { color: "#1e5bb5", fontSize: 15, fontWeight: "700" },
+  devModeBox: {
+    marginBottom: 60,
+    marginHorizontal: 20,
+    borderWidth: 1.5,
+    borderColor: "#ed8936",
+    borderStyle: "dashed",
+    borderRadius: 16,
+    padding: 16,
+    backgroundColor: "#fffdfa",
+  },
+  devModeHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  devModeHeaderText: {
+    color: "#ed8936",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1,
+  },
+  devModeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  devModeBtn: {
+    flex: 1,
+    aspectRatio: 1.1,
+    marginHorizontal: 6,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  devModeBtnText: {
+    color: "white",
+    fontSize: 13,
+    fontWeight: "600",
+    marginTop: 6,
+  },
 });
