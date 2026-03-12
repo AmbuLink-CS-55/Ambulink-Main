@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Ambulance, Users, Map, ClipboardList } from "lucide-react";
+import { Ambulance, Users, Map, ClipboardList, Settings2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import {
@@ -15,10 +15,18 @@ import {
   SidebarGroupContent,
 } from "@/components/ui/sidebar";
 import {
-  isDispatcherDesktopNotificationsEnabled,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
   requestDispatcherNotificationPermission,
   setDispatcherDesktopNotificationsEnabled,
 } from "@/lib/dispatcher-notifications";
+import { useDashboardSettingsStore } from "@/stores/dashboard-settings.store";
 
 const MENU_ITEMS = [
   { title: "Dashboard Home", path: "/", icon: Map },
@@ -30,8 +38,9 @@ const MENU_ITEMS = [
 
 export function AppSidebar() {
   const location = useLocation();
-  const [desktopNotificationsEnabled, setDesktopNotificationsEnabled] = useState(() =>
-    isDispatcherDesktopNotificationsEnabled()
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const desktopNotificationsEnabled = useDashboardSettingsStore(
+    (state) => state.settings.desktopNotificationsEnabled
   );
 
   useEffect(() => {
@@ -41,7 +50,6 @@ export function AppSidebar() {
   }, [desktopNotificationsEnabled]);
 
   const onDesktopNotificationsToggle = (checked: boolean) => {
-    setDesktopNotificationsEnabled(checked);
     setDispatcherDesktopNotificationsEnabled(checked);
     if (checked) {
       requestDispatcherNotificationPermission();
@@ -86,21 +94,44 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-sidebar-border/50">
-        <label className="mb-3 flex items-center justify-between gap-2 text-sm">
-          <span>Desktop notifications</span>
-          <input
-            type="checkbox"
-            checked={desktopNotificationsEnabled}
-            onChange={(event) => onDesktopNotificationsToggle(event.target.checked)}
-          />
-        </label>
-        <SidebarMenuButton
-          variant="outline"
-          render={<Link to="/login" className="justify-center" />}
-        >
-          Logout
-        </SidebarMenuButton>
+        <Button variant="outline" className="w-full justify-center" onClick={() => setSettingsOpen(true)}>
+          <Settings2 className="mr-2 size-4" />
+          Settings
+        </Button>
       </SidebarFooter>
+
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Dashboard Settings</DialogTitle>
+            <DialogDescription>
+              Configure runtime preferences for the dispatcher dashboard.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-6 pb-6">
+            <label className="flex items-center justify-between gap-3 text-sm">
+              <div>
+                <div className="font-medium text-foreground">Desktop notifications</div>
+                <div className="text-xs text-muted-foreground">
+                  Browser/OS notifications while dashboard is open.
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={desktopNotificationsEnabled}
+                onChange={(event) => onDesktopNotificationsToggle(event.target.checked)}
+              />
+            </label>
+            <div className="mt-6">
+              <Link to="/login" onClick={() => setSettingsOpen(false)}>
+                <Button variant="outline" className="w-full justify-center">
+                  Logout
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Sidebar>
   );
 }

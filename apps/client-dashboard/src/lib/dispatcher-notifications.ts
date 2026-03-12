@@ -4,6 +4,7 @@ import type {
   DispatcherBookingPayload,
   DispatcherBookingUpdatePayload,
 } from "@/lib/socket-types";
+import { useDashboardSettingsStore } from "@/stores/dashboard-settings.store";
 
 type NotificationEventType = "ASSIGNED" | "ETA_UPDATED" | "ARRIVED" | "REROUTED" | "CANCELLED";
 
@@ -19,7 +20,6 @@ type DispatcherInboxNotification = {
 };
 
 const KEY_INBOX = "ambulink:notifications:dispatcher:v1";
-const KEY_PREF = "ambulink:notifications:dispatcher:enabled:v1";
 const MAX_ENTRIES = 100;
 const DEDUPE_WINDOW_MS = 10_000;
 const dedupeMap = new Map<string, number>();
@@ -59,14 +59,13 @@ function appendInbox(item: DispatcherInboxNotification) {
 }
 
 export function isDispatcherDesktopNotificationsEnabled() {
-  if (typeof window === "undefined") return false;
-  const raw = window.localStorage.getItem(KEY_PREF);
-  return raw == null ? true : raw === "true";
+  return useDashboardSettingsStore.getState().settings.desktopNotificationsEnabled;
 }
 
 export function setDispatcherDesktopNotificationsEnabled(enabled: boolean) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(KEY_PREF, String(enabled));
+  useDashboardSettingsStore.getState().updateSettings({
+    desktopNotificationsEnabled: enabled,
+  });
 }
 
 export function requestDispatcherNotificationPermission() {

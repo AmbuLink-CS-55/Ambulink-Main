@@ -41,7 +41,7 @@ export function BookingRequestOverlay({
 
   return (
     <>
-      <div className="fixed top-2 right-4 z-50">
+      <div className="fixed top-2 right-4 z-30">
         <Button
           variant="default"
           size="icon"
@@ -67,7 +67,7 @@ export function BookingRequestOverlay({
       <div
         id={panelId}
         className={cn(
-          "fixed top-0 bottom-2 right-2 h-auto w-96 rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] shadow-[var(--shadow-lg)] z-40 transition-transform duration-300 ease-in-out",
+          "fixed top-0 bottom-2 right-2 h-auto w-96 rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] shadow-[var(--shadow-lg)] z-20 transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
@@ -163,7 +163,7 @@ export function BookingRequestOverlay({
 
       {isOpen && bookingRequests.length > 0 ? (
         <div
-          className="fixed inset-0 z-30 transition-opacity duration-300"
+          className="fixed inset-0 z-10 transition-opacity duration-300"
           onClick={() => setIsOpen(false)}
           aria-hidden
         />
