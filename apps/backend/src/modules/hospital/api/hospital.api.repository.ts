@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
-import { eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { hospitals } from "@/core/database/schema";
-import { DbExecutor, DbService } from "@/core/database/db.service";
+import { DbService } from "@/core/database/db.service";
 
 @Injectable()
 export class HospitalApiRepository {
@@ -9,10 +9,6 @@ export class HospitalApiRepository {
 
   getAllHospitals() {
     return this.dbService.db.select().from(hospitals);
-  }
-
-  getHospitalById(id: string, db: DbExecutor = this.dbService.db) {
-    return db.select().from(hospitals).where(eq(hospitals.id, id));
   }
 
   getNearestHospital(lat: number, lng: number) {

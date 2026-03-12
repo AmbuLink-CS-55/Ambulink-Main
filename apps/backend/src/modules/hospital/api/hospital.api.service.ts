@@ -10,11 +10,6 @@ export class HospitalApiService {
     return this.hospitalRepository.getAllHospitals();
   }
 
-  async findTheNearestHospital(lat: number, lng: number) {
-    const nearestHospital = await this.hospitalRepository.getNearestHospital(lat, lng);
-    return nearestHospital[0];
-  }
-
   async findNearby(
     lat: number,
     lng: number,

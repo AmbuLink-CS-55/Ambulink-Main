@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { eq, and } from "drizzle-orm";
 import { users } from "@/core/database/schema";
 import { DbExecutor, DbService } from "@/core/database/db.service";
-import type { NewUser, UserStatus } from "@/core/database/schema";
+import type { NewUser } from "@/core/database/schema";
 
 @Injectable()
 export class PatientApiRepository {
@@ -73,23 +73,4 @@ export class PatientApiRepository {
       .where(eq(users.id, id));
   }
 
-  updateUserStatus(userId: string, status: UserStatus, db: DbExecutor = this.dbService.db) {
-    return db
-      .update(users)
-      .set({ status: status, updatedAt: new Date() })
-      .where(eq(users.id, userId))
-      .returning(this.safeUserColumns);
-  }
-
-  updateUserLocation(
-    userId: string,
-    location: { x: number; y: number },
-    db: DbExecutor = this.dbService.db
-  ) {
-    return db
-      .update(users)
-      .set({ currentLocation: location, lastLocationUpdate: new Date(), updatedAt: new Date() })
-      .where(eq(users.id, userId))
-      .returning(this.safeUserColumns);
-  }
 }

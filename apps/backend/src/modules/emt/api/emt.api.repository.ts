@@ -65,17 +65,6 @@ export class EmtApiRepository {
       .where(and(eq(users.id, id), eq(users.role, "EMT")));
   }
 
-  setEmtStatus(emtId: string, status: UserStatus, db: DbExecutor = this.dbService.db) {
-    return db
-      .update(users)
-      .set({
-        status,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(users.id, emtId), eq(users.role, "EMT")))
-      .returning(this.safeUserColumns);
-  }
-
   updateEmt(id: string, emt: Partial<NewUser>) {
     const updateData: Record<string, unknown> = {
       updatedAt: new Date(),

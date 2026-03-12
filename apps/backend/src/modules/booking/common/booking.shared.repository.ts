@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { eq, ne, and, or, sql, inArray, desc, isNotNull, ilike, asc } from "drizzle-orm";
+import { eq, ne, and, sql, inArray, desc, isNotNull, ilike, asc } from "drizzle-orm";
 import { ambulanceProviders, bookings, hospitals, users } from "@/core/database/schema";
 import { DbExecutor, DbService } from "@/core/database/db.service";
 import type { Booking, BookingStatus } from "@/core/database/schema";
@@ -66,23 +66,6 @@ export class BookingSharedRepository {
         and(
           eq(bookings.id, bookingId),
           inArray(bookings.status, ["ASSIGNED", "ARRIVED", "PICKEDUP"])
-        )
-      );
-  }
-
-  getOngoingBookingByUserId(userId: string) {
-    return this.dbService.db
-      .select({
-        id: bookings.id,
-        patientId: bookings.patientId,
-        driverId: bookings.driverId,
-        status: bookings.status,
-      })
-      .from(bookings)
-      .where(
-        and(
-          or(eq(bookings.patientId, userId), eq(bookings.driverId, userId)),
-          ne(bookings.status, "COMPLETED")
         )
       );
   }

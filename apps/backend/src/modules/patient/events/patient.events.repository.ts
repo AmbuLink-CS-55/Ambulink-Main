@@ -35,42 +35,11 @@ export class PatientEventsRepository {
       .returning(this.safeUserColumns);
   }
 
-  findAllPatients(isActive?: boolean) {
-    const conditions = [eq(users.role, "PATIENT" as const)];
-
-    if (isActive !== undefined) {
-      conditions.push(eq(users.isActive, isActive));
-    }
-
-    return this.dbService.db
-      .select(this.safeUserColumns)
-      .from(users)
-      .where(and(...conditions));
-  }
-
   findPatientById(id: string, db: DbExecutor = this.dbService.db) {
     return db
       .select(this.safeUserColumns)
       .from(users)
       .where(and(eq(users.id, id), eq(users.role, "PATIENT")));
-  }
-
-  updatePatient(id: string, patient: Partial<NewUser>) {
-    return this.dbService.db
-      .update(users)
-      .set({
-        ...patient,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, id))
-      .returning(this.safeUserColumns);
-  }
-
-  removePatient(id: string) {
-    return this.dbService.db
-      .update(users)
-      .set({ isActive: false, updatedAt: new Date() })
-      .where(eq(users.id, id));
   }
 
   updateUserStatus(userId: string, status: UserStatus, db: DbExecutor = this.dbService.db) {

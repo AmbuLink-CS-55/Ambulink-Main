@@ -1,5 +1,4 @@
 import { Injectable } from "@nestjs/common";
-import type { Booking } from "@/core/database/schema";
 import type { ManualAssignBookingDto, ReassignBookingDto } from "@/common/validation/schemas";
 import { BookingCoreService } from "../common/booking.core.service";
 
@@ -37,9 +36,5 @@ export class BookingApiService {
     actor: { patientId?: string; dispatcherId?: string; emtId?: string }
   ) {
     return this.bookingCoreService.getAttachmentForActor(bookingId, attachmentId, actor);
-  }
-
-  updateBooking(bookingId: string, booking: Partial<Booking>) {
-    return this.bookingCoreService.updateBooking(bookingId, booking);
   }
 }

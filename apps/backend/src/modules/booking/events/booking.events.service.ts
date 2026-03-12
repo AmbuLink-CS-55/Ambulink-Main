@@ -2,7 +2,6 @@ import { Inject, Injectable, forwardRef } from "@nestjs/common";
 import type { Booking, Hospital, User } from "@/core/database/schema";
 import type {
   BookingNote,
-  EmtNote,
   PatientSettingsData,
 } from "@ambulink/types";
 import type { UploadedMediaFile } from "../booking-media.service";
@@ -89,10 +88,6 @@ export class BookingEventsService {
     return this.bookingCoreService.getDispatcherActiveBookings(dispatcherId);
   }
 
-  searchOngoingBookingsByProvider(providerId: string, query: string, limit?: number) {
-    return this.bookingCoreService.searchOngoingBookingsByProvider(providerId, query, limit);
-  }
-
   getActiveBookingById(bookingId: string) {
     return this.bookingCoreService.getActiveBookingById(bookingId);
   }
@@ -126,9 +121,5 @@ export class BookingEventsService {
     durationMs?: number | null;
   }) {
     return this.bookingCoreService.buildEmtMediaNote(params);
-  }
-
-  appendEmtNote(bookingId: string, note: EmtNote) {
-    return this.bookingCoreService.appendEmtNote(bookingId, note);
   }
 }
