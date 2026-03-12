@@ -1,4 +1,4 @@
-import { AppSidebar } from "@/components";
+import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Outlet } from "react-router-dom";
 import { useDispatcherSocketSync } from "@/hooks/use-dispatcher-socket-sync";
@@ -7,13 +7,6 @@ import { BookingRequestOverlay } from "@/pages/layouts/components/BookingRequest
 import type { SocketErrorPayload } from "@/lib/socket-types";
 
 export function DashboardLayout() {
-  useEffect(() => {
-    console.info("[dashboard] mount");
-    return () => {
-      console.info("[dashboard] unmount");
-    };
-  }, []);
-
   const { socket, connected } = useDispatcherSocketSync();
 
   // socket error logging

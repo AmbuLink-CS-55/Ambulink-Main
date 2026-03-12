@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { DataTable } from "@/components";
+import { DataTable } from "@/components/VirtualizedTable";
 import { Button } from "@/components/ui/button";
 import { useEntityFormDialog } from "@/hooks/use-entity-form-dialog";
 import { useCreateEmt, useGetEmts, useUpdateEmt } from "@/services/emt.service";

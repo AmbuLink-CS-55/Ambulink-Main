@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { DataTable } from "@/components";
+import { DataTable } from "@/components/VirtualizedTable";
 import { Button } from "@/components/ui/button";
 import { useEntityFormDialog } from "@/hooks/use-entity-form-dialog";
 import { queryKeys } from "@/lib/queryKeys";

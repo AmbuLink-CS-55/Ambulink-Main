@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components";
+import { DataTable } from "@/components/VirtualizedTable";
 import { useGetBookingLog, useManualAssignBooking } from "@/services/booking.service";
 import { useMapView } from "@/hooks/use-map-view";
 import { getBookingActionErrorMessage } from "@/lib/booking-ui-errors";

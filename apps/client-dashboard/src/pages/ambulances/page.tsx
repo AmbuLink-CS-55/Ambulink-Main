@@ -4,7 +4,7 @@ import {
   useCreateAmbulance,
   useUpdateAmbulance,
 } from "@/services/ambulance.service";
-import { DataTable } from "@/components";
+import { DataTable } from "@/components/VirtualizedTable";
 import { Button } from "@/components/ui/button";
 import { useEntityFormDialog } from "@/hooks/use-entity-form-dialog";
 import type { Ambulance } from "@/lib/types";

@@ -25,7 +25,6 @@ type TimeRangeKey = "all" | "24h" | "7d" | "30d" | "custom";
 type ZoneClusterProperties = {
   key: string;
   count: number;
-  weight: number;
 };
 type DriverSortKey =
   | "totalBookings"
@@ -206,7 +205,6 @@ export default function AnalyticsPage() {
             properties: {
               key: cell.key,
               count: cell.count,
-              weight: cell.weight,
             },
             geometry: {
               type: "Point",
