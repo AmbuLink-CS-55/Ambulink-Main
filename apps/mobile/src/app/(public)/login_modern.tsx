@@ -38,10 +38,10 @@ export default function LoginModern() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
@@ -56,7 +56,7 @@ export default function LoginModern() {
           </View>
 
           <View className="px-5" style={{ marginTop: -150 }}>
-            <Text className="font-black mb-[30px]" style={{ fontSize: 26, color: "#1e5bb5" }}>
+            <Text className="font-bold" style={{ fontSize: 26, color: "#1e5bb5", marginBottom: 30 }}>
               Log in
             </Text>
 
@@ -113,12 +113,12 @@ export default function LoginModern() {
 
             <Pressable
               onPress={handleSignIn}
-              className="rounded-xl justify-center items-center shadow-lg"
+              className="rounded-xl justify-center items-center"
               style={{ backgroundColor: "#1e5bb5", height: 56, shadowColor: "#1e5bb5", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 }}
               accessibilityRole="button"
               accessibilityLabel="Sign in"
             >
-              <Text className="text-white text-[18px] font-bold">
+              <Text className="text-white font-bold" style={{ fontSize: 18 }}>
                 {loading ? "Signing in..." : "Sign In"}
               </Text>
             </Pressable>
@@ -132,7 +132,7 @@ export default function LoginModern() {
 
           <View className="px-5">
             <Pressable
-              className="bg-white rounded-xl flex-row justify-center items-center border shadow-sm"
+              className="bg-white rounded-xl flex-row justify-center items-center border"
               style={{ height: 56, borderColor: "#E5E7EB", elevation: 2 }}
               accessibilityRole="button"
               accessibilityLabel="Sign in with Google"
@@ -162,7 +162,7 @@ export default function LoginModern() {
           <View className="mx-5 border-dashed rounded-2xl p-4" style={{ marginBottom: 60, borderWidth: 1.5, borderColor: "#ed8936", backgroundColor: "#fffdfa" }}>
             <View className="flex-row items-center justify-center mb-4">
               <Ionicons name="construct" size={14} color="#ed8936" />
-              <Text className="text-xs font-bold tracking-widest" style={{ color: "#ed8936" }}>
+              <Text className="text-xs font-bold" style={{ color: "#ed8936", letterSpacing: 1 }}>
                 {"  "}DEV MODE — QUICK SIGN-IN
               </Text>
             </View>
