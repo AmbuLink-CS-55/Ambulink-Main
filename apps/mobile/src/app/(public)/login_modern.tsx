@@ -184,8 +184,8 @@ export default function LoginModern() {
                   router.replace("/");
                 }}
               >
-                <Ionicons name="grid" size={24} color="white" />
-                <Text style={styles.devModeBtnText}>Dashboard</Text>
+                <Ionicons name="medkit" size={24} color="white" />
+                <Text style={styles.devModeBtnText}>EMT</Text>
               </Pressable>
             </View>
           </View>
