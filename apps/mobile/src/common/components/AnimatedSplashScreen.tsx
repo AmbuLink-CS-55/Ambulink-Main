@@ -17,6 +17,15 @@ import Animated, {
 
 const { width, height } = Dimensions.get("window");
 
+// --- Dynamic Measurements ---
+const DYNAMIC = {
+  orb1Size: width * 1.4,
+  orb2Size: width * 1.2,
+  pulseSize: width * 0.6,
+  glowSize: width * 0.5,
+  logoSize: width * 0.65,
+};
+
 // --- Sub-components to keep the main component clean ---
 
 function FloatingOrbs() {
@@ -99,7 +108,19 @@ function FloatingOrbs() {
 
   return (
     <>
-      <Animated.View style={[styles.orb1, orb1Style]}>
+      <Animated.View
+        className="absolute overflow-hidden opacity-80"
+        style={[
+          {
+            top: -height * 0.15,
+            left: -width * 0.4,
+            width: DYNAMIC.orb1Size,
+            height: DYNAMIC.orb1Size,
+            borderRadius: DYNAMIC.orb1Size / 2,
+          },
+          orb1Style,
+        ]}
+      >
         <LinearGradient
           colors={["rgba(59, 130, 246, 0.25)", "rgba(59, 130, 246, 0.0)"]}
           style={StyleSheet.absoluteFillObject}
@@ -107,7 +128,19 @@ function FloatingOrbs() {
           end={{ x: 1, y: 1 }}
         />
       </Animated.View>
-      <Animated.View style={[styles.orb2, orb2Style]}>
+      <Animated.View
+        className="absolute overflow-hidden opacity-80"
+        style={[
+          {
+            bottom: -height * 0.1,
+            right: -width * 0.4,
+            width: DYNAMIC.orb2Size,
+            height: DYNAMIC.orb2Size,
+            borderRadius: DYNAMIC.orb2Size / 2,
+          },
+          orb2Style,
+        ]}
+      >
         <LinearGradient
           colors={["rgba(14, 165, 233, 0.2)", "rgba(59, 130, 246, 0.0)"]}
           style={StyleSheet.absoluteFillObject}
@@ -120,14 +153,13 @@ function FloatingOrbs() {
 }
 
 function FloatingParticles() {
-  // Generate 12 random particles
   const particles = useMemo(() => {
     return Array.from({ length: 12 }).map((_, i) => ({
       id: i,
       left: Math.random() * width,
-      size: Math.random() * 6 + 3, // 3px to 9px
+      size: Math.random() * 6 + 3,
       delay: Math.random() * 2000,
-      duration: Math.random() * 3000 + 4000, // 4s to 7s
+      duration: Math.random() * 3000 + 4000,
     }));
   }, []);
 
@@ -145,9 +177,7 @@ function Particle({ left, size, delay, duration }: { left: number; size: number;
   const opacity = useSharedValue(0);
 
   useEffect(() => {
-    // Staggered start via setTimeout to keep hooks clean
     const timeout = setTimeout(() => {
-      // Fade in slowly, fade out at end
       opacity.value = withRepeat(
         withSequence(
           withTiming(0.6, { duration: duration * 0.2 }),
@@ -158,11 +188,10 @@ function Particle({ left, size, delay, duration }: { left: number; size: number;
         false
       );
 
-      // Float upwards infinitely
       translateY.value = withRepeat(
         withSequence(
           withTiming(-height * 0.2, { duration: duration, easing: Easing.linear }),
-          withTiming(height, { duration: 0 }) // Instant reset to bottom
+          withTiming(height, { duration: 0 })
         ),
         -1,
         false
@@ -179,14 +208,12 @@ function Particle({ left, size, delay, duration }: { left: number; size: number;
 
   return (
     <Animated.View
+      className="absolute bg-blue-400 rounded-full"
       style={[
         {
-          position: "absolute",
           left,
           width: size,
           height: size,
-          borderRadius: size / 2,
-          backgroundColor: "#60a5fa",
           shadowColor: "#3b82f6",
           shadowOpacity: 0.8,
           shadowRadius: 5,
@@ -229,7 +256,19 @@ function RadarRing({ delay, sizeObj }: { delay: number; sizeObj: number }) {
     opacity: pulseOpacity.value,
   }));
 
-  return <Animated.View style={[styles.pulseRing, style]} />;
+  return (
+    <Animated.View 
+      className="absolute border-2 border-blue-500/40 bg-blue-500/10"
+      style={[
+        {
+          width: DYNAMIC.pulseSize,
+          height: DYNAMIC.pulseSize,
+          borderRadius: DYNAMIC.pulseSize / 2,
+        },
+        style
+      ]} 
+    />
+  );
 }
 
 function BouncingDots() {
@@ -257,13 +296,30 @@ function BouncingDots() {
   }, []);
 
   return (
-    <View style={styles.loadingWrapper}>
-      {/* Frosted Glass Pill using BlurView */}
-      <BlurView intensity={30} tint="light" style={styles.frostedPill}>
-        <View style={styles.loadingDotsContainer}>
-          <Animated.View style={[styles.dot, { transform: [{ translateY: dot1Y }] }]} />
-          <Animated.View style={[styles.dot, { transform: [{ translateY: dot2Y }] }]} />
-          <Animated.View style={[styles.dot, { transform: [{ translateY: dot3Y }] }]} />
+    <View className="items-center justify-center z-20" style={{ paddingBottom: height * 0.08 }}>
+      <BlurView intensity={30} tint="light" className="px-10 py-5 rounded-full border-[1.5px] border-white/60 overflow-hidden bg-white/30">
+        <View className="flex-row items-center justify-center gap-[14px]">
+          <Animated.View 
+            className="w-4 h-4 rounded-full bg-blue-700"
+            style={[
+              { shadowColor: "#3b82f6", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 4, elevation: 3 },
+              { transform: [{ translateY: dot1Y }] }
+            ]} 
+          />
+          <Animated.View 
+            className="w-4 h-4 rounded-full bg-blue-700"
+            style={[
+              { shadowColor: "#3b82f6", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 4, elevation: 3 },
+              { transform: [{ translateY: dot2Y }] }
+            ]} 
+          />
+          <Animated.View 
+            className="w-4 h-4 rounded-full bg-blue-700"
+            style={[
+              { shadowColor: "#3b82f6", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 4, elevation: 3 },
+              { transform: [{ translateY: dot3Y }] }
+            ]} 
+          />
         </View>
       </BlurView>
     </View>
@@ -279,7 +335,6 @@ export function AnimatedSplashScreen({ onAnimationDone }: { onAnimationDone: () 
   const contentTranslateY = useSharedValue(40);
   const textScale = useSharedValue(0.95);
   
-  // Levitation Effect for Logo
   const logoLevitateY = useSharedValue(0);
 
   useEffect(() => {
@@ -303,9 +358,9 @@ export function AnimatedSplashScreen({ onAnimationDone }: { onAnimationDone: () 
       );
     });
 
-    // 3. Final exit animation
+    // 3. Final exit animation (Reduced to 2 seconds display time)
     opacity.value = withDelay(
-      2000, // Reduced to 2 seconds
+      2000,
       withTiming(0, { duration: 800, easing: Easing.inOut(Easing.ease) }, (isFinished) => {
         if (isFinished) {
           runOnJS(onAnimationDone)();
@@ -328,37 +383,59 @@ export function AnimatedSplashScreen({ onAnimationDone }: { onAnimationDone: () 
   }));
 
   return (
-    <Animated.View style={[styles.container, containerStyle]} pointerEvents="none">
-      {/* Dynamic Background */}
+    <Animated.View 
+      className="absolute inset-0 items-center justify-between overflow-hidden bg-white z-[9999]" 
+      style={[containerStyle, { elevation: 9999 }]} 
+      pointerEvents="none"
+    >
       <LinearGradient
-        colors={["#f0fdfa", "#e0f2fe", "#bfdbfe"]} // Slightly richer medical twilight
+        colors={["#f0fdfa", "#e0f2fe", "#bfdbfe"]}
         style={StyleSheet.absoluteFillObject}
       />
 
-      {/* Floating Blobs overlay */}
       <FloatingOrbs />
-
-      {/* Magical Floating Medical Particles */}
       <FloatingParticles />
 
-      <View style={styles.contentContainer}>
-        {/* Deep Cascading Radar Pulses */}
+      <View className="flex-1 items-center justify-center w-full">
         <RadarRing delay={0} sizeObj={2.5} />
         <RadarRing delay={1200} sizeObj={2.5} />
         <RadarRing delay={2400} sizeObj={2.5} />
 
-        <Animated.View style={[styles.logoGlow, logoStyle]} />
+        <Animated.View 
+          className="absolute bg-white/90 z-5"
+          style={[
+            {
+              width: DYNAMIC.glowSize,
+              height: DYNAMIC.glowSize,
+              borderRadius: DYNAMIC.glowSize / 2,
+              shadowColor: "#2563eb",
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 1,
+              shadowRadius: 60,
+              elevation: 25,
+            },
+            logoStyle
+          ]} 
+        />
+        
         <Animated.Image
           source={require("../../../assets/images/ambulink_splash.png")}
-          style={[styles.image, logoStyle]}
+          className="z-10"
+          style={[
+            {
+              width: DYNAMIC.logoSize,
+              height: DYNAMIC.logoSize,
+            },
+            logoStyle
+          ]}
           resizeMode="contain"
         />
         
-        <Animated.View style={[styles.textContainer, textStyle]}>
-          <Animated.Text style={styles.text}>
+        <Animated.View className="items-center mt-[25px] z-15" style={textStyle}>
+          <Animated.Text className="text-[48px] font-black tracking-[2.5px] text-slate-900">
             AMBULINK
           </Animated.Text>
-          <Animated.Text style={styles.subtitle}>
+          <Animated.Text className="text-[15px] font-extrabold tracking-[3px] text-blue-600 uppercase mt-2.5">
             Emergency Medical Services
           </Animated.Text>
         </Animated.View>
@@ -368,121 +445,3 @@ export function AnimatedSplashScreen({ onAnimationDone }: { onAnimationDone: () 
     </Animated.View>
   );
 }
-
-// --- Styles ---
-
-const styles = StyleSheet.create({
-  container: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: "center",
-    justifyContent: "space-between",
-    zIndex: 9999,
-    elevation: 9999,
-    overflow: "hidden",
-  },
-  orb1: {
-    position: "absolute",
-    top: -height * 0.15,
-    left: -width * 0.4,
-    width: width * 1.4,
-    height: width * 1.4,
-    borderRadius: (width * 1.4) / 2,
-    overflow: "hidden",
-    opacity: 0.8,
-  },
-  orb2: {
-    position: "absolute",
-    bottom: -height * 0.1,
-    right: -width * 0.4,
-    width: width * 1.2,
-    height: width * 1.2,
-    borderRadius: (width * 1.2) / 2,
-    overflow: "hidden",
-    opacity: 0.8,
-  },
-  contentContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-  },
-  pulseRing: {
-    position: "absolute",
-    width: width * 0.6,
-    height: width * 0.6,
-    borderRadius: (width * 0.6) / 2,
-    borderWidth: 2,
-    borderColor: "rgba(59, 130, 246, 0.4)", // Deeper blue stroke
-    backgroundColor: "rgba(59, 130, 246, 0.08)", // Slight fill
-  },
-  logoGlow: {
-    position: "absolute",
-    width: width * 0.5,
-    height: width * 0.5,
-    borderRadius: (width * 0.5) / 2,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    shadowColor: "#2563eb",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 60,
-    elevation: 25,
-    zIndex: 5,
-  },
-  image: {
-    width: width * 0.65,
-    height: width * 0.65,
-    zIndex: 10,
-    marginBottom: 0,
-  },
-  textContainer: {
-    alignItems: "center",
-    marginTop: 25,
-    zIndex: 15,
-  },
-  text: {
-    fontSize: 48, // Slightly bigger
-    fontWeight: "900",
-    color: "#0f172a",
-    letterSpacing: 2.5,
-  },
-  subtitle: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: "#2563eb", // Deeper vibrant blue
-    letterSpacing: 3,
-    textTransform: "uppercase",
-    marginTop: 10,
-  },
-  loadingWrapper: {
-    paddingBottom: height * 0.08,
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 20,
-  },
-  frostedPill: {
-    paddingHorizontal: 40,
-    paddingVertical: 20,
-    borderRadius: 50,
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.6)",
-    overflow: "hidden", // Required for blur view on iOS to keep rounded edges
-    backgroundColor: "rgba(255, 255, 255, 0.3)", // Tint fallback
-  },
-  loadingDotsContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 14,
-  },
-  dot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: "#1d4ed8", // Tailwind Blue 700 (High contrast)
-    shadowColor: "#3b82f6",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-});
