@@ -236,3 +236,20 @@ export const dispatcherBookingPayloadSchema = z
       .nullable(),
   })
   .passthrough();
+
+export const bookingEtaUpdatedPayloadSchema = z
+  .object({
+    bookingId: z.string(),
+    etaMinutes: z.number().int().nonnegative(),
+    previousEtaMinutes: z.number().int().nonnegative().nullable(),
+    changedAt: z.string(),
+  })
+  .passthrough();
+
+export const bookingReroutedPayloadSchema = z
+  .object({
+    bookingId: z.string(),
+    reason: z.string(),
+    changedAt: z.string(),
+  })
+  .passthrough();

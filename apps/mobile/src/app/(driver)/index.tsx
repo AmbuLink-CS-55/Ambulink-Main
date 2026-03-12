@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Alert, Linking, ScrollView, Text, View } from "react-native";
+import { Alert, Linking, ScrollView, Switch, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSocket } from "@/common/hooks/SocketContext";
-import type { BookingAssignedPayload } from "@ambulink/types";
+import type {
+  BookingAssignedPayload,
+  BookingCancelledPayload,
+  BookingEtaUpdatedPayload,
+  BookingReroutedPayload,
+} from "@ambulink/types";
 import { env } from "../../../env";
 import { postDriverArrived, postDriverCompleted, postDriverShift } from "@/common/lib/driverEvents";
 import { useDriverShift } from "@/features/driver/hooks/useDriverShift";
@@ -11,6 +16,8 @@ import { RideDetailsCard } from "@/features/driver/components/RideDetailsCard";
 import { RideMapCard } from "@/features/driver/components/RideMapCard";
 import { ShiftCard } from "@/features/driver/components/ShiftCard";
 import { isValidPoint, type Ride } from "@/features/driver/components/types";
+import { notifyFromSocket } from "@/common/notifications/service";
+import { areNotificationsEnabled, setNotificationsEnabled } from "@/common/notifications/preferences";
 
 const SRI_LANKA_REGION = {
   latitude: 7.8731,
@@ -28,6 +35,7 @@ export default function Home() {
   const [isArrivedUpdating, setIsArrivedUpdating] = useState(false);
   const [isCompletedUpdating, setIsCompletedUpdating] = useState(false);
   const [currentRide, setCurrentRide] = useState<Ride | null>(null);
+  const [notificationsEnabled, setLocalNotificationsEnabled] = useState(true);
   const [rideStatus, setRideStatus] = useState<
     "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED"
   >("COMPLETED");
@@ -52,6 +60,17 @@ export default function Home() {
   }, [pickupPoint]);
 
   useEffect(() => {
+    areNotificationsEnabled("DRIVER")
+      .then((enabled) => setLocalNotificationsEnabled(enabled))
+      .catch((error) => console.warn("[notifications] driver preference load failed", error));
+  }, []);
+
+  const handleToggleNotifications = useCallback(async (next: boolean) => {
+    setLocalNotificationsEnabled(next);
+    await setNotificationsEnabled("DRIVER", next);
+  }, []);
+
+  useEffect(() => {
     if (!socket || !isOnShift) return;
 
     const onConnect = () => {
@@ -61,21 +80,57 @@ export default function Home() {
     const onAssigned = (data: BookingAssignedPayload) => {
       setCurrentRide(data as Ride);
       setRideStatus(data.status ?? "ASSIGNED");
+      if (data.bookingId) {
+        notifyFromSocket("DRIVER", {
+          type: "ASSIGNED",
+          bookingId: data.bookingId,
+        }).catch((error) => console.warn("[notifications] driver ASSIGNED failed", error));
+      }
     };
 
-    const onCancelled = () => {
+    const onCancelled = (payload: BookingCancelledPayload) => {
+      if (payload?.bookingId) {
+        notifyFromSocket("DRIVER", {
+          type: "CANCELLED",
+          bookingId: payload.bookingId,
+          reason: payload.reason,
+        }).catch((error) => console.warn("[notifications] driver CANCELLED failed", error));
+      }
       setCurrentRide(null);
       setRideStatus("CANCELLED");
+    };
+
+    const onEtaUpdated = (payload: BookingEtaUpdatedPayload) => {
+      if (!payload.bookingId) return;
+      notifyFromSocket("DRIVER", {
+        type: "ETA_UPDATED",
+        bookingId: payload.bookingId,
+        etaMinutes: payload.etaMinutes,
+        previousEtaMinutes: payload.previousEtaMinutes,
+      }).catch((error) => console.warn("[notifications] driver ETA_UPDATED failed", error));
+    };
+
+    const onRerouted = (payload: BookingReroutedPayload) => {
+      if (!payload.bookingId) return;
+      notifyFromSocket("DRIVER", {
+        type: "REROUTED",
+        bookingId: payload.bookingId,
+        reason: payload.reason,
+      }).catch((error) => console.warn("[notifications] driver REROUTED failed", error));
     };
 
     socket.on("connect", onConnect);
     socket.on("booking:assigned", onAssigned);
     socket.on("booking:cancelled", onCancelled);
+    socket.on("booking:eta-updated", onEtaUpdated);
+    socket.on("booking:rerouted", onRerouted);
 
     return () => {
       socket.off("connect", onConnect);
       socket.off("booking:assigned", onAssigned);
       socket.off("booking:cancelled", onCancelled);
+      socket.off("booking:eta-updated", onEtaUpdated);
+      socket.off("booking:rerouted", onRerouted);
     };
   }, [isOnShift, socket]);
 
@@ -184,6 +239,17 @@ export default function Home() {
             isShiftUpdating={isShiftUpdating}
             onToggleShift={handleToggleShift}
           />
+          <View className="mb-4 p-4 bg-card rounded-2xl border border-border">
+            <View className="flex-row items-center justify-between">
+              <View className="pr-3">
+                <Text className="text-sm font-semibold text-foreground">OS Notifications</Text>
+                <Text className="text-xs text-muted-foreground mt-1">
+                  Alerts only while this app is running.
+                </Text>
+              </View>
+              <Switch value={notificationsEnabled} onValueChange={handleToggleNotifications} />
+            </View>
+          </View>
 
           <RideMapCard
             currentRide={currentRide}

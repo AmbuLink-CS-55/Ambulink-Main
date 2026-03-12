@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { ActivityIndicator, Alert, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useLocation } from "@/common/hooks/useLocation";
@@ -8,6 +8,7 @@ import BookingPickerList from "@/features/emt/components/BookingPickerList";
 import EmtBottomActions from "@/features/emt/components/EmtBottomActions";
 import EmtSearchBar from "@/features/emt/components/EmtSearchBar";
 import { useEmtBookingState } from "@/features/emt/hooks/useEmtBookingState";
+import { areNotificationsEnabled, setNotificationsEnabled } from "@/common/notifications/preferences";
 
 export default function EmtMapScreen() {
   const router = useRouter();
@@ -28,6 +29,7 @@ export default function EmtMapScreen() {
   const selectAndSubscribe = useEmtBookingState((state) => state.selectAndSubscribe);
 
   const [isPickerVisible, setPickerVisible] = useState(false);
+  const [notificationsEnabled, setLocalNotificationsEnabled] = useState(true);
   const shouldShowPicker = isPickerVisible || (!activeBooking?.bookingId && searchTerm.length > 0);
 
   useEffect(() => {
@@ -39,6 +41,17 @@ export default function EmtMapScreen() {
     if (!errorMessage) return;
     Alert.alert("EMT", errorMessage, [{ text: "OK", onPress: clearTransientErrors }]);
   }, [clearTransientErrors, errorMessage]);
+
+  useEffect(() => {
+    areNotificationsEnabled("EMT")
+      .then((enabled) => setLocalNotificationsEnabled(enabled))
+      .catch((error) => console.warn("[notifications] emt preference load failed", error));
+  }, []);
+
+  const handleToggleNotifications = async (next: boolean) => {
+    setLocalNotificationsEnabled(next);
+    await setNotificationsEnabled("EMT", next);
+  };
 
   const filteredOptions = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -119,6 +132,16 @@ export default function EmtMapScreen() {
                 isSubscribing={isSubscribing || isLoadingOptions}
               />
             )}
+
+            <View className="mt-2 bg-card border border-border rounded-xl px-3 py-2 flex-row items-center justify-between">
+              <View className="pr-3">
+                <Text className="text-sm font-semibold text-foreground">OS Notifications</Text>
+                <Text className="text-xs text-muted-foreground">
+                  Alerts only while this app is running.
+                </Text>
+              </View>
+              <Switch value={notificationsEnabled} onValueChange={handleToggleNotifications} />
+            </View>
           </SafeAreaView>
         }
       >

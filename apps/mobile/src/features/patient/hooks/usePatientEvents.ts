@@ -1,8 +1,17 @@
-import { BookingStatus, Point, User, Hospital, BookingNote } from "@ambulink/types";
+import {
+  BookingStatus,
+  Point,
+  User,
+  Hospital,
+  BookingNote,
+  BookingEtaUpdatedPayload,
+  BookingReroutedPayload,
+} from "@ambulink/types";
 import { Alert } from "react-native";
 import { addBookingHistory } from "@/common/utils/bookingHistory";
 import { useCallback, useEffect } from "react";
 import type { Socket } from "socket.io-client";
+import { notifyFromSocket } from "@/common/notifications/service";
 
 export const usePatientEvents = (
   socket: Socket | null,
@@ -73,6 +82,12 @@ export const usePatientEvents = (
       setStatus(data.status);
       setIsBooking(false);
       setCompletedAt(null);
+      if (data.bookingId) {
+        notifyFromSocket("PATIENT", {
+          type: "ASSIGNED",
+          bookingId: data.bookingId,
+        }).catch((error) => console.warn("[notifications] patient ASSIGNED failed", error));
+      }
     },
     [setBooking, setStatus, setIsBooking, setCompletedAt]
   );
@@ -93,10 +108,18 @@ export const usePatientEvents = (
   );
 
   const onBookingArrived = useCallback(() => {
+    setBooking((prev) => {
+      if (!prev?.bookingId) return prev;
+      notifyFromSocket("PATIENT", {
+        type: "ARRIVED",
+        bookingId: prev.bookingId,
+      }).catch((error) => console.warn("[notifications] patient ARRIVED failed", error));
+      return prev;
+    });
     setStatus("ARRIVED");
     setIsBooking(false);
     setCompletedAt(null);
-  }, [setStatus, setIsBooking, setCompletedAt]);
+  }, [setStatus, setIsBooking, setCompletedAt, setBooking]);
 
   const onBookingCompleted = useCallback(() => {
     setStatus("COMPLETED");
@@ -122,7 +145,7 @@ export const usePatientEvents = (
   }, [setStatus, setBooking, setCompletedAt, setIsBooking]);
 
   const onBookingCancelled = useCallback(
-    (data: { message: string }) => {
+    (data: { bookingId?: string; message: string }) => {
       if (!data) return;
       setBooking((prev) => {
         if (prev) {
@@ -144,6 +167,13 @@ export const usePatientEvents = (
       setStatus("CANCELLED");
       setIsCancelling(false);
       setIsBooking(false);
+      if (data.bookingId) {
+        notifyFromSocket("PATIENT", {
+          type: "CANCELLED",
+          bookingId: data.bookingId,
+          reason: data.message,
+        }).catch((error) => console.warn("[notifications] patient CANCELLED failed", error));
+      }
       Alert.alert("Cancelled", data.message);
     },
     [setBooking, setStatus, setIsCancelling, setIsBooking]
@@ -187,6 +217,25 @@ export const usePatientEvents = (
     [appendNote]
   );
 
+  const onEtaUpdated = useCallback((payload: BookingEtaUpdatedPayload) => {
+    if (!payload?.bookingId) return;
+    notifyFromSocket("PATIENT", {
+      type: "ETA_UPDATED",
+      bookingId: payload.bookingId,
+      etaMinutes: payload.etaMinutes,
+      previousEtaMinutes: payload.previousEtaMinutes,
+    }).catch((error) => console.warn("[notifications] patient ETA_UPDATED failed", error));
+  }, []);
+
+  const onRerouted = useCallback((payload: BookingReroutedPayload) => {
+    if (!payload?.bookingId) return;
+    notifyFromSocket("PATIENT", {
+      type: "REROUTED",
+      bookingId: payload.bookingId,
+      reason: payload.reason,
+    }).catch((error) => console.warn("[notifications] patient REROUTED failed", error));
+  }, []);
+
   useEffect(() => {
     if (!socket) return;
 
@@ -198,6 +247,8 @@ export const usePatientEvents = (
     socket.on("booking:cancel:error", onBookingCancelError);
     socket.on("booking:failed", onBookingFailed);
     socket.on("booking:notes", onBookingNotes);
+    socket.on("booking:eta-updated", onEtaUpdated);
+    socket.on("booking:rerouted", onRerouted);
 
     return () => {
       socket.off("booking:assigned", onBookingAssigned);
@@ -208,6 +259,8 @@ export const usePatientEvents = (
       socket.off("booking:cancel:error", onBookingCancelError);
       socket.off("booking:failed", onBookingFailed);
       socket.off("booking:notes", onBookingNotes);
+      socket.off("booking:eta-updated", onEtaUpdated);
+      socket.off("booking:rerouted", onRerouted);
     };
   }, [
     socket,
@@ -218,6 +271,8 @@ export const usePatientEvents = (
     onBookingCompleted,
     onBookingFailed,
     onBookingNotes,
+    onEtaUpdated,
+    onRerouted,
     onDriverUpdate,
   ]);
 };

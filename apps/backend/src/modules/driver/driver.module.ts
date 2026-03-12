@@ -7,6 +7,7 @@ import { DriverEventsController } from "./events/driver.events.controller";
 import { DriverEventsGateway } from "./events/driver.events.gateway";
 import { DriverEventsService } from "./events/driver.events.service";
 import { DriverEventsRepository } from "./events/driver.events.repository";
+import { DispatcherCoreModule } from "../dispatcher/dispatcher-core.module";
 
 @Module({
   controllers: [DriverApiController, DriverEventsController],
@@ -17,7 +18,7 @@ import { DriverEventsRepository } from "./events/driver.events.repository";
     DriverEventsService,
     DriverEventsRepository,
   ],
-  imports: [forwardRef(() => BookingModule)],
+  imports: [forwardRef(() => BookingModule), DispatcherCoreModule],
   exports: [DriverApiService, DriverEventsService, DriverEventsGateway],
 })
 export class DriverModule {}

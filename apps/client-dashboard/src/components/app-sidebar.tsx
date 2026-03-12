@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Ambulance, Users, Map, ClipboardList } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import {
   Sidebar,
@@ -13,6 +14,11 @@ import {
   SidebarMenuButton,
   SidebarGroupContent,
 } from "@/components/ui/sidebar";
+import {
+  isDispatcherDesktopNotificationsEnabled,
+  requestDispatcherNotificationPermission,
+  setDispatcherDesktopNotificationsEnabled,
+} from "@/lib/dispatcher-notifications";
 
 const MENU_ITEMS = [
   { title: "Dashboard Home", path: "/", icon: Map },
@@ -24,6 +30,23 @@ const MENU_ITEMS = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const [desktopNotificationsEnabled, setDesktopNotificationsEnabled] = useState(() =>
+    isDispatcherDesktopNotificationsEnabled()
+  );
+
+  useEffect(() => {
+    if (desktopNotificationsEnabled) {
+      requestDispatcherNotificationPermission();
+    }
+  }, [desktopNotificationsEnabled]);
+
+  const onDesktopNotificationsToggle = (checked: boolean) => {
+    setDesktopNotificationsEnabled(checked);
+    setDispatcherDesktopNotificationsEnabled(checked);
+    if (checked) {
+      requestDispatcherNotificationPermission();
+    }
+  };
 
   return (
     <Sidebar>
@@ -63,6 +86,14 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-sidebar-border/50">
+        <label className="mb-3 flex items-center justify-between gap-2 text-sm">
+          <span>Desktop notifications</span>
+          <input
+            type="checkbox"
+            checked={desktopNotificationsEnabled}
+            onChange={(event) => onDesktopNotificationsToggle(event.target.checked)}
+          />
+        </label>
         <SidebarMenuButton
           variant="outline"
           render={<Link to="/login" className="justify-center" />}

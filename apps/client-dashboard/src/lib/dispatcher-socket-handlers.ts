@@ -8,7 +8,9 @@ import {
 } from "@/lib/booking-cache-ops";
 import type { BookingRequestEntity } from "@/lib/booking-types";
 import type {
+  BookingEtaUpdatedPayload,
   BookingNote,
+  BookingReroutedPayload,
   BookingNewPayload,
   DispatcherDecisionAckPayload,
   DispatcherPendingSyncPayload,
@@ -21,6 +23,12 @@ import type {
   ServerToDispatcherEvents,
 } from "@/lib/socket-types";
 import type { BookingLogEntry } from "@/services/booking.service";
+import {
+  notifyDispatcherAssigned,
+  notifyDispatcherEta,
+  notifyDispatcherRerouted,
+  notifyDispatcherUpdate,
+} from "@/lib/dispatcher-notifications";
 
 type DispatcherSocket = import("socket.io-client").Socket<
   ServerToDispatcherEvents,
@@ -163,6 +171,7 @@ export function registerDispatcherSocketHandlers({
       );
     }
     queryClient.invalidateQueries({ queryKey: ["booking-log"] });
+    notifyDispatcherAssigned(payload, providerId);
   });
 
   socket.on("booking:update", (payload: DispatcherBookingUpdatePayload) => {
@@ -205,7 +214,22 @@ export function registerDispatcherSocketHandlers({
       }
     );
     queryClient.invalidateQueries({ queryKey: ["booking-log"] });
+    notifyDispatcherUpdate(payload, providerId);
   });
+
+  socket.on(
+    "booking:eta-updated",
+    (payload: BookingEtaUpdatedPayload & { providerId?: string | null }) => {
+      notifyDispatcherEta(payload, providerId);
+    }
+  );
+
+  socket.on(
+    "booking:rerouted",
+    (payload: BookingReroutedPayload & { providerId?: string | null }) => {
+      notifyDispatcherRerouted(payload, providerId);
+    }
+  );
 
   socket.on("driver:update", (payload: DriverLocationUpdate) => {
     queryClient.setQueryData<Record<string, { x: number; y: number }>>(
@@ -323,6 +347,8 @@ export function registerDispatcherSocketHandlers({
     socket.off("booking:sync");
     socket.off("booking:assigned");
     socket.off("booking:update");
+    socket.off("booking:eta-updated");
+    socket.off("booking:rerouted");
     socket.off("driver:update");
     socket.off("driver:roster");
     socket.off("booking:log");

@@ -16,6 +16,7 @@ import { DispatcherEventsService } from "../../dispatcher/events/dispatcher.even
 import type {
   BookingAttachment,
   BookingDetailsPayload,
+  BookingReroutedPayload,
   BookingLogEntry,
   BookingNote,
   BookingStatus,
@@ -276,6 +277,51 @@ export class BookingCoreService {
       this.emitEmt(subscriber.emtId, "booking:assigned", assignedPayload);
     }
     this.emitDispatcher(dispatcherId, "booking:assigned", dispatcherPayload);
+
+    const rerouteReasonParts: string[] = [];
+    if (payload.driverId && payload.driverId !== previousDriverId) {
+      rerouteReasonParts.push("Driver reassigned");
+    }
+    if (payload.hospitalId) {
+      rerouteReasonParts.push("Hospital updated");
+    }
+    if (payload.pickupLocation) {
+      rerouteReasonParts.push("Pickup location updated");
+    }
+    if (payload.pickupAddress !== undefined) {
+      rerouteReasonParts.push("Pickup address updated");
+    }
+
+    if (rerouteReasonParts.length > 0) {
+      const reroutedPayload = {
+        bookingId,
+        reason: rerouteReasonParts.join(", "),
+        changedAt: new Date().toISOString(),
+      } satisfies BookingReroutedPayload;
+
+      if (nextDriverId) {
+        this.emitDriver(nextDriverId, "booking:rerouted", reroutedPayload);
+      }
+      if (booking.patientId) {
+        this.emitPatient(booking.patientId, "booking:rerouted", reroutedPayload);
+      }
+      for (const subscriber of emtSubscribers) {
+        this.emitEmt(subscriber.emtId, "booking:rerouted", reroutedPayload);
+      }
+      if (booking.providerId) {
+        const dispatcherIds = await this.dispatcherService.findAllLiveDispatchersByProvider(
+          booking.providerId
+        );
+        for (const id of dispatcherIds) {
+          this.emitDispatcher(id, "booking:rerouted", {
+            ...reroutedPayload,
+            providerId: booking.providerId,
+          });
+        }
+      } else {
+        this.emitDispatcher(dispatcherId, "booking:rerouted", reroutedPayload);
+      }
+    }
 
     return {
       bookingId,

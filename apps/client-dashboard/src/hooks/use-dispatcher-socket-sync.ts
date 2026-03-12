@@ -4,6 +4,7 @@ import env from "../../env";
 import { registerDispatcherSocketHandlers } from "@/lib/dispatcher-socket-handlers";
 import type { DispatcherToServerEvents, ServerToDispatcherEvents } from "@/lib/socket-types";
 import { dispatcherSocket } from "@/lib/dispatcher-socket";
+import { requestDispatcherNotificationPermission } from "@/lib/dispatcher-notifications";
 
 export function useDispatcherSocketSync() {
   const queryClient = useQueryClient();
@@ -15,6 +16,7 @@ export function useDispatcherSocketSync() {
 
   useEffect(() => {
     console.info("[dispatcher-socket] hook_mount");
+    requestDispatcherNotificationPermission();
     const teardownEventHandlers = registerDispatcherSocketHandlers({
       queryClient,
       socket,

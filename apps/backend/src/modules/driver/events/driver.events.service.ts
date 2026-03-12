@@ -8,16 +8,27 @@ import {
   forwardRef,
 } from "@nestjs/common";
 import { UserStatus } from "@/core/database/schema";
-import type { DriverLocationPayload } from "@ambulink/types";
+import type {
+  BookingEtaUpdatedPayload,
+  BookingStatus,
+  DriverLocationPayload,
+  Point,
+} from "@ambulink/types";
 import { EventBusService } from "@/core/events/event-bus.service";
 import { DbExecutor, DbService } from "@/core/database/db.service";
 import { BookingEventsService } from "@/modules/booking/events/booking.events.service";
 import { BookingSharedRepository } from "@/modules/booking/common/booking.shared.repository";
+import { DispatcherEventsService } from "@/modules/dispatcher/events/dispatcher.events.service";
 import { DriverEventsRepository } from "./driver.events.repository";
 
 @Injectable()
 export class DriverEventsService {
   private lastEmitTimes = new Map<string, number>();
+  private etaEmitByBooking = new Map<string, number>();
+  private etaValueByBooking = new Map<string, number>();
+  private static readonly ETA_EMIT_INTERVAL_MS = 30_000;
+  private static readonly ETA_CHANGE_THRESHOLD_MINUTES = 2;
+  private static readonly AVG_DRIVER_SPEED_KMH = 35;
 
   constructor(
     private dbService: DbService,
@@ -25,6 +36,7 @@ export class DriverEventsService {
     private bookingRepository: BookingSharedRepository,
     @Inject(forwardRef(() => BookingEventsService))
     private bookingService: BookingEventsService,
+    private dispatcherService: DispatcherEventsService,
     private eventBus: EventBusService
   ) {}
 
@@ -171,6 +183,18 @@ export class DriverEventsService {
           payload: locationUpdate,
         });
       }
+
+      await this.emitEtaUpdateIfRequired(
+        {
+          bookingId: booking.bookingId,
+          patientId: booking.patientId,
+          dispatcherId: booking.dispatcherId,
+        },
+        {
+          x,
+          y,
+        }
+      );
     }
 
     const now = Date.now();
@@ -206,5 +230,130 @@ export class DriverEventsService {
 
     await this.bookingService.updateBooking(bookingData.id, { status: "COMPLETED" });
     await this.setStatus(driverId, "AVAILABLE");
+  }
+
+  private async emitEtaUpdateIfRequired(
+    bookingInfo: { bookingId: string; patientId: string | null; dispatcherId: string | null },
+    driverPoint: Point
+  ) {
+    const assigned = await this.bookingService.buildAssignedBookingPayload(bookingInfo.bookingId);
+    if (!assigned) return;
+
+    const destination = this.pickEtaDestination(assigned.status, assigned);
+    if (!destination) return;
+
+    const etaMinutes = this.estimateEtaMinutes(driverPoint, destination);
+    const previousEtaMinutes = this.etaValueByBooking.get(bookingInfo.bookingId) ?? null;
+    const now = Date.now();
+    const lastEmit = this.etaEmitByBooking.get(bookingInfo.bookingId) ?? 0;
+    const isFirstEta = previousEtaMinutes === null;
+    const isSignificantDelta =
+      previousEtaMinutes !== null &&
+      Math.abs(previousEtaMinutes - etaMinutes) >= DriverEventsService.ETA_CHANGE_THRESHOLD_MINUTES;
+
+    this.etaValueByBooking.set(bookingInfo.bookingId, etaMinutes);
+
+    if (!isFirstEta && !isSignificantDelta) {
+      return;
+    }
+    if (now - lastEmit < DriverEventsService.ETA_EMIT_INTERVAL_MS) {
+      return;
+    }
+
+    const changedAt = new Date(now).toISOString();
+    const payload = {
+      bookingId: bookingInfo.bookingId,
+      etaMinutes,
+      previousEtaMinutes,
+      changedAt,
+    } satisfies BookingEtaUpdatedPayload;
+
+    this.eventBus.publish({
+      type: "realtime.driver",
+      driverId: assigned.driver.id,
+      event: "booking:eta-updated",
+      payload,
+    });
+
+    if (bookingInfo.patientId) {
+      this.eventBus.publish({
+        type: "realtime.patient",
+        patientId: bookingInfo.patientId,
+        event: "booking:eta-updated",
+        payload,
+      });
+    }
+
+    const emtSubscribers = await this.bookingService.getEmtSubscribersForBooking(bookingInfo.bookingId);
+    for (const subscriber of emtSubscribers) {
+      this.eventBus.publish({
+        type: "realtime.emt",
+        emtId: subscriber.emtId,
+        event: "booking:eta-updated",
+        payload,
+      });
+    }
+
+    if (assigned.provider?.id) {
+      const dispatcherIds = await this.dispatcherService.findAllLiveDispatchersByProvider(
+        assigned.provider.id
+      );
+      for (const dispatcherId of dispatcherIds) {
+        this.eventBus.publish({
+          type: "realtime.dispatcher",
+          dispatcherId,
+          event: "booking:eta-updated",
+          payload: {
+            ...payload,
+            providerId: assigned.provider.id,
+          },
+        });
+      }
+    } else if (bookingInfo.dispatcherId) {
+      this.eventBus.publish({
+        type: "realtime.dispatcher",
+        dispatcherId: bookingInfo.dispatcherId,
+        event: "booking:eta-updated",
+        payload,
+      });
+    }
+
+    this.etaEmitByBooking.set(bookingInfo.bookingId, now);
+  }
+
+  private pickEtaDestination(
+    status: BookingStatus,
+    payload: Awaited<ReturnType<BookingEventsService["buildAssignedBookingPayload"]>>
+  ): Point | null {
+    if (!payload) return null;
+    if (status === "ASSIGNED") {
+      return payload.pickupLocation ?? payload.patient.location ?? null;
+    }
+    if (status === "ARRIVED" || status === "PICKEDUP") {
+      return payload.hospital.location ?? null;
+    }
+    return null;
+  }
+
+  private estimateEtaMinutes(origin: Point, destination: Point): number {
+    const distanceKm = this.haversineDistanceKm(origin, destination);
+    const hours = distanceKm / DriverEventsService.AVG_DRIVER_SPEED_KMH;
+    return Math.max(1, Math.round(hours * 60));
+  }
+
+  private haversineDistanceKm(a: Point, b: Point): number {
+    const toRad = (degrees: number) => (degrees * Math.PI) / 180;
+    const earthRadiusKm = 6371;
+    const dLat = toRad(b.y - a.y);
+    const dLon = toRad(b.x - a.x);
+    const lat1 = toRad(a.y);
+    const lat2 = toRad(b.y);
+
+    const sinLat = Math.sin(dLat / 2);
+    const sinLon = Math.sin(dLon / 2);
+
+    const h =
+      sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLon * sinLon;
+    return 2 * earthRadiusKm * Math.asin(Math.sqrt(h));
   }
 }
