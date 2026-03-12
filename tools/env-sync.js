@@ -14,6 +14,8 @@ const REQUIRED_KEYS = [
   "EMT_ID",
   "APP_STAGE",
   "DATABASE_URL",
+  "BETTER_AUTH_SECRET",
+  "BETTER_AUTH_URL",
 ];
 
 function parseEnvFile(contents) {
@@ -129,6 +131,8 @@ function main() {
     ["PROVIDER_ID", rootEnv.PROVIDER_ID],
     ["FRONTEND_URL", frontendUrl],
     ["FRONTEND_URLS", frontendUrls],
+    ["BETTER_AUTH_SECRET", rootEnv.BETTER_AUTH_SECRET],
+    ["BETTER_AUTH_URL", rootEnv.BETTER_AUTH_URL],
   ]);
 }
 
