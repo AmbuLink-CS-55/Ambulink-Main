@@ -5,10 +5,14 @@ import { Logger } from "@nestjs/common";
 import { AppModule } from "@/app.module";
 import env from "../env";
 import { AllExceptionsFilter } from "@/common/filters/all-exceptions.filter";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "@/core/auth/auth";
 
 async function bootstrap() {
   const logger = new Logger("Bootstrap");
   const app = await NestFactory.create(AppModule);
+
+  app.use("/api/auth/", toNodeHandler(auth));
 
   app.enableCors({
     origin: true,

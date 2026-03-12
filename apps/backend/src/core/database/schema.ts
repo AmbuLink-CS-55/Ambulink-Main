@@ -61,7 +61,7 @@ export const users = pgTable(
     phoneNumber: varchar("phone_number", { length: 50 }),
     email: varchar("email", { length: 255 }),
     emailVerified: boolean("email_verified").notNull().default(false),
-    passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+    passwordHash: varchar("password_hash", { length: 255 }), //removed .notNull() for better auth
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     isActive: boolean("is_active").notNull().default(true),

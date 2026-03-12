@@ -17,6 +17,10 @@ const envSchema = z.object({
   JWT_EXPIRATION: z.string().default("24h"),
   AUTH_DISABLED: z.coerce.boolean().default(false),
 
+  // Better Auth
+  BETTER_AUTH_SECRET: z.string().min(32, "OzAvtrLbkiy9ENTVUTwYz6iBDwKL8kYx"),
+  BETTER_AUTH_URL: z.string().url("http://localhost:3000"),
+
   // Redis (optional)
   REDIS_URL: z.string().url().optional(),
 

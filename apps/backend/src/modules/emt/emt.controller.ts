@@ -33,8 +33,12 @@ import { emtSubscribeHttpBodySchema } from "@/common/validation/socket.schemas";
 import { EmtCommandService } from "./emt-command.service";
 import { EmtService } from "./emt.service";
 import type { UploadedMediaFile } from "../booking/booking-media.service";
+import { UseGuards } from "@nestjs/common";
+import { AuthGuard } from "@/common/guards/auth.guard";
+import { CurrentUser } from "@/common/decorators/current-user.decorator";
 
 @Controller("api/emts")
+@UseGuards(AuthGuard)
 export class EmtController {
   constructor(
     private readonly emtService: EmtService,
@@ -65,6 +69,14 @@ export class EmtController {
 
     return this.emtService.searchOngoingBookings(emtId, query.q, query.limit);
   }
+  //uncomment after testing
+  // @Get("bookings/search")
+  // searchBookings(
+  //   @CurrentUser() user: { id: string },
+  //   @Query(Validate(emtBookingSearchQuerySchema)) query: EmtBookingSearchQueryDto
+  // ) {
+  //   return this.emtService.searchOngoingBookings(user.id, query.q, query.limit);
+  // }
 
   @Get("events/current")
   async current(@Query("emtId") emtId: string | undefined) {
@@ -75,6 +87,12 @@ export class EmtController {
     const booking = await this.emtService.getCurrentBooking(emtId);
     return { booking };
   }
+  //uncomment after testing
+  // @Get("events/current")
+  // async current(@CurrentUser() user: { id: string }) {
+  //   const booking = await this.emtService.getCurrentBooking(user.id);
+  //   return { booking };
+  // }
 
   @Post("events/subscribe")
   async subscribe(
@@ -89,6 +107,16 @@ export class EmtController {
     const booking = await this.emtCommandService.subscribe(emtId, parsed.bookingId);
     return { booking };
   }
+  //uncomment after testing
+  // @Post("events/subscribe")
+  // async subscribe(
+  //   @CurrentUser() user: { id: string },
+  //   @Body(Validate(emtSubscribeHttpBodySchema)) body: EmtSubscribeDto
+  // ) {
+  //   const parsed = emtSubscribeSchema.parse(body);
+  //   const booking = await this.emtCommandService.subscribe(user.id, parsed.bookingId);
+  //   return { booking };
+  // }
 
   @Post("events/notes")
   @UseInterceptors(FilesInterceptor("files", 5))
@@ -115,6 +143,28 @@ export class EmtController {
     });
     return { note };
   }
+  //uncomment after testing
+  // @Post("events/notes")
+  // @UseInterceptors(FilesInterceptor("files", 5))
+  // async addNote(
+  //   @CurrentUser() user: { id: string },
+  //   @Body() rawBody: Record<string, unknown>,
+  //   @UploadedFiles() files: UploadedMediaFile[]
+  // ) {
+  //   const isMultipart = Array.isArray(files) && files.length > 0;
+  //   const parsed = isMultipart
+  //     ? (emtAddNoteMediaBodySchema.parse(rawBody) as EmtAddNoteMediaBodyDto)
+  //     : (emtAddNoteSchema.parse(rawBody as EmtAddNoteDto) as EmtAddNoteDto);
+
+  //   const note = await this.emtCommandService.addNote({
+  //     emtId: user.id,
+  //     bookingId: parsed.bookingId,
+  //     content: parsed.content,
+  //     files: files ?? [],
+  //     durationMs: "durationMs" in parsed ? parsed.durationMs : undefined,
+  //   });
+  //   return { note };
+  // }
 
   @Get(":id")
   findOne(@Param("id") id: string) {

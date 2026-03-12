@@ -15,6 +15,20 @@
       "when": 1773207001238,
       "tag": "0001_massive_grim_reaper",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773294752447,
+      "tag": "0002_fast_iron_lad",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1773301377154,
+      "tag": "0003_condemned_human_torch",
+      "breakpoints": true
     }
   ]
 }

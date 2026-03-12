@@ -5,8 +5,12 @@ import {
   hospitalNearbyQuerySchema,
   type HospitalNearbyQueryDto,
 } from "@/common/validation/schemas";
+import { UseGuards } from "@nestjs/common";
+import { AuthGuard } from "@/common/guards/auth.guard";
+import { CurrentUser } from "@/common/decorators/current-user.decorator";
 
 @Controller("api/hospitals")
+@UseGuards(AuthGuard)
 export class HospitalController {
   constructor(private readonly hospitalService: HospitalService) {}
 

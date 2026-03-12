@@ -27,8 +27,12 @@ import {
 } from "@/common/validation/socket.schemas";
 import { DriverCommandService } from "./driver-command.service";
 import type { DriverLocationPayload } from "@ambulink/types";
+import { UseGuards } from "@nestjs/common";
+import { AuthGuard } from "@/common/guards/auth.guard";
+import { CurrentUser } from "@/common/decorators/current-user.decorator";
 
 @Controller("api/drivers")
+@UseGuards(AuthGuard)
 export class DriverController {
   constructor(
     private readonly driverService: DriverService,
@@ -57,6 +61,11 @@ export class DriverController {
   findOne(@Param("id") id: string) {
     return this.driverService.findOne(id);
   }
+  // uncomment after testing
+  // @Get(":id")
+  // findOne(@CurrentUser() user: { id: string }, @Param("id") id: string) {
+  //   return this.driverService.findOne(id);
+  // }
 
   @Patch(":id")
   update(
@@ -66,12 +75,25 @@ export class DriverController {
   ) {
     return this.driverService.update(id, body);
   }
+  // uncomment after testing
+  // @Patch(":id")
+  // update(
+  //   @CurrentUser() user: { id: string },
+  //   @Param("id") id: string,
+  //   @Body(Validate(updateDriverSchema)) body: UpdateDriverDto
+  // ) {
+  //   return this.driverService.update(id, body);
+  // }
 
   @Delete(":id")
   remove(@Param("id") id: string) {
     return this.driverService.remove(id);
   }
-
+  // uncomment after testing
+  // @Delete(":id")
+  // remove(@CurrentUser() user: { id: string }, @Param("id") id: string) {
+  //   return this.driverService.remove(id);
+  // }
   @Post("events/location")
   async updateLocation(
     @Query("driverId") driverId: string | undefined,
@@ -84,6 +106,16 @@ export class DriverController {
     return { ok: true };
   }
 
+  // uncomment after testing
+  // @Post("events/location")
+  // async updateLocation(
+  //   @CurrentUser() user: { id: string },
+  //   @Body(Validate(driverLocationHttpBodySchema)) body: DriverLocationPayload
+  // ) {
+  //   await this.driverCommandService.updateLocation(user.id, { x: body.x, y: body.y });
+  //   return { ok: true };
+  // }
+
   @Post("events/arrived")
   async arrived(@Query("driverId") driverId: string | undefined) {
     if (!driverId) {
@@ -93,6 +125,13 @@ export class DriverController {
     return { ok: true };
   }
 
+  // uncomment after testing
+  // @Post("events/arrived")
+  // async arrived(@CurrentUser() user: { id: string }) {
+  //   await this.driverCommandService.arrived(user.id);
+  //   return { ok: true };
+  // }
+
   @Post("events/completed")
   async completed(@Query("driverId") driverId: string | undefined) {
     if (!driverId) {
@@ -101,7 +140,12 @@ export class DriverController {
     await this.driverCommandService.completed(driverId);
     return { ok: true };
   }
-
+  // uncomment after testing
+  // @Post("events/completed")
+  // async completed(@CurrentUser() user: { id: string }) {
+  //   await this.driverCommandService.completed(user.id);
+  //   return { ok: true };
+  // }
   @Post("events/shift")
   async setShift(
     @Query("driverId") driverId: string | undefined,
@@ -112,4 +156,12 @@ export class DriverController {
     }
     return this.driverCommandService.setShift(driverId, body.onShift);
   }
+  // uncomment after testing
+  // @Post("events/shift")
+  // async setShift(
+  //   @CurrentUser() user: { id: string },
+  //   @Body(Validate(driverShiftHttpBodySchema)) body: { onShift: boolean }
+  // ) {
+  //   return this.driverCommandService.setShift(user.id, body.onShift);
+  // }
 }
