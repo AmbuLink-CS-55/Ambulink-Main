@@ -13,6 +13,8 @@ type DispatcherSocket = import("socket.io-client").Socket<
   DispatcherToServerEvents
 >;
 
+type OverlayTab = "all" | "ongoing" | "requests";
+
 export function BookingRequestOverlay({
   socketConnected,
   socket,
@@ -22,6 +24,7 @@ export function BookingRequestOverlay({
 }) {
   const panelId = "booking-activity-panel";
   const [isOpen, setIsOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState<OverlayTab>("all");
   const {
     bookingRequests,
     bookingDecisions,
@@ -32,6 +35,9 @@ export function BookingRequestOverlay({
     handleAccept,
     handleReject,
   } = useBookingActivityOverlay(socket);
+  const hasRequests = bookingRequests.length > 0;
+  const hasOngoing = ongoingList.length > 0;
+  const hasAny = hasRequests || hasOngoing;
 
   return (
     <>
@@ -71,7 +77,48 @@ export function BookingRequestOverlay({
           </div>
 
           <div className="flex-1 overflow-y-auto p-4">
-            {bookingRequests.length === 0 && ongoingList.length === 0 ? (
+            <div className="mb-3 rounded-lg border border-[color:var(--border)] bg-muted/20 p-1">
+              <div className="grid grid-cols-3 gap-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("all")}
+                  className={cn(
+                    "rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
+                    activeTab === "all"
+                      ? "bg-[color:var(--primary)] text-[color:var(--primary-foreground)] shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("ongoing")}
+                  className={cn(
+                    "rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
+                    activeTab === "ongoing"
+                      ? "bg-[color:var(--primary)] text-[color:var(--primary-foreground)] shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Ongoing ({ongoingList.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("requests")}
+                  className={cn(
+                    "rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
+                    activeTab === "requests"
+                      ? "bg-[color:var(--primary)] text-[color:var(--primary-foreground)] shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Requests ({bookingRequests.length})
+                </button>
+              </div>
+            </div>
+
+            {!hasAny ? (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                 <Bell className="h-12 w-12 mb-2 opacity-20" />
                 <p className="text-sm">
@@ -80,17 +127,34 @@ export function BookingRequestOverlay({
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                <OngoingBookingsSection
-                  ongoingList={ongoingList}
-                  etaDurations={durations}
-                  onReassign={(booking) => setSelectedBooking(booking)}
-                />
-                <MemoizedBookingRequestsSection
-                  bookingRequests={bookingRequests}
-                  bookingDecisions={bookingDecisions}
-                  onAccept={handleAccept}
-                  onReject={handleReject}
-                />
+                {activeTab === "all" || activeTab === "ongoing" ? (
+                  hasOngoing ? (
+                    <OngoingBookingsSection
+                      ongoingList={ongoingList}
+                      etaDurations={durations}
+                      onReassign={(booking) => setSelectedBooking(booking)}
+                    />
+                  ) : activeTab === "ongoing" ? (
+                    <div className="rounded-md border border-[color:var(--border)] bg-muted/20 px-3 py-6 text-center text-sm text-muted-foreground">
+                      No ongoing bookings right now.
+                    </div>
+                  ) : null
+                ) : null}
+
+                {activeTab === "all" || activeTab === "requests" ? (
+                  hasRequests ? (
+                    <MemoizedBookingRequestsSection
+                      bookingRequests={bookingRequests}
+                      bookingDecisions={bookingDecisions}
+                      onAccept={handleAccept}
+                      onReject={handleReject}
+                    />
+                  ) : activeTab === "requests" ? (
+                    <div className="rounded-md border border-[color:var(--border)] bg-muted/20 px-3 py-6 text-center text-sm text-muted-foreground">
+                      No pending requests right now.
+                    </div>
+                  ) : null
+                ) : null}
               </div>
             )}
           </div>
