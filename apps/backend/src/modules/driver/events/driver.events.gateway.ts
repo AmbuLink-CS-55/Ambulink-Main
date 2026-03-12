@@ -8,8 +8,8 @@ import {
 import { SocketService } from "@/core/socket/socket.service";
 import type { DriverLocationPayload, SocketErrorPayload } from "@ambulink/types";
 import { driverLocationPayloadSchema } from "@/common/validation/socket.schemas";
-import { DriverWsService } from "./driver.ws.service";
-import { BookingWsService } from "@/modules/booking/ws/booking.ws.service";
+import { DriverEventsService } from "./driver.events.service";
+import { BookingEventsService } from "@/modules/booking/events/booking.events.service";
 
 @WebSocketGateway({
   cors: {
@@ -17,13 +17,13 @@ import { BookingWsService } from "@/modules/booking/ws/booking.ws.service";
   },
   namespace: "/driver",
 })
-export class DriverWsGateway implements OnGatewayInit {
+export class DriverEventsGateway implements OnGatewayInit {
   @WebSocketServer()
   server: Server;
 
   constructor(
-    private driverWsService: DriverWsService,
-    private bookingService: BookingWsService,
+    private driverEventsService: DriverEventsService,
+    private bookingService: BookingEventsService,
     private socketService: SocketService
   ) {}
 
@@ -56,7 +56,7 @@ export class DriverWsGateway implements OnGatewayInit {
     const activeBooking = await this.bookingService.getActiveBookingForDriver(driverId);
 
     if (activeBooking) {
-      await this.driverWsService.setStatus(driverId, "BUSY");
+      await this.driverEventsService.setStatus(driverId, "BUSY");
       if (
         activeBooking.status === "ASSIGNED" ||
         activeBooking.status === "ARRIVED" ||
@@ -70,7 +70,7 @@ export class DriverWsGateway implements OnGatewayInit {
         }
       }
     } else {
-      await this.driverWsService.setStatus(driverId, "AVAILABLE");
+      await this.driverEventsService.setStatus(driverId, "AVAILABLE");
     }
 
     console.log("[socket] connected", {
@@ -114,14 +114,14 @@ export class DriverWsGateway implements OnGatewayInit {
       return;
     }
     const driverId = client.data.driverId;
-    await this.driverWsService.updateLocation(driverId, parsed.data);
+    await this.driverEventsService.updateLocation(driverId, parsed.data);
   }
 
   @SubscribeMessage("driver:arrived")
   async driverArrived(client: Socket) {
     const driverId = client.data.driverId;
     try {
-      await this.driverWsService.arrived(driverId);
+      await this.driverEventsService.arrived(driverId);
     } catch (_error) {
       client.emit("socket:error", {
         code: "NOT_FOUND",
@@ -134,7 +134,7 @@ export class DriverWsGateway implements OnGatewayInit {
   async driverCompleted(client: Socket) {
     const driverId = client.data.driverId;
     try {
-      await this.driverWsService.completed(driverId);
+      await this.driverEventsService.completed(driverId);
     } catch (_error) {
       client.emit("socket:error", {
         code: "NOT_FOUND",

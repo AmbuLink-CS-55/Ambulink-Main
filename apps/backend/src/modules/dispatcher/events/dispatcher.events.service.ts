@@ -6,11 +6,11 @@ import {
 } from "@nestjs/common";
 import { UserStatus } from "@/core/database/schema";
 import { DbExecutor } from "@/core/database/db.service";
-import { DispatcherWsRepository } from "./dispatcher.ws.repository";
+import { DispatcherEventsRepository } from "./dispatcher.events.repository";
 
 @Injectable()
-export class DispatcherWsService {
-  constructor(private dispatcherRepository: DispatcherWsRepository) {}
+export class DispatcherEventsService {
+  constructor(private dispatcherRepository: DispatcherEventsRepository) {}
 
   private dispatcherError(code: string, message: string) {
     return { code, message };

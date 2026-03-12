@@ -12,8 +12,8 @@ import {
   emtSubscribePayloadSchema,
 } from "@/common/validation/socket.schemas";
 import type { SocketErrorPayload } from "@ambulink/types";
-import { EmtWsService } from "./emt.ws.service";
-import { EmtWsCommandService } from "./emt.ws-command.service";
+import { EmtEventsService } from "./emt.events.service";
+import { EmtEventsCommandService } from "./emt.events-command.service";
 
 @WebSocketGateway({
   cors: {
@@ -21,15 +21,15 @@ import { EmtWsCommandService } from "./emt.ws-command.service";
   },
   namespace: "/emt",
 })
-export class EmtWsGateway implements OnGatewayInit, OnModuleDestroy {
+export class EmtEventsGateway implements OnGatewayInit, OnModuleDestroy {
   @WebSocketServer() server: Server;
   private readonly offlineTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private isShuttingDown = false;
 
   constructor(
     private socketService: SocketService,
-    private emtWsService: EmtWsService,
-    private emtCommandService: EmtWsCommandService
+    private emtEventsService: EmtEventsService,
+    private emtCommandService: EmtEventsCommandService
   ) {}
 
   afterInit() {
@@ -60,9 +60,9 @@ export class EmtWsGateway implements OnGatewayInit, OnModuleDestroy {
     try {
       this.clearPendingOffline(emtId);
       client.join(`emt:${emtId}`);
-      await this.emtWsService.setStatus(emtId, "AVAILABLE");
+      await this.emtEventsService.setStatus(emtId, "AVAILABLE");
 
-      const bookingPayload = await this.emtWsService.getCurrentBooking(emtId);
+      const bookingPayload = await this.emtEventsService.getCurrentBooking(emtId);
       if (bookingPayload) {
         client.emit("booking:assigned", bookingPayload);
       }
@@ -185,7 +185,7 @@ export class EmtWsGateway implements OnGatewayInit, OnModuleDestroy {
       try {
         const activeSockets = await this.server.in(`emt:${emtId}`).fetchSockets();
         if (activeSockets.length === 0) {
-          await this.emtWsService.setStatus(emtId, "OFFLINE");
+          await this.emtEventsService.setStatus(emtId, "OFFLINE");
         }
       } finally {
         this.offlineTimers.delete(emtId);

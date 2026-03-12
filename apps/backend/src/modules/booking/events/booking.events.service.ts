@@ -9,7 +9,7 @@ import type { UploadedMediaFile } from "../booking-media.service";
 import { BookingCoreService } from "../common/booking.core.service";
 
 @Injectable()
-export class BookingWsService {
+export class BookingEventsService {
   constructor(
     @Inject(forwardRef(() => BookingCoreService))
     private bookingCoreService: BookingCoreService

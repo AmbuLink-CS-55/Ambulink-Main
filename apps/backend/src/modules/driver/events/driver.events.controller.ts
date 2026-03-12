@@ -5,11 +5,11 @@ import {
 } from "@/common/validation/socket.schemas";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
 import type { DriverLocationPayload } from "@ambulink/types";
-import { DriverWsService } from "./driver.ws.service";
+import { DriverEventsService } from "./driver.events.service";
 
 @Controller("api/drivers/events")
-export class DriverWsController {
-  constructor(private readonly driverWsService: DriverWsService) {}
+export class DriverEventsController {
+  constructor(private readonly driverEventsService: DriverEventsService) {}
 
   @Post("location")
   async updateLocation(
@@ -19,7 +19,7 @@ export class DriverWsController {
     if (!driverId) {
       throw new BadRequestException("driverId is required");
     }
-    await this.driverWsService.updateLocation(driverId, { x: body.x, y: body.y });
+    await this.driverEventsService.updateLocation(driverId, { x: body.x, y: body.y });
     return { ok: true };
   }
 
@@ -28,7 +28,7 @@ export class DriverWsController {
     if (!driverId) {
       throw new BadRequestException("driverId is required");
     }
-    await this.driverWsService.arrived(driverId);
+    await this.driverEventsService.arrived(driverId);
     return { ok: true };
   }
 
@@ -37,7 +37,7 @@ export class DriverWsController {
     if (!driverId) {
       throw new BadRequestException("driverId is required");
     }
-    await this.driverWsService.completed(driverId);
+    await this.driverEventsService.completed(driverId);
     return { ok: true };
   }
 
@@ -49,6 +49,6 @@ export class DriverWsController {
     if (!driverId) {
       throw new BadRequestException("driverId is required");
     }
-    return this.driverWsService.setShift(driverId, body.onShift);
+    return this.driverEventsService.setShift(driverId, body.onShift);
   }
 }

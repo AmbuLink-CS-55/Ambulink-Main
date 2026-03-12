@@ -6,21 +6,21 @@ import { DispatcherCoreModule } from "../dispatcher/dispatcher-core.module";
 import { PatientApiController } from "./api/patient.api.controller";
 import { PatientApiService } from "./api/patient.api.service";
 import { PatientApiRepository } from "./api/patient.api.repository";
-import { PatientWsController } from "./ws/patient.ws.controller";
-import { PatientWsGateway } from "./ws/patient.ws.gateway";
-import { PatientWsService } from "./ws/patient.ws.service";
-import { PatientWsRepository } from "./ws/patient.ws.repository";
+import { PatientEventsController } from "./events/patient.events.controller";
+import { PatientEventsGateway } from "./events/patient.events.gateway";
+import { PatientEventsService } from "./events/patient.events.service";
+import { PatientEventsRepository } from "./events/patient.events.repository";
 
 @Module({
-  controllers: [PatientApiController, PatientWsController],
+  controllers: [PatientApiController, PatientEventsController],
   providers: [
     PatientApiService,
     PatientApiRepository,
-    PatientWsGateway,
-    PatientWsService,
-    PatientWsRepository,
+    PatientEventsGateway,
+    PatientEventsService,
+    PatientEventsRepository,
   ],
   imports: [DriverModule, forwardRef(() => BookingModule), HospitalModule, DispatcherCoreModule],
-  exports: [PatientApiService, PatientWsService, PatientWsGateway],
+  exports: [PatientApiService, PatientEventsService, PatientEventsGateway],
 })
 export class PatientModule {}

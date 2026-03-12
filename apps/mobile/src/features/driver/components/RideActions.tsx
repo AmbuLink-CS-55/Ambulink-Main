@@ -42,10 +42,14 @@ export function RideActions({
         disabled={isArrivedDisabled}
         accessibilityRole="button"
         accessibilityLabel="Mark arrived"
+        accessibilityState={{ disabled: isArrivedDisabled, busy: isArrivedUpdating }}
         className={`p-4 mt-3 rounded-xl items-center ${!isArrivedDisabled ? "bg-yellow-400" : "bg-muted"}`}
       >
         {isArrivedUpdating ? (
-          <ActivityIndicator color="#111827" />
+          <View className="flex-row items-center gap-2">
+            <ActivityIndicator color="#111827" />
+            <Text className="font-bold">Updating...</Text>
+          </View>
         ) : (
           <Text className="font-bold">Arrived</Text>
         )}
@@ -56,10 +60,14 @@ export function RideActions({
         disabled={isCompletedDisabled}
         accessibilityRole="button"
         accessibilityLabel="Complete ride"
+        accessibilityState={{ disabled: isCompletedDisabled, busy: isCompletedUpdating }}
         className={`p-4 mt-3 rounded-xl items-center ${!isCompletedDisabled ? "bg-green-500" : "bg-muted"}`}
       >
         {isCompletedUpdating ? (
-          <ActivityIndicator color="#ffffff" />
+          <View className="flex-row items-center gap-2">
+            <ActivityIndicator color="#ffffff" />
+            <Text className="text-white font-bold">Completing...</Text>
+          </View>
         ) : (
           <Text className="text-white font-bold">Complete Ride</Text>
         )}

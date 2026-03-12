@@ -1,17 +1,17 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { SocketService } from "@/core/socket/socket.service";
 import type { User } from "@/core/database/schema";
-import { DispatcherWsRepository } from "./dispatcher.ws.repository";
-import { DispatcherWsPendingRequestService } from "./dispatcher.ws-pending-request.service";
-import { DispatcherWsService } from "./dispatcher.ws.service";
+import { DispatcherEventsRepository } from "./dispatcher.events.repository";
+import { DispatcherEventsPendingRequestService } from "./dispatcher.events-pending-request.service";
+import { DispatcherEventsService } from "./dispatcher.events.service";
 
 @Injectable()
-export class DispatcherWsApprovalService {
+export class DispatcherEventsApprovalService {
   constructor(
     private socketService: SocketService,
-    private dispatcherService: DispatcherWsService,
-    private dispatcherRepository: DispatcherWsRepository,
-    private pendingRequestService: DispatcherWsPendingRequestService
+    private dispatcherService: DispatcherEventsService,
+    private dispatcherRepository: DispatcherEventsRepository,
+    private pendingRequestService: DispatcherEventsPendingRequestService
   ) {}
 
   async pickDriverThroughDispatchers(

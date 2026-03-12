@@ -26,11 +26,11 @@ import {
 } from "@/common/validation/socket.schemas";
 import type { PatientCancelRequest, PatientPickupRequest } from "@ambulink/types";
 import type { UploadedMediaFile } from "@/modules/booking/booking-media.service";
-import { PatientWsService } from "./patient.ws.service";
+import { PatientEventsService } from "./patient.events.service";
 
 @Controller("api/patients/events")
-export class PatientWsController {
-  constructor(private readonly patientWsService: PatientWsService) {}
+export class PatientEventsController {
+  constructor(private readonly patientEventsService: PatientEventsService) {}
 
   @Post("help")
   async requestHelp(
@@ -40,7 +40,7 @@ export class PatientWsController {
     if (!patientId) {
       throw new BadRequestException("patientId is required");
     }
-    await this.patientWsService.requestHelp(patientId, {
+    await this.patientEventsService.requestHelp(patientId, {
       x: body.x,
       y: body.y,
       patientSettings: body.patientSettings as PatientPickupRequest["patientSettings"],
@@ -56,7 +56,7 @@ export class PatientWsController {
     if (!patientId) {
       throw new BadRequestException("patientId is required");
     }
-    await this.patientWsService.cancel(patientId, { reason: body.reason });
+    await this.patientEventsService.cancel(patientId, { reason: body.reason });
     return { accepted: true };
   }
 
@@ -64,7 +64,7 @@ export class PatientWsController {
   async startUploadSession(
     @Query(Validate(patientUploadSessionStartSchema)) query: PatientUploadSessionStartDto
   ) {
-    return this.patientWsService.startUploadSession(query.patientId);
+    return this.patientEventsService.startUploadSession(query.patientId);
   }
 
   @Post("upload-session/:sessionId/files")
@@ -78,7 +78,7 @@ export class PatientWsController {
     const content = typeof body.content === "string" ? body.content : undefined;
     const durationMs = typeof body.durationMs === "string" ? Number(body.durationMs) : undefined;
 
-    return this.patientWsService.uploadSessionFiles({
+    return this.patientEventsService.uploadSessionFiles({
       patientId: query.patientId,
       sessionId,
       content,
@@ -96,7 +96,7 @@ export class PatientWsController {
     @Body() rawBody: Record<string, unknown>
   ) {
     const body = patientBookingNoteBodySchema.parse(rawBody) as PatientBookingNoteBodyDto;
-    const note = await this.patientWsService.addBookingNote({
+    const note = await this.patientEventsService.addBookingNote({
       bookingId,
       patientId: query.patientId,
       content: body.content,

@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import type { NearbyHospital } from "@ambulink/types";
 import { DbExecutor } from "@/core/database/db.service";
-import { HospitalWsRepository } from "./hospital.ws.repository";
+import { HospitalEventsRepository } from "./hospital.events.repository";
 
 @Injectable()
-export class HospitalWsService {
-  constructor(private hospitalRepository: HospitalWsRepository) {}
+export class HospitalEventsService {
+  constructor(private hospitalRepository: HospitalEventsRepository) {}
 
   async getAll() {
     return this.hospitalRepository.getAllHospitals();

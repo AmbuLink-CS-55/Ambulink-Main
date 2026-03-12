@@ -4,23 +4,23 @@ import { DispatcherCoreModule } from "../dispatcher/dispatcher-core.module";
 import { EmtApiController } from "./api/emt.api.controller";
 import { EmtApiRepository } from "./api/emt.api.repository";
 import { EmtApiService } from "./api/emt.api.service";
-import { EmtWsController } from "./ws/emt.ws.controller";
-import { EmtWsGateway } from "./ws/emt.ws.gateway";
-import { EmtWsRepository } from "./ws/emt.ws.repository";
-import { EmtWsService } from "./ws/emt.ws.service";
-import { EmtWsCommandService } from "./ws/emt.ws-command.service";
+import { EmtEventsController } from "./events/emt.events.controller";
+import { EmtEventsGateway } from "./events/emt.events.gateway";
+import { EmtEventsRepository } from "./events/emt.events.repository";
+import { EmtEventsService } from "./events/emt.events.service";
+import { EmtEventsCommandService } from "./events/emt.events-command.service";
 
 @Module({
   imports: [forwardRef(() => BookingModule), DispatcherCoreModule],
-  controllers: [EmtApiController, EmtWsController],
+  controllers: [EmtApiController, EmtEventsController],
   providers: [
     EmtApiRepository,
     EmtApiService,
-    EmtWsRepository,
-    EmtWsService,
-    EmtWsCommandService,
-    EmtWsGateway,
+    EmtEventsRepository,
+    EmtEventsService,
+    EmtEventsCommandService,
+    EmtEventsGateway,
   ],
-  exports: [EmtApiService, EmtWsService, EmtWsGateway],
+  exports: [EmtApiService, EmtEventsService, EmtEventsGateway],
 })
 export class EmtModule {}

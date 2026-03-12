@@ -5,7 +5,7 @@ import { DbExecutor, DbService } from "@/core/database/db.service";
 import type { NewUser, UserStatus } from "@/core/database/schema";
 
 @Injectable()
-export class DriverWsRepository {
+export class DriverEventsRepository {
   constructor(private dbService: DbService) {}
 
   private readonly safeUserColumns = {

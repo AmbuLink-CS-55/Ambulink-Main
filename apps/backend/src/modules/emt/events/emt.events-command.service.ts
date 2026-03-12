@@ -1,13 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import type { UploadedMediaFile } from "@/modules/booking/booking-media.service";
-import { EmtWsService } from "./emt.ws.service";
+import { EmtEventsService } from "./emt.events.service";
 
 @Injectable()
-export class EmtWsCommandService {
-  constructor(private emtWsService: EmtWsService) {}
+export class EmtEventsCommandService {
+  constructor(private emtEventsService: EmtEventsService) {}
 
   async subscribe(emtId: string, bookingId: string) {
-    return this.emtWsService.subscribeToBooking(emtId, bookingId);
+    return this.emtEventsService.subscribeToBooking(emtId, bookingId);
   }
 
   async addNote(params: {
@@ -17,7 +17,7 @@ export class EmtWsCommandService {
     files: UploadedMediaFile[];
     durationMs?: number;
   }) {
-    return this.emtWsService.addNote(
+    return this.emtEventsService.addNote(
       params.emtId,
       params.bookingId,
       params.content ?? "",

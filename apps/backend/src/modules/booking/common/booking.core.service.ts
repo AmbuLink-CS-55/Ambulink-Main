@@ -12,7 +12,7 @@ import { eq, sql } from "drizzle-orm";
 import { bookings } from "@/core/database/schema";
 import type { Booking, Hospital, User } from "@/core/database/schema";
 import { DbExecutor, DbService } from "@/core/database/db.service";
-import { DispatcherWsService } from "../../dispatcher/ws/dispatcher.ws.service";
+import { DispatcherEventsService } from "../../dispatcher/events/dispatcher.events.service";
 import type {
   BookingAttachment,
   BookingDetailsPayload,
@@ -30,10 +30,10 @@ import { BookingSharedRepository } from "./booking.shared.repository";
 import { BookingMediaService } from "../booking-media.service";
 import type { UploadedMediaFile } from "../booking-media.service";
 import { EventBusService } from "@/core/events/event-bus.service";
-import { DriverWsService } from "../../driver/ws/driver.ws.service";
-import { PatientWsService } from "../../patient/ws/patient.ws.service";
-import { HospitalWsService } from "../../hospital/ws/hospital.ws.service";
-import { EmtWsService } from "../../emt/ws/emt.ws.service";
+import { DriverEventsService } from "../../driver/events/driver.events.service";
+import { PatientEventsService } from "../../patient/events/patient.events.service";
+import { HospitalEventsService } from "../../hospital/events/hospital.events.service";
+import { EmtEventsService } from "../../emt/events/emt.events.service";
 
 const bookingError = (code: string, message: string) => ({ code, message });
 
@@ -47,17 +47,17 @@ export class BookingCoreService {
 
   constructor(
     private dbService: DbService,
-    private dispatcherService: DispatcherWsService,
+    private dispatcherService: DispatcherEventsService,
     private eventBus: EventBusService,
     private bookingRepository: BookingSharedRepository,
     private bookingMediaService: BookingMediaService,
-    @Inject(forwardRef(() => DriverWsService))
-    private driverService: DriverWsService,
-    @Inject(forwardRef(() => PatientWsService))
-    private patientService: PatientWsService,
-    private hospitalService: HospitalWsService,
-    @Inject(forwardRef(() => EmtWsService))
-    private emtService: EmtWsService
+    @Inject(forwardRef(() => DriverEventsService))
+    private driverService: DriverEventsService,
+    @Inject(forwardRef(() => PatientEventsService))
+    private patientService: PatientEventsService,
+    private hospitalService: HospitalEventsService,
+    @Inject(forwardRef(() => EmtEventsService))
+    private emtService: EmtEventsService
   ) {}
 
   async createBooking(

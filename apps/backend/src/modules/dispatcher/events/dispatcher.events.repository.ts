@@ -5,7 +5,7 @@ import { DbExecutor, DbService } from "@/core/database/db.service";
 import type { UserStatus } from "@/core/database/schema";
 
 @Injectable()
-export class DispatcherWsRepository {
+export class DispatcherEventsRepository {
   constructor(private dbService: DbService) {}
 
   setDispatcherStatus(dispatcherId: string, status: UserStatus) {

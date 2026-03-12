@@ -7,7 +7,7 @@ import { EmtModule } from "../emt/emt.module";
 import { BookingMediaService } from "./booking-media.service";
 import { BookingApiController } from "./api/booking.api.controller";
 import { BookingApiService } from "./api/booking.api.service";
-import { BookingWsService } from "./ws/booking.ws.service";
+import { BookingEventsService } from "./events/booking.events.service";
 import { BookingCoreService } from "./common/booking.core.service";
 import { BookingSharedRepository } from "./common/booking.shared.repository";
 
@@ -24,9 +24,9 @@ import { BookingSharedRepository } from "./common/booking.shared.repository";
     BookingSharedRepository,
     BookingCoreService,
     BookingApiService,
-    BookingWsService,
+    BookingEventsService,
     BookingMediaService,
   ],
-  exports: [BookingApiService, BookingWsService, BookingMediaService, BookingSharedRepository],
+  exports: [BookingApiService, BookingEventsService, BookingMediaService, BookingSharedRepository],
 })
 export class BookingModule {}

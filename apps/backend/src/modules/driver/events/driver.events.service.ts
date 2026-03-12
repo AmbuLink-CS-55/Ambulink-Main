@@ -11,20 +11,20 @@ import { UserStatus } from "@/core/database/schema";
 import type { DriverLocationPayload } from "@ambulink/types";
 import { EventBusService } from "@/core/events/event-bus.service";
 import { DbExecutor, DbService } from "@/core/database/db.service";
-import { BookingWsService } from "@/modules/booking/ws/booking.ws.service";
+import { BookingEventsService } from "@/modules/booking/events/booking.events.service";
 import { BookingSharedRepository } from "@/modules/booking/common/booking.shared.repository";
-import { DriverWsRepository } from "./driver.ws.repository";
+import { DriverEventsRepository } from "./driver.events.repository";
 
 @Injectable()
-export class DriverWsService {
+export class DriverEventsService {
   private lastEmitTimes = new Map<string, number>();
 
   constructor(
     private dbService: DbService,
-    private driverRepository: DriverWsRepository,
+    private driverRepository: DriverEventsRepository,
     private bookingRepository: BookingSharedRepository,
-    @Inject(forwardRef(() => BookingWsService))
-    private bookingService: BookingWsService,
+    @Inject(forwardRef(() => BookingEventsService))
+    private bookingService: BookingEventsService,
     private eventBus: EventBusService
   ) {}
 

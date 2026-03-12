@@ -3,21 +3,21 @@ import { BookingModule } from "../booking/booking.module";
 import { DriverApiController } from "./api/driver.api.controller";
 import { DriverApiService } from "./api/driver.api.service";
 import { DriverApiRepository } from "./api/driver.api.repository";
-import { DriverWsController } from "./ws/driver.ws.controller";
-import { DriverWsGateway } from "./ws/driver.ws.gateway";
-import { DriverWsService } from "./ws/driver.ws.service";
-import { DriverWsRepository } from "./ws/driver.ws.repository";
+import { DriverEventsController } from "./events/driver.events.controller";
+import { DriverEventsGateway } from "./events/driver.events.gateway";
+import { DriverEventsService } from "./events/driver.events.service";
+import { DriverEventsRepository } from "./events/driver.events.repository";
 
 @Module({
-  controllers: [DriverApiController, DriverWsController],
+  controllers: [DriverApiController, DriverEventsController],
   providers: [
     DriverApiService,
     DriverApiRepository,
-    DriverWsGateway,
-    DriverWsService,
-    DriverWsRepository,
+    DriverEventsGateway,
+    DriverEventsService,
+    DriverEventsRepository,
   ],
   imports: [forwardRef(() => BookingModule)],
-  exports: [DriverApiService, DriverWsService, DriverWsGateway],
+  exports: [DriverApiService, DriverEventsService, DriverEventsGateway],
 })
 export class DriverModule {}

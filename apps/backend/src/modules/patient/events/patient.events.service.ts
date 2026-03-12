@@ -11,23 +11,23 @@ import type { PatientCancelRequest, PatientPickupRequest } from "@ambulink/types
 import { EventBusService } from "@/core/events/event-bus.service";
 import { DbExecutor, DbService } from "@/core/database/db.service";
 import { users } from "@/core/database/schema";
-import { BookingWsService } from "@/modules/booking/ws/booking.ws.service";
-import { DriverWsService } from "@/modules/driver/ws/driver.ws.service";
-import { HospitalWsService } from "@/modules/hospital/ws/hospital.ws.service";
-import { DispatcherWsApprovalService } from "@/modules/dispatcher/ws/dispatcher.ws-approval.service";
+import { BookingEventsService } from "@/modules/booking/events/booking.events.service";
+import { DriverEventsService } from "@/modules/driver/events/driver.events.service";
+import { HospitalEventsService } from "@/modules/hospital/events/hospital.events.service";
+import { DispatcherEventsApprovalService } from "@/modules/dispatcher/events/dispatcher.events-approval.service";
 import type { UploadedMediaFile } from "@/modules/booking/booking-media.service";
 import type { ManualAssignBookingDto } from "@/common/validation/schemas";
-import { PatientWsRepository } from "./patient.ws.repository";
+import { PatientEventsRepository } from "./patient.events.repository";
 
 @Injectable()
-export class PatientWsService {
+export class PatientEventsService {
   constructor(
-    private patientRepository: PatientWsRepository,
-    private driverWsService: DriverWsService,
-    @Inject(forwardRef(() => BookingWsService))
-    private bookingService: BookingWsService,
-    private hospitalService: HospitalWsService,
-    private dispatcherApprovalService: DispatcherWsApprovalService,
+    private patientRepository: PatientEventsRepository,
+    private driverEventsService: DriverEventsService,
+    @Inject(forwardRef(() => BookingEventsService))
+    private bookingService: BookingEventsService,
+    private hospitalService: HospitalEventsService,
+    private dispatcherApprovalService: DispatcherEventsApprovalService,
     private dbService: DbService,
     private eventBus: EventBusService
   ) {}
@@ -127,7 +127,7 @@ export class PatientWsService {
     patient.currentLocation = { x, y };
     await this.updateLocation(patientId, { x, y });
 
-    const nearestDrivers = await this.driverWsService.findDriverByLocation(y, x);
+    const nearestDrivers = await this.driverEventsService.findDriverByLocation(y, x);
     if (nearestDrivers.length === 0) {
       this.eventBus.publish({
         type: "realtime.patient",
@@ -167,7 +167,7 @@ export class PatientWsService {
     }
 
     const { dispatcherId, pickedDriver, requestId } = result;
-    const isDriverAvailable = await this.driverWsService.isAvailable(pickedDriver.id);
+    const isDriverAvailable = await this.driverEventsService.isAvailable(pickedDriver.id);
     if (!isDriverAvailable) {
       this.eventBus.publish({
         type: "realtime.patient",

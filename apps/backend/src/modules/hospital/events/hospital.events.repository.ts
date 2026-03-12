@@ -4,7 +4,7 @@ import { hospitals } from "@/core/database/schema";
 import { DbExecutor, DbService } from "@/core/database/db.service";
 
 @Injectable()
-export class HospitalWsRepository {
+export class HospitalEventsRepository {
   constructor(private dbService: DbService) {}
 
   getAllHospitals() {

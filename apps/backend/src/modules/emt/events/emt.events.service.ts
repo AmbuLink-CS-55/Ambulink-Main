@@ -8,19 +8,19 @@ import {
 } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
 import type { BookingAssignedPayload, BookingNote, UserStatus } from "@ambulink/types";
-import { BookingWsService } from "@/modules/booking/ws/booking.ws.service";
-import { DispatcherWsService } from "@/modules/dispatcher/ws/dispatcher.ws.service";
+import { BookingEventsService } from "@/modules/booking/events/booking.events.service";
+import { DispatcherEventsService } from "@/modules/dispatcher/events/dispatcher.events.service";
 import type { UploadedMediaFile } from "@/modules/booking/booking-media.service";
 import { EventBusService } from "@/core/events/event-bus.service";
-import { EmtWsRepository } from "./emt.ws.repository";
+import { EmtEventsRepository } from "./emt.events.repository";
 
 @Injectable()
-export class EmtWsService {
+export class EmtEventsService {
   constructor(
-    private emtRepository: EmtWsRepository,
-    @Inject(forwardRef(() => BookingWsService))
-    private bookingService: BookingWsService,
-    private dispatcherService: DispatcherWsService,
+    private emtRepository: EmtEventsRepository,
+    @Inject(forwardRef(() => BookingEventsService))
+    private bookingService: BookingEventsService,
+    private dispatcherService: DispatcherEventsService,
     private eventBus: EventBusService
   ) {}
 
