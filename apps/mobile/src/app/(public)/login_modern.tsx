@@ -8,14 +8,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Button,
-  StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Redirect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "@/common/hooks/AuthContext";
-import i18n from "@/common/i18n/i18n";
 import { AppImage as Image } from "@/common/components/AppImage";
 
 export default function LoginModern() {
@@ -41,31 +38,32 @@ export default function LoginModern() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView className="flex-1 bg-white">
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.flex1}
+        className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          style={styles.scrollView}
+          contentContainerStyle={{ flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.headerSection}>
+          <View className="w-full items-center">
             <Image
               source={require("../../../assets/images/Ambulinkcover.png")}
-              style={styles.headerImage}
+              style={{ width: "180%", aspectRatio: 1, alignSelf: "center", marginTop: -220 }}
               contentFit="contain"
             />
           </View>
 
-          <View style={styles.formSection}>
-            <Text style={styles.heading}>Log in</Text>
+          <View className="px-5" style={{ marginTop: -150 }}>
+            <Text className="font-black mb-[30px]" style={{ fontSize: 26, color: "#1e5bb5" }}>
+              Log in
+            </Text>
 
-            <View style={styles.inputRow}>
+            <View className="rounded-xl border mb-4 px-4 flex-row items-center" style={{ backgroundColor: "#e2eefa", borderColor: "#a8c7fa", height: 56 }}>
               <Ionicons name="mail-outline" size={22} color="#9CA3AF" />
               <TextInput
-                style={styles.input}
+                className="flex-1 ml-3 text-base text-gray-800"
                 placeholder="Email"
                 placeholderTextColor="#9CA3AF"
                 value={email}
@@ -77,10 +75,10 @@ export default function LoginModern() {
               />
             </View>
 
-            <View style={styles.inputRow}>
+            <View className="rounded-xl border mb-4 px-4 flex-row items-center" style={{ backgroundColor: "#e2eefa", borderColor: "#a8c7fa", height: 56 }}>
               <Ionicons name="lock-closed-outline" size={22} color="#9CA3AF" />
               <TextInput
-                style={styles.input}
+                className="flex-1 ml-3 text-base text-gray-800"
                 placeholder="Password"
                 placeholderTextColor="#9CA3AF"
                 value={password}
@@ -104,32 +102,38 @@ export default function LoginModern() {
 
             <Pressable
               onPress={() => Alert.alert("Coming Soon", "Password reset is not implemented yet.")}
-              style={styles.forgotButton}
+              className="items-start mb-6"
               accessibilityRole="button"
               accessibilityLabel="Forgot password"
             >
-              <Text style={styles.forgotText}>Forgot Password?</Text>
+              <Text className="font-bold" style={{ color: "#1e5bb5", fontSize: 13 }}>
+                Forgot Password?
+              </Text>
             </Pressable>
 
             <Pressable
               onPress={handleSignIn}
-              style={styles.signInButton}
+              className="rounded-xl justify-center items-center shadow-lg"
+              style={{ backgroundColor: "#1e5bb5", height: 56, shadowColor: "#1e5bb5", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 }}
               accessibilityRole="button"
               accessibilityLabel="Sign in"
             >
-              <Text style={styles.signInText}>{loading ? "Signing in..." : "Sign In"}</Text>
+              <Text className="text-white text-[18px] font-bold">
+                {loading ? "Signing in..." : "Sign In"}
+              </Text>
             </Pressable>
           </View>
 
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>Continue with</Text>
-            <View style={styles.dividerLine} />
+          <View className="flex-row items-center my-5 px-5">
+            <View className="flex-1" style={{ height: 1, backgroundColor: "#E5E7EB" }} />
+            <Text className="mx-4 text-sm" style={{ color: "#9CA3AF" }}>Continue with</Text>
+            <View className="flex-1" style={{ height: 1, backgroundColor: "#E5E7EB" }} />
           </View>
 
-          <View style={styles.socialSection}>
+          <View className="px-5">
             <Pressable
-              style={styles.googleButton}
+              className="bg-white rounded-xl flex-row justify-center items-center border shadow-sm"
+              style={{ height: 56, borderColor: "#E5E7EB", elevation: 2 }}
               accessibilityRole="button"
               accessibilityLabel="Sign in with Google"
             >
@@ -137,55 +141,70 @@ export default function LoginModern() {
                 source={{
                   uri: "https://www.google.com/images/branding/googleg/1x/googleg_standard_color_128dp.png",
                 }}
-                style={styles.googleLogo}
+                className="w-6 h-6 mr-3"
                 contentFit="contain"
               />
-              <Text style={styles.googleText}>Sign in with Google</Text>
+              <Text className="text-base font-semibold" style={{ color: "#1F2937" }}>
+                Sign in with Google
+              </Text>
             </Pressable>
           </View>
 
-          <View style={styles.footerRow}>
-            <Text style={styles.footerText}>Don&apos;t have an account? </Text>
+          <View className="flex-row justify-center items-center mt-6 mb-5">
+            <Text style={{ color: "#6B7280", fontSize: 15 }}>
+              Don&apos;t have an account?{" "}
+            </Text>
             <Pressable onPress={() => router.push("/(public)/signup")}>
-              <Text style={styles.signupText}>Sign Up</Text>
+              <Text className="font-bold" style={{ color: "#1e5bb5", fontSize: 15 }}>Sign Up</Text>
             </Pressable>
           </View>
 
-          <View style={styles.devModeBox}>
-            <View style={styles.devModeHeader}>
+          <View className="mx-5 border-dashed rounded-2xl p-4" style={{ marginBottom: 60, borderWidth: 1.5, borderColor: "#ed8936", backgroundColor: "#fffdfa" }}>
+            <View className="flex-row items-center justify-center mb-4">
               <Ionicons name="construct" size={14} color="#ed8936" />
-              <Text style={styles.devModeHeaderText}>  DEV MODE — QUICK SIGN-IN</Text>
+              <Text className="text-xs font-bold tracking-widest" style={{ color: "#ed8936" }}>
+                {"  "}DEV MODE — QUICK SIGN-IN
+              </Text>
             </View>
-            <View style={styles.devModeRow}>
+            <View className="flex-row justify-between">
               <Pressable
-                style={[styles.devModeBtn, { backgroundColor: "#1e5bb5" }]}
+                className="flex-1 mx-1.5 rounded-xl justify-center items-center"
+                style={{ aspectRatio: 1.1, backgroundColor: "#1e5bb5" }}
                 onPress={() => {
                   signInAs("patient");
                   router.replace("/");
                 }}
               >
                 <Ionicons name="person" size={24} color="white" />
-                <Text style={styles.devModeBtnText}>Patient</Text>
+                <Text className="text-white font-semibold mt-1.5" style={{ fontSize: 13 }}>
+                  Patient
+                </Text>
               </Pressable>
               <Pressable
-                style={[styles.devModeBtn, { backgroundColor: "#22a95c" }]}
+                className="flex-1 mx-1.5 rounded-xl justify-center items-center"
+                style={{ aspectRatio: 1.1, backgroundColor: "#22a95c" }}
                 onPress={() => {
                   signInAs("driver");
                   router.replace("/");
                 }}
               >
                 <Ionicons name="car" size={24} color="white" />
-                <Text style={styles.devModeBtnText}>Driver</Text>
+                <Text className="text-white font-semibold mt-1.5" style={{ fontSize: 13 }}>
+                  Driver
+                </Text>
               </Pressable>
               <Pressable
-                style={[styles.devModeBtn, { backgroundColor: "#8d4af9" }]}
+                className="flex-1 mx-1.5 rounded-xl justify-center items-center"
+                style={{ aspectRatio: 1.1, backgroundColor: "#8d4af9" }}
                 onPress={() => {
                   signInAs("emt");
                   router.replace("/");
                 }}
               >
                 <Ionicons name="medkit" size={24} color="white" />
-                <Text style={styles.devModeBtnText}>EMT</Text>
+                <Text className="text-white font-semibold mt-1.5" style={{ fontSize: 13 }}>
+                  EMT
+                </Text>
               </Pressable>
             </View>
           </View>
@@ -194,116 +213,3 @@ export default function LoginModern() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "white" },
-  flex1: { flex: 1 },
-  scrollView: {},
-  scrollContent: { flexGrow: 1 },
-  headerSection: { width: "100%", alignItems: "center" },
-  headerImage: { width: "180%", aspectRatio: 1.0, alignSelf: "center", marginTop: -220 },
-  formSection: { paddingHorizontal: 20, marginTop: -150 },
-  heading: { fontSize: 26, fontWeight: "900", color: "#1e5bb5", marginBottom: 30 },
-  inputRow: {
-    backgroundColor: "#e2eefa",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#a8c7fa",
-    marginBottom: 16,
-    paddingHorizontal: 16,
-    height: 56,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  input: { flex: 1, marginLeft: 12, fontSize: 16, color: "#1F2937" },
-  forgotButton: { alignItems: "flex-start", marginBottom: 24 },
-  forgotText: { color: "#1e5bb5", fontSize: 13, fontWeight: "700" },
-  signInButton: {
-    backgroundColor: "#1e5bb5",
-    borderRadius: 12,
-    height: 56,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#1e5bb5",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  signInText: { color: "white", fontSize: 18, fontWeight: "bold" },
-  dividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 20,
-    paddingHorizontal: 20,
-  },
-  dividerLine: { flex: 1, height: 1, backgroundColor: "#E5E7EB" },
-  dividerText: { marginHorizontal: 16, color: "#9CA3AF", fontSize: 14 },
-  socialSection: { paddingHorizontal: 20 },
-  googleButton: {
-    backgroundColor: "white",
-    borderRadius: 12,
-    height: 56,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  googleLogo: { width: 24, height: 24, marginRight: 12 },
-  googleText: { color: "#1F2937", fontSize: 16, fontWeight: "600" },
-  footerRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 24,
-    marginBottom: 20,
-  },
-  footerText: { color: "#6B7280", fontSize: 15 },
-  signupText: { color: "#1e5bb5", fontSize: 15, fontWeight: "700" },
-  devModeBox: {
-    marginBottom: 60,
-    marginHorizontal: 20,
-    borderWidth: 1.5,
-    borderColor: "#ed8936",
-    borderStyle: "dashed",
-    borderRadius: 16,
-    padding: 16,
-    backgroundColor: "#fffdfa",
-  },
-  devModeHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 16,
-  },
-  devModeHeaderText: {
-    color: "#ed8936",
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1,
-  },
-  devModeRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  devModeBtn: {
-    flex: 1,
-    aspectRatio: 1.1,
-    marginHorizontal: 6,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  devModeBtnText: {
-    color: "white",
-    fontSize: 13,
-    fontWeight: "600",
-    marginTop: 6,
-  },
-});
