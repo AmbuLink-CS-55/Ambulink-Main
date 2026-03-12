@@ -52,7 +52,11 @@ export default function LoginModern() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.headerSection}>
-            <Image style={styles.headerImage} contentFit="contain" />
+            <Image
+              source={require("../../../assets/images/Ambulinkcover.png")}
+              style={styles.headerImage}
+              contentFit="contain"
+            />
           </View>
 
           <View style={styles.formSection}>
@@ -177,10 +181,10 @@ export default function LoginModern() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "white" },
   flex1: { flex: 1 },
-  scrollView: { paddingHorizontal: 24 },
+  scrollView: {},
   scrollContent: { flexGrow: 1 },
-  headerSection: { alignItems: "center" },
-  headerImage: { width: 600, height: 600, marginTop: -195 },
+  headerSection: { width: "100%", alignItems: "center" },
+  headerImage: { width: "180%", aspectRatio: 1.0, alignSelf: "center", marginTop: -220 },
   formSection: { paddingHorizontal: 20, marginTop: -150 },
   heading: { fontSize: 22, fontWeight: "bold", color: "#205fb7ff", marginBottom: 30 },
   inputRow: {
