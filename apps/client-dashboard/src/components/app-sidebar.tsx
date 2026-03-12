@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Ambulance, Users, Map, ClipboardList, Settings2 } from "lucide-react";
+import { Ambulance, Users, Map, ClipboardList, Settings2, ChartColumn } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import {
@@ -35,6 +35,7 @@ const MENU_ITEMS = [
   { title: "Drivers", path: "/drivers", icon: Users },
   { title: "EMTs", path: "/emts", icon: Users },
   { title: "Booking Log", path: "/booking", icon: ClipboardList },
+  { title: "Analytics", path: "/analytics", icon: ChartColumn },
 ] as const;
 
 export function AppSidebar() {

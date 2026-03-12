@@ -4,11 +4,13 @@ import { Validate } from "@/common/pipes/zod-validation.pipe";
 import {
   bookingAttachmentAccessQuerySchema,
   bookingAddNoteSchema,
+  bookingAnalyticsQuerySchema,
   bookingDetailsQuerySchema,
   bookingListQuerySchema,
   manualAssignBookingSchema,
   reassignBookingSchema,
   type BookingAddNoteDto,
+  type BookingAnalyticsQueryDto,
   type BookingDetailsQueryDto,
   type BookingListQueryDto,
   type ManualAssignBookingDto,
@@ -36,6 +38,21 @@ export class BookingApiController {
     @Body(Validate(reassignBookingSchema)) body: ReassignBookingDto
   ) {
     return this.bookingService.reassignBooking(bookingId, body.dispatcherId, body);
+  }
+
+  @Get("analytics/response")
+  responseAnalytics(@Query(Validate(bookingAnalyticsQuerySchema)) query: BookingAnalyticsQueryDto) {
+    return this.bookingService.getBookingResponseAnalytics(query);
+  }
+
+  @Get("analytics/zones")
+  zonesAnalytics(@Query(Validate(bookingAnalyticsQuerySchema)) query: BookingAnalyticsQueryDto) {
+    return this.bookingService.getBookingZonesAnalytics(query);
+  }
+
+  @Get("analytics/insights")
+  insightsAnalytics(@Query(Validate(bookingAnalyticsQuerySchema)) query: BookingAnalyticsQueryDto) {
+    return this.bookingService.getBookingInsightsAnalytics(query);
   }
 
   @Get(":id/details")

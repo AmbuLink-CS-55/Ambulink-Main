@@ -134,6 +134,102 @@ export type BookingDetailsPayload = {
   notes: BookingNote[];
 };
 
+export type DurationMetricSummary = {
+  count: number;
+  averageSeconds: number | null;
+  medianSeconds: number | null;
+  p90Seconds: number | null;
+  minSeconds: number | null;
+  maxSeconds: number | null;
+};
+
+export type DriverResponseMetricRow = {
+  driverId: string | null;
+  driverName: string | null;
+  totalBookings: number;
+  completedBookings: number;
+  cancelledBookings: number;
+  completionRate: number;
+  cancellationRate: number;
+  dispatchLatency: DurationMetricSummary;
+  responseTime: DurationMetricSummary;
+  onSceneTime: DurationMetricSummary;
+  transportTime: DurationMetricSummary;
+  endToEndTime: DurationMetricSummary;
+};
+
+export type BookingResponseAnalytics = {
+  providerId: string;
+  from: string | null;
+  to: string | null;
+  totalBookings: number;
+  completedBookings: number;
+  cancelledBookings: number;
+  completionRate: number;
+  cancellationRate: number;
+  dispatchLatency: DurationMetricSummary;
+  responseTime: DurationMetricSummary;
+  onSceneTime: DurationMetricSummary;
+  transportTime: DurationMetricSummary;
+  endToEndTime: DurationMetricSummary;
+  drivers: DriverResponseMetricRow[];
+};
+
+export type ZoneGridCell = {
+  key: string;
+  center: Point;
+  count: number;
+  weight: number;
+};
+
+export type BookingZonesAnalytics = {
+  providerId: string;
+  from: string | null;
+  to: string | null;
+  cellSizeDegrees: number;
+  responseOrigins: ZoneGridCell[];
+  hospitalDestinations: ZoneGridCell[];
+};
+
+export type FunnelStageMetric = {
+  stage: "REQUESTED" | "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED";
+  count: number;
+  percentage: number;
+};
+
+export type CancellationReasonMetric = {
+  reason: string;
+  count: number;
+  percentage: number;
+};
+
+export type TimeBucketMetric = {
+  label: string;
+  count: number;
+};
+
+export type HospitalChoiceMetric = {
+  hospitalId: string;
+  hospitalName: string;
+  count: number;
+  percentage: number;
+};
+
+export type BookingInsightsAnalytics = {
+  providerId: string;
+  from: string | null;
+  to: string | null;
+  funnel: FunnelStageMetric[];
+  cancellationReasons: CancellationReasonMetric[];
+  demandByHour: TimeBucketMetric[];
+  demandByWeekday: TimeBucketMetric[];
+  hospitalChoices: HospitalChoiceMetric[];
+  etaDeltaQuality: {
+    available: false;
+    note: string;
+  } | null;
+};
+
 export type StartUploadSessionResponse = {
   uploadSessionId: string;
   expiresAt: string;

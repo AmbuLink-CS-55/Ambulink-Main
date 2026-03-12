@@ -14,6 +14,7 @@ const DriversDashboard = lazy(() => import("./pages/drivers/page"));
 const EmtsDashboard = lazy(() => import("./pages/emts/page"));
 const PatientsDashboard = lazy(() => import("./pages/patients/page"));
 const BookingLogPage = lazy(() => import("./pages/booking/page"));
+const AnalyticsPage = lazy(() => import("./pages/analytics/page"));
 
 const HOUR_IN_MS = 1000 * 60 * 60;
 const DAY_IN_MS = HOUR_IN_MS * 24;
@@ -68,6 +69,7 @@ export function App() {
               <Route path="/emts" element={<EmtsDashboard />} />
               <Route path="/patients" element={<PatientsDashboard />} />
               <Route path="/booking" element={<BookingLogPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
             </Route>
           </Routes>
         </Suspense>

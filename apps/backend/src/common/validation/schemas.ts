@@ -146,6 +146,25 @@ export const bookingDetailsQuerySchema = z.object({
   dispatcherId: z.string().uuid(),
 });
 
+export const bookingAnalyticsQuerySchema = z
+  .object({
+    dispatcherId: z.string().uuid(),
+    from: z.string().datetime().optional(),
+    to: z.string().datetime().optional(),
+  })
+  .refine(
+    (value) => {
+      if (!value.from || !value.to) {
+        return true;
+      }
+      return new Date(value.from).getTime() <= new Date(value.to).getTime();
+    },
+    {
+      message: "`from` must be before or equal to `to`",
+      path: ["from"],
+    }
+  );
+
 export const bookingAddNoteSchema = z.object({
   dispatcherId: z.string().uuid(),
   content: z.string().trim().min(1).max(2000),
@@ -229,6 +248,7 @@ export type DriverListQueryDto = z.infer<typeof driverListQuerySchema>;
 export type EmtListQueryDto = z.infer<typeof emtListQuerySchema>;
 export type BookingListQueryDto = z.infer<typeof bookingListQuerySchema>;
 export type BookingDetailsQueryDto = z.infer<typeof bookingDetailsQuerySchema>;
+export type BookingAnalyticsQueryDto = z.infer<typeof bookingAnalyticsQuerySchema>;
 export type BookingAddNoteDto = z.infer<typeof bookingAddNoteSchema>;
 export type EmtBookingSearchQueryDto = z.infer<typeof emtBookingSearchQuerySchema>;
 export type EmtSubscribeDto = z.infer<typeof emtSubscribeSchema>;
