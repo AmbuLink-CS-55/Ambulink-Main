@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable, forwardRef } from "@nestjs/common";
 import type { Booking, Hospital, User } from "@/core/database/schema";
 import type {
   BookingNote,
@@ -10,7 +10,10 @@ import { BookingCoreService } from "../common/booking.core.service";
 
 @Injectable()
 export class BookingWsService {
-  constructor(private bookingCoreService: BookingCoreService) {}
+  constructor(
+    @Inject(forwardRef(() => BookingCoreService))
+    private bookingCoreService: BookingCoreService
+  ) {}
 
   createApprovedBooking(
     patient: { id: string },

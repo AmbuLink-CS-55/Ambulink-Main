@@ -25,6 +25,8 @@ export default function Home() {
   const isOnShift = useDriverShift((state) => state.isOnShift);
   const setOnShift = useDriverShift((state) => state.setOnShift);
   const [isShiftUpdating, setIsShiftUpdating] = useState(false);
+  const [isArrivedUpdating, setIsArrivedUpdating] = useState(false);
+  const [isCompletedUpdating, setIsCompletedUpdating] = useState(false);
   const [currentRide, setCurrentRide] = useState<Ride | null>(null);
   const [rideStatus, setRideStatus] = useState<
     "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED"
@@ -107,25 +109,31 @@ export default function Home() {
   }, [currentRide, isOnShift, setOnShift]);
 
   const handleArrived = useCallback(async () => {
-    if (!currentRide) return;
+    if (!currentRide || isArrivedUpdating) return;
+    setIsArrivedUpdating(true);
     try {
       await postDriverArrived({ driverId: env.EXPO_PUBLIC_DRIVER_ID });
       setRideStatus("ARRIVED");
     } catch (error) {
       Alert.alert("Error", error instanceof Error ? error.message : "Failed to update ride status");
+    } finally {
+      setIsArrivedUpdating(false);
     }
-  }, [currentRide]);
+  }, [currentRide, isArrivedUpdating]);
 
   const handleCompleted = useCallback(async () => {
-    if (!currentRide) return;
+    if (!currentRide || isCompletedUpdating) return;
+    setIsCompletedUpdating(true);
     try {
       await postDriverCompleted({ driverId: env.EXPO_PUBLIC_DRIVER_ID });
       setCurrentRide(null);
       setRideStatus("COMPLETED");
     } catch (error) {
       Alert.alert("Error", error instanceof Error ? error.message : "Failed to complete ride");
+    } finally {
+      setIsCompletedUpdating(false);
     }
-  }, [currentRide]);
+  }, [currentRide, isCompletedUpdating]);
 
   const handleCall = useCallback((phone?: string) => {
     if (!phone) {
@@ -191,6 +199,8 @@ export default function Home() {
             isOnShift={isOnShift}
             currentRide={currentRide}
             rideStatus={rideStatus}
+            isArrivedUpdating={isArrivedUpdating}
+            isCompletedUpdating={isCompletedUpdating}
             onCall={handleCall}
             onArrived={handleArrived}
             onCompleted={handleCompleted}
