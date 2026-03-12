@@ -132,20 +132,19 @@ export default function LoginModern() {
 
           <View className="px-5">
             <Pressable
-              className="bg-white rounded-xl flex-row justify-center items-center border"
-              style={{ height: 56, borderColor: "#E5E7EB", elevation: 2 }}
+              className="bg-white rounded-xl flex-row justify-center items-center border h-14 border-gray-200 shadow-sm elevation-3 active:opacity-70"
               accessibilityRole="button"
-              accessibilityLabel="Sign in with Google"
+              accessibilityLabel="Continue with Google"
             >
               <Image
                 source={{
-                  uri: "https://www.google.com/images/branding/googleg/1x/googleg_standard_color_128dp.png",
+                  uri: "https://developers.google.com/identity/images/g-logo.png",
                 }}
-                className="w-6 h-6 mr-3"
+                style={{ width: 28, height: 28, marginRight: 12 }}
                 contentFit="contain"
               />
-              <Text className="text-base font-semibold" style={{ color: "#1F2937" }}>
-                Sign in with Google
+              <Text className="font-bold text-[16px] text-[#374151]">
+                Continue with Google
               </Text>
             </Pressable>
           </View>
