@@ -26,6 +26,7 @@ import {
   requestDispatcherNotificationPermission,
   setDispatcherDesktopNotificationsEnabled,
 } from "@/lib/dispatcher-notifications";
+import { THEME_MODE_OPTIONS, type ThemeMode } from "@/lib/theme-mode";
 import { useDashboardSettingsStore } from "@/stores/dashboard-settings.store";
 
 const MENU_ITEMS = [
@@ -42,6 +43,8 @@ export function AppSidebar() {
   const desktopNotificationsEnabled = useDashboardSettingsStore(
     (state) => state.settings.desktopNotificationsEnabled
   );
+  const themeMode = useDashboardSettingsStore((state) => state.settings.themeMode);
+  const updateSettings = useDashboardSettingsStore((state) => state.updateSettings);
 
   useEffect(() => {
     if (desktopNotificationsEnabled) {
@@ -54,6 +57,10 @@ export function AppSidebar() {
     if (checked) {
       requestDispatcherNotificationPermission();
     }
+  };
+
+  const onThemeModeChange = (nextMode: ThemeMode) => {
+    updateSettings({ themeMode: nextMode });
   };
 
   return (
@@ -109,6 +116,31 @@ export function AppSidebar() {
             </DialogDescription>
           </DialogHeader>
           <div className="px-6 pb-6">
+            <fieldset className="mb-6 rounded-md border border-[color:var(--border)] p-3">
+              <legend className="px-1 text-sm font-medium text-foreground">Theme mode</legend>
+              <div className="mt-2 space-y-2">
+                {THEME_MODE_OPTIONS.map((option) => (
+                  <label
+                    key={option.value}
+                    className="flex items-start gap-3 rounded-md px-2 py-1.5 hover:bg-muted/30"
+                  >
+                    <input
+                      type="radio"
+                      name="theme-mode"
+                      value={option.value}
+                      checked={themeMode === option.value}
+                      onChange={() => onThemeModeChange(option.value)}
+                      className="mt-0.5"
+                    />
+                    <div>
+                      <div className="text-sm font-medium text-foreground">{option.label}</div>
+                      <div className="text-xs text-muted-foreground">{option.description}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
             <label className="flex items-center justify-between gap-3 text-sm">
               <div>
                 <div className="font-medium text-foreground">Desktop notifications</div>

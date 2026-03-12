@@ -1,8 +1,10 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import type { ThemeMode } from "@/lib/theme-mode";
 
 export type DashboardSettings = {
   desktopNotificationsEnabled: boolean;
+  themeMode: ThemeMode;
 };
 
 type DashboardSettingsState = {
@@ -13,6 +15,7 @@ type DashboardSettingsState = {
 
 const DEFAULT_SETTINGS: DashboardSettings = {
   desktopNotificationsEnabled: true,
+  themeMode: "light",
 };
 
 export const useDashboardSettingsStore = create<DashboardSettingsState>()(

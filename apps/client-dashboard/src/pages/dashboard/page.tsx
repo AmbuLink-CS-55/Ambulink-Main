@@ -11,9 +11,13 @@ import { useOngoingBookingRoutes } from "@/pages/dashboard/hooks/use-ongoing-boo
 import { useQuery } from "@tanstack/react-query";
 import type { DispatcherBookingPayload } from "@/lib/socket-types";
 import { queryKeys } from "@/lib/queryKeys";
+import { useDashboardSettingsStore } from "@/stores/dashboard-settings.store";
+import { resolveMapTheme } from "@/lib/theme-mode";
 
 export default function Dashboard() {
   const { mapView } = useMapView();
+  const themeMode = useDashboardSettingsStore((state) => state.settings.themeMode);
+  const mapTheme = resolveMapTheme(themeMode);
   const { error, data: hospitals } = useGetHospitals();
   const { bookingRequestIds } = useBookingRequests();
   const ongoingBookingsQuery = useQuery<Record<string, DispatcherBookingPayload>>({
@@ -33,7 +37,7 @@ export default function Dashboard() {
   }, [error]);
 
   return (
-    <MapView theme="dark" center={mapView.center} zoom={mapView.zoom}>
+    <MapView theme={mapTheme} center={mapView.center} zoom={mapView.zoom}>
       <MapControls position="bottom-right" showZoom showLocate className="mb-4" />
 
       {hospitals ? <HospitalMarkersLayer hospitals={hospitals} /> : null}

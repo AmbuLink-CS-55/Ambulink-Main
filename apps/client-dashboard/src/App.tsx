@@ -1,9 +1,11 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { DashboardLayout } from "./pages/layouts/DashboardLayout";
+import { applyThemeMode } from "@/lib/theme-mode";
+import { useDashboardSettingsStore } from "@/stores/dashboard-settings.store";
 
 const Dashboard = lazy(() => import("./pages/dashboard/page"));
 const LoginPage = lazy(() => import("./pages/login"));
@@ -34,6 +36,16 @@ function PageLoader() {
   return null;
 }
 
+function ThemeModeSync() {
+  const themeMode = useDashboardSettingsStore((state) => state.settings.themeMode);
+
+  useEffect(() => {
+    applyThemeMode(themeMode);
+  }, [themeMode]);
+
+  return null;
+}
+
 export function App() {
   return (
     <PersistQueryClientProvider
@@ -44,6 +56,7 @@ export function App() {
       }}
     >
       <BrowserRouter>
+        <ThemeModeSync />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
