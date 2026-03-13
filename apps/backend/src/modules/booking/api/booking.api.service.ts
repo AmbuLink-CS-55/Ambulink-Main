@@ -1,9 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import type {
-  BookingAnalyticsQueryDto,
-  ManualAssignBookingDto,
-  ReassignBookingDto,
-} from "@/common/validation/schemas";
+import type { ManualAssignBookingDto, ReassignBookingDto } from "@/common/validation/schemas";
 import { BookingCoreService } from "../common/booking.core.service";
 
 @Injectable()
@@ -24,30 +20,6 @@ export class BookingApiService {
 
   getBookingDetailsForDispatcher(bookingId: string, dispatcherId: string) {
     return this.bookingCoreService.getBookingDetailsForDispatcher(bookingId, dispatcherId);
-  }
-
-  getBookingResponseAnalytics(query: BookingAnalyticsQueryDto) {
-    return this.bookingCoreService.getBookingResponseAnalytics(
-      query.dispatcherId,
-      query.from,
-      query.to
-    );
-  }
-
-  getBookingZonesAnalytics(query: BookingAnalyticsQueryDto) {
-    return this.bookingCoreService.getBookingZonesAnalytics(
-      query.dispatcherId,
-      query.from,
-      query.to
-    );
-  }
-
-  getBookingInsightsAnalytics(query: BookingAnalyticsQueryDto) {
-    return this.bookingCoreService.getBookingInsightsAnalytics(
-      query.dispatcherId,
-      query.from,
-      query.to
-    );
   }
 
   addDispatcherNote(bookingId: string, dispatcherId: string, content: string) {

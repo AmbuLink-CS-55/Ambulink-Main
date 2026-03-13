@@ -11,6 +11,7 @@ import { HealthController } from "./core/health/health.controller";
 import { HospitalModule } from "./modules/hospital/hospital.module";
 import { EmtModule } from "./modules/emt/emt.module";
 import { EventsModule } from "./core/events/events.module";
+import { AnalyticsModule } from "./modules/analytics/analytics.module";
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { EventsModule } from "./core/events/events.module";
     DriverModule,
     AmbulanceModule,
     BookingModule,
+    AnalyticsModule,
     DispatcherModule,
     HospitalModule,
     EmtModule,

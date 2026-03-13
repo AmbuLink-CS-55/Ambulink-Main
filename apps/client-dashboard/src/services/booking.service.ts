@@ -3,11 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import type {
   BookingDetailsPayload,
-  BookingInsightsAnalytics,
   BookingLogEntry,
   BookingNote,
-  BookingResponseAnalytics,
-  BookingZonesAnalytics,
   Point,
 } from "@ambulink/types";
 
@@ -19,54 +16,6 @@ export const useGetBookingLog = (params?: { providerId?: string; status?: string
     staleTime: 1000 * 30,
     queryFn: async () => {
       const { data } = await api.get<BookingLogEntry[]>("/booking", { params });
-      return data;
-    },
-  });
-};
-
-type BookingAnalyticsQuery = {
-  dispatcherId: string;
-  from?: string;
-  to?: string;
-};
-
-export const useBookingResponseAnalytics = (params: BookingAnalyticsQuery) => {
-  return useQuery({
-    queryKey: queryKeys.bookingResponseAnalytics(params.dispatcherId, params.from, params.to),
-    enabled: Boolean(params.dispatcherId),
-    staleTime: 1000 * 60,
-    queryFn: async () => {
-      const { data } = await api.get<BookingResponseAnalytics>("/booking/analytics/response", {
-        params,
-      });
-      return data;
-    },
-  });
-};
-
-export const useBookingZonesAnalytics = (params: BookingAnalyticsQuery) => {
-  return useQuery({
-    queryKey: queryKeys.bookingZonesAnalytics(params.dispatcherId, params.from, params.to),
-    enabled: Boolean(params.dispatcherId),
-    staleTime: 1000 * 60,
-    queryFn: async () => {
-      const { data } = await api.get<BookingZonesAnalytics>("/booking/analytics/zones", {
-        params,
-      });
-      return data;
-    },
-  });
-};
-
-export const useBookingInsightsAnalytics = (params: BookingAnalyticsQuery) => {
-  return useQuery({
-    queryKey: queryKeys.bookingInsightsAnalytics(params.dispatcherId, params.from, params.to),
-    enabled: Boolean(params.dispatcherId),
-    staleTime: 1000 * 60,
-    queryFn: async () => {
-      const { data } = await api.get<BookingInsightsAnalytics>("/booking/analytics/insights", {
-        params,
-      });
       return data;
     },
   });

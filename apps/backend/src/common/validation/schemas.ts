@@ -146,7 +146,7 @@ export const bookingDetailsQuerySchema = z.object({
   dispatcherId: z.string().uuid(),
 });
 
-export const bookingAnalyticsQuerySchema = z
+export const analyticsQuerySchema = z
   .object({
     dispatcherId: z.string().uuid(),
     from: z.string().datetime().optional(),
@@ -164,6 +164,13 @@ export const bookingAnalyticsQuerySchema = z
       path: ["from"],
     }
   );
+
+export const analyticsAiChatSchema = z.object({
+  dispatcherId: z.string().uuid(),
+  question: z.string().trim().min(3).max(2000),
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
+});
 
 export const bookingAddNoteSchema = z.object({
   dispatcherId: z.string().uuid(),
@@ -248,7 +255,8 @@ export type DriverListQueryDto = z.infer<typeof driverListQuerySchema>;
 export type EmtListQueryDto = z.infer<typeof emtListQuerySchema>;
 export type BookingListQueryDto = z.infer<typeof bookingListQuerySchema>;
 export type BookingDetailsQueryDto = z.infer<typeof bookingDetailsQuerySchema>;
-export type BookingAnalyticsQueryDto = z.infer<typeof bookingAnalyticsQuerySchema>;
+export type AnalyticsQueryDto = z.infer<typeof analyticsQuerySchema>;
+export type AnalyticsAiChatDto = z.infer<typeof analyticsAiChatSchema>;
 export type BookingAddNoteDto = z.infer<typeof bookingAddNoteSchema>;
 export type EmtBookingSearchQueryDto = z.infer<typeof emtBookingSearchQuerySchema>;
 export type EmtSubscribeDto = z.infer<typeof emtSubscribeSchema>;

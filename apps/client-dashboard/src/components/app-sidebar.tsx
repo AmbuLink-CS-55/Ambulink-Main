@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Ambulance, Users, Map, ClipboardList, Settings2, ChartColumn } from "lucide-react";
+import { Ambulance, Users, Map, ClipboardList, Settings2, ChartColumn, Bot, FileText } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import {
@@ -35,7 +35,12 @@ const MENU_ITEMS = [
   { title: "Drivers", path: "/drivers", icon: Users },
   { title: "EMTs", path: "/emts", icon: Users },
   { title: "Booking Log", path: "/booking", icon: ClipboardList },
+] as const;
+
+const ANALYTICS_MENU_ITEMS = [
   { title: "Analytics", path: "/analytics", icon: ChartColumn },
+  { title: "AI", path: "/analytics/ai", icon: Bot },
+  { title: "Reports", path: "/analytics/reports", icon: FileText },
 ] as const;
 
 export function AppSidebar() {
@@ -80,6 +85,33 @@ export function AppSidebar() {
                   const isActive =
                     item.path === "/"
                       ? location.pathname === "/"
+                      : location.pathname.startsWith(item.path);
+
+                  return (
+                    <SidebarMenuItem key={item.path}>
+                      <SidebarMenuButton
+                        isActive={isActive}
+                        aria-current={isActive ? "page" : undefined}
+                        render={<Link to={item.path} />}
+                      >
+                        <item.icon className="mr-2 size-4" />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <SidebarGroup>
+            <SidebarGroupLabel>Analytics</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {ANALYTICS_MENU_ITEMS.map((item) => {
+                  const isActive =
+                    item.path === "/analytics"
+                      ? location.pathname === "/analytics"
                       : location.pathname.startsWith(item.path);
 
                   return (

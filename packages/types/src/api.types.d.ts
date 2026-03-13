@@ -158,7 +158,7 @@ export type DriverResponseMetricRow = {
   endToEndTime: DurationMetricSummary;
 };
 
-export type BookingResponseAnalytics = {
+export type AnalyticsResponse = {
   providerId: string;
   from: string | null;
   to: string | null;
@@ -182,7 +182,7 @@ export type ZoneGridCell = {
   weight: number;
 };
 
-export type BookingZonesAnalytics = {
+export type AnalyticsZones = {
   providerId: string;
   from: string | null;
   to: string | null;
@@ -215,7 +215,7 @@ export type HospitalChoiceMetric = {
   percentage: number;
 };
 
-export type BookingInsightsAnalytics = {
+export type AnalyticsInsights = {
   providerId: string;
   from: string | null;
   to: string | null;
@@ -228,6 +228,12 @@ export type BookingInsightsAnalytics = {
     available: false;
     note: string;
   } | null;
+};
+
+export type AnalyticsAiResponse = {
+  answer: string;
+  highlights: string[];
+  generatedAt: string;
 };
 
 export type StartUploadSessionResponse = {

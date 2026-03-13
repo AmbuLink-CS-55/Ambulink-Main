@@ -5,10 +5,10 @@ import { Select } from "@/components/ui/select";
 import { Map as MapView, MapClusterLayer, MapControls, MapPopup } from "@/components/ui/map";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  useBookingInsightsAnalytics,
-  useBookingResponseAnalytics,
-  useBookingZonesAnalytics,
-} from "@/services/booking.service";
+  useAnalyticsInsights,
+  useAnalyticsResponse,
+  useAnalyticsZones,
+} from "@/services/analytics.service";
 import { getDispatcherId } from "@/lib/identity";
 import { useDashboardSettingsStore } from "@/stores/dashboard-settings.store";
 import { resolveMapTheme } from "@/lib/theme-mode";
@@ -158,19 +158,19 @@ export default function AnalyticsPage() {
 
   const resolvedRange = useMemo(() => resolveRange(range, customFrom, customTo), [range, customFrom, customTo]);
 
-  const responseQuery = useBookingResponseAnalytics({
+  const responseQuery = useAnalyticsResponse({
     dispatcherId,
     from: resolvedRange.from,
     to: resolvedRange.to,
   });
 
-  const zonesQuery = useBookingZonesAnalytics({
+  const zonesQuery = useAnalyticsZones({
     dispatcherId,
     from: resolvedRange.from,
     to: resolvedRange.to,
   });
 
-  const insightsQuery = useBookingInsightsAnalytics({
+  const insightsQuery = useAnalyticsInsights({
     dispatcherId,
     from: resolvedRange.from,
     to: resolvedRange.to,
