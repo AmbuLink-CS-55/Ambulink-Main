@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  Linking,
-  Platform,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Linking, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 type Guide = {
@@ -17,7 +9,7 @@ type Guide = {
   iconBg: string;
   accent: string;
   accentLight: string;
-  stepDot: string;
+  stepDotColor: string;
   steps: string[];
   tutorialUrl: string;
 };
@@ -30,7 +22,7 @@ const FIRST_AID_GUIDES: Guide[] = [
     iconBg: '#ef4444',
     accent: '#ef4444',
     accentLight: '#fff1f2',
-    stepDot: '#fca5a5',
+    stepDotColor: '#fca5a5',
     steps: [
       'Call emergency services immediately.',
       'Place the heel of your hand on the center of the chest.',
@@ -47,7 +39,7 @@ const FIRST_AID_GUIDES: Guide[] = [
     iconBg: '#f97316',
     accent: '#f97316',
     accentLight: '#fff7ed',
-    stepDot: '#fdba74',
+    stepDotColor: '#fdba74',
     steps: [
       'Ask the person if they are choking. If they cannot speak, call 911.',
       'Give 5 firm back blows between the shoulder blades.',
@@ -63,12 +55,12 @@ const FIRST_AID_GUIDES: Guide[] = [
     iconBg: '#dc2626',
     accent: '#dc2626',
     accentLight: '#fef2f2',
-    stepDot: '#f87171',
+    stepDotColor: '#f87171',
     steps: [
       'Apply direct pressure using a clean cloth or sterile dressing.',
       'Do not remove the cloth if soaked — add more layers on top.',
-      'Elevate the injured area above the heart if possible.',
-      'Call emergency services if bleeding is severe or doesn\'t stop in 10 minutes.',
+      "Elevate the injured area above the heart if possible.",
+      "Call emergency services if bleeding is severe or doesn't stop in 10 minutes.",
     ],
     tutorialUrl: 'https://www.youtube.com/watch?v=0VJ18H6VKC0',
   },
@@ -79,7 +71,7 @@ const FIRST_AID_GUIDES: Guide[] = [
     iconBg: '#d97706',
     accent: '#d97706',
     accentLight: '#fffbeb',
-    stepDot: '#fcd34d',
+    stepDotColor: '#fcd34d',
     steps: [
       'Cool the burn under cool (not cold) running water for 10+ minutes.',
       'Remove tight items like rings before the area swells.',
@@ -96,9 +88,9 @@ const FIRST_AID_GUIDES: Guide[] = [
     iconBg: '#db2777',
     accent: '#db2777',
     accentLight: '#fdf2f8',
-    stepDot: '#f9a8d4',
+    stepDotColor: '#f9a8d4',
     steps: [
-      'Call emergency services immediately — don\'t wait.',
+      "Call emergency services immediately — don't wait.",
       'Have the person sit, rest, and stay calm.',
       'Loosen any tight clothing around the neck and chest.',
       'Help them take their prescribed medication if available.',
@@ -125,121 +117,165 @@ export default function FirstAid() {
   };
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-slate-50">
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        className="flex-1 px-4"
+        contentContainerStyle={{ paddingBottom: 130 }}
         showsVerticalScrollIndicator={false}
       >
         {/* ── Title ── */}
-        <View style={styles.hero}>
-          <Text style={styles.heroTitle}>First Aid Guide</Text>
+        <View className="mt-12 mb-5 px-1">
+          <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight">
+            First Aid Guide
+          </Text>
         </View>
 
         {/* ── Cards ── */}
         {FIRST_AID_GUIDES.map((guide) => {
           const isExpanded = expandedId === guide.id;
+
           return (
             <View
               key={guide.id}
-              style={[
-                styles.card,
-                isExpanded && { borderColor: guide.accent, borderWidth: 1.5 },
-              ]}
+              className="bg-white rounded-3xl mb-4 overflow-hidden"
+              style={{
+                borderWidth: isExpanded ? 1.5 : 1,
+                borderColor: isExpanded ? guide.accent : '#f1f5f9',
+                shadowColor: '#000',
+                shadowOpacity: 0.05,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 2 },
+                elevation: 2,
+              }}
             >
-              {/* Card Header (always visible) */}
+              {/* ── Card Header ── */}
               <TouchableOpacity
-                style={styles.cardHeader}
+                className="flex-row items-center pr-4 py-4"
+                style={{ paddingLeft: isExpanded ? 20 : 16, minHeight: 80 }}
                 onPress={() => toggleExpand(guide.id)}
                 activeOpacity={0.75}
               >
-                {/* Left accent bar */}
+                {/* Accent left bar */}
                 {isExpanded && (
-                  <View style={[styles.accentBar, { backgroundColor: guide.accent }]} />
+                  <View
+                    className="absolute left-0 top-0 bottom-0 w-1 rounded-l-3xl"
+                    style={{ backgroundColor: guide.accent }}
+                  />
                 )}
 
-                {/* Icon */}
+                {/* Icon box */}
                 <View
-                  style={[
-                    styles.iconBox,
-                    { backgroundColor: guide.iconBg },
-                    isExpanded && { shadowColor: guide.iconBg },
-                  ]}
+                  className="w-14 h-14 rounded-2xl items-center justify-center mr-4"
+                  style={{
+                    backgroundColor: guide.iconBg,
+                    shadowColor: guide.iconBg,
+                    shadowOpacity: 0.35,
+                    shadowRadius: 8,
+                    shadowOffset: { width: 0, height: 4 },
+                    elevation: 4,
+                  }}
                 >
-                  <MaterialCommunityIcons
-                    name={guide.icon as any}
-                    size={26}
-                    color="white"
-                  />
+                  <MaterialCommunityIcons name={guide.icon as any} size={26} color="white" />
                 </View>
 
-                {/* Title */}
-                <View style={styles.cardTitleBlock}>
-                  <Text style={styles.cardTitle}>{guide.title}</Text>
+                {/* Title block */}
+                <View className="flex-1 justify-center">
+                  <Text className="text-[17px] font-bold text-slate-800">{guide.title}</Text>
                   {!isExpanded && (
-                    <Text style={styles.cardSub}>{guide.steps.length} steps</Text>
+                    <Text className="text-[12px] font-semibold text-slate-400 mt-0.5 uppercase tracking-wider">
+                      {guide.steps.length} steps
+                    </Text>
                   )}
                 </View>
 
                 {/* Chevron */}
                 <View
-                  style={[
-                    styles.chevronBox,
-                    isExpanded && { backgroundColor: guide.accentLight },
-                  ]}
+                  className="w-9 h-9 rounded-full items-center justify-center"
+                  style={{ backgroundColor: isExpanded ? guide.accentLight : '#f8fafc' }}
                 >
                   <MaterialCommunityIcons
                     name={isExpanded ? 'chevron-up' : 'chevron-down'}
-                    size={24}
+                    size={22}
                     color={isExpanded ? guide.accent : '#94a3b8'}
                   />
                 </View>
               </TouchableOpacity>
 
-              {/* Expanded Steps */}
+              {/* ── Expanded Steps ── */}
               {isExpanded && (
-                <View style={styles.stepsContainer}>
-                  {/* Thin divider */}
-                  <View style={[styles.stepsDivider, { backgroundColor: guide.accentLight }]} />
+                <View className="px-5 pb-5">
+                  {/* Divider */}
+                  <View
+                    className="h-[2px] rounded-full mb-4 ml-[70px]"
+                    style={{ backgroundColor: guide.accentLight }}
+                  />
 
                   {guide.steps.map((step, index) => {
                     const isLast = index === guide.steps.length - 1;
                     return (
-                      <View key={index} style={styles.stepRow}>
-                        {/* Number + connector line */}
-                        <View style={styles.stepLeft}>
+                      <View key={index} className="flex-row">
+                        {/* Step number + connector */}
+                        <View className="items-center mr-4 w-[30px]">
                           <View
-                            style={[
-                              styles.stepDotOuter,
-                              { backgroundColor: guide.accentLight, borderColor: guide.stepDot },
-                            ]}
+                            className="w-[30px] h-[30px] rounded-full items-center justify-center"
+                            style={{
+                              backgroundColor: guide.accentLight,
+                              borderWidth: 1.5,
+                              borderColor: guide.stepDotColor,
+                            }}
                           >
-                            <Text style={[styles.stepNum, { color: guide.accent }]}>
+                            <Text
+                              className="text-[13px] font-bold"
+                              style={{ color: guide.accent }}
+                            >
                               {index + 1}
                             </Text>
                           </View>
                           {!isLast && (
-                            <View style={[styles.stepConnector, { backgroundColor: guide.stepDot }]} />
+                            <View
+                              className="w-[2px] flex-1 rounded-full my-1 opacity-50"
+                              style={{ backgroundColor: guide.stepDotColor, minHeight: 18 }}
+                            />
                           )}
                         </View>
 
                         {/* Step text */}
-                        <Text style={styles.stepText}>{step}</Text>
+                        <Text className="flex-1 text-[15px] text-slate-600 leading-relaxed pt-1 pb-5 pr-1">
+                          {step}
+                        </Text>
                       </View>
                     );
                   })}
 
                   {/* Watch Tutorial Button */}
                   <TouchableOpacity
-                    style={styles.tutorialBtn}
+                    className="flex-row items-center self-start ml-[44px] mt-1 px-4 py-2.5 rounded-xl bg-white border border-slate-200"
+                    style={{
+                      gap: 8,
+                      shadowColor: '#000',
+                      shadowOpacity: 0.04,
+                      shadowRadius: 4,
+                      shadowOffset: { width: 0, height: 2 },
+                      elevation: 2,
+                    }}
                     onPress={() => Linking.openURL(guide.tutorialUrl)}
                     activeOpacity={0.8}
                   >
-                    <View style={[styles.tutorialIconCircle, { backgroundColor: guide.accentLight }]}>
-                      <MaterialCommunityIcons name="play-circle" size={20} color={guide.accent} />
+                    <View
+                      className="w-7 h-7 rounded-full items-center justify-center"
+                      style={{ backgroundColor: guide.accentLight }}
+                    >
+                      <MaterialCommunityIcons name="play-circle" size={18} color={guide.accent} />
                     </View>
-                    <Text style={[styles.tutorialBtnText, { color: guide.accent }]}>Watch Tutorial</Text>
-                    <MaterialCommunityIcons name="open-in-new" size={15} color={guide.accent} style={{ opacity: 0.6 }} />
+                    <Text className="text-[14px] font-bold" style={{ color: guide.accent }}>
+                      Watch Tutorial
+                    </Text>
+                    <MaterialCommunityIcons
+                      name="open-in-new"
+                      size={14}
+                      color={guide.accent}
+                      style={{ opacity: 0.6 }}
+                    />
                   </TouchableOpacity>
                 </View>
               )}
@@ -248,310 +284,29 @@ export default function FirstAid() {
         })}
       </ScrollView>
 
-      {/* ── Sticky EMT Button ── */}
-      <View style={styles.footer}>
+      {/* ── Sticky EMT Footer ── */}
+      <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-5 pt-3 pb-8">
         <TouchableOpacity
-          style={styles.emtBtn}
+          className="flex-row items-center justify-between bg-red-500 px-5 py-4 rounded-[20px]"
+          style={{
+            shadowColor: '#ef4444',
+            shadowOpacity: 0.4,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: 4 },
+            elevation: 6,
+          }}
           onPress={handleContactEMT}
           activeOpacity={0.85}
         >
-          <View style={styles.emtIconCircle}>
-            <MaterialCommunityIcons name="phone-in-talk" size={22} color="#ef4444" />
+          <View className="w-9 h-9 rounded-full bg-white items-center justify-center">
+            <MaterialCommunityIcons name="phone-in-talk" size={20} color="#ef4444" />
           </View>
-          <Text style={styles.emtBtnText}>Contact EMT Now</Text>
-          <MaterialCommunityIcons name="chevron-right" size={22} color="rgba(255,255,255,0.6)" />
+          <Text className="flex-1 text-center text-white text-[17px] font-extrabold tracking-wide">
+            Contact EMT Now
+          </Text>
+          <MaterialCommunityIcons name="chevron-right" size={22} color="rgba(255,255,255,0.55)" />
         </TouchableOpacity>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  scroll: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  scrollContent: {
-    paddingBottom: 130,
-  },
-
-  /* Hero */
-  hero: {
-    marginTop: 48,
-    marginBottom: 18,
-    paddingHorizontal: 4,
-  },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: '#fff1f2',
-    borderWidth: 1,
-    borderColor: '#fecdd3',
-    borderRadius: 50,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginBottom: 16,
-    gap: 6,
-  },
-  badgeText: {
-    color: '#ef4444',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1.4,
-  },
-  heroTitle: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#0f172a',
-    letterSpacing: -0.5,
-  },
-  heroTitleBlue: {
-    color: '#3b82f6',
-  },
-  statRow: {
-    flexDirection: 'row',
-    marginTop: 18,
-  },
-  statPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: 'white',
-    borderRadius: 50,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  statText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#475569',
-  },
-
-  /* Section label */
-  sectionLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 14,
-    paddingHorizontal: 2,
-  },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#94a3b8',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    marginRight: 10,
-  },
-  sectionLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#e2e8f0',
-  },
-
-  /* Card */
-  card: {
-    backgroundColor: 'white',
-    borderRadius: 22,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingRight: 16,
-    paddingLeft: 16,
-    minHeight: 84,
-  },
-  accentBar: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 4,
-    borderTopLeftRadius: 22,
-    borderBottomLeftRadius: 22,
-  },
-  iconBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  },
-  cardTitleBlock: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0f172a',
-    letterSpacing: -0.3,
-  },
-  cardSub: {
-    fontSize: 12,
-    color: '#94a3b8',
-    fontWeight: '600',
-    marginTop: 3,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  chevronBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f8fafc',
-  },
-
-  /* Steps */
-  stepsContainer: {
-    paddingTop: 4,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-  },
-  stepsDivider: {
-    height: 2,
-    borderRadius: 2,
-    marginBottom: 18,
-    marginLeft: 70,
-  },
-  stepRow: {
-    flexDirection: 'row',
-    marginBottom: 4,
-  },
-  stepLeft: {
-    alignItems: 'center',
-    marginRight: 14,
-    width: 30,
-  },
-  stepDotOuter: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-  },
-  stepNum: {
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  stepConnector: {
-    width: 2,
-    flex: 1,
-    minHeight: 18,
-    marginVertical: 4,
-    borderRadius: 1,
-    opacity: 0.5,
-  },
-  stepText: {
-    flex: 1,
-    fontSize: 15,
-    color: '#475569',
-    lineHeight: 22,
-    paddingTop: 4,
-    paddingBottom: 18,
-  },
-
-  /* Footer */
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 20,
-    paddingTop: 14,
-    paddingBottom: 32,
-    backgroundColor: 'white',
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-  },
-  emtBtn: {
-    backgroundColor: '#ef4444',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    shadowColor: '#ef4444',
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
-  },
-  emtIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'white',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emtBtnText: {
-    flex: 1,
-    textAlign: 'center',
-    color: 'white',
-    fontSize: 17,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
-
-  /* Tutorial Button */
-  tutorialBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 12,
-    marginLeft: 44,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    backgroundColor: 'white',
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
-    alignSelf: 'flex-start',
-    gap: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  tutorialIconCircle: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tutorialBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-});
