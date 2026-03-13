@@ -4,17 +4,15 @@ import { useEffect, useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "@/global.css";
 
-import { LocationPermissionOverlay } from "@/common/components/LocationPermissionOverlay";
 import { AnimatedSplashScreen } from "@/common/components/AnimatedSplashScreen";
+import { LocationPermissionOverlay } from "@/common/components/LocationPermissionOverlay";
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   const [isSplashVisible, setIsSplashVisible] = useState(true);
 
   useEffect(() => {
-    // Hide the NATIVE splash screen immediately so our animated one can show up
     SplashScreen.hideAsync().catch(() => {});
   }, []);
 
@@ -22,7 +20,6 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <Stack screenOptions={{ headerShown: false }} />
       <LocationPermissionOverlay />
-      
       {isSplashVisible && (
         <AnimatedSplashScreen
           onAnimationDone={() => {
