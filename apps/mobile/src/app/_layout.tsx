@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { initLocalNotifications } from "@/common/notifications/service";
 import "@/global.css";
 
+import { LocationPermissionOverlay } from "@/common/components/LocationPermissionOverlay";
+
 export default function RootLayout() {
   useEffect(() => {
     initLocalNotifications().catch((error) => {
@@ -14,6 +16,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <Stack screenOptions={{ headerShown: false }} />
+      <LocationPermissionOverlay />
     </SafeAreaProvider>
   );
 }
