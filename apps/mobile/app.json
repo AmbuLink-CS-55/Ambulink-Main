@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "mobile-patient",
+    "name": "Ambulink",
     "slug": "mobile-patient",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/ambulink_splash.png",
     "scheme": "mobilepatient",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -42,7 +42,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/ambulink_splash.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
