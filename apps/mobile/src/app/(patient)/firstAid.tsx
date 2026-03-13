@@ -281,8 +281,8 @@ const styles = StyleSheet.create({
 
   /* Hero */
   hero: {
-    marginTop: 56,
-    marginBottom: 28,
+    marginTop: 48,
+    marginBottom: 18,
     paddingHorizontal: 4,
   },
   badge: {
@@ -305,11 +305,10 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
   },
   heroTitle: {
-    fontSize: 42,
-    fontWeight: '900',
+    fontSize: 26,
+    fontWeight: '800',
     color: '#0f172a',
-    lineHeight: 48,
-    letterSpacing: -1,
+    letterSpacing: -0.5,
   },
   heroTitleBlue: {
     color: '#3b82f6',
