@@ -3,7 +3,7 @@ import type { EmtNote } from "@ambulink/types";
 import { FlatList, Linking, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { env } from "../../../../env";
 import { AppImage } from "@/common/components/AppImage";
-import { Audio } from "expo-av";
+import { Audio, type AVPlaybackStatus } from "expo-av";
 
 type Props = {
   notes: EmtNote[];
@@ -105,7 +105,7 @@ export default function EmtNotesTimeline({ notes, currentEmtId }: Props) {
     };
   }, [releaseSound]);
 
-  const onAudioStatus = (status: Audio.AVPlaybackStatus) => {
+  const onAudioStatus = (status: AVPlaybackStatus) => {
     if (!status.isLoaded) return;
     setAudioPlaying(status.isPlaying);
     setAudioPositionMs(status.positionMillis ?? 0);

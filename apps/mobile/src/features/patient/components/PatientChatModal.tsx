@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Audio } from "expo-av";
+import { Audio, type AVPlaybackStatus } from "expo-av";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
@@ -119,7 +119,7 @@ export default function PatientChatModal({
     const absolute = url.startsWith("http://") || url.startsWith("https://");
     return `${absolute ? url : `${apiOrigin}${url}`}?patientId=${env.EXPO_PUBLIC_PATIENT_ID}`;
   };
-  const onAudioStatus = (status: Audio.AVPlaybackStatus) => {
+  const onAudioStatus = (status: AVPlaybackStatus) => {
     if (!status.isLoaded) return;
     setAudioPlaying(status.isPlaying);
     setAudioPositionMs(status.positionMillis ?? 0);
