@@ -1,6 +1,5 @@
 export const queryKeys = {
-  bookingLog: (providerId?: string | null, status?: string | null) =>
-    ["booking-log", providerId ?? null, status ?? null] as const,
+  bookingLog: (providerId?: string | null) => ["booking-log", providerId ?? null] as const,
   analyticsResponse: (dispatcherId: string, from?: string, to?: string) =>
     ["analytics-response", dispatcherId, from ?? null, to ?? null] as const,
   analyticsZones: (dispatcherId: string, from?: string, to?: string) =>

@@ -137,9 +137,6 @@ export const emtListQuerySchema = z.object({
 
 export const bookingListQuerySchema = z.object({
   providerId: z.string().uuid().optional(),
-  status: z
-    .enum(["REQUESTED", "ASSIGNED", "ARRIVED", "PICKEDUP", "COMPLETED", "CANCELLED"])
-    .optional(),
 });
 
 export const bookingDetailsQuerySchema = z.object({

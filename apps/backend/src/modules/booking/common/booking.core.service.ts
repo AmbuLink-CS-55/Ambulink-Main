@@ -584,8 +584,8 @@ export class BookingCoreService {
     return mapDispatcherBookingPayload(row, requestId);
   }
 
-  async getBookingLog(providerId?: string, status?: string): Promise<BookingLogEntry[]> {
-    const rows = await this.bookingRepository.getBookingLogRows(providerId, status);
+  async getBookingLog(providerId?: string): Promise<BookingLogEntry[]> {
+    const rows = await this.bookingRepository.getBookingLogRows(providerId);
     return rows.map((row) => ({
       ...row,
       requestedAt: row.requestedAt ? row.requestedAt.toISOString() : null,
@@ -664,6 +664,11 @@ export class BookingCoreService {
     }
 
     this.dispatcherService.assertWithinProviderScope(row.providerId, dispatcher.providerId);
+    if (row.status !== "COMPLETED") {
+      throw new BadRequestException(
+        bookingError("BOOKING_NOT_COMPLETED", "Only completed bookings are available")
+      );
+    }
 
     return {
       bookingId: row.bookingId,

@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { eq, ne, and, sql, inArray, desc, isNotNull, ilike, asc } from "drizzle-orm";
 import { ambulanceProviders, bookings, hospitals, users } from "@/core/database/schema";
 import { DbExecutor, DbService } from "@/core/database/db.service";
-import type { Booking, BookingStatus } from "@/core/database/schema";
+import type { Booking } from "@/core/database/schema";
 import type { BookingNote, EmtNote, PatientSettingsData } from "@ambulink/types";
 
 type CreateBookingValues = {
@@ -273,15 +273,12 @@ export class BookingSharedRepository {
       );
   }
 
-  getBookingLogRows(providerId?: string, status?: string) {
+  getBookingLogRows(providerId?: string) {
     const conditions = [] as Array<ReturnType<typeof eq>>;
+    conditions.push(eq(bookings.status, "COMPLETED"));
 
     if (providerId) {
       conditions.push(eq(bookings.providerId, providerId));
-    }
-
-    if (status) {
-      conditions.push(eq(bookings.status, status as BookingStatus));
     }
 
     const whereClause = conditions.length ? and(...conditions) : undefined;

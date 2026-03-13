@@ -25,7 +25,6 @@ export function useDispatcherSocketSync() {
 
     const requestSync = () => {
       socket.emit("booking:sync:request");
-      socket.emit("booking:pending-sync:request");
     };
 
     socket.on("connect", () => {
