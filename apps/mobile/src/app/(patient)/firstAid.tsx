@@ -19,6 +19,7 @@ type Guide = {
   accentLight: string;
   stepDot: string;
   steps: string[];
+  tutorialUrl: string;
 };
 
 const FIRST_AID_GUIDES: Guide[] = [
@@ -37,6 +38,7 @@ const FIRST_AID_GUIDES: Guide[] = [
       'Push hard and fast (100–120 pushes per minute).',
       'Continue until help arrives or the person starts breathing.',
     ],
+    tutorialUrl: 'https://www.youtube.com/watch?v=cosVBV96E2g',
   },
   {
     id: 'choking',
@@ -52,6 +54,7 @@ const FIRST_AID_GUIDES: Guide[] = [
       'Give 5 abdominal thrusts (Heimlich maneuver) just above the navel.',
       'Alternate between 5 blows and 5 thrusts until the blockage clears.',
     ],
+    tutorialUrl: 'https://www.youtube.com/watch?v=7CgtIgSyAiU',
   },
   {
     id: 'bleeding',
@@ -67,6 +70,7 @@ const FIRST_AID_GUIDES: Guide[] = [
       'Elevate the injured area above the heart if possible.',
       'Call emergency services if bleeding is severe or doesn\'t stop in 10 minutes.',
     ],
+    tutorialUrl: 'https://www.youtube.com/watch?v=0VJ18H6VKC0',
   },
   {
     id: 'burns',
@@ -83,6 +87,7 @@ const FIRST_AID_GUIDES: Guide[] = [
       'Do NOT apply ice, butter, or any ointments.',
       'Seek medical help for severe or large burns.',
     ],
+    tutorialUrl: 'https://www.youtube.com/watch?v=WX_mCORhMog',
   },
   {
     id: 'heart_attack',
@@ -99,6 +104,7 @@ const FIRST_AID_GUIDES: Guide[] = [
       'Help them take their prescribed medication if available.',
       'If unresponsive and not breathing, begin CPR.',
     ],
+    tutorialUrl: 'https://www.youtube.com/watch?v=RCeNLKOFMgs',
   },
 ];
 
@@ -222,6 +228,19 @@ export default function FirstAid() {
                       </View>
                     );
                   })}
+
+                  {/* Watch Tutorial Button */}
+                  <TouchableOpacity
+                    style={styles.tutorialBtn}
+                    onPress={() => Linking.openURL(guide.tutorialUrl)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={[styles.tutorialIconCircle, { backgroundColor: guide.accentLight }]}>
+                      <MaterialCommunityIcons name="play-circle" size={20} color={guide.accent} />
+                    </View>
+                    <Text style={[styles.tutorialBtnText, { color: guide.accent }]}>Watch Tutorial</Text>
+                    <MaterialCommunityIcons name="open-in-new" size={15} color={guide.accent} style={{ opacity: 0.6 }} />
+                  </TouchableOpacity>
                 </View>
               )}
             </View>
@@ -503,5 +522,37 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '800',
     letterSpacing: 0.3,
+  },
+
+  /* Tutorial Button */
+  tutorialBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    marginLeft: 44,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: 'white',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    alignSelf: 'flex-start',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  tutorialIconCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tutorialBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
