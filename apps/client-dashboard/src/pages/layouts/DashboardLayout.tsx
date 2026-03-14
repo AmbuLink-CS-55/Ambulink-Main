@@ -3,10 +3,11 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Outlet } from "react-router-dom";
 import { useDispatcherSocketSync } from "@/hooks/use-dispatcher-socket-sync";
 import { useEffect } from "react";
+import { BookingRequestOverlay } from "@/pages/layouts/components/BookingRequestOverlay";
 import type { SocketErrorPayload } from "@/lib/socket-types";
 
 export function DashboardLayout() {
-  const { socket } = useDispatcherSocketSync();
+  const { socket, connected } = useDispatcherSocketSync();
 
   // socket error logging
   useEffect(() => {
@@ -31,6 +32,9 @@ export function DashboardLayout() {
           <Outlet />
           {/*</div>*/}
         </main>
+
+        {/* Booking Request Overlay */}
+        <BookingRequestOverlay socketConnected={connected} socket={socket} />
       </div>
     </SidebarProvider>
   );

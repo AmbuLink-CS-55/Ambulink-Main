@@ -62,4 +62,30 @@ export class AnalyticsRepository {
       .leftJoin(hospitals, eq(hospitals.id, bookings.hospitalId))
       .where(and(...filters));
   }
+
+  getBookingAnalyticsRow(providerId: string, bookingId: string) {
+    return this.dbService.db
+      .select({
+        bookingId: bookings.id,
+        status: bookings.status,
+        requestedAt: bookings.requestedAt,
+        assignedAt: bookings.assignedAt,
+        arrivedAt: bookings.arrivedAt,
+        pickedupAt: bookings.pickedupAt,
+        completedAt: bookings.completedAt,
+        cancellationReason: bookings.cancellationReason,
+        driverId: sql<string | null>`${bookings.driverId}`,
+        driverName: sql<string | null>`driver_user.full_name`,
+        hospitalId: sql<string | null>`${bookings.hospitalId}`,
+        hospitalName: sql<string | null>`${hospitals.name}`,
+        pickupLocationX: sql<number | null>`ST_X(${bookings.pickupLocation})`,
+        pickupLocationY: sql<number | null>`ST_Y(${bookings.pickupLocation})`,
+        hospitalLocationX: sql<number | null>`ST_X(${hospitals.location})`,
+        hospitalLocationY: sql<number | null>`ST_Y(${hospitals.location})`,
+      })
+      .from(bookings)
+      .leftJoin(sql`users as driver_user`, sql`driver_user.id = ${bookings.driverId}`)
+      .leftJoin(hospitals, eq(hospitals.id, bookings.hospitalId))
+      .where(and(eq(bookings.providerId, providerId), eq(bookings.id, bookingId)));
+  }
 }

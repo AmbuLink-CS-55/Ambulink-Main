@@ -148,6 +148,7 @@ export const analyticsQuerySchema = z
     dispatcherId: z.string().uuid(),
     from: z.string().datetime().optional(),
     to: z.string().datetime().optional(),
+    bookingId: z.string().uuid().optional(),
   })
   .refine(
     (value) => {

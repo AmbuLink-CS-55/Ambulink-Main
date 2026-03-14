@@ -12,6 +12,7 @@ type AnalyticsQuery = {
   dispatcherId: string;
   from?: string;
   to?: string;
+  bookingId?: string;
 };
 
 export const useAnalyticsResponse = (params: AnalyticsQuery) => {
@@ -65,9 +66,12 @@ export const useAnalyticsAiChat = () => {
 };
 
 export function getAnalyticsReportDownloadUrl(params: AnalyticsQuery) {
-  const url = new URL("/analytics/reports", api.defaults.baseURL);
+  const base = String(api.defaults.baseURL ?? "");
+  const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+  const url = new URL("analytics/reports", normalizedBase);
   url.searchParams.set("dispatcherId", params.dispatcherId);
   if (params.from) url.searchParams.set("from", params.from);
   if (params.to) url.searchParams.set("to", params.to);
+  if (params.bookingId) url.searchParams.set("bookingId", params.bookingId);
   return url.toString();
 }

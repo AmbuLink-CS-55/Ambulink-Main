@@ -1,7 +1,7 @@
 import { api } from "@/lib/api";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import type { BookingDetailsPayload, BookingLogEntry } from "@ambulink/types";
+import type { BookingDetailsPayload, BookingLogEntry, Point } from "@ambulink/types";
 
 export type { BookingLogEntry };
 
@@ -28,6 +28,32 @@ export const useGetBookingDetails = (bookingId: string | null, dispatcherId?: st
         params: { dispatcherId },
       });
       return data;
+    },
+  });
+};
+
+export const useReassignBooking = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      bookingId,
+      payload,
+    }: {
+      bookingId: string;
+      payload: {
+        dispatcherId: string;
+        driverId?: string;
+        hospitalId?: string;
+        pickupLocation?: Point;
+        pickupAddress?: string | null;
+      };
+    }) => {
+      const { data } = await api.patch(`/booking/${bookingId}/reassign`, payload);
+      return data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.ongoingBookings() });
     },
   });
 };

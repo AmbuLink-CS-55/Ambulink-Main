@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import PDFDocument from "pdfkit";
 import type {
   AnalyticsAiResponse,
@@ -15,6 +15,20 @@ import type {
 import { DispatcherEventsService } from "@/modules/dispatcher/events/dispatcher.events.service";
 import { AnalyticsRepository } from "./analytics.repository";
 import type { AnalyticsBookingRow } from "./analytics.repository";
+import {
+  BOOKING_REPORT_THEME,
+  drawKeyValueGrid,
+  drawKpiCard,
+  drawPageFooter,
+  drawSectionHeader,
+  drawStatusChip,
+  drawTable,
+  ensureVerticalSpace,
+  formatCoordinate,
+  formatDurationBetween,
+  formatUtcTimestamp,
+} from "./analytics.booking-report.utils";
+type PdfDoc = InstanceType<typeof PDFDocument>;
 
 const ZONE_CELL_SIZE_DEGREES = 0.02;
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
@@ -425,7 +439,323 @@ export class AnalyticsCoreService {
     };
   }
 
-  async createAnalyticsReportPdf(dispatcherId: string, from?: string, to?: string): Promise<Buffer> {
+  private async createBookingReportPdf(booking: AnalyticsBookingRow, providerId: string): Promise<Buffer> {
+    const generatedAt = formatUtcTimestamp(new Date());
+    const doc = new PDFDocument({
+      margin: BOOKING_REPORT_THEME.page.margin,
+      compress: false,
+    });
+    const chunks: Buffer[] = [];
+    let pageNumber = 1;
+
+    doc.on("data", (chunk) => chunks.push(chunk as Buffer));
+    doc.on("pageAdded", () => {
+      pageNumber += 1;
+      this.renderBookingReportHeaderBand(doc, booking, generatedAt, providerId);
+      drawPageFooter(doc, pageNumber, generatedAt, providerId);
+      doc.y = BOOKING_REPORT_THEME.page.margin + 64;
+    });
+
+    const ended = new Promise<Buffer>((resolve) => {
+      doc.on("end", () => resolve(Buffer.concat(chunks)));
+    });
+
+    this.renderBookingReportHeaderBand(doc, booking, generatedAt, providerId);
+    drawPageFooter(doc, pageNumber, generatedAt, providerId);
+    doc.y = BOOKING_REPORT_THEME.page.margin + 64;
+
+    this.renderBookingOverviewCards(doc, booking, generatedAt, providerId);
+    this.renderBookingTimelineTable(doc, booking);
+    this.renderBookingEntitiesTable(doc, booking);
+    this.renderBookingCoordinates(doc, booking);
+    this.renderDataQualityBlock(doc, booking);
+
+    doc.end();
+    return ended;
+  }
+
+  private renderBookingReportHeaderBand(
+    doc: PdfDoc,
+    booking: AnalyticsBookingRow,
+    generatedAt: string,
+    providerId: string
+  ) {
+    const x = BOOKING_REPORT_THEME.page.margin;
+    const y = BOOKING_REPORT_THEME.page.margin;
+    const width = doc.page.width - BOOKING_REPORT_THEME.page.margin * 2;
+    const height = 54;
+
+    doc
+      .roundedRect(x, y, width, height, 8)
+      .fillAndStroke(BOOKING_REPORT_THEME.colors.headerBg, BOOKING_REPORT_THEME.colors.headerBg);
+
+    doc
+      .fillColor(BOOKING_REPORT_THEME.colors.headerText)
+      .fontSize(BOOKING_REPORT_THEME.typography.title)
+      .text("Ambulink Booking Report", x + 12, y + 10, { lineBreak: false });
+
+    doc
+      .fillColor("#CBD5E1")
+      .fontSize(BOOKING_REPORT_THEME.typography.subtitle)
+      .text(`Report ID: ${booking.bookingId}`, x + 12, y + 32, {
+        width: width * 0.64,
+        lineBreak: false,
+        ellipsis: true,
+      });
+
+    doc
+      .fillColor("#CBD5E1")
+      .fontSize(BOOKING_REPORT_THEME.typography.subtitle)
+      .text(`Generated: ${generatedAt}`, x + width - 220, y + 12, {
+        width: 210,
+        align: "right",
+        lineBreak: false,
+      });
+    doc
+      .fillColor("#CBD5E1")
+      .fontSize(BOOKING_REPORT_THEME.typography.subtitle)
+      .text(`Provider: ${providerId}`, x + width - 220, y + 30, {
+        width: 210,
+        align: "right",
+        lineBreak: false,
+        ellipsis: true,
+      });
+  }
+
+  private renderBookingOverviewCards(
+    doc: PdfDoc,
+    booking: AnalyticsBookingRow,
+    generatedAt: string,
+    providerId: string
+  ) {
+    ensureVerticalSpace(doc, 110);
+    const x = BOOKING_REPORT_THEME.page.margin;
+    const sectionWidth = doc.page.width - BOOKING_REPORT_THEME.page.margin * 2;
+    const y = doc.y;
+    drawSectionHeader(doc, "Booking Overview", y, sectionWidth);
+
+    const cardGap = 10;
+    const cardHeight = 56;
+    const cardWidth = (sectionWidth - cardGap * 2) / 3;
+    const cardsY = y + 24;
+
+    drawKpiCard(doc, {
+      title: "Booking ID",
+      value: booking.bookingId,
+      x,
+      y: cardsY,
+      width: cardWidth,
+      height: cardHeight,
+    });
+    drawKpiCard(doc, {
+      title: "Completed At",
+      value: formatUtcTimestamp(booking.completedAt),
+      x: x + cardWidth + cardGap,
+      y: cardsY,
+      width: cardWidth,
+      height: cardHeight,
+    });
+    drawKpiCard(doc, {
+      title: "Generated",
+      value: generatedAt,
+      x: x + (cardWidth + cardGap) * 2,
+      y: cardsY,
+      width: cardWidth,
+      height: cardHeight,
+    });
+
+    drawStatusChip(doc, booking.status, x, cardsY + cardHeight + 8);
+    doc
+      .fillColor(BOOKING_REPORT_THEME.colors.muted)
+      .fontSize(BOOKING_REPORT_THEME.typography.label)
+      .text(`Provider ${providerId}`, x + 88, cardsY + cardHeight + 12, {
+        width: sectionWidth - 88,
+        lineBreak: false,
+        ellipsis: true,
+      });
+
+    doc.y = cardsY + cardHeight + 28;
+  }
+
+  private renderBookingTimelineTable(doc: PdfDoc, booking: AnalyticsBookingRow) {
+    ensureVerticalSpace(doc, 170);
+    const x = BOOKING_REPORT_THEME.page.margin;
+    const width = doc.page.width - BOOKING_REPORT_THEME.page.margin * 2;
+    const y = doc.y + 6;
+    drawSectionHeader(doc, "Timeline", y, width);
+
+    const rows = [
+      {
+        stage: "Requested",
+        at: formatUtcTimestamp(booking.requestedAt),
+        delta: "N/A",
+      },
+      {
+        stage: "Assigned",
+        at: formatUtcTimestamp(booking.assignedAt),
+        delta: formatDurationBetween(booking.requestedAt, booking.assignedAt),
+      },
+      {
+        stage: "Arrived",
+        at: formatUtcTimestamp(booking.arrivedAt),
+        delta: formatDurationBetween(booking.assignedAt, booking.arrivedAt),
+      },
+      {
+        stage: "Picked Up",
+        at: formatUtcTimestamp(booking.pickedupAt),
+        delta: formatDurationBetween(booking.arrivedAt, booking.pickedupAt),
+      },
+      {
+        stage: "Completed",
+        at: formatUtcTimestamp(booking.completedAt),
+        delta: formatDurationBetween(booking.pickedupAt, booking.completedAt),
+      },
+    ];
+
+    const tableBottom = drawTable(doc, {
+      x,
+      y: y + 24,
+      width,
+      columns: [
+        { key: "stage", label: "Stage", widthRatio: 0.28 },
+        { key: "at", label: "Timestamp", widthRatio: 0.48 },
+        { key: "delta", label: "Stage Duration", widthRatio: 0.24 },
+      ],
+      rows,
+      rowHeight: 22,
+    });
+    doc.y = tableBottom + 10;
+  }
+
+  private renderBookingEntitiesTable(doc: PdfDoc, booking: AnalyticsBookingRow) {
+    ensureVerticalSpace(doc, 130);
+    const x = BOOKING_REPORT_THEME.page.margin;
+    const width = doc.page.width - BOOKING_REPORT_THEME.page.margin * 2;
+    const y = doc.y + 4;
+    drawSectionHeader(doc, "Entities", y, width);
+
+    const rows = [
+      {
+        role: "Driver",
+        name: booking.driverName ?? "N/A",
+        id: booking.driverId ?? "N/A",
+      },
+      {
+        role: "Hospital",
+        name: booking.hospitalName ?? "N/A",
+        id: booking.hospitalId ?? "N/A",
+      },
+    ];
+
+    const tableBottom = drawTable(doc, {
+      x,
+      y: y + 24,
+      width,
+      columns: [
+        { key: "role", label: "Role", widthRatio: 0.2 },
+        { key: "name", label: "Name", widthRatio: 0.4 },
+        { key: "id", label: "Reference ID", widthRatio: 0.4 },
+      ],
+      rows,
+      rowHeight: 22,
+    });
+    doc.y = tableBottom + 10;
+  }
+
+  private renderBookingCoordinates(doc: PdfDoc, booking: AnalyticsBookingRow) {
+    ensureVerticalSpace(doc, 120);
+    const x = BOOKING_REPORT_THEME.page.margin;
+    const width = doc.page.width - BOOKING_REPORT_THEME.page.margin * 2;
+    const y = doc.y + 4;
+    drawSectionHeader(doc, "Coordinates", y, width);
+
+    const rows = [
+      {
+        label: "Pickup (lat, lng)",
+        value: `${formatCoordinate(booking.pickupLocationY)}, ${formatCoordinate(booking.pickupLocationX)}`,
+      },
+      {
+        label: "Hospital (lat, lng)",
+        value: `${formatCoordinate(booking.hospitalLocationY)}, ${formatCoordinate(booking.hospitalLocationX)}`,
+      },
+    ];
+
+    drawKeyValueGrid(doc, {
+      x,
+      y: y + 24,
+      width,
+      rows,
+      rowHeight: 22,
+    });
+
+    doc.y = y + 24 + rows.length * 22 + 10;
+  }
+
+  private renderDataQualityBlock(doc: PdfDoc, booking: AnalyticsBookingRow) {
+    ensureVerticalSpace(doc, 120);
+    const x = BOOKING_REPORT_THEME.page.margin;
+    const width = doc.page.width - BOOKING_REPORT_THEME.page.margin * 2;
+    const y = doc.y + 4;
+    drawSectionHeader(doc, "Data Quality", y, width);
+
+    const qualityRows = [
+      {
+        label: "Missing driver",
+        value: booking.driverId ? "No" : "Yes",
+      },
+      {
+        label: "Missing hospital",
+        value: booking.hospitalId ? "No" : "Yes",
+      },
+      {
+        label: "Missing timestamps",
+        value:
+          booking.requestedAt &&
+          booking.assignedAt &&
+          booking.arrivedAt &&
+          booking.pickedupAt &&
+          booking.completedAt
+            ? "No"
+            : "Yes",
+      },
+      {
+        label: "Cancellation reason",
+        value: booking.cancellationReason ?? "N/A",
+      },
+    ];
+
+    drawKeyValueGrid(doc, {
+      x,
+      y: y + 24,
+      width,
+      rows: qualityRows,
+      rowHeight: 22,
+    });
+
+    doc.y = y + 24 + qualityRows.length * 22 + 8;
+  }
+
+  async createAnalyticsReportPdf(
+    dispatcherId: string,
+    from?: string,
+    to?: string,
+    bookingId?: string
+  ): Promise<Buffer> {
+    const dispatcher = await this.dispatcherService.getDispatcherContextOrThrow(dispatcherId);
+    if (bookingId) {
+      const [booking] = await this.analyticsRepository.getBookingAnalyticsRow(
+        dispatcher.providerId,
+        bookingId
+      );
+      if (!booking) {
+        throw new NotFoundException("Booking not found");
+      }
+      if (booking.status !== "COMPLETED") {
+        throw new BadRequestException("Report can only be generated for completed bookings");
+      }
+      return this.createBookingReportPdf(booking, dispatcher.providerId);
+    }
+
     const [response, insights] = await Promise.all([
       this.getResponseAnalytics(dispatcherId, from, to),
       this.getInsightsAnalytics(dispatcherId, from, to),

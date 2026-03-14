@@ -34,7 +34,8 @@ export class AnalyticsApiService {
     return this.analyticsCoreService.createAnalyticsReportPdf(
       query.dispatcherId,
       query.from,
-      query.to
+      query.to,
+      query.bookingId
     );
   }
 }

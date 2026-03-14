@@ -1,5 +1,14 @@
 import { AnalyticsCoreService } from "./common/analytics.core.service";
 
+function decodePdfHexText(raw: string) {
+  const matches = raw.match(/<([0-9A-Fa-f]+)>/g) ?? [];
+  return matches
+    .map((token) => token.slice(1, -1))
+    .filter((hex) => hex.length % 2 === 0)
+    .map((hex) => Buffer.from(hex, "hex").toString("latin1"))
+    .join(" ");
+}
+
 describe("AnalyticsCoreService", () => {
   const setup = () => {
     const analyticsRepository = {
@@ -37,6 +46,26 @@ describe("AnalyticsCoreService", () => {
           hospitalName: "General Hospital",
           pickupLocationX: 79.851,
           pickupLocationY: 6.921,
+          hospitalLocationX: 79.88,
+          hospitalLocationY: 6.95,
+        },
+      ]),
+      getBookingAnalyticsRow: jest.fn().mockResolvedValue([
+        {
+          bookingId: "b1",
+          status: "COMPLETED",
+          requestedAt: new Date("2026-03-01T10:00:00.000Z"),
+          assignedAt: new Date("2026-03-01T10:02:00.000Z"),
+          arrivedAt: new Date("2026-03-01T10:12:00.000Z"),
+          pickedupAt: new Date("2026-03-01T10:20:00.000Z"),
+          completedAt: new Date("2026-03-01T10:44:00.000Z"),
+          cancellationReason: null,
+          driverId: "driver-1",
+          driverName: "Driver One",
+          hospitalId: "h1",
+          hospitalName: "General Hospital",
+          pickupLocationX: 79.85,
+          pickupLocationY: 6.92,
           hospitalLocationX: 79.88,
           hospitalLocationY: 6.95,
         },
@@ -90,5 +119,25 @@ describe("AnalyticsCoreService", () => {
     const zones = await service.getZonesAnalytics("dispatcher-1");
     expect(zones.responseOrigins.length).toBeGreaterThan(0);
     expect(zones.responseOrigins[0]?.count).toBe(2);
+  });
+
+  it("generates booking report PDF with expected section labels", async () => {
+    const { service, analyticsRepository } = setup();
+    const pdf = await service.createAnalyticsReportPdf(
+      "dispatcher-1",
+      undefined,
+      undefined,
+      "b1"
+    );
+
+    expect(pdf.subarray(0, 4).toString("utf8")).toBe("%PDF");
+    const extracted = decodePdfHexText(pdf.toString("latin1"))
+      .toLowerCase()
+      .replace(/\s+/g, "");
+    expect(extracted).toContain("ambulinkbookingreport");
+    expect(extracted).toContain("bookingoverview");
+    expect(extracted).toContain("timeline");
+    expect(extracted).toContain("dataquality");
+    expect(analyticsRepository.getBookingAnalyticsRow).toHaveBeenCalledWith("provider-1", "b1");
   });
 });
