@@ -22,6 +22,7 @@ export function RideActions({
   onArrived,
   onCompleted,
 }: RideActionsProps) {
+  const isCallDisabled = !currentRide || !isOnShift;
   const isArrivedDisabled = rideStatus !== "ASSIGNED" || isArrivedUpdating;
   const isCompletedDisabled = rideStatus !== "ARRIVED" || isCompletedUpdating;
 
@@ -29,12 +30,16 @@ export function RideActions({
     <View className="mt-3">
       <Pressable
         onPress={() => onCall(currentRide?.patient.phoneNumber ?? undefined)}
-        disabled={!currentRide || !isOnShift}
+        disabled={isCallDisabled}
         accessibilityRole="button"
         accessibilityLabel="Call patient"
-        className={`p-4 mt-3 rounded-xl items-center ${currentRide && isOnShift ? "bg-card" : "bg-muted"}`}
+        className={`p-4 mt-3 rounded-xl items-center border ${isCallDisabled ? "bg-secondary border-border" : "bg-card border-border"}`}
       >
-        <Text className="text-foreground font-bold">Call Patient</Text>
+        <Text
+          className={`font-bold ${isCallDisabled ? "text-secondary-foreground" : "text-foreground"}`}
+        >
+          Call Patient
+        </Text>
       </Pressable>
 
       <Pressable
@@ -43,7 +48,7 @@ export function RideActions({
         accessibilityRole="button"
         accessibilityLabel="Mark arrived"
         accessibilityState={{ disabled: isArrivedDisabled, busy: isArrivedUpdating }}
-        className={`p-4 mt-3 rounded-xl items-center ${!isArrivedDisabled ? "bg-yellow-400" : "bg-muted"}`}
+        className={`p-4 mt-3 rounded-xl items-center border ${!isArrivedDisabled ? "bg-yellow-400 border-yellow-500" : "bg-secondary border-border"}`}
       >
         {isArrivedUpdating ? (
           <View className="flex-row items-center gap-2">
@@ -51,7 +56,9 @@ export function RideActions({
             <Text className="font-bold">Updating...</Text>
           </View>
         ) : (
-          <Text className="font-bold">Arrived</Text>
+          <Text className={`font-bold ${isArrivedDisabled ? "text-secondary-foreground" : "text-black"}`}>
+            Arrived
+          </Text>
         )}
       </Pressable>
 
@@ -61,7 +68,7 @@ export function RideActions({
         accessibilityRole="button"
         accessibilityLabel="Complete ride"
         accessibilityState={{ disabled: isCompletedDisabled, busy: isCompletedUpdating }}
-        className={`p-4 mt-3 rounded-xl items-center ${!isCompletedDisabled ? "bg-green-500" : "bg-muted"}`}
+        className={`p-4 mt-3 rounded-xl items-center border ${!isCompletedDisabled ? "bg-green-500 border-green-600" : "bg-secondary border-border"}`}
       >
         {isCompletedUpdating ? (
           <View className="flex-row items-center gap-2">
@@ -69,7 +76,11 @@ export function RideActions({
             <Text className="text-white font-bold">Completing...</Text>
           </View>
         ) : (
-          <Text className="text-white font-bold">Complete Ride</Text>
+          <Text
+            className={`font-bold ${isCompletedDisabled ? "text-secondary-foreground" : "text-white"}`}
+          >
+            Complete Ride
+          </Text>
         )}
       </Pressable>
     </View>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Alert, Linking, ScrollView, Switch, Text, View } from "react-native";
+import { Alert, Linking, ScrollView, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSocket } from "@/common/hooks/SocketContext";
 import type {
@@ -17,7 +17,6 @@ import { RideMapCard } from "@/features/driver/components/RideMapCard";
 import { ShiftCard } from "@/features/driver/components/ShiftCard";
 import { isValidPoint, type Ride } from "@/features/driver/components/types";
 import { notifyFromSocket } from "@/common/notifications/service";
-import { areNotificationsEnabled, setNotificationsEnabled } from "@/common/notifications/preferences";
 
 const SRI_LANKA_REGION = {
   latitude: 7.8731,
@@ -35,7 +34,6 @@ export default function Home() {
   const [isArrivedUpdating, setIsArrivedUpdating] = useState(false);
   const [isCompletedUpdating, setIsCompletedUpdating] = useState(false);
   const [currentRide, setCurrentRide] = useState<Ride | null>(null);
-  const [notificationsEnabled, setLocalNotificationsEnabled] = useState(true);
   const [rideStatus, setRideStatus] = useState<
     "ASSIGNED" | "ARRIVED" | "PICKEDUP" | "COMPLETED" | "CANCELLED"
   >("COMPLETED");
@@ -58,17 +56,6 @@ export default function Home() {
 
     return SRI_LANKA_REGION;
   }, [pickupPoint]);
-
-  useEffect(() => {
-    areNotificationsEnabled("DRIVER")
-      .then((enabled) => setLocalNotificationsEnabled(enabled))
-      .catch((error) => console.warn("[notifications] driver preference load failed", error));
-  }, []);
-
-  const handleToggleNotifications = useCallback(async (next: boolean) => {
-    setLocalNotificationsEnabled(next);
-    await setNotificationsEnabled("DRIVER", next);
-  }, []);
 
   useEffect(() => {
     if (!socket || !isOnShift) return;
@@ -239,17 +226,6 @@ export default function Home() {
             isShiftUpdating={isShiftUpdating}
             onToggleShift={handleToggleShift}
           />
-          <View className="mb-4 p-4 bg-card rounded-2xl border border-border">
-            <View className="flex-row items-center justify-between">
-              <View className="pr-3">
-                <Text className="text-sm font-semibold text-foreground">OS Notifications</Text>
-                <Text className="text-xs text-muted-foreground mt-1">
-                  Alerts only while this app is running.
-                </Text>
-              </View>
-              <Switch value={notificationsEnabled} onValueChange={handleToggleNotifications} />
-            </View>
-          </View>
 
           <RideMapCard
             currentRide={currentRide}

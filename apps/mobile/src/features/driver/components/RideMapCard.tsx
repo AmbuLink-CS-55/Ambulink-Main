@@ -21,6 +21,7 @@ export function RideMapCard({
   const safeHospitalPoint = isValidPoint(currentRide?.hospital.location)
     ? currentRide?.hospital.location
     : null;
+  const isNavigationDisabled = !currentRide || !isOnShift;
 
   return (
     <View className="rounded-2xl overflow-hidden shadow-sm bg-card border border-border">
@@ -52,13 +53,17 @@ export function RideMapCard({
       </View>
 
       <Pressable
-        className={`p-4 items-center justify-center ${currentRide && isOnShift ? "bg-green-500" : "bg-muted"}`}
+        className={`p-4 items-center justify-center border ${isNavigationDisabled ? "bg-secondary border-border" : "bg-green-500 border-green-600"}`}
         onPress={onOpenOnMap}
-        disabled={!currentRide || !isOnShift}
+        disabled={isNavigationDisabled}
         accessibilityRole="button"
         accessibilityLabel="Open navigation"
       >
-        <Text className="text-white font-bold text-lg">Open in Navigation</Text>
+        <Text
+          className={`font-bold text-lg ${isNavigationDisabled ? "text-secondary-foreground" : "text-white"}`}
+        >
+          Open in Navigation
+        </Text>
       </Pressable>
     </View>
   );
