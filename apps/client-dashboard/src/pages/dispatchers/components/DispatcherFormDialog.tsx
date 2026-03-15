@@ -98,6 +98,9 @@ type BaseDispatcherDialogProps = {
   submitLabel: string;
   showPassword: boolean;
   submitDisabled: boolean;
+  validationMessage?: string | null;
+  errorMessage?: string | null;
+  isSubmitting?: boolean;
   onSubmit: () => void;
 };
 
@@ -110,6 +113,9 @@ function BaseDispatcherFormDialog({
   submitLabel,
   showPassword,
   submitDisabled,
+  validationMessage,
+  errorMessage,
+  isSubmitting = false,
   onSubmit,
 }: BaseDispatcherDialogProps) {
   return (
@@ -123,10 +129,17 @@ function BaseDispatcherFormDialog({
         <DispatcherFormFields form={form} onChange={onChange} showPassword={showPassword} />
 
         <DialogFooter>
+          {errorMessage ? (
+            <p className="w-full text-xs text-destructive" role="alert">
+              {errorMessage}
+            </p>
+          ) : validationMessage ? (
+            <p className="w-full text-xs text-muted-foreground">{validationMessage}</p>
+          ) : null}
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={onSubmit} disabled={submitDisabled}>
+          <Button onClick={onSubmit} disabled={submitDisabled || isSubmitting}>
             {submitLabel}
           </Button>
         </DialogFooter>
@@ -139,6 +152,8 @@ export function CreateDispatcherDialog({
   open,
   form,
   providerAvailable,
+  errorMessage,
+  isSubmitting,
   onOpenChange,
   onChange,
   onSubmit,
@@ -146,6 +161,8 @@ export function CreateDispatcherDialog({
   open: boolean;
   form: DispatcherFormState;
   providerAvailable: boolean;
+  errorMessage?: string | null;
+  isSubmitting?: boolean;
   onOpenChange: (open: boolean) => void;
   onChange: <K extends keyof DispatcherFormState>(field: K, value: DispatcherFormState[K]) => void;
   onSubmit: () => void;
@@ -156,6 +173,17 @@ export function CreateDispatcherDialog({
     !form.email.trim() ||
     form.passwordHash.trim().length < 8 ||
     !providerAvailable;
+  const validationMessage = !form.fullName.trim()
+    ? "Full name is required."
+    : !form.phoneNumber.trim()
+      ? "Phone number is required."
+      : !form.email.trim()
+        ? "Email is required."
+        : form.passwordHash.trim().length < 8
+          ? "Password must be at least 8 characters."
+          : !providerAvailable
+            ? "Provider is not available for this action."
+            : null;
 
   return (
     <BaseDispatcherFormDialog
@@ -167,6 +195,9 @@ export function CreateDispatcherDialog({
       submitLabel="Create Dispatcher"
       showPassword={true}
       submitDisabled={submitDisabled}
+      validationMessage={validationMessage}
+      errorMessage={errorMessage}
+      isSubmitting={isSubmitting}
       onSubmit={onSubmit}
     />
   );
@@ -175,17 +206,28 @@ export function CreateDispatcherDialog({
 export function EditDispatcherDialog({
   open,
   form,
+  errorMessage,
+  isSubmitting,
   onOpenChange,
   onChange,
   onSubmit,
 }: {
   open: boolean;
   form: DispatcherFormState;
+  errorMessage?: string | null;
+  isSubmitting?: boolean;
   onOpenChange: (open: boolean) => void;
   onChange: <K extends keyof DispatcherFormState>(field: K, value: DispatcherFormState[K]) => void;
   onSubmit: () => void;
 }) {
   const submitDisabled = !form.fullName.trim() || !form.phoneNumber.trim() || !form.email.trim();
+  const validationMessage = !form.fullName.trim()
+    ? "Full name is required."
+    : !form.phoneNumber.trim()
+      ? "Phone number is required."
+      : !form.email.trim()
+        ? "Email is required."
+        : null;
 
   return (
     <BaseDispatcherFormDialog
@@ -197,6 +239,9 @@ export function EditDispatcherDialog({
       submitLabel="Save Changes"
       showPassword={false}
       submitDisabled={submitDisabled}
+      validationMessage={validationMessage}
+      errorMessage={errorMessage}
+      isSubmitting={isSubmitting}
       onSubmit={onSubmit}
     />
   );

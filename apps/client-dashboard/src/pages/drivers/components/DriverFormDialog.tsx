@@ -78,6 +78,9 @@ type BaseDriverDialogProps = {
   title: string;
   submitLabel: string;
   submitDisabled: boolean;
+  validationMessage?: string | null;
+  errorMessage?: string | null;
+  isSubmitting?: boolean;
   onSubmit: () => void;
 };
 
@@ -89,6 +92,9 @@ function BaseDriverFormDialog({
   title,
   submitLabel,
   submitDisabled,
+  validationMessage,
+  errorMessage,
+  isSubmitting = false,
   onSubmit,
 }: BaseDriverDialogProps) {
   return (
@@ -102,10 +108,17 @@ function BaseDriverFormDialog({
         <DriverFormFields form={form} onChange={onChange} />
 
         <DialogFooter>
+          {errorMessage ? (
+            <p className="w-full text-xs text-destructive" role="alert">
+              {errorMessage}
+            </p>
+          ) : validationMessage ? (
+            <p className="w-full text-xs text-muted-foreground">{validationMessage}</p>
+          ) : null}
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={onSubmit} disabled={submitDisabled}>
+          <Button onClick={onSubmit} disabled={submitDisabled || isSubmitting}>
             {submitLabel}
           </Button>
         </DialogFooter>
@@ -118,6 +131,8 @@ export function CreateDriverDialog({
   open,
   form,
   providerAvailable,
+  errorMessage,
+  isSubmitting,
   onOpenChange,
   onChange,
   onSubmit,
@@ -125,6 +140,8 @@ export function CreateDriverDialog({
   open: boolean;
   form: DriverFormState;
   providerAvailable: boolean;
+  errorMessage?: string | null;
+  isSubmitting?: boolean;
   onOpenChange: (open: boolean) => void;
   onChange: <K extends keyof DriverFormState>(field: K, value: DriverFormState[K]) => void;
   onSubmit: () => void;
@@ -134,6 +151,15 @@ export function CreateDriverDialog({
     !form.phoneNumber.trim() ||
     !form.email.trim() ||
     !providerAvailable;
+  const validationMessage = !form.fullName.trim()
+    ? "Full name is required."
+    : !form.phoneNumber.trim()
+      ? "Phone number is required."
+      : !form.email.trim()
+        ? "Email is required."
+        : !providerAvailable
+          ? "Provider is not available for this action."
+          : null;
 
   return (
     <BaseDriverFormDialog
@@ -144,6 +170,9 @@ export function CreateDriverDialog({
       title="Add Driver"
       submitLabel="Create Driver"
       submitDisabled={submitDisabled}
+      validationMessage={validationMessage}
+      errorMessage={errorMessage}
+      isSubmitting={isSubmitting}
       onSubmit={onSubmit}
     />
   );
@@ -152,17 +181,26 @@ export function CreateDriverDialog({
 export function EditDriverDialog({
   open,
   form,
+  errorMessage,
+  isSubmitting,
   onOpenChange,
   onChange,
   onSubmit,
 }: {
   open: boolean;
   form: DriverFormState;
+  errorMessage?: string | null;
+  isSubmitting?: boolean;
   onOpenChange: (open: boolean) => void;
   onChange: <K extends keyof DriverFormState>(field: K, value: DriverFormState[K]) => void;
   onSubmit: () => void;
 }) {
   const submitDisabled = !form.fullName.trim() || !form.phoneNumber.trim();
+  const validationMessage = !form.fullName.trim()
+    ? "Full name is required."
+    : !form.phoneNumber.trim()
+      ? "Phone number is required."
+      : null;
 
   return (
     <BaseDriverFormDialog
@@ -173,6 +211,9 @@ export function EditDriverDialog({
       title="Edit Driver"
       submitLabel="Save Changes"
       submitDisabled={submitDisabled}
+      validationMessage={validationMessage}
+      errorMessage={errorMessage}
+      isSubmitting={isSubmitting}
       onSubmit={onSubmit}
     />
   );

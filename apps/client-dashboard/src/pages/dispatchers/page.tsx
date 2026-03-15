@@ -31,6 +31,8 @@ export default function DispatchersDashboard() {
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [copiedInviteLink, setCopiedInviteLink] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const mapDispatcherToForm = useCallback(
     (dispatcher: User) => ({
@@ -42,11 +44,36 @@ export default function DispatchersDashboard() {
     []
   );
 
-  const { isOpen, editing, form, openForCreate, openForEdit, onOpenChange, reset, updateForm } =
+  const { isOpen, editing, form, openForEdit, onOpenChange, reset, updateForm } =
     useEntityFormDialog<User, DispatcherFormState>({
       initialForm,
       mapEntityToForm: mapDispatcherToForm,
     });
+  const handleOpenForEdit = useCallback(
+    (dispatcher: User) => {
+      setFormError(null);
+      openForEdit(dispatcher);
+    },
+    [openForEdit]
+  );
+  const handleDialogOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        setFormError(null);
+      }
+      onOpenChange(open);
+    },
+    [onOpenChange]
+  );
+  const handleFormChange = useCallback(
+    <K extends keyof DispatcherFormState>(field: K, value: DispatcherFormState[K]) => {
+      if (formError) {
+        setFormError(null);
+      }
+      updateForm(field, value);
+    },
+    [formError, updateForm]
+  );
 
   const rows = useMemo(() => dispatchers.data ?? [], [dispatchers.data]);
   const columns = useMemo(() => createDispatcherColumns(), []);
@@ -81,6 +108,9 @@ export default function DispatchersDashboard() {
   }, [inviteLink]);
 
   const handleSubmit = useCallback(async () => {
+    if (isSubmitting) return;
+    setFormError(null);
+    setIsSubmitting(true);
     const payload = {
       fullName: form.fullName.trim(),
       phoneNumber: form.phoneNumber.trim(),
@@ -88,25 +118,35 @@ export default function DispatchersDashboard() {
       passwordHash: form.passwordHash.trim(),
     } satisfies Partial<User>;
 
-    if (!editing) return;
+    if (!editing) {
+      setIsSubmitting(false);
+      return;
+    }
 
-    await updateDispatcher.mutateAsync({
-      id: editing.id,
-      payload: {
-        fullName: payload.fullName,
-        phoneNumber: payload.phoneNumber,
-        email: payload.email,
-        passwordHash: payload.passwordHash || undefined,
-      },
-    });
+    try {
+      await updateDispatcher.mutateAsync({
+        id: editing.id,
+        payload: {
+          fullName: payload.fullName,
+          phoneNumber: payload.phoneNumber,
+          email: payload.email,
+          passwordHash: payload.passwordHash || undefined,
+        },
+      });
 
-    reset();
+      reset();
+    } catch (error) {
+      setFormError(toUiErrorMessage(error, "Failed to save dispatcher. Please review your inputs."));
+    } finally {
+      setIsSubmitting(false);
+    }
   }, [
     editing,
     form.email,
     form.fullName,
     form.passwordHash,
     form.phoneNumber,
+    isSubmitting,
     reset,
     updateDispatcher,
   ]);
@@ -172,16 +212,18 @@ export default function DispatchersDashboard() {
         height={640}
         rowHeight={56}
         rowKey={(row) => row.id}
-        onRowClick={isDispatcherAdmin ? openForEdit : undefined}
+        onRowClick={isDispatcherAdmin ? handleOpenForEdit : undefined}
       />
 
       {isDispatcherAdmin && editing ? (
         <EditDispatcherDialog
           open={isOpen}
           form={form}
-          onOpenChange={onOpenChange}
-          onChange={updateForm}
+          onOpenChange={handleDialogOpenChange}
+          onChange={handleFormChange}
           onSubmit={handleSubmit}
+          errorMessage={formError}
+          isSubmitting={isSubmitting}
         />
       ) : null}
     </div>

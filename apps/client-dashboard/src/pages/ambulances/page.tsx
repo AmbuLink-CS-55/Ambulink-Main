@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   useGetAmbulances,
   useCreateAmbulance,
@@ -14,6 +14,7 @@ import {
   EditAmbulanceDialog,
   type AmbulanceFormState,
 } from "@/pages/ambulances/components/AmbulanceFormDialog";
+import { toUiErrorMessage } from "@/lib/ui-error";
 
 const initialForm: AmbulanceFormState = {
   vehicleNumber: "",
@@ -25,6 +26,8 @@ export default function AmbulancesDashboard() {
   const ambulances = useGetAmbulances();
   const createAmbulance = useCreateAmbulance();
   const updateAmbulance = useUpdateAmbulance();
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const mapAmbulanceToForm = useCallback(
     (ambulance: Ambulance) => ({
       vehicleNumber: ambulance.vehicleNumber ?? "",
@@ -38,32 +41,71 @@ export default function AmbulancesDashboard() {
       initialForm,
       mapEntityToForm: mapAmbulanceToForm,
     });
+  const handleOpenForCreate = useCallback(() => {
+    setFormError(null);
+    openForCreate();
+  }, [openForCreate]);
+  const handleOpenForEdit = useCallback(
+    (ambulance: Ambulance) => {
+      setFormError(null);
+      openForEdit(ambulance);
+    },
+    [openForEdit]
+  );
+  const handleDialogOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        setFormError(null);
+      }
+      onOpenChange(open);
+    },
+    [onOpenChange]
+  );
+  const handleFormChange = useCallback(
+    <K extends keyof AmbulanceFormState>(field: K, value: AmbulanceFormState[K]) => {
+      if (formError) {
+        setFormError(null);
+      }
+      updateForm(field, value);
+    },
+    [formError, updateForm]
+  );
 
   const rows = useMemo(() => ambulances.data ?? [], [ambulances.data]);
 
   const columns = useMemo(() => createAmbulanceColumns(), []);
 
   const handleSubmit = useCallback(async () => {
+    if (isSubmitting) return;
+    setFormError(null);
+    setIsSubmitting(true);
     const payload = {
       vehicleNumber: form.vehicleNumber.trim(),
       equipmentLevel: form.equipmentLevel.trim() || undefined,
       status: form.status,
     } satisfies Partial<Ambulance>;
 
-    if (editing) {
-      const updatePayload = { ...payload, providerId: undefined };
-      await updateAmbulance.mutateAsync({ id: editing.id, payload: updatePayload });
-    } else {
-      await createAmbulance.mutateAsync(payload);
-    }
+    try {
+      if (editing) {
+        const updatePayload = { ...payload, providerId: undefined };
+        await updateAmbulance.mutateAsync({ id: editing.id, payload: updatePayload });
+      } else {
+        await createAmbulance.mutateAsync(payload);
+      }
 
-    reset();
+      reset();
+    } catch (error) {
+      setFormError(toUiErrorMessage(error, "Failed to save ambulance. Please review your inputs."));
+    } finally {
+      setIsSubmitting(false);
+    }
   }, [
     createAmbulance,
     editing,
     form.equipmentLevel,
     form.status,
     form.vehicleNumber,
+    isSubmitting,
     reset,
     updateAmbulance,
   ]);
@@ -75,7 +117,7 @@ export default function AmbulancesDashboard() {
           <h1 className="text-2xl font-semibold">Ambulances</h1>
           <p className="text-sm text-muted-foreground">Manage your fleet.</p>
         </div>
-        <Button onClick={openForCreate}>
+        <Button onClick={handleOpenForCreate}>
           Add Ambulance
         </Button>
       </div>
@@ -86,25 +128,29 @@ export default function AmbulancesDashboard() {
         height={640}
         rowHeight={56}
         rowKey={(row) => row.id}
-        onRowClick={openForEdit}
+        onRowClick={handleOpenForEdit}
       />
 
       {editing ? (
         <EditAmbulanceDialog
           open={isOpen}
           form={form}
-          onOpenChange={onOpenChange}
-          onChange={updateForm}
+          onOpenChange={handleDialogOpenChange}
+          onChange={handleFormChange}
           onSubmit={handleSubmit}
+          errorMessage={formError}
+          isSubmitting={isSubmitting}
         />
       ) : (
         <CreateAmbulanceDialog
           open={isOpen}
           form={form}
           providerAvailable={true}
-          onOpenChange={onOpenChange}
-          onChange={updateForm}
+          onOpenChange={handleDialogOpenChange}
+          onChange={handleFormChange}
           onSubmit={handleSubmit}
+          errorMessage={formError}
+          isSubmitting={isSubmitting}
         />
       )}
     </div>

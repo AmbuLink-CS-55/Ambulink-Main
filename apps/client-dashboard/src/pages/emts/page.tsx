@@ -13,6 +13,7 @@ import {
 } from "@/pages/emts/components/EmtFormDialog";
 import { useAuthStore } from "@/stores/auth.store";
 import { useCreateStaffInvite } from "@/services/auth.service";
+import { toUiErrorMessage } from "@/lib/ui-error";
 
 const initialForm: EmtFormState = {
   fullName: "",
@@ -31,6 +32,8 @@ export default function EmtsDashboard() {
     email: string;
     role: "EMT";
   } | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const mapEmtToForm = useCallback(
     (emt: User) => ({
@@ -47,11 +50,43 @@ export default function EmtsDashboard() {
       initialForm,
       mapEntityToForm: mapEmtToForm,
     });
+  const handleOpenForCreate = useCallback(() => {
+    setFormError(null);
+    openForCreate();
+  }, [openForCreate]);
+  const handleOpenForEdit = useCallback(
+    (emt: User) => {
+      setFormError(null);
+      openForEdit(emt);
+    },
+    [openForEdit]
+  );
+  const handleDialogOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        setFormError(null);
+      }
+      onOpenChange(open);
+    },
+    [onOpenChange]
+  );
+  const handleFormChange = useCallback(
+    <K extends keyof EmtFormState>(field: K, value: EmtFormState[K]) => {
+      if (formError) {
+        setFormError(null);
+      }
+      updateForm(field, value);
+    },
+    [formError, updateForm]
+  );
 
   const rows = useMemo(() => emts.data ?? [], [emts.data]);
   const columns = useMemo(() => createEmtColumns(), []);
 
   const handleSubmit = useCallback(async () => {
+    if (isSubmitting) return;
+    setFormError(null);
+    setIsSubmitting(true);
     const payload = {
       fullName: form.fullName.trim(),
       phoneNumber: form.phoneNumber.trim(),
@@ -59,32 +94,38 @@ export default function EmtsDashboard() {
       passwordHash: form.passwordHash.trim(),
     } satisfies Partial<User>;
 
-    if (editing) {
-      await updateEmt.mutateAsync({
-        id: editing.id,
-        payload: {
-          fullName: payload.fullName,
-          phoneNumber: payload.phoneNumber,
+    try {
+      if (editing) {
+        await updateEmt.mutateAsync({
+          id: editing.id,
+          payload: {
+            fullName: payload.fullName,
+            phoneNumber: payload.phoneNumber,
+            email: payload.email,
+            passwordHash: payload.passwordHash || undefined,
+          },
+        });
+      } else {
+        if (!payload.email) {
+          throw new Error("Email is required to generate onboarding invite.");
+        }
+        const invite = await createInvite.mutateAsync({
+          role: "EMT",
           email: payload.email,
-          passwordHash: payload.passwordHash || undefined,
-        },
-      });
-    } else {
-      if (!payload.email) {
-        throw new Error("Email is required to generate onboarding invite.");
+        });
+        setInvitePayload({
+          token: invite.inviteToken,
+          email: payload.email,
+          role: "EMT",
+        });
       }
-      const invite = await createInvite.mutateAsync({
-        role: "EMT",
-        email: payload.email,
-      });
-      setInvitePayload({
-        token: invite.inviteToken,
-        email: payload.email,
-        role: "EMT",
-      });
-    }
 
-    reset();
+      reset();
+    } catch (error) {
+      setFormError(toUiErrorMessage(error, "Failed to save EMT. Please review your inputs."));
+    } finally {
+      setIsSubmitting(false);
+    }
   }, [
     createInvite,
     editing,
@@ -92,6 +133,7 @@ export default function EmtsDashboard() {
     form.fullName,
     form.passwordHash,
     form.phoneNumber,
+    isSubmitting,
     reset,
     updateEmt,
   ]);
@@ -103,7 +145,7 @@ export default function EmtsDashboard() {
           <h1 className="text-2xl font-semibold">EMTs</h1>
           <p className="text-sm text-muted-foreground">Manage your EMT roster.</p>
         </div>
-        {isDispatcherAdmin ? <Button onClick={openForCreate}>Add EMT</Button> : null}
+        {isDispatcherAdmin ? <Button onClick={handleOpenForCreate}>Add EMT</Button> : null}
       </div>
 
       <DataTable
@@ -112,25 +154,29 @@ export default function EmtsDashboard() {
         height={640}
         rowHeight={56}
         rowKey={(row) => row.id}
-        onRowClick={isDispatcherAdmin ? openForEdit : undefined}
+        onRowClick={isDispatcherAdmin ? handleOpenForEdit : undefined}
       />
 
       {isDispatcherAdmin && editing ? (
         <EditEmtDialog
           open={isOpen}
           form={form}
-          onOpenChange={onOpenChange}
-          onChange={updateForm}
+          onOpenChange={handleDialogOpenChange}
+          onChange={handleFormChange}
           onSubmit={handleSubmit}
+          errorMessage={formError}
+          isSubmitting={isSubmitting}
         />
       ) : isDispatcherAdmin ? (
         <CreateEmtDialog
           open={isOpen}
           form={form}
           providerAvailable={true}
-          onOpenChange={onOpenChange}
-          onChange={updateForm}
+          onOpenChange={handleDialogOpenChange}
+          onChange={handleFormChange}
           onSubmit={handleSubmit}
+          errorMessage={formError}
+          isSubmitting={isSubmitting}
         />
       ) : null}
 

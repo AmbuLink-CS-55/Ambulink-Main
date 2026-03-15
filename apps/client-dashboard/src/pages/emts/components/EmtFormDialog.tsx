@@ -98,6 +98,9 @@ type BaseEmtDialogProps = {
   submitLabel: string;
   showPassword: boolean;
   submitDisabled: boolean;
+  validationMessage?: string | null;
+  errorMessage?: string | null;
+  isSubmitting?: boolean;
   onSubmit: () => void;
 };
 
@@ -110,6 +113,9 @@ function BaseEmtFormDialog({
   submitLabel,
   showPassword,
   submitDisabled,
+  validationMessage,
+  errorMessage,
+  isSubmitting = false,
   onSubmit,
 }: BaseEmtDialogProps) {
   return (
@@ -123,10 +129,17 @@ function BaseEmtFormDialog({
         <EmtFormFields form={form} onChange={onChange} showPassword={showPassword} />
 
         <DialogFooter>
+          {errorMessage ? (
+            <p className="w-full text-xs text-destructive" role="alert">
+              {errorMessage}
+            </p>
+          ) : validationMessage ? (
+            <p className="w-full text-xs text-muted-foreground">{validationMessage}</p>
+          ) : null}
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={onSubmit} disabled={submitDisabled}>
+          <Button onClick={onSubmit} disabled={submitDisabled || isSubmitting}>
             {submitLabel}
           </Button>
         </DialogFooter>
@@ -139,6 +152,8 @@ export function CreateEmtDialog({
   open,
   form,
   providerAvailable,
+  errorMessage,
+  isSubmitting,
   onOpenChange,
   onChange,
   onSubmit,
@@ -146,6 +161,8 @@ export function CreateEmtDialog({
   open: boolean;
   form: EmtFormState;
   providerAvailable: boolean;
+  errorMessage?: string | null;
+  isSubmitting?: boolean;
   onOpenChange: (open: boolean) => void;
   onChange: <K extends keyof EmtFormState>(field: K, value: EmtFormState[K]) => void;
   onSubmit: () => void;
@@ -156,6 +173,17 @@ export function CreateEmtDialog({
     !form.email.trim() ||
     form.passwordHash.trim().length < 8 ||
     !providerAvailable;
+  const validationMessage = !form.fullName.trim()
+    ? "Full name is required."
+    : !form.phoneNumber.trim()
+      ? "Phone number is required."
+      : !form.email.trim()
+        ? "Email is required."
+        : form.passwordHash.trim().length < 8
+          ? "Password must be at least 8 characters."
+          : !providerAvailable
+            ? "Provider is not available for this action."
+            : null;
 
   return (
     <BaseEmtFormDialog
@@ -167,6 +195,9 @@ export function CreateEmtDialog({
       submitLabel="Create EMT"
       showPassword={true}
       submitDisabled={submitDisabled}
+      validationMessage={validationMessage}
+      errorMessage={errorMessage}
+      isSubmitting={isSubmitting}
       onSubmit={onSubmit}
     />
   );
@@ -175,17 +206,26 @@ export function CreateEmtDialog({
 export function EditEmtDialog({
   open,
   form,
+  errorMessage,
+  isSubmitting,
   onOpenChange,
   onChange,
   onSubmit,
 }: {
   open: boolean;
   form: EmtFormState;
+  errorMessage?: string | null;
+  isSubmitting?: boolean;
   onOpenChange: (open: boolean) => void;
   onChange: <K extends keyof EmtFormState>(field: K, value: EmtFormState[K]) => void;
   onSubmit: () => void;
 }) {
   const submitDisabled = !form.fullName.trim() || !form.phoneNumber.trim();
+  const validationMessage = !form.fullName.trim()
+    ? "Full name is required."
+    : !form.phoneNumber.trim()
+      ? "Phone number is required."
+      : null;
 
   return (
     <BaseEmtFormDialog
@@ -197,6 +237,9 @@ export function EditEmtDialog({
       submitLabel="Save Changes"
       showPassword={false}
       submitDisabled={submitDisabled}
+      validationMessage={validationMessage}
+      errorMessage={errorMessage}
+      isSubmitting={isSubmitting}
       onSubmit={onSubmit}
     />
   );

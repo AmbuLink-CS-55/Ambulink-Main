@@ -22,6 +22,7 @@ import {
   type DriverFormState,
 } from "@/pages/drivers/components/DriverFormDialog";
 import { useAuthStore } from "@/stores/auth.store";
+import { toUiErrorMessage } from "@/lib/ui-error";
 
 const initialForm: DriverFormState = {
   fullName: "",
@@ -51,6 +52,8 @@ export default function DriversDashboard() {
     email: string;
     role: "DRIVER";
   } | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const inviteModalOpen = Boolean(invitePayload);
   const mapDriverToForm = useCallback(
     (driver: User) => ({
@@ -65,6 +68,35 @@ export default function DriversDashboard() {
       initialForm,
       mapEntityToForm: mapDriverToForm,
     });
+  const handleOpenForCreate = useCallback(() => {
+    setFormError(null);
+    openForCreate();
+  }, [openForCreate]);
+  const handleOpenForEdit = useCallback(
+    (driver: User) => {
+      setFormError(null);
+      openForEdit(driver);
+    },
+    [openForEdit]
+  );
+  const handleDialogOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        setFormError(null);
+      }
+      onOpenChange(open);
+    },
+    [onOpenChange]
+  );
+  const handleFormChange = useCallback(
+    <K extends keyof DriverFormState>(field: K, value: DriverFormState[K]) => {
+      if (formError) {
+        setFormError(null);
+      }
+      updateForm(field, value);
+    },
+    [formError, updateForm]
+  );
 
   const rows = useMemo(() => drivers.data ?? [], [drivers.data]);
 
@@ -77,45 +109,55 @@ export default function DriversDashboard() {
   );
 
   const handleSubmit = useCallback(async () => {
+    if (isSubmitting) return;
+    setFormError(null);
+    setIsSubmitting(true);
     const payload = {
       fullName: form.fullName.trim(),
       phoneNumber: form.phoneNumber.trim(),
       email: form.email.trim(),
     } satisfies Partial<User>;
 
-    if (editing) {
-      await updateDriver.mutateAsync({
-        id: editing.id,
-        payload: {
+    try {
+      if (editing) {
+        await updateDriver.mutateAsync({
+          id: editing.id,
+          payload: {
+            fullName: payload.fullName,
+            phoneNumber: payload.phoneNumber,
+            email: payload.email,
+          },
+        });
+      } else {
+        if (!payload.email) {
+          throw new Error("Email is required to generate onboarding invite.");
+        }
+        const invite = await createInvite.mutateAsync({
+          role: "DRIVER",
           fullName: payload.fullName,
           phoneNumber: payload.phoneNumber,
           email: payload.email,
-        },
-      });
-    } else {
-      if (!payload.email) {
-        throw new Error("Email is required to generate onboarding invite.");
+        });
+        setInvitePayload({
+          token: invite.inviteToken,
+          email: payload.email,
+          role: "DRIVER",
+        });
       }
-      const invite = await createInvite.mutateAsync({
-        role: "DRIVER",
-        fullName: payload.fullName,
-        phoneNumber: payload.phoneNumber,
-        email: payload.email,
-      });
-      setInvitePayload({
-        token: invite.inviteToken,
-        email: payload.email,
-        role: "DRIVER",
-      });
-    }
 
-    reset();
+      reset();
+    } catch (error) {
+      setFormError(toUiErrorMessage(error, "Failed to save driver. Please review your inputs."));
+    } finally {
+      setIsSubmitting(false);
+    }
   }, [
     createInvite,
     editing,
     form.email,
     form.fullName,
     form.phoneNumber,
+    isSubmitting,
     reset,
     updateDriver,
   ]);
@@ -127,7 +169,7 @@ export default function DriversDashboard() {
           <h1 className="text-2xl font-semibold">Drivers</h1>
           <p className="text-sm text-muted-foreground">Manage your roster.</p>
         </div>
-        {isDispatcherAdmin ? <Button onClick={openForCreate}>Add Driver</Button> : null}
+        {isDispatcherAdmin ? <Button onClick={handleOpenForCreate}>Add Driver</Button> : null}
       </div>
 
       <DataTable
@@ -136,25 +178,29 @@ export default function DriversDashboard() {
         height={640}
         rowHeight={56}
         rowKey={(row) => row.id}
-        onRowClick={isDispatcherAdmin ? openForEdit : undefined}
+        onRowClick={isDispatcherAdmin ? handleOpenForEdit : undefined}
       />
 
       {isDispatcherAdmin && editing ? (
         <EditDriverDialog
           open={isOpen}
           form={form}
-          onOpenChange={onOpenChange}
-          onChange={updateForm}
+          onOpenChange={handleDialogOpenChange}
+          onChange={handleFormChange}
           onSubmit={handleSubmit}
+          errorMessage={formError}
+          isSubmitting={isSubmitting}
         />
       ) : isDispatcherAdmin ? (
         <CreateDriverDialog
           open={isOpen}
           form={form}
           providerAvailable={true}
-          onOpenChange={onOpenChange}
-          onChange={updateForm}
+          onOpenChange={handleDialogOpenChange}
+          onChange={handleFormChange}
           onSubmit={handleSubmit}
+          errorMessage={formError}
+          isSubmitting={isSubmitting}
         />
       ) : null}
 
