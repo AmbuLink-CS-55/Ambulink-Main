@@ -904,7 +904,13 @@ export class BookingCoreService {
     });
   }
 
-  private emitAllDispatchers(event: string, payload: unknown) {
+  private emitAllDispatchers(
+    event: string,
+    payload: {
+      providerId: string;
+      [key: string]: unknown;
+    }
+  ) {
     this.eventBus.publish({
       type: "realtime.dispatchers",
       event,

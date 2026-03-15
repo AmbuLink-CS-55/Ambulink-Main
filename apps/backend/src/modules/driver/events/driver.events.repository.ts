@@ -73,7 +73,7 @@ export class DriverEventsRepository {
     });
 
     return this.dbService.db
-      .select({ id: users.id })
+      .select({ id: users.id, providerId: users.providerId })
       .from(users)
       .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")));
   }

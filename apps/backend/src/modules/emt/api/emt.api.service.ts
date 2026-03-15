@@ -45,8 +45,13 @@ export class EmtApiService {
     return emt;
   }
 
-  async searchOngoingBookings(emtId: string, query: string, limit?: number) {
-    const emt = await this.findOne(emtId);
+  async searchOngoingBookings(
+    emtId: string,
+    query: string,
+    limit?: number,
+    providerId?: string
+  ) {
+    const emt = await this.findOne(emtId, providerId);
     if (!emt.providerId) {
       throw new BadRequestException("EMT is not attached to a provider");
     }
@@ -81,13 +86,13 @@ export class EmtApiService {
   }
 
   async remove(id: string, providerId?: string) {
-    await this.findOne(id, providerId);
+    const existing = await this.findOne(id, providerId);
     await this.emtRepository.removeEmt(id);
     this.eventBus.publish({
       type: "realtime.dispatchers",
       event: "emt:roster",
       payload: {
-        providerId: null,
+        providerId: existing.providerId,
         emt: { id },
         action: "removed",
       },

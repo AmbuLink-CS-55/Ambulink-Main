@@ -70,13 +70,13 @@ export class DriverApiService {
   }
 
   async remove(id: string, providerId?: string) {
-    await this.findOne(id, providerId);
+    const existing = await this.findOne(id, providerId);
     await this.driverRepository.removeDriver(id);
     this.eventBus.publish({
       type: "realtime.dispatchers",
       event: "driver:roster",
       payload: {
-        providerId: null,
+        providerId: existing.providerId,
         driver: { id },
         action: "removed",
       },

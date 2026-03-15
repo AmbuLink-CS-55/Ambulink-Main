@@ -57,13 +57,14 @@ export class EmtApiController {
   @Get("bookings/search")
   searchBookings(
     @Query("emtId") emtId: string | undefined,
-    @Query(Validate(emtBookingSearchQuerySchema)) query: EmtBookingSearchQueryDto
+    @Query(Validate(emtBookingSearchQuerySchema)) query: EmtBookingSearchQueryDto,
+    @CurrentUser() user: AuthUser
   ) {
     if (!emtId) {
       throw new BadRequestException("emtId is required");
     }
 
-    return this.emtService.searchOngoingBookings(emtId, query.q, query.limit);
+    return this.emtService.searchOngoingBookings(emtId, query.q, query.limit, user.providerId ?? undefined);
   }
 
   @Get(":id")

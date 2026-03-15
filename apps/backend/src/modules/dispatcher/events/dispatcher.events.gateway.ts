@@ -47,9 +47,9 @@ export class DispatcherEventsGateway implements OnGatewayInit, OnModuleDestroy {
       namespace: "/dispatcher",
       clientId: client.id,
     });
-    let dispatcherId: string;
+    let identity: { dispatcherId: string; providerId: string };
     try {
-      dispatcherId = this.extractSocketActorId(client, "dispatcherId");
+      identity = this.extractSocketIdentity(client, "dispatcherId");
     } catch (error) {
       console.warn("[socket] missing_auth", {
         namespace: "/dispatcher",
@@ -58,10 +58,12 @@ export class DispatcherEventsGateway implements OnGatewayInit, OnModuleDestroy {
       });
       return client.disconnect(true);
     }
+    const { dispatcherId, providerId } = identity;
     client.data.dispatcherId = dispatcherId;
     this.clearPendingOffline(dispatcherId);
     await this.dispatcherServise.setStatus(dispatcherId, "AVAILABLE");
     client.join(`dispatcher:${dispatcherId}`);
+    client.join(`dispatcher-provider:${providerId}`);
     this.emitActiveBookingSync(dispatcherId);
     this.emitPendingSync(dispatcherId);
     console.log("[socket] connected", {
@@ -71,7 +73,7 @@ export class DispatcherEventsGateway implements OnGatewayInit, OnModuleDestroy {
     });
   }
 
-  private extractSocketActorId(client: Socket, key: "dispatcherId") {
+  private extractSocketIdentity(client: Socket, key: "dispatcherId") {
     const accessToken =
       typeof client.handshake.auth?.accessToken === "string"
         ? client.handshake.auth.accessToken
@@ -85,6 +87,9 @@ export class DispatcherEventsGateway implements OnGatewayInit, OnModuleDestroy {
     if (!payload || payload.role !== "DISPATCHER") {
       throw new Error("Invalid socket access token");
     }
+    if (!payload.providerId) {
+      throw new Error("Dispatcher must belong to a provider");
+    }
 
     const authValue = client.handshake.auth?.[key];
     const queryValue = client.handshake.query?.[key];
@@ -97,7 +102,10 @@ export class DispatcherEventsGateway implements OnGatewayInit, OnModuleDestroy {
     if (providedValue && providedValue !== payload.sub) {
       throw new Error("Socket actor mismatch");
     }
-    return payload.sub;
+    return {
+      dispatcherId: payload.sub,
+      providerId: payload.providerId,
+    };
   }
 
   handleDisconnect(client: Socket) {

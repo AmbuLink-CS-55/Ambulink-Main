@@ -117,6 +117,7 @@ export class DriverEventsService {
     if (result.length === 0) {
       throw new NotFoundException(`Driver with id ${driverId} not found`);
     }
+    return result[0];
   }
 
   async clearDriverLocation(driverId: string) {
@@ -156,7 +157,7 @@ export class DriverEventsService {
 
   async updateLocation(driverId: string, data: DriverLocationPayload) {
     const { x, y } = data;
-    await this.setDriverLocation(driverId, y, x);
+    const updated = await this.setDriverLocation(driverId, y, x);
 
     const booking = await this.bookingService.getOngoingBookingDispatchInfoForDriver(driverId);
     if (booking?.patientId && booking.dispatcherId) {
@@ -200,16 +201,20 @@ export class DriverEventsService {
     const now = Date.now();
     const lastEmit = this.lastEmitTimes.get(driverId) || 0;
     if (now - lastEmit > 1000) {
-      this.eventBus.publish({
-        type: "realtime.dispatchers",
-        event: "driver:update",
-        payload: {
-          id: driverId,
-          x,
-          y,
-        },
-      });
-      this.lastEmitTimes.set(driverId, now);
+      const providerId = updated?.providerId;
+      if (providerId) {
+        this.eventBus.publish({
+          type: "realtime.dispatchers",
+          event: "driver:update",
+          payload: {
+            providerId,
+            id: driverId,
+            x,
+            y,
+          },
+        });
+        this.lastEmitTimes.set(driverId, now);
+      }
     }
   }
 
