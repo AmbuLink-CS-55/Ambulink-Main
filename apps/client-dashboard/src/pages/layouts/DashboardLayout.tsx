@@ -2,12 +2,14 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Outlet } from "react-router-dom";
 import { useDispatcherSocketSync } from "@/hooks/use-dispatcher-socket-sync";
+import { useDashboardUrlState } from "@/hooks/use-dashboard-url-state";
 import { useEffect } from "react";
 import { BookingRequestOverlay } from "@/pages/layouts/components/BookingRequestOverlay";
 import type { SocketErrorPayload } from "@/lib/socket-types";
 
 export function DashboardLayout() {
   const { socket, connected } = useDispatcherSocketSync();
+  const { sidebarOpen, setSidebarOpen } = useDashboardUrlState();
 
   // socket error logging
   useEffect(() => {
@@ -22,7 +24,7 @@ export function DashboardLayout() {
   }, [socket]);
 
   return (
-    <SidebarProvider>
+    <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <div className="flex h-screen w-full">
         <AppSidebar />
 

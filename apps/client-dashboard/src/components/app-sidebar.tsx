@@ -92,7 +92,7 @@ export function AppSidebar() {
                       <SidebarMenuButton
                         isActive={isActive}
                         aria-current={isActive ? "page" : undefined}
-                        render={<Link to={item.path} />}
+                        render={<Link to={{ pathname: item.path, search: location.search }} />}
                       >
                         <item.icon className="mr-2 size-4" />
                         <span>{item.title}</span>
@@ -119,7 +119,7 @@ export function AppSidebar() {
                       <SidebarMenuButton
                         isActive={isActive}
                         aria-current={isActive ? "page" : undefined}
-                        render={<Link to={item.path} />}
+                        render={<Link to={{ pathname: item.path, search: location.search }} />}
                       >
                         <item.icon className="mr-2 size-4" />
                         <span>{item.title}</span>

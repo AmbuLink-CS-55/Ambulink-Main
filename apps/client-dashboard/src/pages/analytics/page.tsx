@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Map as MapView, MapClusterLayer, MapControls, MapPopup } from "@/components/ui/map";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useDashboardUrlState } from "@/hooks/use-dashboard-url-state";
 import {
   useAnalyticsInsights,
   useAnalyticsResponse,
@@ -20,7 +21,6 @@ const TABS = [
   { value: "insights", label: "Insights" },
 ] as const;
 
-type AnalyticsTab = (typeof TABS)[number]["value"];
 type TimeRangeKey = "all" | "24h" | "7d" | "30d" | "custom";
 type ZoneClusterProperties = {
   key: string;
@@ -139,12 +139,12 @@ export default function AnalyticsPage() {
   const themeMode = useDashboardSettingsStore((state) => state.settings.themeMode);
   const mapTheme = resolveMapTheme(themeMode);
   const dispatcherId = getDispatcherId();
+  const { analyticsTab: tab, setAnalyticsTab, analyticsZoneLayer: zoneLayer, setAnalyticsZoneLayer } =
+    useDashboardUrlState();
 
-  const [tab, setTab] = useState<AnalyticsTab>("response");
   const [range, setRange] = useState<TimeRangeKey>("all");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
-  const [zoneLayer, setZoneLayer] = useState<"origins" | "destinations">("origins");
   const [selectedZonePoint, setSelectedZonePoint] = useState<{
     coordinates: [number, number];
     properties: ZoneClusterProperties;
@@ -293,7 +293,7 @@ export default function AnalyticsPage() {
             <Button
               key={item.value}
               variant={tab === item.value ? "primary" : "ghost"}
-              onClick={() => setTab(item.value)}
+              onClick={() => setAnalyticsTab(item.value)}
               className="w-full"
             >
               {item.label}
@@ -402,7 +402,7 @@ export default function AnalyticsPage() {
                 <Button
                   variant={zoneLayer === "origins" ? "primary" : "outline"}
                   onClick={() => {
-                    setZoneLayer("origins");
+                    setAnalyticsZoneLayer("origins");
                     setSelectedZonePoint(null);
                     setSelectedZoneCluster(null);
                   }}
@@ -412,7 +412,7 @@ export default function AnalyticsPage() {
                 <Button
                   variant={zoneLayer === "destinations" ? "primary" : "outline"}
                   onClick={() => {
-                    setZoneLayer("destinations");
+                    setAnalyticsZoneLayer("destinations");
                     setSelectedZonePoint(null);
                     setSelectedZoneCluster(null);
                   }}
