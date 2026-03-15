@@ -1,4 +1,4 @@
-import { Bell, Truck, X } from "lucide-react";
+import { Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { DispatcherToServerEvents, ServerToDispatcherEvents } from "@/lib/socket-types";
 import { cn } from "@/lib/utils";
@@ -51,7 +51,7 @@ export function BookingRequestOverlay({
           {overviewOpen ? (
             <X className="h-4 w-4 text-[color:var(--primary-foreground)]" />
           ) : (
-            <Truck className="h-4 w-4 text-[color:var(--primary-foreground)]" />
+            <img src="/ambulance.svg" alt="" aria-hidden="true" className="h-4 w-4" />
           )}
           {bookingRequests.length > 0 ? (
             <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-[color:var(--destructive)] text-[color:var(--card)] text-xs flex items-center justify-center font-semibold">
