@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   useGetAmbulances,
   useCreateAmbulance,
@@ -71,9 +71,8 @@ export default function AmbulancesDashboard() {
     [formError, updateForm]
   );
 
-  const rows = useMemo(() => ambulances.data ?? [], [ambulances.data]);
-
-  const columns = useMemo(() => createAmbulanceColumns(), []);
+  const rows = ambulances.data ?? [];
+  const columns = createAmbulanceColumns();
 
   const handleSubmit = useCallback(async () => {
     if (isSubmitting) return;

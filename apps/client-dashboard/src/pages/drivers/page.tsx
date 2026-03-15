@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { DataTable } from "@/components/VirtualizedTable";
@@ -39,10 +39,7 @@ export default function DriversDashboard() {
     staleTime: Infinity,
     enabled: false,
   });
-  const driverLocations = useMemo(
-    () => driverLocationsQuery.data ?? {},
-    [driverLocationsQuery.data]
-  );
+  const driverLocations = driverLocationsQuery.data ?? {};
 
   const drivers = useGetDrivers();
   const createInvite = useCreateStaffInvite();
@@ -98,15 +95,10 @@ export default function DriversDashboard() {
     [formError, updateForm]
   );
 
-  const rows = useMemo(() => drivers.data ?? [], [drivers.data]);
-
-  const columns = useMemo(
-    () =>
-      createDriverColumns({
-        driverLocations,
-      }),
-    [driverLocations]
-  );
+  const rows = drivers.data ?? [];
+  const columns = createDriverColumns({
+    driverLocations,
+  });
 
   const handleSubmit = useCallback(async () => {
     if (isSubmitting) return;

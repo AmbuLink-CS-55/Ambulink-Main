@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useState } from "react";
 import { DataTable } from "@/components/VirtualizedTable";
 import { Button } from "@/components/ui/button";
@@ -80,8 +80,8 @@ export default function EmtsDashboard() {
     [formError, updateForm]
   );
 
-  const rows = useMemo(() => emts.data ?? [], [emts.data]);
-  const columns = useMemo(() => createEmtColumns(), []);
+  const rows = emts.data ?? [];
+  const columns = createEmtColumns();
 
   const handleSubmit = useCallback(async () => {
     if (isSubmitting) return;

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -61,10 +61,7 @@ export default function AnalyticsAiPage() {
     },
   ]);
 
-  const resolvedRange = useMemo(
-    () => resolveRange(range, customFrom, customTo),
-    [range, customFrom, customTo]
-  );
+  const resolvedRange = resolveRange(range, customFrom, customTo);
 
   const onAsk = async () => {
     const normalized = question.trim();

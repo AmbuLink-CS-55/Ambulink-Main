@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { DataTable } from "@/components/VirtualizedTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,8 +75,8 @@ export default function DispatchersDashboard() {
     [formError, updateForm]
   );
 
-  const rows = useMemo(() => dispatchers.data ?? [], [dispatchers.data]);
-  const columns = useMemo(() => createDispatcherColumns(), []);
+  const rows = dispatchers.data ?? [];
+  const columns = createDispatcherColumns();
 
   const onCreateInvite = useCallback(async () => {
     setInviteError(null);

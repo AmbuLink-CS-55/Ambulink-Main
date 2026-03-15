@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { DataTable } from "@/components/VirtualizedTable";
 import { useGetBookingLog } from "@/services/booking.service";
 import { bookingLogColumns } from "@/pages/booking/components/booking-log-columns";
@@ -9,7 +9,7 @@ export default function BookingLogPage() {
 
   const bookingLog = useGetBookingLog();
 
-  const rows = useMemo(() => bookingLog.data ?? [], [bookingLog.data]);
+  const rows = bookingLog.data ?? [];
 
   return (
     <div className="p-6 space-y-4">
