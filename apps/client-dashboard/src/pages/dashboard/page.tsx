@@ -19,10 +19,12 @@ export default function Dashboard() {
   }, [error]);
 
   return (
-    <MapView theme={mapTheme} center={mapView.center} zoom={mapView.zoom}>
-      <MapControls position="bottom-right" showZoom showLocate className="mb-4" />
+    <div className="h-[calc(100vh-64px)] w-full">
+      <MapView theme={mapTheme} center={mapView.center} zoom={mapView.zoom}>
+        <MapControls position="bottom-right" showZoom showLocate className="mb-4" />
 
-      {hospitals ? <HospitalMarkersLayer hospitals={hospitals} /> : null}
-    </MapView>
+        {hospitals ? <HospitalMarkersLayer hospitals={hospitals} /> : null}
+      </MapView>
+    </div>
   );
 }

@@ -143,6 +143,7 @@ export const staffSignupSchema = z
 
 export const staffInviteCreateSchema = z.object({
   role: staffRoleSchema,
+  fullName: z.string().trim().min(2).max(255).optional(),
   email: z.string().email(),
   expiresInHours: z.coerce.number().int().min(1).max(168).default(48),
 });

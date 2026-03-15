@@ -257,6 +257,7 @@ export class AuthService {
       createdByUserId: actor.id,
       codeHash,
       tokenHash,
+      fullName: dto.fullName?.trim() || undefined,
       invitedEmail: dto.email?.trim().toLowerCase(),
       expiresAt,
     });
@@ -335,7 +336,7 @@ export class AuthService {
     if (!staff) {
       const [created] = await this.authRepository.createStaff({
         role,
-        fullName: null,
+        fullName: invite.fullName?.trim() || null,
         phoneNumber: null,
         email: invitedEmail,
         passwordHash,
@@ -352,9 +353,17 @@ export class AuthService {
         isActive: true,
       };
     } else {
-      await this.authRepository.updateStaffPasswordAndActive(staff.id, passwordHash, true);
+      await this.authRepository.updateStaffPasswordAndActive(
+        staff.id,
+        passwordHash,
+        true,
+        staff.fullName ? undefined : (invite.fullName?.trim() || undefined)
+      );
       staff.passwordHash = passwordHash;
       staff.isActive = true;
+      if (!staff.fullName && invite.fullName?.trim()) {
+        staff.fullName = invite.fullName.trim();
+      }
     }
 
     await this.authRepository.markStaffInviteAsUsed(invite.id);

@@ -21,6 +21,16 @@ export function toUiErrorMessage(error: unknown, fallback: string) {
       if (typeof first === "string" && !hasStatusCodeMessage(first)) {
         return first;
       }
+
+      const firstObjectMessage = apiMessage.find((item) => {
+        if (typeof item !== "object" || item === null || !("message" in item)) return false;
+        const msg = (item as { message?: unknown }).message;
+        return typeof msg === "string" && msg.trim().length > 0;
+      }) as { message?: string } | undefined;
+
+      if (firstObjectMessage?.message && !hasStatusCodeMessage(firstObjectMessage.message)) {
+        return firstObjectMessage.message;
+      }
     }
 
     if (error.code === "ERR_NETWORK") {

@@ -187,6 +187,7 @@ export class AuthRepository {
     createdByUserId: string;
     codeHash: string;
     tokenHash: string;
+    fullName?: string;
     invitedEmail?: string;
     expiresAt: Date;
   }) {
@@ -199,7 +200,7 @@ export class AuthRepository {
         username:
           input.invitedEmail?.split("@")[0]?.trim() ||
           `invite-${input.createdByUserId.slice(0, 8)}`,
-        fullName: null,
+        fullName: input.fullName ?? null,
         email: input.invitedEmail,
         phoneNumber: null,
         createdByDispatcherId: input.createdByUserId,
@@ -214,6 +215,7 @@ export class AuthRepository {
         id: staffInvites.id,
         providerId: staffInvites.providerId,
         role: staffInvites.role,
+        fullName: staffInvites.fullName,
         invitedEmail: staffInvites.invitedEmail,
         expiresAt: staffInvites.expiresAt,
       });
@@ -225,6 +227,7 @@ export class AuthRepository {
         id: staffInvites.id,
         providerId: staffInvites.providerId,
         role: staffInvites.role,
+        fullName: staffInvites.fullName,
         invitedEmail: staffInvites.invitedEmail,
         codeHash: staffInvites.codeHash,
         expiresAt: staffInvites.expiresAt,
@@ -260,14 +263,25 @@ export class AuthRepository {
       .where(eq(users.id, userId));
   }
 
-  updateStaffPasswordAndActive(userId: string, passwordHash: string, active: boolean) {
+  updateStaffPasswordAndActive(
+    userId: string,
+    passwordHash: string,
+    active: boolean,
+    fullName?: string
+  ) {
+    const updateData: Record<string, unknown> = {
+      passwordHash,
+      isActive: active,
+      updatedAt: new Date(),
+    };
+
+    if (fullName !== undefined) {
+      updateData.fullName = fullName;
+    }
+
     return this.dbService.db
       .update(users)
-      .set({
-        passwordHash,
-        isActive: active,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(users.id, userId));
   }
 }

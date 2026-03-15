@@ -109,11 +109,14 @@ export default function LoginPage() {
       setError(toUiErrorMessage(err, "Signup failed. Please review the form and try again."));
     }
   };
-  const hasFullName = signupFullName.trim().length > 0;
-  const hasPhoneNumber = signupPhoneNumber.trim().length > 0;
+  const hasFullName = signupFullName.trim().length >= 2;
+  const hasPhoneNumber = signupPhoneNumber.trim().length >= 5;
   const hasEmail = signupEmail.trim().length > 0;
   const hasPasswordLength = signupPassword.length >= 8;
-  const hasProviderName = signupProviderName.trim().length > 0;
+  const hasProviderName = signupProviderName.trim().length >= 2;
+  const hasValidHotline =
+    !signupHotlineNumber.trim() || signupHotlineNumber.trim().length >= 5;
+  const hasValidAddress = !signupAddress.trim() || signupAddress.trim().length >= 5;
   const hasValidEmailFormat = !hasEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signupEmail.trim());
   const hasValidInitialPrice =
     !signupInitialPrice.trim() || (!Number.isNaN(Number(signupInitialPrice)) && Number(signupInitialPrice) >= 0);
@@ -121,12 +124,14 @@ export default function LoginPage() {
     !signupPricePerKm.trim() || (!Number.isNaN(Number(signupPricePerKm)) && Number(signupPricePerKm) >= 0);
 
   const signupIssues: string[] = [];
-  if (!hasFullName) signupIssues.push("Full name is required.");
-  if (!hasPhoneNumber) signupIssues.push("Phone number is required.");
+  if (!hasFullName) signupIssues.push("Full name must be at least 2 characters.");
+  if (!hasPhoneNumber) signupIssues.push("Phone number must be at least 5 characters.");
   if (!hasEmail) signupIssues.push("Email is required.");
   if (hasEmail && !hasValidEmailFormat) signupIssues.push("Email format is invalid.");
   if (!hasPasswordLength) signupIssues.push("Password must be at least 8 characters.");
-  if (!hasProviderName) signupIssues.push("Organization name is required.");
+  if (!hasProviderName) signupIssues.push("Organization name must be at least 2 characters.");
+  if (!hasValidHotline) signupIssues.push("Hotline number must be at least 5 characters.");
+  if (!hasValidAddress) signupIssues.push("Address must be at least 5 characters.");
   if (!hasValidInitialPrice) signupIssues.push("Initial price must be a non-negative number.");
   if (!hasValidPricePerKm) signupIssues.push("Price per km must be a non-negative number.");
 
@@ -296,6 +301,7 @@ export default function LoginPage() {
               <FieldLabel>Organization hotline (optional)</FieldLabel>
               <Input
                 placeholder="e.g. +94 11 234 5678"
+                className={!hasValidHotline ? "border-[color:var(--destructive)]" : undefined}
                 value={signupHotlineNumber}
                 onChange={(event) => setSignupHotlineNumber(event.target.value)}
               />
@@ -304,6 +310,7 @@ export default function LoginPage() {
               <FieldLabel>Organization address (optional)</FieldLabel>
               <Input
                 placeholder="Street, city"
+                className={!hasValidAddress ? "border-[color:var(--destructive)]" : undefined}
                 value={signupAddress}
                 onChange={(event) => setSignupAddress(event.target.value)}
               />

@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import type {
   CreateDispatcherDto,
   UpdateDispatcherDto,
@@ -11,8 +16,10 @@ export class DispatcherApiService {
   constructor(private readonly dispatcherRepository: DispatcherApiRepository) {}
 
   async create(createDispatcherDto: CreateDispatcherDto) {
-    const [created] = await this.dispatcherRepository.createDispatcher(createDispatcherDto);
-    return created;
+    void createDispatcherDto;
+    throw new BadRequestException(
+      "Direct dispatcher creation is disabled. Use the Add Dispatcher invite flow on the Dispatch page."
+    );
   }
 
   async findAll(providerId?: string, isActive?: boolean, status?: UserStatus) {

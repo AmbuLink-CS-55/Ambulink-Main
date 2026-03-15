@@ -28,6 +28,7 @@ export type StaffInviteRole = "DISPATCHER" | "DRIVER" | "EMT";
 
 export type StaffInvitePayload = {
   role: StaffInviteRole;
+  fullName?: string;
   email: string;
   expiresInHours?: number;
 };

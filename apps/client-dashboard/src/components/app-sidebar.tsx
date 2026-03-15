@@ -22,7 +22,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   requestDispatcherNotificationPermission,
   setDispatcherDesktopNotificationsEnabled,
@@ -30,9 +29,7 @@ import {
 import { THEME_MODE_OPTIONS, type ThemeMode } from "@/lib/theme-mode";
 import { useDashboardSettingsStore } from "@/stores/dashboard-settings.store";
 import { useAuthStore } from "@/stores/auth.store";
-import { useCreateStaffInvite } from "@/services/auth.service";
 import { getDispatcherSocket } from "@/lib/dispatcher-socket";
-import { toUiErrorMessage } from "@/lib/ui-error";
 
 const MENU_ITEMS = [
   { title: "Dashboard Home", path: "/", icon: Map },
@@ -59,14 +56,6 @@ export function AppSidebar() {
   const updateSettings = useDashboardSettingsStore((state) => state.updateSettings);
   const clearSession = useAuthStore((state) => state.clearSession);
   const sessionUser = useAuthStore((state) => state.session?.user ?? null);
-  const isDispatcherAdmin = Boolean(sessionUser?.isDispatcherAdmin);
-  const createInvite = useCreateStaffInvite();
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteToken, setInviteToken] = useState<string | null>(null);
-  const [inviteLink, setInviteLink] = useState<string | null>(null);
-  const [inviteError, setInviteError] = useState<string | null>(null);
-  const [copiedInviteToken, setCopiedInviteToken] = useState(false);
-  const [copiedInviteLink, setCopiedInviteLink] = useState(false);
 
   useEffect(() => {
     if (desktopNotificationsEnabled) {
@@ -83,48 +72,6 @@ export function AppSidebar() {
 
   const onThemeModeChange = (nextMode: ThemeMode) => {
     updateSettings({ themeMode: nextMode });
-  };
-
-  const onCreateInvite = async () => {
-    setInviteError(null);
-    setInviteToken(null);
-    setInviteLink(null);
-    setCopiedInviteToken(false);
-    setCopiedInviteLink(false);
-    try {
-      const response = await createInvite.mutateAsync({
-        role: "DISPATCHER",
-        email: inviteEmail.trim(),
-      });
-      setInviteToken(response.inviteToken);
-      const base = window.location.origin.replace(/\/+$/, "");
-      setInviteLink(`${base}/login?inviteToken=${encodeURIComponent(response.inviteToken)}`);
-    } catch (error) {
-      console.error("[invite] create failed", error);
-      setInviteError(toUiErrorMessage(error, "Failed to generate invite token."));
-    }
-  };
-
-  const onCopyInviteToken = async () => {
-    if (!inviteToken) return;
-    try {
-      await navigator.clipboard.writeText(inviteToken);
-      setCopiedInviteToken(true);
-      setTimeout(() => setCopiedInviteToken(false), 1500);
-    } catch {
-      setInviteError("Failed to copy token");
-    }
-  };
-
-  const onCopyInviteLink = async () => {
-    if (!inviteLink) return;
-    try {
-      await navigator.clipboard.writeText(inviteLink);
-      setCopiedInviteLink(true);
-      setTimeout(() => setCopiedInviteLink(false), 1500);
-    } catch {
-      setInviteError("Failed to copy invite link");
-    }
   };
 
   return (
@@ -246,73 +193,14 @@ export function AppSidebar() {
               />
             </label>
             <div className="mt-6">
-              {sessionUser ? (
-                <p className="mb-3 text-xs text-muted-foreground">
-                  Signed in as {sessionUser.email ?? "dispatcher"}
-                </p>
-              ) : null}
-              <div className="mb-3 space-y-2 rounded-md border border-[color:var(--border)] p-3">
-                <div className="text-sm font-medium text-foreground">Invite Dispatcher</div>
-                <Input
-                  type="email"
-                  placeholder="Invite dispatcher email"
-                  value={inviteEmail}
-                  onChange={(event) => setInviteEmail(event.target.value)}
-                />
-                {isDispatcherAdmin ? (
-                  <Button
-                    variant="outline"
-                    className="w-full justify-center"
-                    onClick={() => void onCreateInvite()}
-                    disabled={createInvite.isPending || !inviteEmail.trim()}
-                  >
-                    {createInvite.isPending ? "Generating..." : "Generate Dispatcher Invite"}
-                  </Button>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Only dispatcher admins can generate invite links.
-                  </p>
-                )}
-                {inviteToken ? (
-                  <div className="rounded bg-muted/50 p-2 text-xs text-foreground">
-                    <p className="mb-2 text-muted-foreground">
-                      Share this link with the dispatcher to set their password and activate.
-                    </p>
-                    <p className="break-all">
-                      Token: <span className="font-bold">{inviteToken}</span>
-                    </p>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="mt-2 w-full justify-center"
-                      onClick={() => void onCopyInviteToken()}
-                    >
-                      {copiedInviteToken ? "Copied" : "Copy Token"}
-                    </Button>
-                    {inviteLink ? (
-                      <>
-                        <p className="mt-3 break-all">
-                          Invite link: <span className="font-bold">{inviteLink}</span>
-                        </p>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="mt-2 w-full justify-center"
-                          onClick={() => void onCopyInviteLink()}
-                        >
-                          {copiedInviteLink ? "Copied" : "Copy Invite Link"}
-                        </Button>
-                      </>
-                    ) : null}
-                  </div>
-                ) : null}
-                {inviteError ? <p className="text-xs text-destructive">{inviteError}</p> : null}
-              </div>
-              <Link
-                to="/login"
-                onClick={() => {
+            {sessionUser ? (
+              <p className="mb-3 text-xs text-muted-foreground">
+                Signed in as {sessionUser.email ?? "dispatcher"}
+              </p>
+            ) : null}
+            <Link
+              to="/login"
+              onClick={() => {
                   getDispatcherSocket().disconnect();
                   clearSession();
                   setSettingsOpen(false);
