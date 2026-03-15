@@ -14,7 +14,7 @@ export default function DriverSettingsScreen() {
         <Pressable
           onPress={() =>
             void signOut().then(() => {
-              router.replace("/(public)/login_modern");
+              router.replace("/(patient)/map");
             })
           }
           style={{

@@ -110,11 +110,18 @@ export default function UserMap({
                 latitude: driver.location!.y,
                 longitude: driver.location!.x,
               }}
-              pinColor="#2563eb"
               title={driver.fullName ?? "Nearby Driver"}
               description={`${driver.distanceKm.toFixed(1)} km away`}
               tracksViewChanges={false}
-            />
+            >
+              <View style={{ alignItems: "center", justifyContent: "center" }}>
+                <Image
+                  source={ambulanceIcon}
+                  style={{ width: 40, height: 40 }}
+                  contentFit="contain"
+                />
+              </View>
+            </Marker>
           ))}
 
         {safeHospitalLocation &&

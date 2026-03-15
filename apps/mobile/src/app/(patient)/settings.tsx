@@ -4,7 +4,6 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useRouter } from "expo-router";
 import i18n from "@/common/i18n/i18n";
 import { SettingsProvider, useSettings } from "@/common/hooks/SettingsContext";
-import { useAuthStore } from "@/common/hooks/AuthContext";
 
 // Sections
 import PersonalSection from "@/features/patient/components/settings/PersonalSection";
@@ -30,7 +29,6 @@ export default function Settings() {
 
 function SettingsContent() {
   const router = useRouter();
-  const signOut = useAuthStore((state) => state.signOut);
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const {
@@ -82,14 +80,12 @@ function SettingsContent() {
         <EmergencyContactsSection />
         <AppSettingsSection />
         <Pressable
-          className="mt-4 rounded-xl bg-slate-900 px-4 py-3"
-          onPress={() =>
-            void signOut().then(() => {
-              router.replace("/(public)/login_modern");
-            })
-          }
+          className="mt-4 rounded-xl border border-slate-300 bg-white px-4 py-3"
+          onPress={() => {
+            router.push("/(public)/login_modern");
+          }}
         >
-          <Text className="text-center text-white font-semibold">Sign Out</Text>
+          <Text className="text-center text-slate-900 font-semibold">Staff Login</Text>
         </Pressable>
         {activeModal === "bloodType" && (
           <BloodTypeModal

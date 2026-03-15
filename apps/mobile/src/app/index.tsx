@@ -13,7 +13,7 @@ export default function Index() {
 
   if (!hydrated) return null;
 
-  if (!role) return <Redirect href="/(public)/login_modern" />;
+  if (!role) return <Redirect href="/(patient)/map" />;
 
   if (role === "patient") return <Redirect href="/(patient)/map" />;
   if (role === "driver") return <Redirect href="/(driver)" />;

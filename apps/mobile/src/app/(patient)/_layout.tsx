@@ -45,14 +45,6 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="settings"
-          options={{
-            title: "Settings",
-            tabBarAccessibilityLabel: "Open settings",
-            tabBarIcon: ({ color, size }) => <Ionicons name="settings" size={size} color={color} />,
-          }}
-        />
-        <Tabs.Screen
           name="firstAid"
           options={{
             title: "First-Aid",
@@ -60,6 +52,14 @@ export default function TabLayout() {
             tabBarIcon: ({ color, size }) => (
               <FontAwesome5 name="first-aid" size={size} color={color} />
             ),
+          }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{
+            title: "Settings",
+            tabBarAccessibilityLabel: "Open settings",
+            tabBarIcon: ({ color, size }) => <Ionicons name="settings" size={size} color={color} />,
           }}
         />
       </Tabs>

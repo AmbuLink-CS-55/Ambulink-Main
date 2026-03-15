@@ -19,7 +19,6 @@ export default function LoginModern() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const signInStaff = useAuthStore((state) => state.signInStaff);
-  const signInAs = useAuthStore((state) => state.signInAs);
   const hydrated = useAuthStore((state) => state.hydrated);
 
   const [role, setRole] = useState<MobileStaffRole>("DRIVER");
@@ -42,7 +41,6 @@ export default function LoginModern() {
     return null;
   }
 
-  if (user?.role === "patient") return <Redirect href="/(patient)/map" />;
   if (user?.role === "driver") return <Redirect href="/(driver)" />;
   if (user?.role === "emt") return <Redirect href={"/(emt)" as never} />;
 
@@ -189,18 +187,8 @@ export default function LoginModern() {
           </View>
 
           <Pressable
-            onPress={() => {
-              signInAs("patient");
-              router.replace("/(patient)/map");
-            }}
-            style={{ marginTop: 12, alignItems: "center" }}
-          >
-            <Text style={{ color: "#0f172a", fontWeight: "700" }}>Continue As Patient</Text>
-          </Pressable>
-
-          <Pressable
             onPress={() => router.push("/(public)/scan-invite" as never)}
-            style={{ marginTop: 10, alignItems: "center" }}
+            style={{ marginTop: 12, alignItems: "center" }}
           >
             <Text style={{ color: "#334155", fontWeight: "600" }}>Scan Staff Invite QR</Text>
           </Pressable>
