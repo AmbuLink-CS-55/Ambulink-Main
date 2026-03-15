@@ -21,8 +21,10 @@ import {
   TouchableOpacity,
   Linking,
   Platform,
+  TextInput,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 // ─────────────────────────────────────────────
 // Types
@@ -142,6 +144,7 @@ const FIRST_AID_GUIDES: Guide[] = [
 
 export default function FirstAid() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
@@ -156,23 +159,96 @@ export default function FirstAid() {
     }
   };
 
+  const filteredGuides = FIRST_AID_GUIDES.filter((guide) =>
+    guide.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    guide.subtitle.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <View className="flex-1 bg-slate-50">
+      {/* ── Fixed Header ── */}
+      <View
+        style={{
+          backgroundColor: '#1e3a8a',
+          paddingTop: 60,
+          paddingBottom: 20,
+          paddingHorizontal: 20,
+          borderBottomLeftRadius: 32,
+          borderBottomRightRadius: 32,
+        }}
+      >
+        <View className="flex-row items-center justify-between mb-4">
+          <View>
+            <Text
+              style={{
+                fontSize: 28,
+                fontWeight: '800',
+                color: '#ffffff',
+                letterSpacing: -0.5,
+              }}
+            >
+              First Aid Guide
+            </Text>
+          </View>
+          <View
+            className="w-12 h-12 rounded-2xl items-center justify-center"
+            style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+          >
+            <MaterialCommunityIcons name="book-open-variant" size={24} color="#ffffff" />
+          </View>
+        </View>
+
+        {/* Search Bar */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: 'rgba(255,255,255,0.1)',
+            borderRadius: 16,
+            paddingHorizontal: 16,
+            height: 52,
+            borderWidth: 1,
+            borderColor: 'rgba(255,255,255,0.1)',
+          }}
+        >
+          <MaterialCommunityIcons name="magnify" size={20} color="#94a3b8" />
+          <TextInput
+            placeholder="Search emergency guides..."
+            placeholderTextColor="#64748b"
+            style={{
+              flex: 1,
+              marginLeft: 10,
+              color: '#ffffff',
+              fontSize: 15,
+              fontWeight: '500',
+            }}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery !== '' && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <MaterialCommunityIcons name="close-circle" size={18} color="#94a3b8" />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 130 }}
+        contentContainerStyle={{ paddingBottom: 110, paddingTop: 10 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Page title ── */}
-        <View className="mt-12 mb-4 px-5">
-          <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight">
-            First Aid Guide
+
+        {/* ── Section label ── */}
+        <View style={{ paddingHorizontal: 20, paddingTop: 22, paddingBottom: 8 }}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: '#94a3b8', letterSpacing: 1, textTransform: 'uppercase' }}>
+            Common Emergencies
           </Text>
         </View>
 
         {/* ── Cards ── */}
-        <View className="px-4 pt-2">
-          {FIRST_AID_GUIDES.map((guide, idx) => {
+        <View className="px-4">
+          {filteredGuides.map((guide, idx) => {
             const isExpanded = expandedId === guide.id;
 
             return (
@@ -343,38 +419,80 @@ export default function FirstAid() {
         </View>
       </ScrollView>
 
-      {/* ── Sticky Footer: Contact EMT ── */}
+      {/* ── Sticky Contact EMT Button ── */}
       <View
-        className="absolute bottom-0 left-0 right-0 px-5 pt-3 pb-6"
         style={{
-          backgroundColor: 'rgba(248, 250, 252, 0.97)',
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          paddingHorizontal: 16,
+          paddingTop: 12,
+          paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+          backgroundColor: 'rgba(255,255,255,0.95)',
           borderTopWidth: 1,
-          borderTopColor: '#e2e8f0',
+          borderTopColor: '#f1f5f9',
         }}
       >
         <TouchableOpacity
-          className="flex-row items-center bg-red-500 px-4 py-3 rounded-xl"
-          style={{
-            shadowColor: '#ef4444',
-            shadowOpacity: 0.35,
-            shadowRadius: 10,
-            shadowOffset: { width: 0, height: 4 },
-            elevation: 5,
-          }}
           onPress={handleContactEMT}
-          activeOpacity={0.85}
+          activeOpacity={0.9}
         >
-          {/* Phone icon circle */}
-          <View className="w-8 h-8 rounded-full bg-white items-center justify-center mr-3">
-            <MaterialCommunityIcons name="phone-in-talk" size={17} color="#ef4444" />
-          </View>
+          <LinearGradient
+            colors={['#2563eb', '#1d4ed8']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              borderRadius: 24,
+              paddingHorizontal: 20,
+              paddingVertical: 16,
+              shadowColor: '#2563eb',
+              shadowOpacity: 0.45,
+              shadowRadius: 15,
+              shadowOffset: { width: 0, height: 8 },
+              elevation: 10,
+            }}
+          >
+            <View
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                backgroundColor: 'rgba(255,255,255,0.15)',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 16,
+                borderWidth: 1,
+                borderColor: 'rgba(255,255,255,0.25)',
+              }}
+            >
+              <MaterialCommunityIcons name="phone-plus" size={26} color="#ffffff" />
+            </View>
 
-          <View className="flex-1">
-            <Text className="text-white font-bold text-[15px] tracking-wide">Contact EMT Now</Text>
-            <Text className="text-red-200 text-[11px] font-medium mt-0.5">Dials 1990 immediately</Text>
-          </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: '#ffffff', fontWeight: '900', fontSize: 18, letterSpacing: 0.5 }}>
+                CONTACT EMT
+              </Text>
+              <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2, fontWeight: '500' }}>
+                Instant emergency medical support
+              </Text>
+            </View>
 
-          <MaterialCommunityIcons name="chevron-right" size={18} color="rgba(255,255,255,0.6)" />
+            <View
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#ffffff" />
+            </View>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     </View>
