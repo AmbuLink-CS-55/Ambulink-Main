@@ -117,7 +117,7 @@ export default function PatientChatModal({
   const apiOrigin = env.EXPO_PUBLIC_API_SERVER_URL.replace(/\/api\/?$/, "");
   const toAttachmentUrl = (url: string) => {
     const absolute = url.startsWith("http://") || url.startsWith("https://");
-    return `${absolute ? url : `${apiOrigin}${url}`}?patientId=${env.EXPO_PUBLIC_PATIENT_ID}`;
+    return `${absolute ? url : `${apiOrigin}${url}`}`;
   };
   const onAudioStatus = (status: AVPlaybackStatus) => {
     if (!status.isLoaded) return;

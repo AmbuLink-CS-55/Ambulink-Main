@@ -21,12 +21,17 @@ import {
   startPatientUploadSession,
   submitPatientMediaNote,
 } from "@/common/lib/patientEvents";
-import { env } from "../../../env";
 import { useSocket } from "@/common/hooks/SocketContext";
+import { startGuestBooking } from "@/common/lib/staffAuth";
+import { useAuthStore } from "@/common/hooks/AuthContext";
 const PATIENT_BOOKING_TIMEOUT_MS = 40000;
 
 export default function Map() {
   const socket = useSocket();
+  const user = useAuthStore((state) => state.user);
+  const session = useAuthStore((state) => state.session);
+  const signInPatientGuest = useAuthStore((state) => state.signInPatientGuest);
+  const clearPatientSession = useAuthStore((state) => state.clearPatientSession);
   const locationState = useLocation();
   const { hospitals: nearbyHospitals } = useNearbyHospitals({
     x: locationState.location?.x,
@@ -131,10 +136,30 @@ export default function Map() {
     if (!locationState?.location) return;
 
     setIsBooking(true);
+    const needsGuestBootstrap = !session?.accessToken || !user?.id || user.id === "demo";
+    if (needsGuestBootstrap) {
+      try {
+        const started = await startGuestBooking({
+          x: locationState.location.x,
+          y: locationState.location.y,
+          patientSettings,
+        });
+        await signInPatientGuest({
+          patient: started.patient,
+          accessToken: started.accessToken,
+          expiresInSeconds: started.expiresInSeconds,
+        });
+      } catch (error) {
+        setIsBooking(false);
+        Alert.alert("Request Failed", error instanceof Error ? error.message : "Please try again.");
+      }
+      return;
+    }
+
     if (!uploadSessionId) {
       try {
-        const session = await startPatientUploadSession(env.EXPO_PUBLIC_PATIENT_ID);
-        setUploadSessionId(session.uploadSessionId);
+        const uploadSession = await startPatientUploadSession();
+        setUploadSessionId(uploadSession.uploadSessionId);
       } catch {
         // Session creation is best-effort; uploads can still start later from composer.
       }
@@ -151,7 +176,7 @@ export default function Map() {
     }, PATIENT_BOOKING_TIMEOUT_MS);
     try {
       await sendPatientHelp({
-        patientId: env.EXPO_PUBLIC_PATIENT_ID,
+        patientId: user?.id ?? "",
         x: locationState.location.x,
         y: locationState.location.y,
         patientSettings,
@@ -179,7 +204,7 @@ export default function Map() {
           }
           try {
             await sendPatientCancel({
-              patientId: env.EXPO_PUBLIC_PATIENT_ID,
+              patientId: user?.id ?? "",
               reason: "Cancelled by patient",
             });
 
@@ -207,8 +232,9 @@ export default function Map() {
     if (status === "COMPLETED" || status === "CANCELLED") {
       setChatOpen(false);
       setUploadSessionId(null);
+      void clearPatientSession();
     }
-  }, [status]);
+  }, [clearPatientSession, status]);
 
   const handleChatSend = async (params: {
     content?: string;
@@ -219,7 +245,7 @@ export default function Map() {
     try {
       let sessionId = uploadSessionId;
       if (!booking?.bookingId && !sessionId) {
-        const created = await startPatientUploadSession(env.EXPO_PUBLIC_PATIENT_ID);
+        const created = await startPatientUploadSession();
         sessionId = created.uploadSessionId;
         setUploadSessionId(sessionId);
       }

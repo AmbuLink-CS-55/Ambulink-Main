@@ -13,6 +13,7 @@ import {
 import { DriverApiService } from "./driver.api.service";
 import { AuthGuard } from "@/common/auth/auth.guard";
 import { DispatcherRoleGuard } from "@/common/auth/dispatcher-role.guard";
+import { DispatcherAdminGuard } from "@/common/auth/dispatcher-admin.guard";
 import { CurrentUser } from "@/common/auth/auth.decorators";
 import type { AuthUser } from "@/common/auth/auth.types";
 
@@ -21,6 +22,7 @@ export class DriverApiController {
   constructor(private readonly driverService: DriverApiService) {}
 
   @UseGuards(AuthGuard, DispatcherRoleGuard)
+  @UseGuards(DispatcherAdminGuard)
   @Post()
   create(
     @Body(Validate(createDriverSchema))
@@ -54,6 +56,7 @@ export class DriverApiController {
   }
 
   @UseGuards(AuthGuard, DispatcherRoleGuard)
+  @UseGuards(DispatcherAdminGuard)
   @Patch(":id")
   update(
     @Param("id") id: string,
@@ -68,6 +71,7 @@ export class DriverApiController {
   }
 
   @UseGuards(AuthGuard, DispatcherRoleGuard)
+  @UseGuards(DispatcherAdminGuard)
   @Delete(":id")
   remove(@Param("id") id: string, @CurrentUser() user: AuthUser) {
     return this.driverService.remove(id, user.providerId ?? undefined);

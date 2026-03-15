@@ -10,20 +10,20 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
-export type EmtFormState = {
+export type DispatcherFormState = {
   fullName: string;
   phoneNumber: string;
   email: string;
   passwordHash: string;
 };
 
-type EmtFormFieldsProps = {
-  form: EmtFormState;
-  onChange: <K extends keyof EmtFormState>(field: K, value: EmtFormState[K]) => void;
+type DispatcherFormFieldsProps = {
+  form: DispatcherFormState;
+  onChange: <K extends keyof DispatcherFormState>(field: K, value: DispatcherFormState[K]) => void;
   showPassword: boolean;
 };
 
-function EmtFormFields({ form, onChange, showPassword }: EmtFormFieldsProps) {
+function DispatcherFormFields({ form, onChange, showPassword }: DispatcherFormFieldsProps) {
   const fullNameId = useId();
   const phoneNumberId = useId();
   const emailId = useId();
@@ -64,7 +64,7 @@ function EmtFormFields({ form, onChange, showPassword }: EmtFormFieldsProps) {
           name="email"
           autoComplete="email"
           type="email"
-          placeholder="Enter EMT email"
+          placeholder="Enter dispatcher email"
           value={form.email}
           onChange={(e) => onChange("email", e.target.value)}
         />
@@ -89,11 +89,11 @@ function EmtFormFields({ form, onChange, showPassword }: EmtFormFieldsProps) {
   );
 }
 
-type BaseEmtDialogProps = {
+type BaseDispatcherDialogProps = {
   open: boolean;
-  form: EmtFormState;
+  form: DispatcherFormState;
   onOpenChange: (open: boolean) => void;
-  onChange: <K extends keyof EmtFormState>(field: K, value: EmtFormState[K]) => void;
+  onChange: <K extends keyof DispatcherFormState>(field: K, value: DispatcherFormState[K]) => void;
   title: string;
   submitLabel: string;
   showPassword: boolean;
@@ -101,7 +101,7 @@ type BaseEmtDialogProps = {
   onSubmit: () => void;
 };
 
-function BaseEmtFormDialog({
+function BaseDispatcherFormDialog({
   open,
   form,
   onOpenChange,
@@ -111,7 +111,7 @@ function BaseEmtFormDialog({
   showPassword,
   submitDisabled,
   onSubmit,
-}: BaseEmtDialogProps) {
+}: BaseDispatcherDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -120,7 +120,7 @@ function BaseEmtFormDialog({
           <DialogDescription>Provider cannot be changed.</DialogDescription>
         </DialogHeader>
 
-        <EmtFormFields form={form} onChange={onChange} showPassword={showPassword} />
+        <DispatcherFormFields form={form} onChange={onChange} showPassword={showPassword} />
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -135,7 +135,7 @@ function BaseEmtFormDialog({
   );
 }
 
-export function CreateEmtDialog({
+export function CreateDispatcherDialog({
   open,
   form,
   providerAvailable,
@@ -144,10 +144,10 @@ export function CreateEmtDialog({
   onSubmit,
 }: {
   open: boolean;
-  form: EmtFormState;
+  form: DispatcherFormState;
   providerAvailable: boolean;
   onOpenChange: (open: boolean) => void;
-  onChange: <K extends keyof EmtFormState>(field: K, value: EmtFormState[K]) => void;
+  onChange: <K extends keyof DispatcherFormState>(field: K, value: DispatcherFormState[K]) => void;
   onSubmit: () => void;
 }) {
   const submitDisabled =
@@ -158,13 +158,13 @@ export function CreateEmtDialog({
     !providerAvailable;
 
   return (
-    <BaseEmtFormDialog
+    <BaseDispatcherFormDialog
       open={open}
       form={form}
       onOpenChange={onOpenChange}
       onChange={onChange}
-      title="Add EMT"
-      submitLabel="Create EMT"
+      title="Add Dispatcher"
+      submitLabel="Create Dispatcher"
       showPassword={true}
       submitDisabled={submitDisabled}
       onSubmit={onSubmit}
@@ -172,7 +172,7 @@ export function CreateEmtDialog({
   );
 }
 
-export function EditEmtDialog({
+export function EditDispatcherDialog({
   open,
   form,
   onOpenChange,
@@ -180,20 +180,20 @@ export function EditEmtDialog({
   onSubmit,
 }: {
   open: boolean;
-  form: EmtFormState;
+  form: DispatcherFormState;
   onOpenChange: (open: boolean) => void;
-  onChange: <K extends keyof EmtFormState>(field: K, value: EmtFormState[K]) => void;
+  onChange: <K extends keyof DispatcherFormState>(field: K, value: DispatcherFormState[K]) => void;
   onSubmit: () => void;
 }) {
-  const submitDisabled = !form.fullName.trim() || !form.phoneNumber.trim();
+  const submitDisabled = !form.fullName.trim() || !form.phoneNumber.trim() || !form.email.trim();
 
   return (
-    <BaseEmtFormDialog
+    <BaseDispatcherFormDialog
       open={open}
       form={form}
       onOpenChange={onOpenChange}
       onChange={onChange}
-      title="Edit EMT"
+      title="Edit Dispatcher"
       submitLabel="Save Changes"
       showPassword={false}
       submitDisabled={submitDisabled}

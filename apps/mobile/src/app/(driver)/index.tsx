@@ -2,13 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Linking, ScrollView, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSocket } from "@/common/hooks/SocketContext";
+import { useAuthStore } from "@/common/hooks/AuthContext";
 import type {
   BookingAssignedPayload,
   BookingCancelledPayload,
   BookingEtaUpdatedPayload,
   BookingReroutedPayload,
 } from "@ambulink/types";
-import { env } from "../../../env";
 import { postDriverArrived, postDriverCompleted, postDriverShift } from "@/common/lib/driverEvents";
 import { useDriverShift } from "@/features/driver/hooks/useDriverShift";
 import { RideActions } from "@/features/driver/components/RideActions";
@@ -28,6 +28,7 @@ const SRI_LANKA_REGION = {
 export default function Home() {
   const insets = useSafeAreaInsets();
   const socket = useSocket();
+  const user = useAuthStore((state) => state.user);
   const isOnShift = useDriverShift((state) => state.isOnShift);
   const setOnShift = useDriverShift((state) => state.setOnShift);
   const [isShiftUpdating, setIsShiftUpdating] = useState(false);
@@ -122,6 +123,10 @@ export default function Home() {
   }, [isOnShift, socket]);
 
   const handleToggleShift = useCallback(async () => {
+    if (!user || user.role !== "driver") {
+      Alert.alert("Session Error", "Driver session is required.");
+      return;
+    }
     if (isOnShift && currentRide) {
       Alert.alert("Active Booking", "Complete or cancel the active booking before clocking out.");
       return;
@@ -131,7 +136,7 @@ export default function Home() {
     setIsShiftUpdating(true);
     try {
       await postDriverShift({
-        driverId: env.EXPO_PUBLIC_DRIVER_ID,
+        driverId: user.id,
         onShift: nextOnShift,
       });
       setOnShift(nextOnShift);
@@ -148,26 +153,34 @@ export default function Home() {
     } finally {
       setIsShiftUpdating(false);
     }
-  }, [currentRide, isOnShift, setOnShift]);
+  }, [currentRide, isOnShift, setOnShift, user]);
 
   const handleArrived = useCallback(async () => {
+    if (!user || user.role !== "driver") {
+      Alert.alert("Session Error", "Driver session is required.");
+      return;
+    }
     if (!currentRide || isArrivedUpdating) return;
     setIsArrivedUpdating(true);
     try {
-      await postDriverArrived({ driverId: env.EXPO_PUBLIC_DRIVER_ID });
+      await postDriverArrived({ driverId: user.id });
       setRideStatus("ARRIVED");
     } catch (error) {
       Alert.alert("Error", error instanceof Error ? error.message : "Failed to update ride status");
     } finally {
       setIsArrivedUpdating(false);
     }
-  }, [currentRide, isArrivedUpdating]);
+  }, [currentRide, isArrivedUpdating, user]);
 
   const handleCompleted = useCallback(async () => {
+    if (!user || user.role !== "driver") {
+      Alert.alert("Session Error", "Driver session is required.");
+      return;
+    }
     if (!currentRide || isCompletedUpdating) return;
     setIsCompletedUpdating(true);
     try {
-      await postDriverCompleted({ driverId: env.EXPO_PUBLIC_DRIVER_ID });
+      await postDriverCompleted({ driverId: user.id });
       setCurrentRide(null);
       setRideStatus("COMPLETED");
     } catch (error) {
@@ -175,7 +188,7 @@ export default function Home() {
     } finally {
       setIsCompletedUpdating(false);
     }
-  }, [currentRide, isCompletedUpdating]);
+  }, [currentRide, isCompletedUpdating, user]);
 
   const handleCall = useCallback((phone?: string) => {
     if (!phone) {

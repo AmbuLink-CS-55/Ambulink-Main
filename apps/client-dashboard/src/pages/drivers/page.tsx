@@ -1,10 +1,12 @@
 import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { DataTable } from "@/components/VirtualizedTable";
 import { Button } from "@/components/ui/button";
 import { useEntityFormDialog } from "@/hooks/use-entity-form-dialog";
 import { queryKeys } from "@/lib/queryKeys";
-import { useCreateDriver, useGetDrivers, useUpdateDriver } from "@/services/driver.service";
+import { useGetDrivers, useUpdateDriver } from "@/services/driver.service";
+import { useCreateStaffInvite } from "@/services/auth.service";
 import type { User } from "@/lib/types";
 import { createDriverColumns } from "@/pages/drivers/components/driver-columns";
 import {
@@ -12,6 +14,7 @@ import {
   EditDriverDialog,
   type DriverFormState,
 } from "@/pages/drivers/components/DriverFormDialog";
+import { useAuthStore } from "@/stores/auth.store";
 
 const initialForm: DriverFormState = {
   fullName: "",
@@ -21,6 +24,7 @@ const initialForm: DriverFormState = {
 };
 
 export default function DriversDashboard() {
+  const isDispatcherAdmin = useAuthStore((state) => Boolean(state.session?.user.isDispatcherAdmin));
   const driverLocationsQuery = useQuery<Record<string, { x: number; y: number }>>({
     queryKey: queryKeys.driverLocations(),
     queryFn: async () => ({}),
@@ -34,8 +38,13 @@ export default function DriversDashboard() {
   );
 
   const drivers = useGetDrivers();
-  const createDriver = useCreateDriver();
+  const createInvite = useCreateStaffInvite();
   const updateDriver = useUpdateDriver();
+  const [invitePayload, setInvitePayload] = useState<{
+    token: string;
+    email: string;
+    role: "DRIVER";
+  } | null>(null);
   const mapDriverToForm = useCallback(
     (driver: User) => ({
       fullName: driver.fullName ?? "",
@@ -80,12 +89,23 @@ export default function DriversDashboard() {
         },
       });
     } else {
-      await createDriver.mutateAsync(payload);
+      if (!payload.email) {
+        throw new Error("Email is required to generate onboarding invite.");
+      }
+      const invite = await createInvite.mutateAsync({
+        role: "DRIVER",
+        email: payload.email,
+      });
+      setInvitePayload({
+        token: invite.inviteToken,
+        email: payload.email,
+        role: "DRIVER",
+      });
     }
 
     reset();
   }, [
-    createDriver,
+    createInvite,
     editing,
     form.email,
     form.fullName,
@@ -102,7 +122,7 @@ export default function DriversDashboard() {
           <h1 className="text-2xl font-semibold">Drivers</h1>
           <p className="text-sm text-muted-foreground">Manage your roster.</p>
         </div>
-        <Button onClick={openForCreate}>Add Driver</Button>
+        {isDispatcherAdmin ? <Button onClick={openForCreate}>Add Driver</Button> : null}
       </div>
 
       <DataTable
@@ -111,10 +131,10 @@ export default function DriversDashboard() {
         height={640}
         rowHeight={56}
         rowKey={(row) => row.id}
-        onRowClick={openForEdit}
+        onRowClick={isDispatcherAdmin ? openForEdit : undefined}
       />
 
-      {editing ? (
+      {isDispatcherAdmin && editing ? (
         <EditDriverDialog
           open={isOpen}
           form={form}
@@ -122,7 +142,7 @@ export default function DriversDashboard() {
           onChange={updateForm}
           onSubmit={handleSubmit}
         />
-      ) : (
+      ) : isDispatcherAdmin ? (
         <CreateDriverDialog
           open={isOpen}
           form={form}
@@ -131,7 +151,29 @@ export default function DriversDashboard() {
           onChange={updateForm}
           onSubmit={handleSubmit}
         />
-      )}
+      ) : null}
+
+      {invitePayload ? (
+        <div className="rounded-md border p-4 space-y-2">
+          <h3 className="font-semibold">Driver Onboarding Invite</h3>
+          <p className="text-sm text-muted-foreground">
+            Assigned email: {invitePayload.email}
+          </p>
+          <p className="text-xs break-all">Invite token: {invitePayload.token}</p>
+          <img
+            alt="Driver invite QR"
+            className="h-40 w-40 rounded border"
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
+              JSON.stringify({
+                type: "staff_invite",
+                role: invitePayload.role,
+                inviteToken: invitePayload.token,
+                invitedEmail: invitePayload.email,
+              })
+            )}`}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

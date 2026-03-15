@@ -1,8 +1,9 @@
 import { useCallback, useMemo } from "react";
+import { useState } from "react";
 import { DataTable } from "@/components/VirtualizedTable";
 import { Button } from "@/components/ui/button";
 import { useEntityFormDialog } from "@/hooks/use-entity-form-dialog";
-import { useCreateEmt, useGetEmts, useUpdateEmt } from "@/services/emt.service";
+import { useGetEmts, useUpdateEmt } from "@/services/emt.service";
 import type { User } from "@/lib/types";
 import { createEmtColumns } from "@/pages/emts/components/emt-columns";
 import {
@@ -10,6 +11,8 @@ import {
   EditEmtDialog,
   type EmtFormState,
 } from "@/pages/emts/components/EmtFormDialog";
+import { useAuthStore } from "@/stores/auth.store";
+import { useCreateStaffInvite } from "@/services/auth.service";
 
 const initialForm: EmtFormState = {
   fullName: "",
@@ -19,9 +22,15 @@ const initialForm: EmtFormState = {
 };
 
 export default function EmtsDashboard() {
+  const isDispatcherAdmin = useAuthStore((state) => Boolean(state.session?.user.isDispatcherAdmin));
   const emts = useGetEmts();
-  const createEmt = useCreateEmt();
   const updateEmt = useUpdateEmt();
+  const createInvite = useCreateStaffInvite();
+  const [invitePayload, setInvitePayload] = useState<{
+    token: string;
+    email: string;
+    role: "EMT";
+  } | null>(null);
 
   const mapEmtToForm = useCallback(
     (emt: User) => ({
@@ -61,12 +70,23 @@ export default function EmtsDashboard() {
         },
       });
     } else {
-      await createEmt.mutateAsync(payload);
+      if (!payload.email) {
+        throw new Error("Email is required to generate onboarding invite.");
+      }
+      const invite = await createInvite.mutateAsync({
+        role: "EMT",
+        email: payload.email,
+      });
+      setInvitePayload({
+        token: invite.inviteToken,
+        email: payload.email,
+        role: "EMT",
+      });
     }
 
     reset();
   }, [
-    createEmt,
+    createInvite,
     editing,
     form.email,
     form.fullName,
@@ -83,7 +103,7 @@ export default function EmtsDashboard() {
           <h1 className="text-2xl font-semibold">EMTs</h1>
           <p className="text-sm text-muted-foreground">Manage your EMT roster.</p>
         </div>
-        <Button onClick={openForCreate}>Add EMT</Button>
+        {isDispatcherAdmin ? <Button onClick={openForCreate}>Add EMT</Button> : null}
       </div>
 
       <DataTable
@@ -92,10 +112,10 @@ export default function EmtsDashboard() {
         height={640}
         rowHeight={56}
         rowKey={(row) => row.id}
-        onRowClick={openForEdit}
+        onRowClick={isDispatcherAdmin ? openForEdit : undefined}
       />
 
-      {editing ? (
+      {isDispatcherAdmin && editing ? (
         <EditEmtDialog
           open={isOpen}
           form={form}
@@ -103,7 +123,7 @@ export default function EmtsDashboard() {
           onChange={updateForm}
           onSubmit={handleSubmit}
         />
-      ) : (
+      ) : isDispatcherAdmin ? (
         <CreateEmtDialog
           open={isOpen}
           form={form}
@@ -112,7 +132,29 @@ export default function EmtsDashboard() {
           onChange={updateForm}
           onSubmit={handleSubmit}
         />
-      )}
+      ) : null}
+
+      {invitePayload ? (
+        <div className="rounded-md border p-4 space-y-2">
+          <h3 className="font-semibold">EMT Onboarding Invite</h3>
+          <p className="text-sm text-muted-foreground">
+            Assigned email: {invitePayload.email}
+          </p>
+          <p className="text-xs break-all">Invite token: {invitePayload.token}</p>
+          <img
+            alt="EMT invite QR"
+            className="h-40 w-40 rounded border"
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
+              JSON.stringify({
+                type: "staff_invite",
+                role: invitePayload.role,
+                inviteToken: invitePayload.token,
+                invitedEmail: invitePayload.email,
+              })
+            )}`}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

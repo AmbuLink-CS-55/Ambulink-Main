@@ -3,14 +3,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SocketProvider } from "@/common/hooks/SocketContext";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import { useAuthStore } from "@/common/hooks/AuthContext";
 
 export default function TabLayout() {
+  const hasAccessToken = useAuthStore((state) => Boolean(state.session?.accessToken));
   const insets = useSafeAreaInsets();
   const tabBarBaseHeight = 56;
   const tabBarBottomPadding = Math.max(insets.bottom, 8);
 
   return (
-    <SocketProvider type="PATIENT" enabled>
+    <SocketProvider type="PATIENT" enabled={hasAccessToken}>
       <Tabs
         screenOptions={{
           headerShown: false,

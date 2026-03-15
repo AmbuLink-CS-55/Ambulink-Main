@@ -24,6 +24,7 @@ import {
 import { EmtApiService } from "./emt.api.service";
 import { AuthGuard } from "@/common/auth/auth.guard";
 import { DispatcherRoleGuard } from "@/common/auth/dispatcher-role.guard";
+import { DispatcherAdminGuard } from "@/common/auth/dispatcher-admin.guard";
 import { CurrentUser } from "@/common/auth/auth.decorators";
 import type { AuthUser } from "@/common/auth/auth.types";
 
@@ -33,6 +34,7 @@ export class EmtApiController {
   constructor(private readonly emtService: EmtApiService) {}
 
   @Post()
+  @UseGuards(DispatcherAdminGuard)
   create(
     @Body(Validate(createEmtSchema))
     body: CreateEmtDto,
@@ -70,6 +72,7 @@ export class EmtApiController {
   }
 
   @Patch(":id")
+  @UseGuards(DispatcherAdminGuard)
   update(
     @Param("id") id: string,
     @Body(Validate(updateEmtSchema))
@@ -83,6 +86,7 @@ export class EmtApiController {
   }
 
   @Delete(":id")
+  @UseGuards(DispatcherAdminGuard)
   remove(@Param("id") id: string, @CurrentUser() user: AuthUser) {
     return this.emtService.remove(id, user.providerId ?? undefined);
   }

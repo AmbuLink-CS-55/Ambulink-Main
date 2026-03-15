@@ -7,6 +7,7 @@ export type DispatcherSessionUser = {
   email: string | null;
   role: "DISPATCHER";
   providerId: string | null;
+  isDispatcherAdmin: boolean;
 };
 
 export type DispatcherSession = {

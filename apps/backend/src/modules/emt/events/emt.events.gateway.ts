@@ -14,6 +14,7 @@ import {
 import type { SocketErrorPayload } from "@ambulink/types";
 import { EmtEventsService } from "./emt.events.service";
 import { EmtEventsCommandService } from "./emt.events-command.service";
+import { verifyAuthToken } from "@/common/auth/auth-token";
 
 @WebSocketGateway({
   cors: {
@@ -148,22 +149,36 @@ export class EmtEventsGateway implements OnGatewayInit, OnModuleDestroy {
 
   private extractSocketActorId(
     client: Socket,
-    key: "patientId" | "driverId" | "dispatcherId" | "emtId"
+    key: "emtId"
   ) {
+    const accessToken =
+      typeof client.handshake.auth?.accessToken === "string"
+        ? client.handshake.auth.accessToken
+        : typeof client.handshake.query?.accessToken === "string"
+          ? client.handshake.query.accessToken
+          : null;
+    if (!accessToken) {
+      throw new Error("accessToken is required");
+    }
+    const payload = verifyAuthToken(accessToken);
+    if (!payload || payload.role !== "EMT") {
+      throw new Error("Invalid socket access token");
+    }
+
     const authValue = client.handshake.auth?.[key];
     const queryValue = client.handshake.query?.[key];
-    const value =
+    const providedValue =
       typeof authValue === "string"
         ? authValue
         : typeof queryValue === "string"
           ? queryValue
           : null;
 
-    if (!value) {
-      throw new Error(`${key} is required`);
+    if (providedValue && providedValue !== payload.sub) {
+      throw new Error("Socket actor mismatch");
     }
 
-    return value;
+    return payload.sub;
   }
 
   private clearPendingOffline(emtId: string) {

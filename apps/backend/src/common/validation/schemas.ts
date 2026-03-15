@@ -7,6 +7,7 @@ export const createPatientSchema = createInsertSchema(users).omit({
   role: true,
   providerId: true,
   isActive: true,
+  isDispatcherAdmin: true,
   createdAt: true,
   updatedAt: true,
   lastLoginAt: true,
@@ -22,6 +23,7 @@ export const createDriverSchema = createInsertSchema(users).omit({
   id: true,
   role: true,
   isActive: true,
+  isDispatcherAdmin: true,
   createdAt: true,
   updatedAt: true,
   lastLoginAt: true,
@@ -33,10 +35,27 @@ export const createDriverSchema = createInsertSchema(users).omit({
 
 export const updateDriverSchema = createDriverSchema.partial();
 
+export const createDispatcherSchema = createInsertSchema(users).omit({
+  id: true,
+  role: true,
+  isActive: true,
+  isDispatcherAdmin: true,
+  createdAt: true,
+  updatedAt: true,
+  lastLoginAt: true,
+  currentLocation: true,
+  lastLocationUpdate: true,
+  status: true,
+  subscribedBookingId: true,
+});
+
+export const updateDispatcherSchema = createDispatcherSchema.partial();
+
 export const createEmtSchema = createInsertSchema(users).omit({
   id: true,
   role: true,
   isActive: true,
+  isDispatcherAdmin: true,
   createdAt: true,
   updatedAt: true,
   lastLoginAt: true,
@@ -78,18 +97,70 @@ export const dispatcherSignupSchema = z
     phoneNumber: z.string().trim().min(5).max(50),
     email: z.string().email(),
     password: z.string().min(8).max(128),
-    providerId: z.string().uuid().optional(),
-    inviteToken: z.string().trim().min(16).max(256).optional(),
-  })
-  .refine((value) => Boolean(value.providerId || value.inviteToken), {
-    message: "Either providerId or inviteToken is required",
-    path: ["providerId"],
+    inviteToken: z.string().trim().min(16).max(256),
   });
 
+export const dispatcherBootstrapSignupSchema = z.object({
+  fullName: z.string().trim().min(2).max(255),
+  phoneNumber: z.string().trim().min(5).max(50),
+  email: z.string().email(),
+  password: z.string().min(8).max(128),
+  providerName: z.string().trim().min(2).max(255),
+  providerType: z.enum(["PUBLIC", "PRIVATE"]),
+  hotlineNumber: z.string().trim().min(5).max(50).optional(),
+  address: z.string().trim().min(5).max(500).optional(),
+  initialPrice: z.coerce.number().nonnegative().max(9999999999.99).optional(),
+  pricePerKm: z.coerce.number().nonnegative().max(9999999999.99).optional(),
+});
+
 export const dispatcherInviteCreateSchema = z.object({
-  email: z.string().email().optional(),
+  email: z.string().email(),
   expiresInHours: z.coerce.number().int().min(1).max(168).default(48),
 });
+
+export const dispatcherInviteLoginSchema = z.object({
+  inviteToken: z.string().trim().min(16).max(256),
+  password: z.string().min(8).max(128),
+});
+
+export const staffRoleSchema = z.enum(["DISPATCHER", "DRIVER", "EMT"]);
+
+export const staffLoginSchema = z.object({
+  role: staffRoleSchema,
+  email: z.string().email(),
+  password: z.string().min(8).max(128),
+});
+
+export const staffSignupSchema = z
+  .object({
+    role: staffRoleSchema,
+    fullName: z.string().trim().min(2).max(255),
+    phoneNumber: z.string().trim().min(5).max(50),
+    email: z.string().email(),
+    password: z.string().min(8).max(128),
+    inviteToken: z.string().trim().min(16).max(256),
+  });
+
+export const staffInviteCreateSchema = z.object({
+  role: staffRoleSchema,
+  email: z.string().email(),
+  expiresInHours: z.coerce.number().int().min(1).max(168).default(48),
+});
+
+export const staffInvitePreviewQuerySchema = z.object({
+  inviteToken: z.string().trim().min(16).max(256),
+});
+
+export const staffInviteActivateSchema = z
+  .object({
+    inviteToken: z.string().trim().min(16).max(256),
+    password: z.string().min(8).max(128),
+    confirmPassword: z.string().min(8).max(128),
+  })
+  .refine((value) => value.password === value.confirmPassword, {
+    message: "Password and confirmPassword must match",
+    path: ["confirmPassword"],
+  });
 
 const pointSchema = z.object({
   x: z.number(),
@@ -142,6 +213,15 @@ export const hospitalNearbyQuerySchema = z.object({
 });
 
 export const driverListQuerySchema = z.object({
+  providerId: z.string().uuid().optional(),
+  isActive: z
+    .enum(["true", "false"])
+    .transform((value) => value === "true")
+    .optional(),
+  status: z.enum(["AVAILABLE", "BUSY", "OFFLINE"]).optional(),
+});
+
+export const dispatcherListQuerySchema = z.object({
   providerId: z.string().uuid().optional(),
   isActive: z
     .enum(["true", "false"])
@@ -261,6 +341,8 @@ export type UpdatePatientDto = z.infer<typeof updatePatientSchema>;
 
 export type CreateDriverDto = z.infer<typeof createDriverSchema>;
 export type UpdateDriverDto = z.infer<typeof updateDriverSchema>;
+export type CreateDispatcherDto = z.infer<typeof createDispatcherSchema>;
+export type UpdateDispatcherDto = z.infer<typeof updateDispatcherSchema>;
 export type CreateEmtDto = z.infer<typeof createEmtSchema>;
 export type UpdateEmtDto = z.infer<typeof updateEmtSchema>;
 
@@ -271,12 +353,21 @@ export type CreateAmbulanceProviderDto = z.infer<typeof createAmbulanceProviderS
 export type UpdateAmbulanceProviderDto = z.infer<typeof updateAmbulanceProviderSchema>;
 export type DispatcherLoginDto = z.infer<typeof dispatcherLoginSchema>;
 export type DispatcherSignupDto = z.infer<typeof dispatcherSignupSchema>;
+export type DispatcherBootstrapSignupDto = z.infer<typeof dispatcherBootstrapSignupSchema>;
 export type DispatcherInviteCreateDto = z.infer<typeof dispatcherInviteCreateSchema>;
+export type DispatcherInviteLoginDto = z.infer<typeof dispatcherInviteLoginSchema>;
+export type StaffRoleDto = z.infer<typeof staffRoleSchema>;
+export type StaffLoginDto = z.infer<typeof staffLoginSchema>;
+export type StaffSignupDto = z.infer<typeof staffSignupSchema>;
+export type StaffInviteCreateDto = z.infer<typeof staffInviteCreateSchema>;
+export type StaffInvitePreviewQueryDto = z.infer<typeof staffInvitePreviewQuerySchema>;
+export type StaffInviteActivateDto = z.infer<typeof staffInviteActivateSchema>;
 export type ManualAssignBookingDto = z.infer<typeof manualAssignBookingSchema>;
 export type ReassignBookingDto = z.infer<typeof reassignBookingSchema>;
 export type DriverNearbyQueryDto = z.infer<typeof driverNearbyQuerySchema>;
 export type HospitalNearbyQueryDto = z.infer<typeof hospitalNearbyQuerySchema>;
 export type DriverListQueryDto = z.infer<typeof driverListQuerySchema>;
+export type DispatcherListQueryDto = z.infer<typeof dispatcherListQuerySchema>;
 export type EmtListQueryDto = z.infer<typeof emtListQuerySchema>;
 export type BookingListQueryDto = z.infer<typeof bookingListQuerySchema>;
 export type BookingDetailsQueryDto = z.infer<typeof bookingDetailsQuerySchema>;

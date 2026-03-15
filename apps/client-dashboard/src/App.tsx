@@ -12,6 +12,7 @@ import { useAuthStore } from "@/stores/auth.store";
 const Dashboard = lazy(() => import("./pages/dashboard/page"));
 const LoginPage = lazy(() => import("./pages/login"));
 const AmbulancesDashboard = lazy(() => import("./pages/ambulances/page"));
+const DispatchersDashboard = lazy(() => import("./pages/dispatchers/page"));
 const DriversDashboard = lazy(() => import("./pages/drivers/page"));
 const EmtsDashboard = lazy(() => import("./pages/emts/page"));
 const PatientsDashboard = lazy(() => import("./pages/patients/page"));
@@ -98,6 +99,7 @@ export function App() {
             >
               <Route path="/" element={<Dashboard />} />
               <Route path="/ambulances" element={<AmbulancesDashboard />} />
+              <Route path="/dispatcher" element={<DispatchersDashboard />} />
               <Route path="/drivers" element={<DriversDashboard />} />
               <Route path="/emts" element={<EmtsDashboard />} />
               <Route path="/patients" element={<PatientsDashboard />} />

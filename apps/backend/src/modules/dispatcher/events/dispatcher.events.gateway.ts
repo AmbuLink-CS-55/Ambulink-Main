@@ -14,6 +14,7 @@ import { DispatcherEventsService } from "./dispatcher.events.service";
 import { DispatcherEventsPendingRequestService } from "./dispatcher.events-pending-request.service";
 import { dispatcherDecisionSubmitPayloadSchema } from "@/common/validation/socket.schemas";
 import type { SocketErrorPayload } from "@ambulink/types";
+import { verifyAuthToken } from "@/common/auth/auth-token";
 
 @WebSocketGateway({
   cors: {
@@ -70,19 +71,33 @@ export class DispatcherEventsGateway implements OnGatewayInit, OnModuleDestroy {
     });
   }
 
-  private extractSocketActorId(client: Socket, key: "patientId" | "driverId" | "dispatcherId") {
+  private extractSocketActorId(client: Socket, key: "dispatcherId") {
+    const accessToken =
+      typeof client.handshake.auth?.accessToken === "string"
+        ? client.handshake.auth.accessToken
+        : typeof client.handshake.query?.accessToken === "string"
+          ? client.handshake.query.accessToken
+          : null;
+    if (!accessToken) {
+      throw new Error("accessToken is required");
+    }
+    const payload = verifyAuthToken(accessToken);
+    if (!payload || payload.role !== "DISPATCHER") {
+      throw new Error("Invalid socket access token");
+    }
+
     const authValue = client.handshake.auth?.[key];
     const queryValue = client.handshake.query?.[key];
-    const value =
+    const providedValue =
       typeof authValue === "string"
         ? authValue
         : typeof queryValue === "string"
           ? queryValue
           : null;
-    if (!value) {
-      throw new Error(`${key} is required`);
+    if (providedValue && providedValue !== payload.sub) {
+      throw new Error("Socket actor mismatch");
     }
-    return value;
+    return payload.sub;
   }
 
   handleDisconnect(client: Socket) {

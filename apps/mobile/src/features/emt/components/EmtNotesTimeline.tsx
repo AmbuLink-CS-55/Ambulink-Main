@@ -44,7 +44,7 @@ export default function EmtNotesTimeline({ notes, currentEmtId }: Props) {
   const toAttachmentUrl = (rawUrl: string) => {
     const absolute = rawUrl.startsWith("http://") || rawUrl.startsWith("https://");
     const base = absolute ? rawUrl : `${apiOrigin}${rawUrl}`;
-    return `${base}?emtId=${env.EXPO_PUBLIC_EMT_ID}`;
+    return `${base}?emtId=${currentEmtId}`;
   };
   const formatter = useMemo(
     () =>

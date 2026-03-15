@@ -6,6 +6,7 @@ import {
   NotFoundException,
   forwardRef,
 } from "@nestjs/common";
+import { createHash, randomBytes } from "crypto";
 import { and, eq } from "drizzle-orm";
 import type { PatientCancelRequest, PatientPickupRequest } from "@ambulink/types";
 import { EventBusService } from "@/core/events/event-bus.service";
@@ -17,6 +18,7 @@ import { HospitalEventsService } from "@/modules/hospital/events/hospital.events
 import { DispatcherEventsApprovalService } from "@/modules/dispatcher/events/dispatcher.events-approval.service";
 import type { UploadedMediaFile } from "@/modules/booking/booking-media.service";
 import type { ManualAssignBookingDto } from "@/common/validation/schemas";
+import { signAuthToken } from "@/common/auth/auth-token";
 import { PatientEventsRepository } from "./patient.events.repository";
 
 @Injectable()
@@ -260,6 +262,68 @@ export class PatientEventsService {
         message: "Booking cancelled successfully",
       },
     });
+    await this.patientRepository.updateGuestSessionStatusByPatient(patientId, "CANCELLED");
+  }
+
+  async startGuestBookingAndRequestHelp(data: PatientPickupRequest) {
+    const randomIdentity = randomBytes(12).toString("hex");
+    const now = Date.now();
+
+    const [patient] = await this.patientRepository.createPatient({
+      fullName: "Guest",
+      phoneNumber: null,
+      email: `guest.${randomIdentity}@ambulink.local`,
+      passwordHash: `guest_${now}_${randomIdentity}`,
+      providerId: null,
+      currentLocation: { x: data.x, y: data.y },
+    });
+
+    if (!patient) {
+      throw new ConflictException("Failed to create guest patient");
+    }
+
+    const rawSessionToken = randomBytes(24).toString("hex");
+    const tokenHash = createHash("sha256").update(rawSessionToken).digest("hex");
+    const expiresAt = new Date(now + 24 * 60 * 60 * 1000);
+    const [session] = await this.patientRepository.createGuestSession({
+      patientId: patient.id,
+      tokenHash,
+      expiresAt,
+    });
+
+    await this.requestHelp(patient.id, data);
+
+    const activeBooking = await this.bookingService.getActiveBookingForPatient(patient.id);
+    if (session && activeBooking?.id) {
+      await this.patientRepository.attachSessionBooking(session.id, activeBooking.id);
+    }
+
+    const auth = signAuthToken({
+      id: patient.id,
+      role: "PATIENT",
+      providerId: null,
+      email: patient.email ?? null,
+      fullName: patient.fullName ?? "Guest",
+      isDispatcherAdmin: false,
+    });
+
+    return {
+      accessToken: auth.accessToken,
+      expiresInSeconds: auth.expiresInSeconds,
+      patient: {
+        id: patient.id,
+        fullName: patient.fullName,
+        email: patient.email,
+      },
+      guestSession: session
+        ? {
+            id: session.id,
+            bookingId: activeBooking?.id ?? session.bookingId,
+            expiresAt: session.expiresAt,
+            status: session.status,
+          }
+        : null,
+    };
   }
 
   async startUploadSession(patientId: string) {

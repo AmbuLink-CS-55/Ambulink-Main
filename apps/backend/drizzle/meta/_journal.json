@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1772691913355,
-      "tag": "0000_daily_mister_sinister",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1773564000000,
-      "tag": "0001_dispatcher_auth_invites",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1773562009646,
-      "tag": "0002_hard_omega_sentinel",
+      "when": 1773574511229,
+      "tag": "0000_brown_black_panther",
       "breakpoints": true
     }
   ]

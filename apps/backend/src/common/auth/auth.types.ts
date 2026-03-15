@@ -6,6 +6,7 @@ export type AuthUser = {
   providerId: string | null;
   email: string | null;
   fullName: string | null;
+  isDispatcherAdmin: boolean;
 };
 
 export type AuthTokenPayload = {
@@ -14,6 +15,7 @@ export type AuthTokenPayload = {
   providerId: string | null;
   email: string | null;
   fullName: string | null;
+  isDispatcherAdmin: boolean;
   exp: number;
   iat: number;
 };

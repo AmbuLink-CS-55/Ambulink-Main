@@ -63,6 +63,8 @@ function DriverFormFields({ form, onChange, showPassword }: DriverFormFieldsProp
           id={emailId}
           name="email"
           autoComplete="email"
+          type="email"
+          placeholder="Enter driver email"
           value={form.email}
           onChange={(e) => onChange("email", e.target.value)}
         />
@@ -77,6 +79,7 @@ function DriverFormFields({ form, onChange, showPassword }: DriverFormFieldsProp
             name="password"
             autoComplete="new-password"
             type="password"
+            placeholder="Minimum 8 characters"
             value={form.passwordHash}
             onChange={(e) => onChange("passwordHash", e.target.value)}
           />
@@ -150,7 +153,8 @@ export function CreateDriverDialog({
   const submitDisabled =
     !form.fullName.trim() ||
     !form.phoneNumber.trim() ||
-    !form.passwordHash.trim() ||
+    !form.email.trim() ||
+    form.passwordHash.trim().length < 8 ||
     !providerAvailable;
 
   return (

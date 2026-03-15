@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { eq, and } from "drizzle-orm";
-import { users } from "@/core/database/schema";
+import { patientGuestSessions, users } from "@/core/database/schema";
 import { DbExecutor, DbService } from "@/core/database/db.service";
 import type { NewUser, UserStatus } from "@/core/database/schema";
 
@@ -60,5 +60,46 @@ export class PatientEventsRepository {
       .set({ currentLocation: location, lastLocationUpdate: new Date(), updatedAt: new Date() })
       .where(eq(users.id, userId))
       .returning(this.safeUserColumns);
+  }
+
+  createGuestSession(
+    input: { patientId: string; tokenHash: string; expiresAt: Date },
+    db: DbExecutor = this.dbService.db
+  ) {
+    return db
+      .insert(patientGuestSessions)
+      .values({
+        patientId: input.patientId,
+        tokenHash: input.tokenHash,
+        expiresAt: input.expiresAt,
+        status: "ACTIVE",
+      })
+      .returning({
+        id: patientGuestSessions.id,
+        patientId: patientGuestSessions.patientId,
+        bookingId: patientGuestSessions.bookingId,
+        status: patientGuestSessions.status,
+        expiresAt: patientGuestSessions.expiresAt,
+      });
+  }
+
+  attachSessionBooking(sessionId: string, bookingId: string, db: DbExecutor = this.dbService.db) {
+    return db
+      .update(patientGuestSessions)
+      .set({
+        bookingId,
+        updatedAt: new Date(),
+      })
+      .where(eq(patientGuestSessions.id, sessionId));
+  }
+
+  updateGuestSessionStatusByPatient(patientId: string, status: "COMPLETED" | "CANCELLED") {
+    return this.dbService.db
+      .update(patientGuestSessions)
+      .set({
+        status,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(patientGuestSessions.patientId, patientId), eq(patientGuestSessions.status, "ACTIVE")));
   }
 }

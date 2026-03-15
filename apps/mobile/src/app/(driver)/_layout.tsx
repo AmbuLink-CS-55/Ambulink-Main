@@ -7,7 +7,6 @@ import { useDriverHistory } from "@/features/driver/hooks/useDriverHistory";
 import { useDriverShift } from "@/features/driver/hooks/useDriverShift";
 import Ionicons from "@expo/vector-icons/build/Ionicons";
 import { apiGet } from "@/common/lib/api";
-import { env } from "../../../env";
 
 function DriverHistoryListener() {
   useDriverHistory();
@@ -18,7 +17,7 @@ export default function TabLayout() {
   const { user } = useAuthStore();
   const isOnShift = useDriverShift((state) => state.isOnShift);
   const setOnShift = useDriverShift((state) => state.setOnShift);
-  useDriverTracking(isOnShift);
+  useDriverTracking(isOnShift, user?.role === "driver" ? user.id : undefined);
 
   useEffect(() => {
     if (!user || user.role !== "driver") return;
@@ -27,7 +26,7 @@ export default function TabLayout() {
     const hydrateShiftState = async () => {
       try {
         const driver = await apiGet<{ status?: "AVAILABLE" | "BUSY" | "OFFLINE" | null }>(
-          `/api/drivers/${env.EXPO_PUBLIC_DRIVER_ID}`
+          `/api/drivers/${user.id}`
         );
         if (!isMounted) return;
         setOnShift(driver.status === "AVAILABLE" || driver.status === "BUSY");
@@ -43,8 +42,8 @@ export default function TabLayout() {
     };
   }, [setOnShift, user]);
 
-  if (!user) return <Redirect href="/(public)/login" />;
-  if (user.role !== "driver") return <Redirect href="/login" />;
+  if (!user) return <Redirect href="/(public)/login_modern" />;
+  if (user.role !== "driver") return <Redirect href="/" />;
 
   return (
     <SocketProvider type="DRIVER" enabled={isOnShift}>
@@ -66,8 +65,15 @@ export default function TabLayout() {
             ),
           }}
         />
-
-        {/*<Tabs.Screen name="settings" options={{ title: "Settings" }} />*/}
+        <Tabs.Screen
+          name="settings"
+          options={{
+            title: "Settings",
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="settings-outline" size={size} color={color} />
+            ),
+          }}
+        />
       </Tabs>
     </SocketProvider>
   );

@@ -50,6 +50,7 @@ export function signAuthToken(user: AuthUser): { accessToken: string; expiresInS
     providerId: user.providerId,
     email: user.email,
     fullName: user.fullName,
+    isDispatcherAdmin: user.isDispatcherAdmin,
     iat: now,
     exp: now + expiresInSeconds,
   };

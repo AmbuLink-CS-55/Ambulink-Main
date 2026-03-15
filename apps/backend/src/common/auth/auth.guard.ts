@@ -35,6 +35,7 @@ export class AuthGuard implements CanActivate {
       providerId: payload.providerId,
       email: payload.email,
       fullName: payload.fullName,
+      isDispatcherAdmin: payload.isDispatcherAdmin ?? false,
     };
 
     return true;

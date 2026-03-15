@@ -1,8 +1,10 @@
-import { View, ScrollView, Text } from "react-native";
+import { View, ScrollView, Text, Pressable } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useRouter } from "expo-router";
 import i18n from "@/common/i18n/i18n";
 import { SettingsProvider, useSettings } from "@/common/hooks/SettingsContext";
+import { useAuthStore } from "@/common/hooks/AuthContext";
 
 // Sections
 import PersonalSection from "@/features/patient/components/settings/PersonalSection";
@@ -27,6 +29,8 @@ export default function Settings() {
 }
 
 function SettingsContent() {
+  const router = useRouter();
+  const signOut = useAuthStore((state) => state.signOut);
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const {
@@ -77,6 +81,16 @@ function SettingsContent() {
         <MedicalSection />
         <EmergencyContactsSection />
         <AppSettingsSection />
+        <Pressable
+          className="mt-4 rounded-xl bg-slate-900 px-4 py-3"
+          onPress={() =>
+            void signOut().then(() => {
+              router.replace("/(public)/login_modern");
+            })
+          }
+        >
+          <Text className="text-center text-white font-semibold">Sign Out</Text>
+        </Pressable>
         {activeModal === "bloodType" && (
           <BloodTypeModal
             visible
