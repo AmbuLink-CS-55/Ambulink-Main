@@ -1,5 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Text, Alert, View, ActivityIndicator } from "react-native";
+import {
+  Text,
+  Alert,
+  View,
+  ActivityIndicator,
+  Linking,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
 import MapOptions from "@/features/patient/components/MapOptions";
 import PatientChatModal from "@/features/patient/components/PatientChatModal";
 import UserMap from "@/features/patient/components/UserMap";
@@ -26,6 +34,21 @@ import { useSocket } from "@/common/hooks/SocketContext";
 const PATIENT_BOOKING_TIMEOUT_MS = 40000;
 
 export default function Map() {
+
+  // Sos button functionality
+  const callEmergency = () => {
+    const phoneNumber = "tel:119";
+
+    Linking.canOpenURL(phoneNumber)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(phoneNumber);
+        } else {
+          Alert.alert("Error", "Phone call is not supported on this device");
+        }
+      })
+      .catch((err) => console.log(err));
+  };
   const socket = useSocket();
   const locationState = useLocation();
   const { hospitals: nearbyHospitals } = useNearbyHospitals({
@@ -34,6 +57,7 @@ export default function Map() {
     limit: 6,
     radiusKm: 12,
   });
+
   const { drivers: nearbyDrivers } = useNearbyDrivers({
     x: locationState.location?.x,
     y: locationState.location?.y,
@@ -270,6 +294,11 @@ export default function Map() {
         }
       }
     >
+      {/* SOS button */}
+      <TouchableOpacity style={styles.sosButton} onPress={callEmergency}>
+        <Text style={styles.sosText}>SOS</Text>
+      </TouchableOpacity>
+
       <MapOptions
         bookingAssigned={status !== "COMPLETED"}
         status={status}
@@ -291,3 +320,25 @@ export default function Map() {
     </UserMap>
   );
 }
+
+// Sos butoon style
+const styles = StyleSheet.create({
+  sosButton: {
+    position: "absolute",
+    top: 50,
+    right: 20,
+    width: 55,
+    height: 55,
+    borderRadius: 28,
+    backgroundColor: "red",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+    elevation: 6,
+  },
+  sosText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+});
