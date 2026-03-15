@@ -1,7 +1,8 @@
-import { Injectable } from "@nestjs/common";
-import { eq, ne, and, sql, inArray, desc, isNotNull, ilike, asc } from "drizzle-orm";
+import { Inject, Injectable } from "@nestjs/common";
+import { eq, and, sql, inArray, desc, isNotNull, ilike, asc } from "drizzle-orm";
 import { ambulanceProviders, bookings, hospitals, users } from "@/core/database/schema";
 import { DbExecutor, DbService } from "@/core/database/db.service";
+import { KV_STORE, type KvStore } from "@/core/database/kv-store.types";
 import type { Booking } from "@/core/database/schema";
 import type { BookingNote, EmtNote, PatientSettingsData } from "@ambulink/types";
 
@@ -20,34 +21,48 @@ type CreateBookingValues = {
 
 @Injectable()
 export class BookingSharedRepository {
-  constructor(private dbService: DbService) {}
+  constructor(
+    private dbService: DbService,
+    @Inject(KV_STORE) private kvStore: KvStore
+  ) {}
 
-  createBooking(values: CreateBookingValues, db: DbExecutor = this.dbService.db) {
-    return db
-      .insert(bookings)
-      .values({
-        patientId: values.patientId,
-        pickupAddress: values.pickupAddress,
-        pickupLocation: sql`ST_SetSRID(ST_MakePoint(${values.pickupLocation.x}, ${values.pickupLocation.y}), 4326)`,
-        status: "ASSIGNED",
-        providerId: values.providerId,
-        driverId: values.driverId,
-        hospitalId: values.hospitalId,
-        dispatcherId: values.dispatcherId ?? null,
-        emergencyType: values.emergencyType,
-        patientProfileSnapshot: values.patientProfileSnapshot ?? null,
-        fareEstimate: values.fareEstimate ?? null,
-        assignedAt: new Date(),
-      })
-      .returning();
+  async createBooking(values: CreateBookingValues, _db: DbExecutor = this.dbService.db) {
+    const booking = await this.kvStore.createBooking(values);
+    return [booking];
   }
 
-  updateBooking(bookingId: string, booking: Partial<Booking>, db: DbExecutor = this.dbService.db) {
-    return db.update(bookings).set(booking).where(eq(bookings.id, bookingId)).returning();
+  async updateBooking(
+    bookingId: string,
+    booking: Partial<Booking>,
+    db: DbExecutor = this.dbService.db
+  ) {
+    const tracked = await this.kvStore.getBookingState(bookingId);
+    if (tracked) {
+      await this.kvStore.updateBooking(bookingId, booking);
+    } else {
+      const [existing] = await db.select().from(bookings).where(eq(bookings.id, bookingId));
+      if (existing) {
+        await this.kvStore.updateBooking(bookingId, { ...(existing as Booking), ...booking });
+      } else {
+        await this.kvStore.updateBooking(bookingId, booking);
+      }
+    }
+
+    const [existing] = await db.select().from(bookings).where(eq(bookings.id, bookingId));
+    if (!existing) {
+      return [(await this.kvStore.getBookingData(bookingId)) as Booking].filter(Boolean);
+    }
+
+    return [(await this.kvStore.applyBookingOverlay([existing]))[0] as Booking];
   }
 
-  getActiveBookingForPatient(patientId: string) {
-    return this.dbService.db
+  async getActiveBookingForPatient(patientId: string) {
+    const kvActive = await this.kvStore.getNewActiveBookingsByPatient(patientId);
+    if (kvActive.length > 0) {
+      return kvActive as Booking[];
+    }
+
+    const rows = await this.dbService.db
       .select()
       .from(bookings)
       .where(
@@ -56,10 +71,17 @@ export class BookingSharedRepository {
           inArray(bookings.status, ["REQUESTED", "ASSIGNED", "ARRIVED", "PICKEDUP"])
         )
       );
+
+    return this.kvStore.applyBookingOverlay(rows);
   }
 
-  getActiveBookingById(bookingId: string, db: DbExecutor = this.dbService.db) {
-    return db
+  async getActiveBookingById(bookingId: string, db: DbExecutor = this.dbService.db) {
+    const memoryBooking = await this.kvStore.getActiveBookingByIdFromMemory(bookingId);
+    if (memoryBooking) {
+      return [memoryBooking as Booking];
+    }
+
+    const rows = await db
       .select()
       .from(bookings)
       .where(
@@ -68,46 +90,63 @@ export class BookingSharedRepository {
           inArray(bookings.status, ["ASSIGNED", "ARRIVED", "PICKEDUP"])
         )
       );
+    return this.kvStore.applyBookingOverlay(rows);
   }
 
-  getUserSubscribedBooking(userId: string, db: DbExecutor = this.dbService.db) {
+  async getUserSubscribedBooking(userId: string, db: DbExecutor = this.dbService.db) {
+    if (await this.kvStore.hasUserSubscribedBookingOverride(userId)) {
+      return [{ subscribedBookingId: await this.kvStore.getUserSubscribedBooking(userId) }];
+    }
+
     return db
       .select({ subscribedBookingId: users.subscribedBookingId })
       .from(users)
       .where(eq(users.id, userId));
   }
 
-  setUserSubscribedBooking(userId: string, bookingId: string, db: DbExecutor = this.dbService.db) {
-    return db
-      .update(users)
-      .set({
-        subscribedBookingId: bookingId,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, userId))
-      .returning({ id: users.id, subscribedBookingId: users.subscribedBookingId });
+  async setUserSubscribedBooking(
+    userId: string,
+    bookingId: string,
+    db: DbExecutor = this.dbService.db
+  ) {
+    await this.kvStore.setUserSubscribedBooking(userId, bookingId);
+    const [user] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.id, userId));
+    if (!user) return [];
+
+    return [{ id: user.id, subscribedBookingId: bookingId }];
   }
 
-  clearUserSubscribedBooking(userId: string, db: DbExecutor = this.dbService.db) {
-    return db
-      .update(users)
-      .set({
-        subscribedBookingId: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, userId))
-      .returning({ id: users.id, subscribedBookingId: users.subscribedBookingId });
+  async clearUserSubscribedBooking(userId: string, db: DbExecutor = this.dbService.db) {
+    await this.kvStore.setUserSubscribedBooking(userId, null);
+    const [user] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.id, userId));
+    if (!user) return [];
+
+    return [{ id: user.id, subscribedBookingId: null }];
   }
 
-  clearSubscribedBookingForBooking(bookingId: string, db: DbExecutor = this.dbService.db) {
-    return db
-      .update(users)
-      .set({
-        subscribedBookingId: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.subscribedBookingId, bookingId))
-      .returning({ id: users.id, role: users.role });
+  async clearSubscribedBookingForBooking(bookingId: string, db: DbExecutor = this.dbService.db) {
+    const usersToClear = await db
+      .select({ id: users.id, role: users.role })
+      .from(users)
+      .where(eq(users.subscribedBookingId, bookingId));
+
+    for (const user of usersToClear) {
+      await this.kvStore.setUserSubscribedBooking(user.id, null);
+    }
+
+    const inMemoryUserIds = await this.kvStore.clearSubscriptionsForBooking(bookingId);
+    const existingIds = new Set(usersToClear.map((user) => user.id));
+    const extra = inMemoryUserIds
+      .filter((userId) => !existingIds.has(userId))
+      .map((userId) => ({ id: userId, role: "PATIENT" as const }));
+
+    return [...usersToClear, ...extra];
   }
 
   getEmtsSubscribedToBooking(bookingId: string, db: DbExecutor = this.dbService.db) {
@@ -126,20 +165,33 @@ export class BookingSharedRepository {
       );
   }
 
-  cancelBookingByPatient(patientId: string, reason: string, db: DbExecutor = this.dbService.db) {
-    return db
-      .update(bookings)
-      .set({
+  async cancelBookingByPatient(
+    patientId: string,
+    reason: string,
+    db: DbExecutor = this.dbService.db
+  ) {
+    const activeBookings = await this.getActiveBookingForPatient(patientId);
+    const active = activeBookings.find((booking) => booking.status !== "COMPLETED");
+    if (!active) return [];
+
+    return this.updateBooking(
+      active.id,
+      {
         status: "CANCELLED",
         ongoing: false,
         cancellationReason: reason,
-      })
-      .where(and(eq(bookings.patientId, patientId), ne(bookings.status, "COMPLETED")))
-      .returning();
+      },
+      db
+    );
   }
 
-  getDriverActiveBooking(driverId: string, db: DbExecutor = this.dbService.db) {
-    return db
+  async getDriverActiveBooking(driverId: string, db: DbExecutor = this.dbService.db) {
+    const kvActive = await this.kvStore.getNewActiveBookingsByDriver(driverId);
+    if (kvActive.length > 0) {
+      return kvActive as Booking[];
+    }
+
+    const rows = await db
       .select()
       .from(bookings)
       .where(
@@ -148,10 +200,16 @@ export class BookingSharedRepository {
           inArray(bookings.status, ["REQUESTED", "ASSIGNED", "ARRIVED", "PICKEDUP"])
         )
       );
+    return this.kvStore.applyBookingOverlay(rows);
   }
 
-  getOngoingBookingDispatchInfoForDriver(driverId: string, db: DbExecutor = this.dbService.db) {
-    return db
+  async getOngoingBookingDispatchInfoForDriver(driverId: string, db: DbExecutor = this.dbService.db) {
+    const kvOngoing = await this.kvStore.getNewOngoingDispatchBookingByDriver(driverId);
+    if (kvOngoing) {
+      return [kvOngoing];
+    }
+
+    const rows = await db
       .select({
         bookingId: bookings.id,
         patientId: bookings.patientId,
@@ -159,10 +217,12 @@ export class BookingSharedRepository {
       })
       .from(bookings)
       .where(and(eq(bookings.ongoing, true), eq(bookings.driverId, driverId)));
+
+    return this.kvStore.applyBookingOverlay(rows);
   }
 
-  getAssignedBookingPayloadRow(bookingId: string) {
-    return this.dbService.db
+  async getAssignedBookingPayloadRow(bookingId: string) {
+    const rows = await this.dbService.db
       .select({
         bookingId: bookings.id,
         status: bookings.status,
@@ -200,10 +260,20 @@ export class BookingSharedRepository {
       .leftJoin(ambulanceProviders, eq(ambulanceProviders.id, bookings.providerId))
       .leftJoin(hospitals, eq(hospitals.id, bookings.hospitalId))
       .where(eq(bookings.id, bookingId));
+
+    if (rows[0]) {
+      const [overlaid] = await this.kvStore.applyBookingOverlay(rows);
+      return [await this.applyDriverLocationOverlay(overlaid)];
+    }
+
+    const memoryBooking = await this.kvStore.getBookingData(bookingId);
+    if (!memoryBooking) return [];
+    const row = await this.buildAssignedPayloadRowFromMemory(memoryBooking as Booking);
+    return row ? [row] : [];
   }
 
-  getDispatcherBookingPayloadRow(bookingId: string) {
-    return this.dbService.db
+  async getDispatcherBookingPayloadRow(bookingId: string) {
+    const rows = await this.dbService.db
       .select({
         bookingId: bookings.id,
         status: bookings.status,
@@ -233,10 +303,25 @@ export class BookingSharedRepository {
       .leftJoin(ambulanceProviders, eq(ambulanceProviders.id, bookings.providerId))
       .leftJoin(hospitals, eq(hospitals.id, bookings.hospitalId))
       .where(eq(bookings.id, bookingId));
+
+    if (rows[0]) {
+      const [overlaid] = await this.kvStore.applyBookingOverlay(rows);
+      return [await this.applyDriverLocationOverlay(overlaid)];
+    }
+
+    const memoryBooking = await this.kvStore.getBookingData(bookingId);
+    if (!memoryBooking) return [];
+    const row = await this.buildDispatcherPayloadRowFromMemory(memoryBooking as Booking);
+    return row ? [row] : [];
   }
 
-  getDispatcherActiveBookingRows(dispatcherId: string) {
-    return this.dbService.db
+  async getDispatcherActiveBookingRows(dispatcherId: string) {
+    const kvRows = await this.buildDispatcherActiveRowsFromMemory(dispatcherId);
+    if (kvRows.length > 0) {
+      return kvRows;
+    }
+
+    const rows = await this.dbService.db
       .select({
         bookingId: bookings.id,
         status: bookings.status,
@@ -271,6 +356,11 @@ export class BookingSharedRepository {
           inArray(bookings.status, ["ASSIGNED", "ARRIVED", "PICKEDUP"])
         )
       );
+
+    const overlaidRows = await Promise.all(
+      (await this.kvStore.applyBookingOverlay(rows)).map((row) => this.applyDriverLocationOverlay(row))
+    );
+    return overlaidRows;
   }
 
   getBookingLogRows(providerId?: string) {
@@ -374,17 +464,170 @@ export class BookingSharedRepository {
     return baseQuery;
   }
 
-  appendBookingNote(bookingId: string, note: BookingNote, db: DbExecutor = this.dbService.db) {
-    return db
-      .update(bookings)
-      .set({
-        emtNotes: sql`${bookings.emtNotes} || ${JSON.stringify([note])}::jsonb`,
+  private async applyDriverLocationOverlay(row: Record<string, unknown>) {
+    if (!row.driverId) return row;
+
+    const driverState = await this.kvStore.getDriverState(row.driverId as string);
+    if (!driverState?.location) return row;
+
+    return {
+      ...row,
+      driverLocationX: driverState.location.x,
+      driverLocationY: driverState.location.y,
+    };
+  }
+
+  private async buildAssignedPayloadRowFromMemory(booking: Booking) {
+    const [{ patient } = { patient: null }] = await this.dbService.db
+      .select({
+        patient: {
+          id: users.id,
+          fullName: users.fullName,
+          phoneNumber: users.phoneNumber,
+          locationX: sql<number | null>`ST_X(${users.currentLocation})`,
+          locationY: sql<number | null>`ST_Y(${users.currentLocation})`,
+        },
       })
-      .where(eq(bookings.id, bookingId))
-      .returning({
-        id: bookings.id,
-        emtNotes: bookings.emtNotes,
-      });
+      .from(users)
+      .where(eq(users.id, booking.patientId as string))
+      .limit(1);
+
+    const [{ driver } = { driver: null }] = await this.dbService.db
+      .select({
+        driver: {
+          id: users.id,
+          fullName: users.fullName,
+          phoneNumber: users.phoneNumber,
+          locationX: sql<number | null>`ST_X(${users.currentLocation})`,
+          locationY: sql<number | null>`ST_Y(${users.currentLocation})`,
+        },
+      })
+      .from(users)
+      .where(eq(users.id, booking.driverId as string))
+      .limit(1);
+
+    const [{ provider } = { provider: null }] = await this.dbService.db
+      .select({
+        provider: {
+          id: ambulanceProviders.id,
+          name: ambulanceProviders.name,
+          hotlineNumber: ambulanceProviders.hotlineNumber,
+        },
+      })
+      .from(ambulanceProviders)
+      .where(eq(ambulanceProviders.id, booking.providerId as string))
+      .limit(1);
+
+    const [{ hospital } = { hospital: null }] = await this.dbService.db
+      .select({
+        hospital: {
+          id: hospitals.id,
+          name: hospitals.name,
+          phoneNumber: hospitals.phoneNumber,
+          locationX: sql<number | null>`ST_X(${hospitals.location})`,
+          locationY: sql<number | null>`ST_Y(${hospitals.location})`,
+        },
+      })
+      .from(hospitals)
+      .where(eq(hospitals.id, booking.hospitalId as string))
+      .limit(1);
+
+    if (!patient || !driver || !hospital) return null;
+
+    const driverState = await this.kvStore.getDriverState(driver.id);
+
+    return {
+      bookingId: booking.id,
+      status: booking.status,
+      requestedAt: booking.requestedAt ?? null,
+      assignedAt: booking.assignedAt ?? null,
+      arrivedAt: booking.arrivedAt ?? null,
+      pickedupAt: booking.pickedupAt ?? null,
+      completedAt: booking.completedAt ?? null,
+      pickupLocationX: booking.pickupLocation?.x ?? null,
+      pickupLocationY: booking.pickupLocation?.y ?? null,
+      patientId: patient.id,
+      patientName: patient.fullName,
+      patientPhone: patient.phoneNumber,
+      patientLocationX: patient.locationX,
+      patientLocationY: patient.locationY,
+      driverId: driver.id,
+      driverName: driver.fullName,
+      driverPhone: driver.phoneNumber,
+      driverLocationX: driverState?.location?.x ?? driver.locationX,
+      driverLocationY: driverState?.location?.y ?? driver.locationY,
+      providerId: provider?.id ?? null,
+      providerName: provider?.name ?? null,
+      providerHotline: provider?.hotlineNumber ?? null,
+      hospitalId: hospital.id,
+      hospitalName: hospital.name,
+      hospitalPhone: hospital.phoneNumber,
+      hospitalLocationX: hospital.locationX,
+      hospitalLocationY: hospital.locationY,
+      patientProfileSnapshot: booking.patientProfileSnapshot ?? null,
+      emtNotes: booking.emtNotes ?? [],
+    };
+  }
+
+  private async buildDispatcherPayloadRowFromMemory(booking: Booking) {
+    const assigned = await this.buildAssignedPayloadRowFromMemory(booking);
+    if (!assigned) return null;
+
+    return {
+      bookingId: assigned.bookingId,
+      status: assigned.status,
+      pickupLocationX: assigned.pickupLocationX,
+      pickupLocationY: assigned.pickupLocationY,
+      patientId: assigned.patientId,
+      patientName: assigned.patientName,
+      patientPhone: assigned.patientPhone,
+      patientLocationX: assigned.patientLocationX,
+      patientLocationY: assigned.patientLocationY,
+      driverId: assigned.driverId,
+      driverName: assigned.driverName,
+      driverPhone: assigned.driverPhone,
+      driverLocationX: assigned.driverLocationX,
+      driverLocationY: assigned.driverLocationY,
+      providerId: assigned.providerId,
+      providerName: assigned.providerName,
+      hospitalId: assigned.hospitalId,
+      hospitalName: assigned.hospitalName,
+      hospitalPhone: assigned.hospitalPhone,
+      hospitalLocationX: assigned.hospitalLocationX,
+      hospitalLocationY: assigned.hospitalLocationY,
+    };
+  }
+
+  private async buildDispatcherActiveRowsFromMemory(dispatcherId: string) {
+    const states = await this.kvStore.getNewActiveBookingsByDispatcher(dispatcherId);
+
+    const rows = await Promise.all(
+      states.map((state) => this.buildDispatcherPayloadRowFromMemory(state as Booking))
+    );
+    return rows.filter((row): row is NonNullable<typeof row> => Boolean(row));
+  }
+
+  async appendBookingNote(bookingId: string, note: BookingNote, db: DbExecutor = this.dbService.db) {
+    const memoryState = await this.kvStore.getBookingState(bookingId);
+    if (memoryState?.data.emtNotes && Array.isArray(memoryState.data.emtNotes)) {
+      await this.kvStore.appendBookingNote(bookingId, note);
+      return [{ id: bookingId, emtNotes: (await this.kvStore.getBookingData(bookingId))?.emtNotes ?? [] }];
+    }
+
+    const [row] = await db
+      .select({ id: bookings.id, emtNotes: bookings.emtNotes })
+      .from(bookings)
+      .where(eq(bookings.id, bookingId));
+
+    if (!row) {
+      await this.kvStore.appendBookingNote(bookingId, note);
+      return [{ id: bookingId, emtNotes: (await this.kvStore.getBookingData(bookingId))?.emtNotes ?? [] }];
+    }
+
+    const baseNotes = Array.isArray(row.emtNotes) ? row.emtNotes : [];
+    await this.kvStore.updateBooking(bookingId, { emtNotes: [...baseNotes, note] });
+
+    return [{ id: bookingId, emtNotes: (await this.kvStore.getBookingData(bookingId))?.emtNotes ?? [] }];
   }
 
   appendEmtNote(bookingId: string, note: EmtNote, db: DbExecutor = this.dbService.db) {

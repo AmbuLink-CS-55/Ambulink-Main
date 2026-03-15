@@ -8,7 +8,7 @@ import {
   forwardRef,
 } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { bookings } from "@/core/database/schema";
 import type { Booking, Hospital, User } from "@/core/database/schema";
 import { DbExecutor, DbService } from "@/core/database/db.service";
@@ -100,7 +100,7 @@ export class BookingCoreService {
 
   async buildAssignedBookingPayload(bookingId: string) {
     const [row] = await this.bookingRepository.getAssignedBookingPayloadRow(bookingId);
-    return mapAssignedBookingPayload(row);
+    return mapAssignedBookingPayload(row as Parameters<typeof mapAssignedBookingPayload>[0]);
   }
 
   async manualAssignBooking(dispatcherId: string, payload: ManualAssignBookingDto) {
@@ -226,12 +226,11 @@ export class BookingCoreService {
       }
 
       if (payload.pickupLocation) {
-        await tx
-          .update(bookings)
-          .set({
-            pickupLocation: sql`ST_SetSRID(ST_MakePoint(${payload.pickupLocation.x}, ${payload.pickupLocation.y}), 4326)`,
-          })
-          .where(eq(bookings.id, bookingId));
+        await this.bookingRepository.updateBooking(
+          bookingId,
+          { pickupLocation: payload.pickupLocation },
+          tx
+        );
       }
 
       if (previousDriverId && nextDriverId && previousDriverId !== nextDriverId) {
@@ -572,7 +571,9 @@ export class BookingCoreService {
     const rows = await this.bookingRepository.getDispatcherActiveBookingRows(dispatcherId);
 
     return rows
-      .map((row) => mapDispatcherBookingPayload(row))
+      .map((row) =>
+        mapDispatcherBookingPayload(row as Parameters<typeof mapDispatcherBookingPayload>[0])
+      )
       .filter((payload): payload is DispatcherBookingPayload => payload !== null);
   }
 
@@ -581,7 +582,10 @@ export class BookingCoreService {
 
     if (!row) return null;
 
-    return mapDispatcherBookingPayload(row, requestId);
+    return mapDispatcherBookingPayload(
+      row as Parameters<typeof mapDispatcherBookingPayload>[0],
+      requestId
+    );
   }
 
   async getBookingLog(providerId?: string): Promise<BookingLogEntry[]> {

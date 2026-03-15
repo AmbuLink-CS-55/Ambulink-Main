@@ -1,12 +1,16 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { eq, and, sql, isNotNull, asc, or } from "drizzle-orm";
 import { users, bookings } from "@/core/database/schema";
 import { DbExecutor, DbService } from "@/core/database/db.service";
+import { KV_STORE, type KvStore } from "@/core/database/kv-store.types";
 import type { UserStatus } from "@/core/database/schema";
 
 @Injectable()
 export class DriverEventsRepository {
-  constructor(private dbService: DbService) {}
+  constructor(
+    private dbService: DbService,
+    @Inject(KV_STORE) private kvStore: KvStore
+  ) {}
 
   private readonly safeUserColumns = {
     id: users.id,
@@ -25,63 +29,75 @@ export class DriverEventsRepository {
     subscribedBookingId: users.subscribedBookingId,
   };
 
-  findDriverById(id: string, db: DbExecutor = this.dbService.db) {
-    return db
+  async findDriverById(id: string, db: DbExecutor = this.dbService.db) {
+    const rows = await db
       .select(this.safeUserColumns)
       .from(users)
       .where(and(eq(users.id, id), eq(users.role, "DRIVER" as const)));
+    return this.kvStore.applyDriverOverlay(rows);
   }
 
-  setDriverStatus(driverId: string, status: UserStatus, db: DbExecutor = this.dbService.db) {
-    return db
-      .update(users)
-      .set({
-        status: status,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")))
-      .returning(this.safeUserColumns);
+  async setDriverStatus(driverId: string, status: UserStatus, db: DbExecutor = this.dbService.db) {
+    const now = new Date();
+    await this.kvStore.setDriverState(driverId, {
+      status,
+      updatedAt: now,
+    });
+
+    const rows = await db
+      .select(this.safeUserColumns)
+      .from(users)
+      .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")));
+
+    return this.kvStore.applyDriverOverlay(rows);
   }
 
-  checkDriverAvailability(driverId: string) {
-    return this.dbService.db
+  async checkDriverAvailability(driverId: string) {
+    const rows = await this.dbService.db
       .select({ status: users.status })
+      .from(users)
+      .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")));
+    const state = await this.kvStore.getDriverState(driverId);
+    if (state?.status !== undefined && rows[0]) {
+      rows[0] = { ...rows[0], status: state.status };
+    }
+    return rows;
+  }
+
+  async setDriverLocation(driverId: string, lat: number, lng: number) {
+    const now = new Date();
+    await this.kvStore.setDriverState(driverId, {
+      location: { x: lng, y: lat },
+      lastLocationUpdate: now,
+      updatedAt: now,
+    });
+
+    return this.dbService.db
+      .select({ id: users.id })
       .from(users)
       .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")));
   }
 
-  setDriverLocation(driverId: string, lat: number, lng: number) {
-    const pointWkt = `POINT(${lng} ${lat})`;
+  async clearDriverLocation(driverId: string) {
+    await this.kvStore.setDriverState(driverId, {
+      location: null,
+      lastLocationUpdate: null,
+      updatedAt: new Date(),
+    });
+
     return this.dbService.db
-      .update(users)
-      .set({
-        currentLocation: sql`ST_GeomFromText(${pointWkt}, 4326)`,
-        lastLocationUpdate: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")))
-      .returning({ id: users.id });
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")));
   }
 
-  clearDriverLocation(driverId: string) {
-    return this.dbService.db
-      .update(users)
-      .set({
-        currentLocation: null,
-        lastLocationUpdate: null,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")))
-      .returning({ id: users.id });
-  }
-
-  findDriversByLocation(lat: number, lng: number) {
+  async findDriversByLocation(lat: number, lng: number) {
     const distanceExpr = sql<number>`ST_Distance(
     ${users.currentLocation}::geography,
     ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography
   )`;
 
-    return this.dbService.db
+    const rows = await this.dbService.db
       .select()
       .from(users)
       .where(
@@ -94,10 +110,17 @@ export class DriverEventsRepository {
       )
       .orderBy(asc(distanceExpr))
       .limit(3);
+
+    return this.kvStore.applyDriverOverlay(rows);
   }
 
-  getDriverBooking(driverId: string) {
-    return this.dbService.db
+  async getDriverBooking(driverId: string) {
+    const kvRows = await this.kvStore.getNewActiveBookingsByDriver(driverId);
+    if (kvRows.length > 0) {
+      return kvRows;
+    }
+
+    const rows = await this.dbService.db
       .select()
       .from(bookings)
       .where(
@@ -106,5 +129,7 @@ export class DriverEventsRepository {
           or(eq(bookings.status, "ASSIGNED"), eq(bookings.status, "ARRIVED"))
         )
       );
+
+    return this.kvStore.applyBookingOverlay(rows);
   }
 }

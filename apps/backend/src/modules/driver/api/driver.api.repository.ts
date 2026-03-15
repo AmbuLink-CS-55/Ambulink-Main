@@ -1,12 +1,16 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { eq, and, sql, isNotNull, asc } from "drizzle-orm";
 import { users } from "@/core/database/schema";
 import { DbExecutor, DbService } from "@/core/database/db.service";
+import { KV_STORE, type KvStore } from "@/core/database/kv-store.types";
 import type { NewUser, UserStatus } from "@/core/database/schema";
 
 @Injectable()
 export class DriverApiRepository {
-  constructor(private dbService: DbService) {}
+  constructor(
+    private dbService: DbService,
+    @Inject(KV_STORE) private kvStore: KvStore
+  ) {}
 
   private readonly safeUserColumns = {
     id: users.id,
@@ -57,17 +61,19 @@ export class DriverApiRepository {
     return this.dbService.db
       .select(this.safeUserColumns)
       .from(users)
-      .where(and(...conditions));
+      .where(and(...conditions))
+      .then((rows) => this.kvStore.applyDriverOverlay(rows));
   }
 
-  findDriverById(id: string, db: DbExecutor = this.dbService.db) {
-    return db
+  async findDriverById(id: string, db: DbExecutor = this.dbService.db) {
+    const rows = await db
       .select(this.safeUserColumns)
       .from(users)
       .where(and(eq(users.id, id), eq(users.role, "DRIVER" as const)));
+    return this.kvStore.applyDriverOverlay(rows);
   }
 
-  updateDriver(id: string, driver: Partial<NewUser>) {
+  async updateDriver(id: string, driver: Partial<NewUser>) {
     const updateData: Record<string, unknown> = {
       updatedAt: new Date(),
     };
@@ -78,11 +84,13 @@ export class DriverApiRepository {
     if (driver.passwordHash !== undefined) updateData.passwordHash = driver.passwordHash;
     if (driver.providerId !== undefined) updateData.providerId = driver.providerId as string | null;
 
-    return this.dbService.db
+    const rows = await this.dbService.db
       .update(users)
       .set(updateData)
       .where(eq(users.id, id))
       .returning(this.safeUserColumns);
+
+    return this.kvStore.applyDriverOverlay(rows);
   }
 
   removeDriver(id: string) {
@@ -92,11 +100,11 @@ export class DriverApiRepository {
       .where(eq(users.id, id));
   }
 
-  findNearbyDriversForMap(lat: number, lng: number, limit: number) {
+  async findNearbyDriversForMap(lat: number, lng: number, limit: number) {
     const point = sql`ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)`;
     const distanceExpr = sql<number>`ST_DistanceSphere(${users.currentLocation}, ${point})`;
 
-    return this.dbService.db
+    const rows = await this.dbService.db
       .select({
         id: users.id,
         fullName: users.fullName,
@@ -118,6 +126,20 @@ export class DriverApiRepository {
       )
       .orderBy(asc(distanceExpr))
       .limit(limit);
+
+    const overlaid = await this.kvStore.applyDriverOverlay(rows);
+    return overlaid.map((row) => {
+      const currentLocation = (row as { currentLocation?: { x: number; y: number } | null })
+        .currentLocation;
+      if (currentLocation !== undefined) {
+        return {
+          ...row,
+          locationX: currentLocation?.x ?? null,
+          locationY: currentLocation?.y ?? null,
+        };
+      }
+      return row;
+    });
   }
 
 }
