@@ -327,6 +327,7 @@ export default function PatientChatModal({
                 onToggleAudio={() => void actions.toggleRecording()}
                 onRemoveAttachment={actions.removeFile}
                 files={state.files}
+                isMediaProcessing={state.isMediaProcessing}
                 isRecordingAudio={state.isRecordingAudio}
                 loading={sending || state.isSubmitting}
                 recordingStatusText={`Recording audio... ${formatMs(state.recordingElapsedMs)}`}
@@ -337,6 +338,7 @@ export default function PatientChatModal({
                   audioStartLabel: "Audio",
                   audioStopLabel: "Stop Audio",
                   sendLabel: "Send",
+                  mediaProcessingLabel: "Processing photo...",
                 }}
               />
             </View>
