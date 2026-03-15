@@ -13,11 +13,11 @@ import {
 import { getBookingActionErrorMessage } from "@/lib/booking-ui-errors";
 import type { BookingDetailsPayload } from "@/lib/socket-types";
 import { useGetBookingDetails } from "@/services/booking.service";
+import { getDispatcherAccessToken, getDispatcherId } from "@/lib/identity";
 import env from "../../../../env";
 
 type Props = {
   bookingId: string | null;
-  dispatcherId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
@@ -31,8 +31,8 @@ function statusVariant(status: string): BadgeVariant {
   return "info";
 }
 
-export function BookingDetailDialog({ bookingId, dispatcherId, open, onOpenChange }: Props) {
-  const detailsQuery = useGetBookingDetails(open ? bookingId : null, dispatcherId);
+export function BookingDetailDialog({ bookingId, open, onOpenChange }: Props) {
+  const detailsQuery = useGetBookingDetails(open ? bookingId : null);
 
   const details = detailsQuery.data;
   const notes = useMemo(
@@ -62,7 +62,6 @@ export function BookingDetailDialog({ bookingId, dispatcherId, open, onOpenChang
         ) : details ? (
           <BookingContent
             details={details}
-            dispatcherId={dispatcherId}
             notes={notes}
             onClose={() => onOpenChange(false)}
           />
@@ -76,12 +75,10 @@ export function BookingDetailDialog({ bookingId, dispatcherId, open, onOpenChang
 
 function BookingContent({
   details,
-  dispatcherId,
   notes,
   onClose,
 }: {
   details: BookingDetailsPayload;
-  dispatcherId: string;
   notes: BookingDetailsPayload["notes"];
   onClose: () => void;
 }) {
@@ -94,10 +91,12 @@ function BookingContent({
   } | null>(null);
 
   const apiOrigin = env.VITE_API_SERVER_URL.replace(/\/api\/?$/, "");
+  const dispatcherId = getDispatcherId();
+  const accessToken = getDispatcherAccessToken();
   const toAttachmentUrl = (rawUrl: string) => {
     const absolute = rawUrl.startsWith("http://") || rawUrl.startsWith("https://");
     const url = absolute ? rawUrl : `${apiOrigin}${rawUrl}`;
-    return `${url}?dispatcherId=${dispatcherId}`;
+    return `${url}?dispatcherId=${dispatcherId}&accessToken=${encodeURIComponent(accessToken)}`;
   };
 
   const previewUrl = previewAttachment ? toAttachmentUrl(previewAttachment.url) : null;

@@ -2,8 +2,8 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { getDispatcherId } from "@/lib/identity";
 import { useAnalyticsAiChat } from "@/services/analytics.service";
+import { toUiErrorMessage } from "@/lib/ui-error";
 
 type TimeRangeKey = "all" | "24h" | "7d" | "30d" | "custom";
 
@@ -48,7 +48,6 @@ function resolveRange(range: TimeRangeKey, customFrom: string, customTo: string)
 }
 
 export default function AnalyticsAiPage() {
-  const dispatcherId = getDispatcherId();
   const aiChat = useAnalyticsAiChat();
 
   const [range, setRange] = useState<TimeRangeKey>("all");
@@ -76,7 +75,6 @@ export default function AnalyticsAiPage() {
 
     try {
       const response = await aiChat.mutateAsync({
-        dispatcherId,
         question: normalized,
         from: resolvedRange.from,
         to: resolvedRange.to,
@@ -92,7 +90,8 @@ export default function AnalyticsAiPage() {
         },
       ]);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to fetch AI analytics response.";
+      console.error("[analytics-ai] request failed", error);
+      const message = toUiErrorMessage(error, "Failed to fetch AI analytics response.");
       setMessages((prev) => [...prev, { role: "assistant", text: message }]);
     }
   };

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { UserStatus } from "@/core/database/schema";
 import type { CreateDriverDto, UpdateDriverDto } from "@/common/validation/schemas";
 import type { NearbyDriver } from "@ambulink/types";
@@ -33,17 +33,21 @@ export class DriverApiService {
     return this.driverRepository.findAllDrivers(providerId, isActive, status);
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, providerId?: string) {
     const result = await this.driverRepository.findDriverById(id);
 
     if (result.length === 0) {
       throw new NotFoundException(`Driver with id ${id} not found`);
     }
-    return result[0];
+    const entity = result[0];
+    if (providerId && entity?.providerId !== providerId) {
+      throw new ForbiddenException("Driver is outside dispatcher provider scope");
+    }
+    return entity;
   }
 
-  async update(id: string, updateDriverDto: UpdateDriverDto) {
-    await this.findOne(id);
+  async update(id: string, updateDriverDto: UpdateDriverDto, providerId?: string) {
+    await this.findOne(id, providerId);
 
     const result = await this.driverRepository.updateDriver(id, updateDriverDto);
 
@@ -65,8 +69,8 @@ export class DriverApiService {
     return updated;
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, providerId?: string) {
+    await this.findOne(id, providerId);
     await this.driverRepository.removeDriver(id);
     this.eventBus.publish({
       type: "realtime.dispatchers",

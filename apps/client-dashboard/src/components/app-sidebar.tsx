@@ -22,12 +22,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   requestDispatcherNotificationPermission,
   setDispatcherDesktopNotificationsEnabled,
 } from "@/lib/dispatcher-notifications";
 import { THEME_MODE_OPTIONS, type ThemeMode } from "@/lib/theme-mode";
 import { useDashboardSettingsStore } from "@/stores/dashboard-settings.store";
+import { useAuthStore } from "@/stores/auth.store";
+import { useCreateDispatcherInvite } from "@/services/auth.service";
+import { getDispatcherSocket } from "@/lib/dispatcher-socket";
+import { toUiErrorMessage } from "@/lib/ui-error";
 
 const MENU_ITEMS = [
   { title: "Dashboard Home", path: "/", icon: Map },
@@ -51,6 +56,13 @@ export function AppSidebar() {
   );
   const themeMode = useDashboardSettingsStore((state) => state.settings.themeMode);
   const updateSettings = useDashboardSettingsStore((state) => state.updateSettings);
+  const clearSession = useAuthStore((state) => state.clearSession);
+  const sessionUser = useAuthStore((state) => state.session?.user ?? null);
+  const createInvite = useCreateDispatcherInvite();
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [copiedInviteToken, setCopiedInviteToken] = useState(false);
 
   useEffect(() => {
     if (desktopNotificationsEnabled) {
@@ -67,6 +79,32 @@ export function AppSidebar() {
 
   const onThemeModeChange = (nextMode: ThemeMode) => {
     updateSettings({ themeMode: nextMode });
+  };
+
+  const onCreateInvite = async () => {
+    setInviteError(null);
+    setInviteToken(null);
+    setCopiedInviteToken(false);
+    try {
+      const response = await createInvite.mutateAsync({
+        email: inviteEmail.trim() || undefined,
+      });
+      setInviteToken(response.inviteToken);
+    } catch (error) {
+      console.error("[invite] create failed", error);
+      setInviteError(toUiErrorMessage(error, "Failed to generate invite token."));
+    }
+  };
+
+  const onCopyInviteToken = async () => {
+    if (!inviteToken) return;
+    try {
+      await navigator.clipboard.writeText(inviteToken);
+      setCopiedInviteToken(true);
+      setTimeout(() => setCopiedInviteToken(false), 1500);
+    } catch {
+      setInviteError("Failed to copy token");
+    }
   };
 
   return (
@@ -188,7 +226,53 @@ export function AppSidebar() {
               />
             </label>
             <div className="mt-6">
-              <Link to="/login" onClick={() => setSettingsOpen(false)}>
+              {sessionUser ? (
+                <p className="mb-3 text-xs text-muted-foreground">
+                  Signed in as {sessionUser.email ?? "dispatcher"}
+                </p>
+              ) : null}
+              <div className="mb-3 space-y-2 rounded-md border border-[color:var(--border)] p-3">
+                <div className="text-sm font-medium text-foreground">Invite Dispatcher</div>
+                <Input
+                  type="email"
+                  placeholder="Invite email (optional)"
+                  value={inviteEmail}
+                  onChange={(event) => setInviteEmail(event.target.value)}
+                />
+                <Button
+                  variant="outline"
+                  className="w-full justify-center"
+                  onClick={() => void onCreateInvite()}
+                  disabled={createInvite.isPending}
+                >
+                  {createInvite.isPending ? "Generating..." : "Generate Invite Token"}
+                </Button>
+                {inviteToken ? (
+                  <div className="rounded bg-muted/50 p-2 text-xs text-foreground">
+                    <p className="break-all">
+                      Token: <span className="font-bold">{inviteToken}</span>
+                    </p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="mt-2 w-full justify-center"
+                      onClick={() => void onCopyInviteToken()}
+                    >
+                      {copiedInviteToken ? "Copied" : "Copy Token"}
+                    </Button>
+                  </div>
+                ) : null}
+                {inviteError ? <p className="text-xs text-destructive">{inviteError}</p> : null}
+              </div>
+              <Link
+                to="/login"
+                onClick={() => {
+                  getDispatcherSocket().disconnect();
+                  clearSession();
+                  setSettingsOpen(false);
+                }}
+              >
                 <Button variant="outline" className="w-full justify-center">
                   Logout
                 </Button>

@@ -1,11 +1,13 @@
 import { Suspense, lazy, useEffect } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import type { ReactElement } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { DashboardLayout } from "./pages/layouts/DashboardLayout";
 import { applyThemeMode } from "@/lib/theme-mode";
 import { useDashboardSettingsStore } from "@/stores/dashboard-settings.store";
+import { useAuthStore } from "@/stores/auth.store";
 
 const Dashboard = lazy(() => import("./pages/dashboard/page"));
 const LoginPage = lazy(() => import("./pages/login"));
@@ -49,6 +51,22 @@ function ThemeModeSync() {
   return null;
 }
 
+function ProtectedRoute({ children }: { children: ReactElement }) {
+  const session = useAuthStore((state) => state.session);
+  if (!session) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
+
+function PublicOnlyRoute({ children }: { children: ReactElement }) {
+  const session = useAuthStore((state) => state.session);
+  if (session) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
+
 export function App() {
   return (
     <PersistQueryClientProvider
@@ -62,9 +80,22 @@ export function App() {
         <ThemeModeSync />
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            <Route path="/login" element={<LoginPage />} />
+            <Route
+              path="/login"
+              element={
+                <PublicOnlyRoute>
+                  <LoginPage />
+                </PublicOnlyRoute>
+              }
+            />
 
-            <Route element={<DashboardLayout />}>
+            <Route
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
               <Route path="/" element={<Dashboard />} />
               <Route path="/ambulances" element={<AmbulancesDashboard />} />
               <Route path="/drivers" element={<DriversDashboard />} />

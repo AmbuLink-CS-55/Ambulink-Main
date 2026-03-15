@@ -14,7 +14,6 @@ import {
   EditAmbulanceDialog,
   type AmbulanceFormState,
 } from "@/pages/ambulances/components/AmbulanceFormDialog";
-import env from "@/../env";
 
 const initialForm: AmbulanceFormState = {
   vehicleNumber: "",
@@ -23,7 +22,7 @@ const initialForm: AmbulanceFormState = {
 };
 
 export default function AmbulancesDashboard() {
-  const ambulances = useGetAmbulances({ providerId: env.VITE_PROVIDER_ID });
+  const ambulances = useGetAmbulances();
   const createAmbulance = useCreateAmbulance();
   const updateAmbulance = useUpdateAmbulance();
   const mapAmbulanceToForm = useCallback(
@@ -46,7 +45,6 @@ export default function AmbulancesDashboard() {
 
   const handleSubmit = useCallback(async () => {
     const payload = {
-      providerId: env.VITE_PROVIDER_ID,
       vehicleNumber: form.vehicleNumber.trim(),
       equipmentLevel: form.equipmentLevel.trim() || undefined,
       status: form.status,
@@ -56,7 +54,6 @@ export default function AmbulancesDashboard() {
       const updatePayload = { ...payload, providerId: undefined };
       await updateAmbulance.mutateAsync({ id: editing.id, payload: updatePayload });
     } else {
-      if (!env.VITE_PROVIDER_ID) return;
       await createAmbulance.mutateAsync(payload);
     }
 
@@ -78,7 +75,7 @@ export default function AmbulancesDashboard() {
           <h1 className="text-2xl font-semibold">Ambulances</h1>
           <p className="text-sm text-muted-foreground">Manage your fleet.</p>
         </div>
-        <Button onClick={openForCreate} disabled={!env.VITE_PROVIDER_ID}>
+        <Button onClick={openForCreate}>
           Add Ambulance
         </Button>
       </div>
@@ -104,7 +101,7 @@ export default function AmbulancesDashboard() {
         <CreateAmbulanceDialog
           open={isOpen}
           form={form}
-          providerAvailable={Boolean(env.VITE_PROVIDER_ID)}
+          providerAvailable={true}
           onOpenChange={onOpenChange}
           onChange={updateForm}
           onSubmit={handleSubmit}

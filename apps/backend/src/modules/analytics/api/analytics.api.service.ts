@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import type {
   AnalyticsAiChatDto,
   AnalyticsQueryDto,
@@ -9,21 +9,32 @@ import { AnalyticsCoreService } from "../common/analytics.core.service";
 export class AnalyticsApiService {
   constructor(private readonly analyticsCoreService: AnalyticsCoreService) {}
 
+  private ensureDispatcherId(dispatcherId: string | undefined) {
+    if (!dispatcherId) {
+      throw new BadRequestException("dispatcherId is required");
+    }
+    return dispatcherId;
+  }
+
   getResponse(query: AnalyticsQueryDto) {
-    return this.analyticsCoreService.getResponseAnalytics(query.dispatcherId, query.from, query.to);
+    const dispatcherId = this.ensureDispatcherId(query.dispatcherId);
+    return this.analyticsCoreService.getResponseAnalytics(dispatcherId, query.from, query.to);
   }
 
   getZones(query: AnalyticsQueryDto) {
-    return this.analyticsCoreService.getZonesAnalytics(query.dispatcherId, query.from, query.to);
+    const dispatcherId = this.ensureDispatcherId(query.dispatcherId);
+    return this.analyticsCoreService.getZonesAnalytics(dispatcherId, query.from, query.to);
   }
 
   getInsights(query: AnalyticsQueryDto) {
-    return this.analyticsCoreService.getInsightsAnalytics(query.dispatcherId, query.from, query.to);
+    const dispatcherId = this.ensureDispatcherId(query.dispatcherId);
+    return this.analyticsCoreService.getInsightsAnalytics(dispatcherId, query.from, query.to);
   }
 
   aiChat(body: AnalyticsAiChatDto) {
+    const dispatcherId = this.ensureDispatcherId(body.dispatcherId);
     return this.analyticsCoreService.getAiAnalyticsResponse(
-      body.dispatcherId,
+      dispatcherId,
       body.question,
       body.from,
       body.to
@@ -31,8 +42,9 @@ export class AnalyticsApiService {
   }
 
   reportPdf(query: AnalyticsQueryDto) {
+    const dispatcherId = this.ensureDispatcherId(query.dispatcherId);
     return this.analyticsCoreService.createAnalyticsReportPdf(
-      query.dispatcherId,
+      dispatcherId,
       query.from,
       query.to,
       query.bookingId

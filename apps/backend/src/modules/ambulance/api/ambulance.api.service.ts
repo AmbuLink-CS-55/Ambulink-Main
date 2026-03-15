@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import type { CreateAmbulanceDto, UpdateAmbulanceDto } from "@/common/validation/schemas";
 import { AmbulanceApiRepository } from "./ambulance.api.repository";
 import { EventBusService } from "@/core/events/event-bus.service";
@@ -31,15 +31,22 @@ export class AmbulanceApiService {
     return this.ambulanceRepository.getAllAmbulances(providerId);
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, providerId?: string) {
     const result = await this.ambulanceRepository.getAmbulanceById(id);
     if (result.length === 0) {
       throw new NotFoundException(`Ambulance with id ${id} not found`);
     }
-    return result[0];
+    const entity = result[0];
+    if (providerId && entity?.providerId !== providerId) {
+      throw new ForbiddenException("Ambulance is outside dispatcher provider scope");
+    }
+    return entity;
   }
 
-  async update(id: string, updateAmbulanceDto: UpdateAmbulanceDto) {
+  async update(id: string, updateAmbulanceDto: UpdateAmbulanceDto, providerId?: string) {
+    if (providerId) {
+      await this.findOne(id, providerId);
+    }
     const result = await this.ambulanceRepository.updateAmbulance(id, updateAmbulanceDto);
     if (result.length === 0) {
       throw new NotFoundException(`Ambulance with id ${id} not found`);
@@ -59,8 +66,8 @@ export class AmbulanceApiService {
     return updated;
   }
 
-  async remove(id: string) {
-    await this.findOne(id); // Check if exists
+  async remove(id: string, providerId?: string) {
+    await this.findOne(id, providerId);
     await this.ambulanceRepository.deleteAmbulance(id);
   }
 }

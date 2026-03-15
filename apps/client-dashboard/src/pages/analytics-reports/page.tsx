@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { getDispatcherId } from "@/lib/identity";
 import { getAnalyticsReportDownloadUrl } from "@/services/analytics.service";
 import { useGetBookingLog } from "@/services/booking.service";
-import env from "@/../env";
+import { getDispatcherAccessToken } from "@/lib/identity";
+import { toUiErrorMessage } from "@/lib/ui-error";
 
 export default function AnalyticsReportsPage() {
-  const dispatcherId = getDispatcherId();
-  const bookingLog = useGetBookingLog({ providerId: env.VITE_PROVIDER_ID });
+  const bookingLog = useGetBookingLog();
   const [downloadingBookingId, setDownloadingBookingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,10 +15,13 @@ export default function AnalyticsReportsPage() {
     setError(null);
     try {
       const url = getAnalyticsReportDownloadUrl({
-        dispatcherId,
         bookingId,
       });
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${getDispatcherAccessToken()}`,
+        },
+      });
       if (!response.ok) {
         throw new Error("Report generation failed.");
       }
@@ -31,7 +33,8 @@ export default function AnalyticsReportsPage() {
       link.click();
       URL.revokeObjectURL(objectUrl);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to generate report.");
+      console.error("[analytics-reports] download failed", err);
+      setError(toUiErrorMessage(err, "Unable to generate report."));
     } finally {
       setDownloadingBookingId(null);
     }

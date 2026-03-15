@@ -67,6 +67,30 @@ export const createAmbulanceProviderSchema = createInsertSchema(ambulanceProvide
 
 export const updateAmbulanceProviderSchema = createAmbulanceProviderSchema.partial();
 
+export const dispatcherLoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8).max(128),
+});
+
+export const dispatcherSignupSchema = z
+  .object({
+    fullName: z.string().trim().min(2).max(255),
+    phoneNumber: z.string().trim().min(5).max(50),
+    email: z.string().email(),
+    password: z.string().min(8).max(128),
+    providerId: z.string().uuid().optional(),
+    inviteToken: z.string().trim().min(16).max(256).optional(),
+  })
+  .refine((value) => Boolean(value.providerId || value.inviteToken), {
+    message: "Either providerId or inviteToken is required",
+    path: ["providerId"],
+  });
+
+export const dispatcherInviteCreateSchema = z.object({
+  email: z.string().email().optional(),
+  expiresInHours: z.coerce.number().int().min(1).max(168).default(48),
+});
+
 const pointSchema = z.object({
   x: z.number(),
   y: z.number(),
@@ -86,7 +110,7 @@ export const manualAssignBookingSchema = z.object({
 
 export const reassignBookingSchema = z
   .object({
-    dispatcherId: z.string().uuid(),
+    dispatcherId: z.string().uuid().optional(),
     driverId: z.string().uuid().optional(),
     hospitalId: z.string().uuid().optional(),
     pickupLocation: pointSchema.optional(),
@@ -140,12 +164,12 @@ export const bookingListQuerySchema = z.object({
 });
 
 export const bookingDetailsQuerySchema = z.object({
-  dispatcherId: z.string().uuid(),
+  dispatcherId: z.string().uuid().optional(),
 });
 
 export const analyticsQuerySchema = z
   .object({
-    dispatcherId: z.string().uuid(),
+    dispatcherId: z.string().uuid().optional(),
     from: z.string().datetime().optional(),
     to: z.string().datetime().optional(),
     bookingId: z.string().uuid().optional(),
@@ -164,7 +188,7 @@ export const analyticsQuerySchema = z
   );
 
 export const analyticsAiChatSchema = z.object({
-  dispatcherId: z.string().uuid(),
+  dispatcherId: z.string().uuid().optional(),
   question: z.string().trim().min(3).max(2000),
   from: z.string().datetime().optional(),
   to: z.string().datetime().optional(),
@@ -245,6 +269,9 @@ export type UpdateAmbulanceDto = z.infer<typeof updateAmbulanceSchema>;
 
 export type CreateAmbulanceProviderDto = z.infer<typeof createAmbulanceProviderSchema>;
 export type UpdateAmbulanceProviderDto = z.infer<typeof updateAmbulanceProviderSchema>;
+export type DispatcherLoginDto = z.infer<typeof dispatcherLoginSchema>;
+export type DispatcherSignupDto = z.infer<typeof dispatcherSignupSchema>;
+export type DispatcherInviteCreateDto = z.infer<typeof dispatcherInviteCreateSchema>;
 export type ManualAssignBookingDto = z.infer<typeof manualAssignBookingSchema>;
 export type ReassignBookingDto = z.infer<typeof reassignBookingSchema>;
 export type DriverNearbyQueryDto = z.infer<typeof driverNearbyQuerySchema>;

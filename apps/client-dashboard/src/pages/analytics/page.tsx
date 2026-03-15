@@ -10,7 +10,6 @@ import {
   useAnalyticsResponse,
   useAnalyticsZones,
 } from "@/services/analytics.service";
-import { getDispatcherId } from "@/lib/identity";
 import { useDashboardSettingsStore } from "@/stores/dashboard-settings.store";
 import { resolveMapTheme } from "@/lib/theme-mode";
 import type { DriverResponseMetricRow } from "@ambulink/types";
@@ -138,7 +137,6 @@ function BarRow({ label, count, max }: { label: string; count: number; max: numb
 export default function AnalyticsPage() {
   const themeMode = useDashboardSettingsStore((state) => state.settings.themeMode);
   const mapTheme = resolveMapTheme(themeMode);
-  const dispatcherId = getDispatcherId();
   const { analyticsTab: tab, setAnalyticsTab, analyticsZoneLayer: zoneLayer, setAnalyticsZoneLayer } =
     useDashboardUrlState();
 
@@ -159,19 +157,16 @@ export default function AnalyticsPage() {
   const resolvedRange = useMemo(() => resolveRange(range, customFrom, customTo), [range, customFrom, customTo]);
 
   const responseQuery = useAnalyticsResponse({
-    dispatcherId,
     from: resolvedRange.from,
     to: resolvedRange.to,
   });
 
   const zonesQuery = useAnalyticsZones({
-    dispatcherId,
     from: resolvedRange.from,
     to: resolvedRange.to,
   });
 
   const insightsQuery = useAnalyticsInsights({
-    dispatcherId,
     from: resolvedRange.from,
     to: resolvedRange.to,
   });

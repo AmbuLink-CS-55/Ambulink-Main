@@ -10,7 +10,6 @@ import {
   EditEmtDialog,
   type EmtFormState,
 } from "@/pages/emts/components/EmtFormDialog";
-import env from "@/../env";
 
 const initialForm: EmtFormState = {
   fullName: "",
@@ -20,7 +19,7 @@ const initialForm: EmtFormState = {
 };
 
 export default function EmtsDashboard() {
-  const emts = useGetEmts({ providerId: env.VITE_PROVIDER_ID });
+  const emts = useGetEmts();
   const createEmt = useCreateEmt();
   const updateEmt = useUpdateEmt();
 
@@ -49,7 +48,6 @@ export default function EmtsDashboard() {
       phoneNumber: form.phoneNumber.trim(),
       email: form.email.trim(),
       passwordHash: form.passwordHash.trim(),
-      providerId: env.VITE_PROVIDER_ID,
     } satisfies Partial<User>;
 
     if (editing) {
@@ -63,7 +61,6 @@ export default function EmtsDashboard() {
         },
       });
     } else {
-      if (!env.VITE_PROVIDER_ID) return;
       await createEmt.mutateAsync(payload);
     }
 
@@ -110,7 +107,7 @@ export default function EmtsDashboard() {
         <CreateEmtDialog
           open={isOpen}
           form={form}
-          providerAvailable={Boolean(env.VITE_PROVIDER_ID)}
+          providerAvailable={true}
           onOpenChange={onOpenChange}
           onChange={updateForm}
           onSubmit={handleSubmit}

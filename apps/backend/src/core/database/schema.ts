@@ -108,6 +108,40 @@ export const users = pgTable(
 export type User = InferSelectModel<typeof users>;
 export type NewUser = InferInsertModel<typeof users>;
 
+export const dispatcherInvites = pgTable(
+  "dispatcher_invites",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    providerId: uuid("provider_id")
+      .notNull()
+      .references(() => ambulanceProviders.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    createdByUserId: uuid("created_by_user_id")
+      .notNull()
+      .references(() => users.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    invitedEmail: varchar("invited_email", { length: 255 }),
+    tokenHash: varchar("token_hash", { length: 128 }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    tokenHashUnique: uniqueIndex("dispatcher_invites_token_hash_unique").on(t.tokenHash),
+    providerIdx: index("dispatcher_invites_provider_idx").on(t.providerId),
+    invitedEmailIdx: index("dispatcher_invites_invited_email_idx").on(t.invitedEmail),
+    expiresAtIdx: index("dispatcher_invites_expires_at_idx").on(t.expiresAt),
+  })
+);
+export type DispatcherInvite = InferSelectModel<typeof dispatcherInvites>;
+export type NewDispatcherInvite = InferInsertModel<typeof dispatcherInvites>;
+
 export const ambulance = pgTable(
   "ambulances",
   {
@@ -250,6 +284,18 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   }),
   patientBookings: many(bookings, { relationName: "patientBookings" }),
   driverBookings: many(bookings, { relationName: "driverBookings" }),
+  createdDispatcherInvites: many(dispatcherInvites),
+}));
+
+export const dispatcherInvitesRelations = relations(dispatcherInvites, ({ one }) => ({
+  provider: one(ambulanceProviders, {
+    fields: [dispatcherInvites.providerId],
+    references: [ambulanceProviders.id],
+  }),
+  createdByUser: one(users, {
+    fields: [dispatcherInvites.createdByUserId],
+    references: [users.id],
+  }),
 }));
 
 export const ambulancesRelations = relations(ambulance, ({ one, many }) => ({

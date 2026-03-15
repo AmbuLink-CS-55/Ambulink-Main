@@ -11,11 +11,20 @@ type SelectProps = React.ComponentProps<"select"> & {
 };
 
 export function Select({ className, options, placeholder, ...props }: SelectProps) {
+  const value =
+    typeof props.value === "string" || typeof props.value === "number"
+      ? String(props.value)
+      : "";
+  const showingPlaceholder = Boolean(placeholder) && value.length === 0;
+
   return (
     <select
       // Native select retains full keyboard navigation; explicit focus ring keeps it visible for keyboard users.
       className={cn(
-        "flex h-10 w-full rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--card)] px-3 text-sm text-[color:var(--foreground)] transition-colors",
+        "flex h-10 w-full rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--card)] px-3 text-sm transition-colors",
+        showingPlaceholder
+          ? "text-[color:var(--form-placeholder)]"
+          : "text-[color:var(--foreground)]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--background)]",
         className
       )}

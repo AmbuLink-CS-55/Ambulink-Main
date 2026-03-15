@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { BookingCoreService } from "../common/booking.core.service";
 import type { ReassignBookingDto } from "@/common/validation/schemas";
 
@@ -27,6 +27,9 @@ export class BookingApiService {
   }
 
   reassignBooking(bookingId: string, payload: ReassignBookingDto) {
+    if (!payload.dispatcherId) {
+      throw new BadRequestException("dispatcherId is required");
+    }
     return this.bookingCoreService.reassignBooking(bookingId, payload.dispatcherId, payload);
   }
 }

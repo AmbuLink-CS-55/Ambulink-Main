@@ -3,13 +3,11 @@ import { DataTable } from "@/components/VirtualizedTable";
 import { useGetBookingLog } from "@/services/booking.service";
 import { bookingLogColumns } from "@/pages/booking/components/booking-log-columns";
 import { BookingDetailDialog } from "@/pages/booking/components/BookingDetailDialog";
-import { getDispatcherId } from "@/lib/identity";
-import env from "@/../env";
 
 export default function BookingLogPage() {
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
 
-  const bookingLog = useGetBookingLog({ providerId: env.VITE_PROVIDER_ID });
+  const bookingLog = useGetBookingLog();
 
   const rows = useMemo(() => bookingLog.data ?? [], [bookingLog.data]);
 
@@ -25,7 +23,6 @@ export default function BookingLogPage() {
       <BookingDetailDialog
         open={Boolean(selectedBookingId)}
         bookingId={selectedBookingId}
-        dispatcherId={getDispatcherId()}
         onOpenChange={(open) => {
           if (!open) setSelectedBookingId(null);
         }}

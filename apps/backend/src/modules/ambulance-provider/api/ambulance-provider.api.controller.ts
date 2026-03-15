@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { AmbulanceProviderApiService } from "./ambulance-provider.api.service";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
 import {
@@ -7,11 +7,14 @@ import {
   type CreateAmbulanceProviderDto,
   type UpdateAmbulanceProviderDto,
 } from "@/common/validation/schemas";
+import { AuthGuard } from "@/common/auth/auth.guard";
+import { DispatcherRoleGuard } from "@/common/auth/dispatcher-role.guard";
 
 @Controller("api/ambulance-providers")
 export class AmbulanceProviderApiController {
   constructor(private readonly ambulanceProviderService: AmbulanceProviderApiService) {}
 
+  @UseGuards(AuthGuard, DispatcherRoleGuard)
   @Post()
   create(
     @Body(Validate(createAmbulanceProviderSchema))
@@ -30,6 +33,7 @@ export class AmbulanceProviderApiController {
     return this.ambulanceProviderService.findOne(id);
   }
 
+  @UseGuards(AuthGuard, DispatcherRoleGuard)
   @Patch(":id")
   update(
     @Param("id") id: string,
@@ -39,6 +43,7 @@ export class AmbulanceProviderApiController {
     return this.ambulanceProviderService.update(id, body);
   }
 
+  @UseGuards(AuthGuard, DispatcherRoleGuard)
   @Delete(":id")
   remove(@Param("id") id: string) {
     return this.ambulanceProviderService.remove(id);

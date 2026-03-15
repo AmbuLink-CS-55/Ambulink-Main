@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
 import {
   createPatientSchema,
@@ -7,7 +7,10 @@ import {
   type UpdatePatientDto,
 } from "@/common/validation/schemas";
 import { PatientApiService } from "./patient.api.service";
+import { AuthGuard } from "@/common/auth/auth.guard";
+import { DispatcherRoleGuard } from "@/common/auth/dispatcher-role.guard";
 
+@UseGuards(AuthGuard, DispatcherRoleGuard)
 @Controller("api/patients")
 export class PatientApiController {
   constructor(private readonly patientService: PatientApiService) {}

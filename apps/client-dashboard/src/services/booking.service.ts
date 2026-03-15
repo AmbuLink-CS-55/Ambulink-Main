@@ -5,28 +5,26 @@ import type { BookingDetailsPayload, BookingLogEntry, Point } from "@ambulink/ty
 
 export type { BookingLogEntry };
 
-export const useGetBookingLog = (params?: { providerId?: string }) => {
+export const useGetBookingLog = () => {
   return useQuery({
-    queryKey: queryKeys.bookingLog(params?.providerId ?? null),
+    queryKey: queryKeys.bookingLog(null),
     staleTime: 1000 * 30,
     queryFn: async () => {
-      const { data } = await api.get<BookingLogEntry[]>("/booking", { params });
+      const { data } = await api.get<BookingLogEntry[]>("/booking");
       return data;
     },
   });
 };
 
-export const useGetBookingDetails = (bookingId: string | null, dispatcherId?: string) => {
+export const useGetBookingDetails = (bookingId: string | null) => {
   return useQuery({
     queryKey: queryKeys.bookingDetails(bookingId ?? "none"),
-    enabled: Boolean(bookingId && dispatcherId),
+    enabled: Boolean(bookingId),
     queryFn: async () => {
-      if (!bookingId || !dispatcherId) {
-        throw new Error("Booking ID and dispatcher ID are required");
+      if (!bookingId) {
+        throw new Error("Booking ID is required");
       }
-      const { data } = await api.get<BookingDetailsPayload>(`/booking/${bookingId}/details`, {
-        params: { dispatcherId },
-      });
+      const { data } = await api.get<BookingDetailsPayload>(`/booking/${bookingId}/details`);
       return data;
     },
   });
@@ -42,7 +40,6 @@ export const useReassignBooking = () => {
     }: {
       bookingId: string;
       payload: {
-        dispatcherId: string;
         driverId?: string;
         hospitalId?: string;
         pickupLocation?: Point;

@@ -17,8 +17,6 @@ import { getBookingActionErrorMessage } from "@/lib/booking-ui-errors";
 import { useGetDrivers } from "@/services/driver.service";
 import { useGetHospitals } from "@/services/hospital.service";
 import { useReassignBooking } from "@/services/booking.service";
-import { getDispatcherId } from "@/lib/identity";
-import env from "@/../env";
 
 export function ReassignBookingDialog({
   booking,
@@ -48,7 +46,7 @@ export function ReassignBookingDialog({
   const pickupYId = useId();
   const pickupAddressId = useId();
 
-  const drivers = useGetDrivers({ providerId: env.VITE_PROVIDER_ID, isActive: true });
+  const drivers = useGetDrivers({ isActive: true });
   const hospitals = useGetHospitals();
   const reassignBooking = useReassignBooking();
 
@@ -90,14 +88,11 @@ export function ReassignBookingDialog({
     setReassignError(null);
 
     const payload: {
-      dispatcherId: string;
       driverId?: string;
       hospitalId?: string;
       pickupLocation?: { x: number; y: number };
       pickupAddress?: string | null;
-    } = {
-      dispatcherId: getDispatcherId(),
-    };
+    } = {};
 
     if (reassignDriverId && reassignDriverId !== booking.driver.id) {
       payload.driverId = reassignDriverId;
@@ -123,7 +118,7 @@ export function ReassignBookingDialog({
       payload.pickupAddress = reassignPickupAddress.trim();
     }
 
-    if (Object.keys(payload).length === 1) {
+    if (Object.keys(payload).length === 0) {
       setReassignError("No changes detected. Update at least one field.");
       return;
     }

@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import env from "../../env";
 import { registerDispatcherSocketHandlers } from "@/lib/dispatcher-socket-handlers";
 import type { DispatcherToServerEvents, ServerToDispatcherEvents } from "@/lib/socket-types";
-import { dispatcherSocket } from "@/lib/dispatcher-socket";
+import { getDispatcherSocket } from "@/lib/dispatcher-socket";
 import { requestDispatcherNotificationPermission } from "@/lib/dispatcher-notifications";
+import { useAuthStore } from "@/stores/auth.store";
 
 export function useDispatcherSocketSync() {
   const queryClient = useQueryClient();
-  const socket = dispatcherSocket as unknown as import("socket.io-client").Socket<
+  const providerId = useAuthStore((state) => state.session?.user.providerId ?? undefined);
+  const socket = getDispatcherSocket() as unknown as import("socket.io-client").Socket<
     ServerToDispatcherEvents,
     DispatcherToServerEvents
   >;
@@ -20,7 +21,7 @@ export function useDispatcherSocketSync() {
     const teardownEventHandlers = registerDispatcherSocketHandlers({
       queryClient,
       socket,
-      providerId: env.VITE_PROVIDER_ID,
+      providerId,
     });
 
     const requestSync = () => {
@@ -48,7 +49,7 @@ export function useDispatcherSocketSync() {
       socket.off("disconnect");
       socket.off("connect_error");
     };
-  }, [queryClient, socket]);
+  }, [providerId, queryClient, socket]);
 
   return { socket, connected };
 }

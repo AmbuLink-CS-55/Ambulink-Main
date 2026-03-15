@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import type { CreateEmtDto, UpdateEmtDto } from "@/common/validation/schemas";
 import type { UserStatus } from "@ambulink/types";
 import { BookingApiService } from "@/modules/booking/api/booking.api.service";
@@ -34,10 +34,13 @@ export class EmtApiService {
     return this.emtRepository.findAllEmts(providerId, isActive, status);
   }
 
-  async findOne(emtId: string) {
+  async findOne(emtId: string, providerId?: string) {
     const [emt] = await this.emtRepository.findEmtById(emtId);
     if (!emt || !emt.isActive) {
       throw new NotFoundException("EMT not found");
+    }
+    if (providerId && emt.providerId !== providerId) {
+      throw new ForbiddenException("EMT is outside dispatcher provider scope");
     }
     return emt;
   }
@@ -56,8 +59,8 @@ export class EmtApiService {
     }));
   }
 
-  async update(id: string, updateEmtDto: UpdateEmtDto) {
-    await this.findOne(id);
+  async update(id: string, updateEmtDto: UpdateEmtDto, providerId?: string) {
+    await this.findOne(id, providerId);
 
     const result = await this.emtRepository.updateEmt(id, updateEmtDto);
     const updated = result[0];
@@ -77,8 +80,8 @@ export class EmtApiService {
     return updated;
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, providerId?: string) {
+    await this.findOne(id, providerId);
     await this.emtRepository.removeEmt(id);
     this.eventBus.publish({
       type: "realtime.dispatchers",

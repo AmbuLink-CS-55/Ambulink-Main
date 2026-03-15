@@ -1,4 +1,15 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from "@nestjs/common";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
 import {
   createEmtSchema,
@@ -11,7 +22,12 @@ import {
   type UpdateEmtDto,
 } from "@/common/validation/schemas";
 import { EmtApiService } from "./emt.api.service";
+import { AuthGuard } from "@/common/auth/auth.guard";
+import { DispatcherRoleGuard } from "@/common/auth/dispatcher-role.guard";
+import { CurrentUser } from "@/common/auth/auth.decorators";
+import type { AuthUser } from "@/common/auth/auth.types";
 
+@UseGuards(AuthGuard, DispatcherRoleGuard)
 @Controller("api/emts")
 export class EmtApiController {
   constructor(private readonly emtService: EmtApiService) {}
@@ -19,14 +35,21 @@ export class EmtApiController {
   @Post()
   create(
     @Body(Validate(createEmtSchema))
-    body: CreateEmtDto
+    body: CreateEmtDto,
+    @CurrentUser() user: AuthUser
   ) {
-    return this.emtService.create(body);
+    return this.emtService.create({
+      ...body,
+      providerId: user.providerId ?? undefined,
+    });
   }
 
   @Get()
-  findAll(@Query(Validate(emtListQuerySchema)) query: EmtListQueryDto) {
-    return this.emtService.findAll(query.providerId, query.isActive, query.status);
+  findAll(
+    @Query(Validate(emtListQuerySchema)) query: EmtListQueryDto,
+    @CurrentUser() user: AuthUser
+  ) {
+    return this.emtService.findAll(user.providerId ?? undefined, query.isActive, query.status);
   }
 
   @Get("bookings/search")
@@ -42,21 +65,25 @@ export class EmtApiController {
   }
 
   @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.emtService.findOne(id);
+  findOne(@Param("id") id: string, @CurrentUser() user: AuthUser) {
+    return this.emtService.findOne(id, user.providerId ?? undefined);
   }
 
   @Patch(":id")
   update(
     @Param("id") id: string,
     @Body(Validate(updateEmtSchema))
-    body: UpdateEmtDto
+    body: UpdateEmtDto,
+    @CurrentUser() user: AuthUser
   ) {
-    return this.emtService.update(id, body);
+    return this.emtService.update(id, {
+      ...body,
+      providerId: undefined,
+    }, user.providerId ?? undefined);
   }
 
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.emtService.remove(id);
+  remove(@Param("id") id: string, @CurrentUser() user: AuthUser) {
+    return this.emtService.remove(id, user.providerId ?? undefined);
   }
 }

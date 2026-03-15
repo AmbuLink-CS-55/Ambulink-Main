@@ -12,7 +12,6 @@ import {
   EditDriverDialog,
   type DriverFormState,
 } from "@/pages/drivers/components/DriverFormDialog";
-import env from "@/../env";
 
 const initialForm: DriverFormState = {
   fullName: "",
@@ -34,7 +33,7 @@ export default function DriversDashboard() {
     [driverLocationsQuery.data]
   );
 
-  const drivers = useGetDrivers({ providerId: env.VITE_PROVIDER_ID });
+  const drivers = useGetDrivers();
   const createDriver = useCreateDriver();
   const updateDriver = useUpdateDriver();
   const mapDriverToForm = useCallback(
@@ -68,7 +67,6 @@ export default function DriversDashboard() {
       phoneNumber: form.phoneNumber.trim(),
       email: form.email.trim(),
       passwordHash: form.passwordHash.trim(),
-      providerId: env.VITE_PROVIDER_ID,
     } satisfies Partial<User>;
 
     if (editing) {
@@ -82,7 +80,6 @@ export default function DriversDashboard() {
         },
       });
     } else {
-      if (!env.VITE_PROVIDER_ID) return;
       await createDriver.mutateAsync(payload);
     }
 
@@ -129,7 +126,7 @@ export default function DriversDashboard() {
         <CreateDriverDialog
           open={isOpen}
           form={form}
-          providerAvailable={Boolean(env.VITE_PROVIDER_ID)}
+          providerAvailable={true}
           onOpenChange={onOpenChange}
           onChange={updateForm}
           onSubmit={handleSubmit}

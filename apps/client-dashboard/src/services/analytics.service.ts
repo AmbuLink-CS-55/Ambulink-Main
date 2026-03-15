@@ -9,7 +9,6 @@ import type {
 } from "@ambulink/types";
 
 type AnalyticsQuery = {
-  dispatcherId: string;
   from?: string;
   to?: string;
   bookingId?: string;
@@ -17,8 +16,8 @@ type AnalyticsQuery = {
 
 export const useAnalyticsResponse = (params: AnalyticsQuery) => {
   return useQuery({
-    queryKey: queryKeys.analyticsResponse(params.dispatcherId, params.from, params.to),
-    enabled: Boolean(params.dispatcherId),
+    queryKey: queryKeys.analyticsResponse("session", params.from, params.to),
+    enabled: true,
     staleTime: 1000 * 60,
     queryFn: async () => {
       const { data } = await api.get<AnalyticsResponse>("/analytics/response", { params });
@@ -29,8 +28,8 @@ export const useAnalyticsResponse = (params: AnalyticsQuery) => {
 
 export const useAnalyticsZones = (params: AnalyticsQuery) => {
   return useQuery({
-    queryKey: queryKeys.analyticsZones(params.dispatcherId, params.from, params.to),
-    enabled: Boolean(params.dispatcherId),
+    queryKey: queryKeys.analyticsZones("session", params.from, params.to),
+    enabled: true,
     staleTime: 1000 * 60,
     queryFn: async () => {
       const { data } = await api.get<AnalyticsZones>("/analytics/zones", { params });
@@ -41,8 +40,8 @@ export const useAnalyticsZones = (params: AnalyticsQuery) => {
 
 export const useAnalyticsInsights = (params: AnalyticsQuery) => {
   return useQuery({
-    queryKey: queryKeys.analyticsInsights(params.dispatcherId, params.from, params.to),
-    enabled: Boolean(params.dispatcherId),
+    queryKey: queryKeys.analyticsInsights("session", params.from, params.to),
+    enabled: true,
     staleTime: 1000 * 60,
     queryFn: async () => {
       const { data } = await api.get<AnalyticsInsights>("/analytics/insights", { params });
@@ -54,7 +53,6 @@ export const useAnalyticsInsights = (params: AnalyticsQuery) => {
 export const useAnalyticsAiChat = () => {
   return useMutation({
     mutationFn: async (payload: {
-      dispatcherId: string;
       question: string;
       from?: string;
       to?: string;
@@ -69,7 +67,6 @@ export function getAnalyticsReportDownloadUrl(params: AnalyticsQuery) {
   const base = String(api.defaults.baseURL ?? "");
   const normalizedBase = base.endsWith("/") ? base : `${base}/`;
   const url = new URL("analytics/reports", normalizedBase);
-  url.searchParams.set("dispatcherId", params.dispatcherId);
   if (params.from) url.searchParams.set("from", params.from);
   if (params.to) url.searchParams.set("to", params.to);
   if (params.bookingId) url.searchParams.set("bookingId", params.bookingId);

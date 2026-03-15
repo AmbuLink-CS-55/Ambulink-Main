@@ -1,32 +1,36 @@
-import { Body, Controller, Get, Param, Patch, Query, Res } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Query, Res, UseGuards } from "@nestjs/common";
 import type { Response } from "express";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
 import {
   bookingAttachmentAccessQuerySchema,
   bookingDetailsQuerySchema,
-  bookingListQuerySchema,
   reassignBookingSchema,
   type BookingDetailsQueryDto,
-  type BookingListQueryDto,
   type ReassignBookingDto,
 } from "@/common/validation/schemas";
 import { BookingApiService } from "./booking.api.service";
+import { AuthGuard } from "@/common/auth/auth.guard";
+import { DispatcherRoleGuard } from "@/common/auth/dispatcher-role.guard";
+import { CurrentUser } from "@/common/auth/auth.decorators";
+import type { AuthUser } from "@/common/auth/auth.types";
 
+@UseGuards(AuthGuard, DispatcherRoleGuard)
 @Controller("api/booking")
 export class BookingApiController {
   constructor(private readonly bookingService: BookingApiService) {}
 
   @Get()
-  findByProvider(@Query(Validate(bookingListQuerySchema)) query: BookingListQueryDto) {
-    return this.bookingService.getBookingLog(query.providerId);
+  findByProvider(@CurrentUser() user: AuthUser) {
+    return this.bookingService.getBookingLog(user.providerId ?? undefined);
   }
 
   @Get(":id/details")
   details(
     @Param("id") bookingId: string,
-    @Query(Validate(bookingDetailsQuerySchema)) query: BookingDetailsQueryDto
+    @Query(Validate(bookingDetailsQuerySchema)) _query: BookingDetailsQueryDto,
+    @CurrentUser() user: AuthUser
   ) {
-    return this.bookingService.getBookingDetailsForDispatcher(bookingId, query.dispatcherId);
+    return this.bookingService.getBookingDetailsForDispatcher(bookingId, user.id);
   }
 
   @Get(":id/attachments/:attachmentId")
@@ -46,8 +50,12 @@ export class BookingApiController {
   @Patch(":id/reassign")
   reassign(
     @Param("id") bookingId: string,
-    @Body(Validate(reassignBookingSchema)) payload: ReassignBookingDto
+    @Body(Validate(reassignBookingSchema)) payload: ReassignBookingDto,
+    @CurrentUser() user: AuthUser
   ) {
-    return this.bookingService.reassignBooking(bookingId, payload);
+    return this.bookingService.reassignBooking(bookingId, {
+      ...payload,
+      dispatcherId: user.id,
+    });
   }
 }

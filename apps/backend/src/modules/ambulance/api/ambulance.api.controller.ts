@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from "@nestjs/common";
 import { AmbulanceApiService } from "./ambulance.api.service";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
 import {
@@ -7,7 +17,12 @@ import {
   type CreateAmbulanceDto,
   type UpdateAmbulanceDto,
 } from "@/common/validation/schemas";
+import { AuthGuard } from "@/common/auth/auth.guard";
+import { DispatcherRoleGuard } from "@/common/auth/dispatcher-role.guard";
+import { CurrentUser } from "@/common/auth/auth.decorators";
+import type { AuthUser } from "@/common/auth/auth.types";
 
+@UseGuards(AuthGuard, DispatcherRoleGuard)
 @Controller("api/ambulances")
 export class AmbulanceApiController {
   constructor(private readonly ambulanceService: AmbulanceApiService) {}
@@ -15,32 +30,43 @@ export class AmbulanceApiController {
   @Post()
   create(
     @Body(Validate(createAmbulanceSchema))
-    body: CreateAmbulanceDto
+    body: CreateAmbulanceDto,
+    @CurrentUser() user: AuthUser
   ) {
-    return this.ambulanceService.create(body);
+    if (!user.providerId) {
+      throw new BadRequestException("Dispatcher provider is required");
+    }
+    return this.ambulanceService.create({
+      ...body,
+      providerId: user.providerId,
+    });
   }
 
   @Get()
-  findAll(@Query("providerId") providerId?: string) {
-    return this.ambulanceService.findAll(providerId);
+  findAll(@CurrentUser() user: AuthUser) {
+    return this.ambulanceService.findAll(user.providerId ?? undefined);
   }
 
   @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.ambulanceService.findOne(id);
+  findOne(@Param("id") id: string, @CurrentUser() user: AuthUser) {
+    return this.ambulanceService.findOne(id, user.providerId ?? undefined);
   }
 
   @Patch(":id")
   update(
     @Param("id") id: string,
     @Body(Validate(updateAmbulanceSchema))
-    body: UpdateAmbulanceDto
+    body: UpdateAmbulanceDto,
+    @CurrentUser() user: AuthUser
   ) {
-    return this.ambulanceService.update(id, body);
+    return this.ambulanceService.update(id, {
+      ...body,
+      providerId: undefined,
+    }, user.providerId ?? undefined);
   }
 
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.ambulanceService.remove(id);
+  remove(@Param("id") id: string, @CurrentUser() user: AuthUser) {
+    return this.ambulanceService.remove(id, user.providerId ?? undefined);
   }
 }
