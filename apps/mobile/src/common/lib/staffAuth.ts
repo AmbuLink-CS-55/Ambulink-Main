@@ -24,18 +24,6 @@ export async function loginStaff(payload: {
   return apiPost<StaffAuthResponse, typeof payload>("/api/auth/staff/login", payload);
 }
 
-export async function signupStaff(payload: {
-  role: MobileStaffRole;
-  fullName: string;
-  phoneNumber: string;
-  email: string;
-  password: string;
-  inviteToken?: string;
-  providerId?: string;
-}) {
-  return apiPost<StaffAuthResponse, typeof payload>("/api/auth/staff/signup", payload);
-}
-
 export type StaffInvitePreview = {
   valid: boolean;
   role: "DISPATCHER" | "DRIVER" | "EMT" | null;

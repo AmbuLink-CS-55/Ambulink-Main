@@ -2,8 +2,6 @@ import { Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
 import {
   dispatcherBootstrapSignupSchema,
-  dispatcherInviteCreateSchema,
-  dispatcherInviteLoginSchema,
   dispatcherLoginSchema,
   dispatcherSignupSchema,
   staffInviteActivateSchema,
@@ -13,8 +11,6 @@ import {
   type StaffInviteActivateDto,
   type StaffInvitePreviewQueryDto,
   type DispatcherBootstrapSignupDto,
-  type DispatcherInviteCreateDto,
-  type DispatcherInviteLoginDto,
   type DispatcherLoginDto,
   type DispatcherSignupDto,
   type StaffLoginDto,
@@ -23,8 +19,6 @@ import {
 import { AuthService } from "./auth.service";
 import { CurrentUser } from "@/common/auth/auth.decorators";
 import { AuthGuard } from "@/common/auth/auth.guard";
-import { DispatcherRoleGuard } from "@/common/auth/dispatcher-role.guard";
-import { DispatcherAdminGuard } from "@/common/auth/dispatcher-admin.guard";
 import type { AuthUser } from "@/common/auth/auth.types";
 
 @Controller("api/auth")
@@ -34,13 +28,6 @@ export class AuthController {
   @Post("dispatcher/login")
   loginDispatcher(@Body(Validate(dispatcherLoginSchema)) body: DispatcherLoginDto) {
     return this.authService.loginDispatcher(body);
-  }
-
-  @Post("dispatcher/invite-login")
-  loginDispatcherWithInvite(
-    @Body(Validate(dispatcherInviteLoginSchema)) body: DispatcherInviteLoginDto
-  ) {
-    return this.authService.loginDispatcherWithInvite(body);
   }
 
   @Post("staff/login")
@@ -75,15 +62,6 @@ export class AuthController {
   @Post("staff/invites/activate")
   activateStaffInvite(@Body(Validate(staffInviteActivateSchema)) body: StaffInviteActivateDto) {
     return this.authService.activateStaffInvite(body);
-  }
-
-  @UseGuards(AuthGuard, DispatcherRoleGuard, DispatcherAdminGuard)
-  @Post("dispatcher/invites")
-  createDispatcherInvite(
-    @Body(Validate(dispatcherInviteCreateSchema)) body: DispatcherInviteCreateDto,
-    @CurrentUser() user: AuthUser
-  ) {
-    return this.authService.createDispatcherInvite(body, user);
   }
 
   @UseGuards(AuthGuard)

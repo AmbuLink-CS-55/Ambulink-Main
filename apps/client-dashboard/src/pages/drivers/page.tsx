@@ -3,6 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { DataTable } from "@/components/VirtualizedTable";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useEntityFormDialog } from "@/hooks/use-entity-form-dialog";
 import { queryKeys } from "@/lib/queryKeys";
 import { useGetDrivers, useUpdateDriver } from "@/services/driver.service";
@@ -20,7 +27,6 @@ const initialForm: DriverFormState = {
   fullName: "",
   phoneNumber: "",
   email: "",
-  passwordHash: "",
 };
 
 export default function DriversDashboard() {
@@ -45,12 +51,12 @@ export default function DriversDashboard() {
     email: string;
     role: "DRIVER";
   } | null>(null);
+  const inviteModalOpen = Boolean(invitePayload);
   const mapDriverToForm = useCallback(
     (driver: User) => ({
       fullName: driver.fullName ?? "",
       phoneNumber: driver.phoneNumber ?? "",
       email: driver.email ?? "",
-      passwordHash: "",
     }),
     []
   );
@@ -75,7 +81,6 @@ export default function DriversDashboard() {
       fullName: form.fullName.trim(),
       phoneNumber: form.phoneNumber.trim(),
       email: form.email.trim(),
-      passwordHash: form.passwordHash.trim(),
     } satisfies Partial<User>;
 
     if (editing) {
@@ -85,7 +90,6 @@ export default function DriversDashboard() {
           fullName: payload.fullName,
           phoneNumber: payload.phoneNumber,
           email: payload.email,
-          passwordHash: payload.passwordHash || undefined,
         },
       });
     } else {
@@ -94,6 +98,8 @@ export default function DriversDashboard() {
       }
       const invite = await createInvite.mutateAsync({
         role: "DRIVER",
+        fullName: payload.fullName,
+        phoneNumber: payload.phoneNumber,
         email: payload.email,
       });
       setInvitePayload({
@@ -109,7 +115,6 @@ export default function DriversDashboard() {
     editing,
     form.email,
     form.fullName,
-    form.passwordHash,
     form.phoneNumber,
     reset,
     updateDriver,
@@ -153,27 +158,33 @@ export default function DriversDashboard() {
         />
       ) : null}
 
-      {invitePayload ? (
-        <div className="rounded-md border p-4 space-y-2">
-          <h3 className="font-semibold">Driver Onboarding Invite</h3>
-          <p className="text-sm text-muted-foreground">
-            Assigned email: {invitePayload.email}
-          </p>
-          <p className="text-xs break-all">Invite token: {invitePayload.token}</p>
-          <img
-            alt="Driver invite QR"
-            className="h-40 w-40 rounded border"
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
-              JSON.stringify({
-                type: "staff_invite",
-                role: invitePayload.role,
-                inviteToken: invitePayload.token,
-                invitedEmail: invitePayload.email,
-              })
-            )}`}
-          />
-        </div>
-      ) : null}
+      <Dialog open={inviteModalOpen} onOpenChange={(open) => (!open ? setInvitePayload(null) : null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Driver Onboarding Invite</DialogTitle>
+            <DialogDescription>
+              Assigned email: {invitePayload?.email ?? "N/A"}
+            </DialogDescription>
+          </DialogHeader>
+          {invitePayload ? (
+            <div className="space-y-2 px-6 pb-6">
+              <p className="text-xs break-all text-muted-foreground">Invite token: {invitePayload.token}</p>
+              <img
+                alt="Driver invite QR"
+                className="mx-auto h-56 w-56 rounded border"
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(
+                  JSON.stringify({
+                    type: "staff_invite",
+                    role: invitePayload.role,
+                    inviteToken: invitePayload.token,
+                    invitedEmail: invitePayload.email,
+                  })
+                )}`}
+              />
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -3,14 +3,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import type { DispatcherSession } from "@/stores/auth.store";
 import type { ProviderType } from "@/lib/types";
 
-export type DispatcherSignupPayload = {
-  fullName: string;
-  phoneNumber: string;
-  email: string;
-  password: string;
-  inviteToken: string;
-};
-
 export type DispatcherBootstrapSignupPayload = {
   fullName: string;
   phoneNumber: string;
@@ -29,6 +21,7 @@ export type StaffInviteRole = "DISPATCHER" | "DRIVER" | "EMT";
 export type StaffInvitePayload = {
   role: StaffInviteRole;
   fullName?: string;
+  phoneNumber?: string;
   email: string;
   expiresInHours?: number;
 };
@@ -51,28 +44,10 @@ export const useLoginDispatcher = () => {
   });
 };
 
-export const useSignupDispatcher = () => {
-  return useMutation({
-    mutationFn: async (payload: DispatcherSignupPayload) => {
-      const { data } = await api.post<DispatcherSession>("/auth/dispatcher/signup", payload);
-      return data;
-    },
-  });
-};
-
 export const useBootstrapDispatcherSignup = () => {
   return useMutation({
     mutationFn: async (payload: DispatcherBootstrapSignupPayload) => {
       const { data } = await api.post<DispatcherSession>("/auth/dispatcher/bootstrap-signup", payload);
-      return data;
-    },
-  });
-};
-
-export const useLoginDispatcherWithInvite = () => {
-  return useMutation({
-    mutationFn: async (payload: { inviteToken: string; password: string }) => {
-      const { data } = await api.post<DispatcherSession>("/auth/dispatcher/invite-login", payload);
       return data;
     },
   });

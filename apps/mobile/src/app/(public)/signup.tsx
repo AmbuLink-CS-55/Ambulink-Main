@@ -120,14 +120,11 @@ export default function SignupPage() {
           </Text>
 
           <View style={{ marginTop: 16, gap: 10 }}>
-            <TextInput
-              placeholder="Invite token"
-              placeholderTextColor="#64748b"
-              value={inviteToken}
-              onChangeText={setInviteToken}
-              autoCapitalize="none"
-              style={inputStyle}
-            />
+            <View style={[inputStyle, { justifyContent: "center", backgroundColor: "#f8fafc" }]}>
+              <Text style={{ color: "#0f172a" }}>
+                {inviteToken.trim() ? "Invite token captured from QR/link." : "Waiting for invite token..."}
+              </Text>
+            </View>
 
             <View style={[inputStyle, { justifyContent: "center", backgroundColor: "#f8fafc" }]}>
               <Text style={{ color: "#0f172a" }}>

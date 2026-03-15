@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { and, count, eq, gt, isNull, ne } from "drizzle-orm";
+import { and, eq, gt, isNull } from "drizzle-orm";
 import { DbService } from "@/core/database/db.service";
 import { ambulanceProviders, staffInvites, users } from "@/core/database/schema";
 import type { StaffInviteRole, UserRole } from "@/core/database/schema";
@@ -145,32 +145,6 @@ export class AuthRepository {
       });
   }
 
-  countDispatchersByProvider(providerId: string) {
-    return this.dbService.db
-      .select({ value: count() })
-      .from(users)
-      .where(
-        and(eq(users.role, "DISPATCHER"), eq(users.providerId, providerId), eq(users.isActive, true))
-      );
-  }
-
-  countActiveDispatcherAdmins(providerId: string, excludeUserId?: string) {
-    const conditions = [
-      eq(users.role, "DISPATCHER"),
-      eq(users.providerId, providerId),
-      eq(users.isActive, true),
-      eq(users.isDispatcherAdmin, true),
-    ];
-    if (excludeUserId) {
-      conditions.push(ne(users.id, excludeUserId));
-    }
-
-    return this.dbService.db
-      .select({ value: count() })
-      .from(users)
-      .where(and(...conditions));
-  }
-
   touchLastLogin(userId: string) {
     return this.dbService.db
       .update(users)
@@ -188,6 +162,7 @@ export class AuthRepository {
     codeHash: string;
     tokenHash: string;
     fullName?: string;
+    phoneNumber?: string;
     invitedEmail?: string;
     expiresAt: Date;
   }) {
@@ -202,7 +177,7 @@ export class AuthRepository {
           `invite-${input.createdByUserId.slice(0, 8)}`,
         fullName: input.fullName ?? null,
         email: input.invitedEmail,
-        phoneNumber: null,
+        phoneNumber: input.phoneNumber ?? null,
         createdByDispatcherId: input.createdByUserId,
         createdByUserId: input.createdByUserId,
         maxAttempts: 10,
@@ -228,6 +203,7 @@ export class AuthRepository {
         providerId: staffInvites.providerId,
         role: staffInvites.role,
         fullName: staffInvites.fullName,
+        phoneNumber: staffInvites.phoneNumber,
         invitedEmail: staffInvites.invitedEmail,
         codeHash: staffInvites.codeHash,
         expiresAt: staffInvites.expiresAt,
@@ -253,21 +229,12 @@ export class AuthRepository {
       .where(eq(staffInvites.id, inviteId));
   }
 
-  updateStaffPassword(userId: string, passwordHash: string) {
-    return this.dbService.db
-      .update(users)
-      .set({
-        passwordHash,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, userId));
-  }
-
   updateStaffPasswordAndActive(
     userId: string,
     passwordHash: string,
     active: boolean,
-    fullName?: string
+    fullName?: string,
+    phoneNumber?: string
   ) {
     const updateData: Record<string, unknown> = {
       passwordHash,
@@ -277,6 +244,9 @@ export class AuthRepository {
 
     if (fullName !== undefined) {
       updateData.fullName = fullName;
+    }
+    if (phoneNumber !== undefined) {
+      updateData.phoneNumber = phoneNumber;
     }
 
     return this.dbService.db

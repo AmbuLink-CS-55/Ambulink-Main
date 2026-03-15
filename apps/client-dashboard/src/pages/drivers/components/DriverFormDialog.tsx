@@ -14,20 +14,17 @@ export type DriverFormState = {
   fullName: string;
   phoneNumber: string;
   email: string;
-  passwordHash: string;
 };
 
 type DriverFormFieldsProps = {
   form: DriverFormState;
   onChange: <K extends keyof DriverFormState>(field: K, value: DriverFormState[K]) => void;
-  showPassword: boolean;
 };
 
-function DriverFormFields({ form, onChange, showPassword }: DriverFormFieldsProps) {
+function DriverFormFields({ form, onChange }: DriverFormFieldsProps) {
   const fullNameId = useId();
   const phoneNumberId = useId();
   const emailId = useId();
-  const passwordId = useId();
 
   return (
     <div className="grid gap-4 px-6">
@@ -69,22 +66,6 @@ function DriverFormFields({ form, onChange, showPassword }: DriverFormFieldsProp
           onChange={(e) => onChange("email", e.target.value)}
         />
       </div>
-      {showPassword ? (
-        <div className="grid gap-2">
-          <label className="text-sm font-medium" htmlFor={passwordId}>
-            Password
-          </label>
-          <Input
-            id={passwordId}
-            name="password"
-            autoComplete="new-password"
-            type="password"
-            placeholder="Minimum 8 characters"
-            value={form.passwordHash}
-            onChange={(e) => onChange("passwordHash", e.target.value)}
-          />
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -96,7 +77,6 @@ type BaseDriverDialogProps = {
   onChange: <K extends keyof DriverFormState>(field: K, value: DriverFormState[K]) => void;
   title: string;
   submitLabel: string;
-  showPassword: boolean;
   submitDisabled: boolean;
   onSubmit: () => void;
 };
@@ -108,7 +88,6 @@ function BaseDriverFormDialog({
   onChange,
   title,
   submitLabel,
-  showPassword,
   submitDisabled,
   onSubmit,
 }: BaseDriverDialogProps) {
@@ -120,7 +99,7 @@ function BaseDriverFormDialog({
           <DialogDescription>Provider cannot be changed.</DialogDescription>
         </DialogHeader>
 
-        <DriverFormFields form={form} onChange={onChange} showPassword={showPassword} />
+        <DriverFormFields form={form} onChange={onChange} />
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -154,7 +133,6 @@ export function CreateDriverDialog({
     !form.fullName.trim() ||
     !form.phoneNumber.trim() ||
     !form.email.trim() ||
-    form.passwordHash.trim().length < 8 ||
     !providerAvailable;
 
   return (
@@ -165,7 +143,6 @@ export function CreateDriverDialog({
       onChange={onChange}
       title="Add Driver"
       submitLabel="Create Driver"
-      showPassword={true}
       submitDisabled={submitDisabled}
       onSubmit={onSubmit}
     />
@@ -195,7 +172,6 @@ export function EditDriverDialog({
       onChange={onChange}
       title="Edit Driver"
       submitLabel="Save Changes"
-      showPassword={false}
       submitDisabled={submitDisabled}
       onSubmit={onSubmit}
     />

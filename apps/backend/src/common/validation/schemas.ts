@@ -118,11 +118,6 @@ export const dispatcherInviteCreateSchema = z.object({
   expiresInHours: z.coerce.number().int().min(1).max(168).default(48),
 });
 
-export const dispatcherInviteLoginSchema = z.object({
-  inviteToken: z.string().trim().min(16).max(256),
-  password: z.string().min(8).max(128),
-});
-
 export const staffRoleSchema = z.enum(["DISPATCHER", "DRIVER", "EMT"]);
 
 export const staffLoginSchema = z.object({
@@ -144,6 +139,7 @@ export const staffSignupSchema = z
 export const staffInviteCreateSchema = z.object({
   role: staffRoleSchema,
   fullName: z.string().trim().min(2).max(255).optional(),
+  phoneNumber: z.string().trim().min(5).max(50).optional(),
   email: z.string().email(),
   expiresInHours: z.coerce.number().int().min(1).max(168).default(48),
 });
@@ -356,7 +352,6 @@ export type DispatcherLoginDto = z.infer<typeof dispatcherLoginSchema>;
 export type DispatcherSignupDto = z.infer<typeof dispatcherSignupSchema>;
 export type DispatcherBootstrapSignupDto = z.infer<typeof dispatcherBootstrapSignupSchema>;
 export type DispatcherInviteCreateDto = z.infer<typeof dispatcherInviteCreateSchema>;
-export type DispatcherInviteLoginDto = z.infer<typeof dispatcherInviteLoginSchema>;
 export type StaffRoleDto = z.infer<typeof staffRoleSchema>;
 export type StaffLoginDto = z.infer<typeof staffLoginSchema>;
 export type StaffSignupDto = z.infer<typeof staffSignupSchema>;

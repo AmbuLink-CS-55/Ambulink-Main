@@ -9,8 +9,6 @@ import {
 import { createHash, randomBytes } from "crypto";
 import type {
   DispatcherBootstrapSignupDto,
-  DispatcherInviteCreateDto,
-  DispatcherInviteLoginDto,
   DispatcherLoginDto,
   DispatcherSignupDto,
   StaffInviteActivateDto,
@@ -33,6 +31,11 @@ export class AuthService {
     return email.trim().toLowerCase();
   }
 
+  private normalizeOptional(value?: string | null) {
+    const normalized = value?.trim();
+    return normalized ? normalized : null;
+  }
+
   private inviteTokenHash(token: string) {
     return createHash("sha256").update(token).digest("hex");
   }
@@ -52,6 +55,15 @@ export class AuthService {
       role: user.role,
       providerId: user.providerId,
       isDispatcherAdmin: user.isDispatcherAdmin ?? false,
+    };
+  }
+
+  private buildSessionResponse(user: AuthUser) {
+    const token = signAuthToken(user);
+    return {
+      accessToken: token.accessToken,
+      expiresInSeconds: token.expiresInSeconds,
+      user,
     };
   }
 
@@ -92,80 +104,25 @@ export class AuthService {
     }
 
     const user = this.mapDbUserToAuthUser(staff);
-    const token = signAuthToken(user);
     await this.authRepository.touchLastLogin(user.id);
-
-    return {
-      accessToken: token.accessToken,
-      expiresInSeconds: token.expiresInSeconds,
-      user,
-    };
+    return this.buildSessionResponse(user);
   }
 
   async signupStaff(dto: StaffSignupDto) {
-    const normalizedEmail = this.normalizeEmail(dto.email);
-    const inviteToken = dto.inviteToken?.trim();
+    const inviteToken = this.normalizeOptional(dto.inviteToken);
     if (!inviteToken) {
       throw new BadRequestException("Invite token is required");
     }
-
-    const requestedRole = this.ensureStaffRole(dto.role);
-    let effectiveRole: Exclude<UserRole, "PATIENT"> = requestedRole;
-    let inviteIdToConsume: string | null = null;
-
-    const hashedToken = this.inviteTokenHash(inviteToken);
-    const [invite] = await this.authRepository.findActiveStaffInviteByTokenHash(hashedToken);
-    if (!invite) {
-      throw new BadRequestException("Invalid or expired invite token");
-    }
-
-    if (invite.invitedEmail && invite.invitedEmail.toLowerCase() !== normalizedEmail) {
-      throw new BadRequestException("Invite is issued for a different email address");
-    }
-
-    const providerId = invite.providerId;
-    effectiveRole = invite.role as Exclude<UserRole, "PATIENT">;
-    inviteIdToConsume = invite.id;
-
-    if (requestedRole !== effectiveRole) {
-      throw new BadRequestException("Invite role does not match selected role");
-    }
-
-    const [provider] = await this.authRepository.findProviderById(providerId);
-    if (!provider || !provider.isActive) {
-      throw new NotFoundException("Provider not found or inactive");
-    }
-
-    try {
-      const [created] = await this.authRepository.createStaff({
-        role: effectiveRole,
-        fullName: dto.fullName.trim(),
-        phoneNumber: dto.phoneNumber.trim(),
-        email: normalizedEmail,
-        passwordHash: hashPassword(dto.password),
-        providerId,
-        isDispatcherAdmin: false,
-      });
-
-      if (!created) {
-        throw new ConflictException("Failed to create staff account");
-      }
-
-      if (inviteIdToConsume) {
-        await this.authRepository.markStaffInviteAsUsed(inviteIdToConsume);
-      }
-
-      const user = this.mapDbUserToAuthUser(created);
-      const token = signAuthToken(user);
-
-      return {
-        accessToken: token.accessToken,
-        expiresInSeconds: token.expiresInSeconds,
-        user,
-      };
-    } catch (error) {
-      this.handleUniqueConstraint(error);
-    }
+    return this.activateInviteFlow({
+      inviteToken,
+      password: dto.password,
+      expectedRole: this.ensureStaffRole(dto.role),
+      expectedEmail: this.normalizeEmail(dto.email),
+      profile: {
+        fullName: this.normalizeOptional(dto.fullName),
+        phoneNumber: this.normalizeOptional(dto.phoneNumber),
+      },
+    });
   }
 
   async loginDispatcher(dto: DispatcherLoginDto) {
@@ -211,14 +168,8 @@ export class AuthService {
       });
 
       const user = this.mapDbUserToAuthUser(created);
-      const token = signAuthToken(user);
       await this.authRepository.touchLastLogin(user.id);
-
-      return {
-        accessToken: token.accessToken,
-        expiresInSeconds: token.expiresInSeconds,
-        user,
-      };
+      return this.buildSessionResponse(user);
     } catch (error) {
       this.handleUniqueConstraint(error);
     }
@@ -258,6 +209,7 @@ export class AuthService {
       codeHash,
       tokenHash,
       fullName: dto.fullName?.trim() || undefined,
+      phoneNumber: dto.phoneNumber?.trim() || undefined,
       invitedEmail: dto.email?.trim().toLowerCase(),
       expiresAt,
     });
@@ -270,17 +222,6 @@ export class AuthService {
       ...invite,
       inviteToken,
     };
-  }
-
-  async createDispatcherInvite(dto: DispatcherInviteCreateDto, actor: AuthUser) {
-    return this.createStaffInvite(
-      {
-        role: "DISPATCHER",
-        email: dto.email,
-        expiresInHours: dto.expiresInHours,
-      },
-      actor
-    );
   }
 
   async previewStaffInvite(inviteToken: string) {
@@ -304,15 +245,38 @@ export class AuthService {
   }
 
   async activateStaffInvite(dto: StaffInviteActivateDto) {
-    const hashedToken = this.inviteTokenHash(dto.inviteToken.trim());
+    const inviteToken = this.normalizeOptional(dto.inviteToken);
+    if (!inviteToken) {
+      throw new BadRequestException("Invite token is required");
+    }
+    return this.activateInviteFlow({
+      inviteToken,
+      password: dto.password,
+    });
+  }
+
+  private async activateInviteFlow(input: {
+    inviteToken: string;
+    password: string;
+    expectedRole?: Exclude<UserRole, "PATIENT">;
+    expectedEmail?: string;
+    profile?: {
+      fullName?: string | null;
+      phoneNumber?: string | null;
+    };
+  }) {
+    const hashedToken = this.inviteTokenHash(input.inviteToken);
     const [invite] = await this.authRepository.findActiveStaffInviteByTokenHash(hashedToken);
     if (!invite) {
       throw new BadRequestException("Invalid or expired invite token");
     }
 
-    const invitedEmail = invite.invitedEmail?.trim().toLowerCase();
+    const invitedEmail = this.normalizeOptional(invite.invitedEmail)?.toLowerCase() ?? null;
     if (!invitedEmail) {
       throw new BadRequestException("Invite is missing invited email");
+    }
+    if (input.expectedEmail && invitedEmail !== input.expectedEmail) {
+      throw new BadRequestException("Invite is issued for a different email address");
     }
 
     const [provider] = await this.authRepository.findProviderById(invite.providerId);
@@ -321,7 +285,15 @@ export class AuthService {
     }
 
     const role = invite.role as Exclude<UserRole, "PATIENT">;
-    const passwordHash = hashPassword(dto.password);
+    if (input.expectedRole && input.expectedRole !== role) {
+      throw new BadRequestException("Invite role does not match selected role");
+    }
+
+    const fullNameFromInvite =
+      this.normalizeOptional(invite.fullName) ?? this.normalizeOptional(input.profile?.fullName);
+    const phoneFromInvite =
+      this.normalizeOptional(invite.phoneNumber) ?? this.normalizeOptional(input.profile?.phoneNumber);
+    const passwordHash = hashPassword(input.password);
 
     let [staff] = await this.authRepository.findStaffByEmailAndRole(invitedEmail, role);
 
@@ -334,54 +306,54 @@ export class AuthService {
     }
 
     if (!staff) {
-      const [created] = await this.authRepository.createStaff({
-        role,
-        fullName: invite.fullName?.trim() || null,
-        phoneNumber: null,
-        email: invitedEmail,
-        passwordHash,
-        providerId: invite.providerId,
-        isDispatcherAdmin: false,
-      });
-      if (!created) {
-        throw new ConflictException("Failed to create account from invite");
+      try {
+        const [created] = await this.authRepository.createStaff({
+          role,
+          fullName: fullNameFromInvite,
+          phoneNumber: phoneFromInvite,
+          email: invitedEmail,
+          passwordHash,
+          providerId: invite.providerId,
+          isDispatcherAdmin: false,
+        });
+        if (!created) {
+          throw new ConflictException("Failed to create account from invite");
+        }
+        staff = {
+          ...created,
+          passwordHash,
+          phoneNumber: phoneFromInvite,
+          isActive: true,
+        };
+      } catch (error) {
+        this.handleUniqueConstraint(error);
       }
-      staff = {
-        ...created,
-        passwordHash,
-        phoneNumber: null,
-        isActive: true,
-      };
     } else {
-      await this.authRepository.updateStaffPasswordAndActive(
-        staff.id,
-        passwordHash,
-        true,
-        staff.fullName ? undefined : (invite.fullName?.trim() || undefined)
-      );
+      try {
+        await this.authRepository.updateStaffPasswordAndActive(
+          staff.id,
+          passwordHash,
+          true,
+          staff.fullName ? undefined : (fullNameFromInvite ?? undefined),
+          staff.phoneNumber ? undefined : (phoneFromInvite ?? undefined)
+        );
+      } catch (error) {
+        this.handleUniqueConstraint(error);
+      }
       staff.passwordHash = passwordHash;
       staff.isActive = true;
-      if (!staff.fullName && invite.fullName?.trim()) {
-        staff.fullName = invite.fullName.trim();
+      if (!staff.fullName && fullNameFromInvite) {
+        staff.fullName = fullNameFromInvite;
+      }
+      if (!staff.phoneNumber && phoneFromInvite) {
+        staff.phoneNumber = phoneFromInvite;
       }
     }
 
     await this.authRepository.markStaffInviteAsUsed(invite.id);
 
     const user = this.mapDbUserToAuthUser(staff);
-    const token = signAuthToken(user);
     await this.authRepository.touchLastLogin(user.id);
-
-    return {
-      accessToken: token.accessToken,
-      expiresInSeconds: token.expiresInSeconds,
-      user,
-    };
-  }
-
-  async loginDispatcherWithInvite(dto: DispatcherInviteLoginDto) {
-    throw new BadRequestException(
-      "Dispatcher invite-login is deprecated. Use invite activation with password confirmation."
-    );
+    return this.buildSessionResponse(user);
   }
 }
