@@ -15,6 +15,13 @@
       "when": 1773564000000,
       "tag": "0001_dispatcher_auth_invites",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773562009646,
+      "tag": "0002_hard_omega_sentinel",
+      "breakpoints": true
     }
   ]
 }
