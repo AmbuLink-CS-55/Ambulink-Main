@@ -14,7 +14,7 @@ type DashboardSettingsState = {
 };
 
 const DEFAULT_SETTINGS: DashboardSettings = {
-  desktopNotificationsEnabled: true,
+  desktopNotificationsEnabled: false,
   themeMode: "light",
 };
 

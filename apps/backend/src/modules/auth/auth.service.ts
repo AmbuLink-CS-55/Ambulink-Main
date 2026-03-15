@@ -146,8 +146,26 @@ export class AuthService {
 
   async bootstrapDispatcherSignup(dto: DispatcherBootstrapSignupDto) {
     const normalizedEmail = this.normalizeEmail(dto.email);
+    const normalizedPhoneNumber = dto.phoneNumber.trim();
     const initialPrice = dto.initialPrice === undefined ? undefined : dto.initialPrice.toFixed(2);
     const pricePerKm = dto.pricePerKm === undefined ? undefined : dto.pricePerKm.toFixed(2);
+
+    const existingUsers = await this.authRepository.findUserByEmailOrPhone(
+      normalizedEmail,
+      normalizedPhoneNumber
+    );
+    const emailExists = existingUsers.some((user) => user.email === normalizedEmail);
+    const phoneExists = existingUsers.some((user) => user.phoneNumber === normalizedPhoneNumber);
+
+    if (emailExists && phoneExists) {
+      throw new ConflictException("Email and phone number are already in use");
+    }
+    if (emailExists) {
+      throw new ConflictException("Email is already in use");
+    }
+    if (phoneExists) {
+      throw new ConflictException("Phone number is already in use");
+    }
 
     try {
       const created = await this.authRepository.createProviderWithAdminDispatcher({
@@ -161,7 +179,7 @@ export class AuthService {
         },
         dispatcher: {
           fullName: dto.fullName.trim(),
-          phoneNumber: dto.phoneNumber.trim(),
+          phoneNumber: normalizedPhoneNumber,
           email: normalizedEmail,
           passwordHash: hashPassword(dto.password),
         },
@@ -196,6 +214,26 @@ export class AuthService {
     if (!dto.email?.trim()) {
       throw new BadRequestException("Email is required for staff invite links");
     }
+    const normalizedEmail = this.normalizeEmail(dto.email);
+    const normalizedPhoneNumber = this.normalizeOptional(dto.phoneNumber);
+    const existingUsers = await this.authRepository.findUserByEmailOrPhone(
+      normalizedEmail,
+      normalizedPhoneNumber ?? undefined
+    );
+    const emailExists = existingUsers.some((user) => user.email === normalizedEmail);
+    const phoneExists =
+      normalizedPhoneNumber !== null &&
+      existingUsers.some((user) => user.phoneNumber === normalizedPhoneNumber);
+
+    if (emailExists && phoneExists) {
+      throw new ConflictException("Email and phone number are already in use");
+    }
+    if (emailExists) {
+      throw new ConflictException("Email is already in use");
+    }
+    if (phoneExists) {
+      throw new ConflictException("Phone number is already in use");
+    }
 
     const inviteToken = randomBytes(24).toString("hex");
     const tokenHash = this.inviteTokenHash(inviteToken);
@@ -209,8 +247,8 @@ export class AuthService {
       codeHash,
       tokenHash,
       fullName: dto.fullName?.trim() || undefined,
-      phoneNumber: dto.phoneNumber?.trim() || undefined,
-      invitedEmail: dto.email?.trim().toLowerCase(),
+      phoneNumber: normalizedPhoneNumber ?? undefined,
+      invitedEmail: normalizedEmail,
       expiresAt,
     });
 

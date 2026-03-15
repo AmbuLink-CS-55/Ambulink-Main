@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { and, eq, gt, isNull } from "drizzle-orm";
+import { and, eq, gt, isNull, or } from "drizzle-orm";
 import { DbService } from "@/core/database/db.service";
 import { ambulanceProviders, staffInvites, users } from "@/core/database/schema";
 import type { StaffInviteRole, UserRole } from "@/core/database/schema";
@@ -23,6 +23,21 @@ export class AuthRepository {
       })
       .from(users)
       .where(and(eq(users.email, email), eq(users.role, role)));
+  }
+
+  findUserByEmailOrPhone(email: string, phoneNumber?: string) {
+    const condition = phoneNumber
+      ? or(eq(users.email, email), eq(users.phoneNumber, phoneNumber))
+      : eq(users.email, email);
+
+    return this.dbService.db
+      .select({
+        id: users.id,
+        email: users.email,
+        phoneNumber: users.phoneNumber,
+      })
+      .from(users)
+      .where(condition);
   }
 
   findStaffById(id: string) {

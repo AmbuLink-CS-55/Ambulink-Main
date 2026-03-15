@@ -1,10 +1,5 @@
 import { z } from "zod";
 
-export const pointSchema = z.object({
-  x: z.number(),
-  y: z.number(),
-});
-
 export const emergencyContactSchema = z.object({
   id: z.number(),
   number: z.string(),
@@ -67,41 +62,6 @@ export const emtAddNotePayloadSchema = z
   })
   .passthrough();
 
-export const driverEventDriverIdSchema = z
-  .object({
-    driverId: z.string().uuid(),
-  })
-  .passthrough();
-
-export const emtEventEmtIdSchema = z
-  .object({
-    emtId: z.string().uuid(),
-  })
-  .passthrough();
-
-export const patientEventPatientIdSchema = z
-  .object({
-    patientId: z.string().uuid(),
-  })
-  .passthrough();
-
-export const patientHelpCommandSchema = patientEventPatientIdSchema.merge(
-  patientPickupRequestSchema
-);
-export const patientCancelCommandSchema = patientEventPatientIdSchema.merge(
-  patientCancelRequestSchema
-);
-export const driverLocationCommandSchema = driverEventDriverIdSchema.merge(
-  driverLocationPayloadSchema
-);
-export const driverShiftCommandSchema = driverEventDriverIdSchema.merge(
-  z.object({
-    onShift: z.boolean(),
-  })
-);
-export const emtSubscribeCommandSchema = emtEventEmtIdSchema.merge(emtSubscribePayloadSchema);
-export const emtAddNoteCommandSchema = emtEventEmtIdSchema.merge(emtAddNotePayloadSchema);
-
 export const patientHelpHttpBodySchema = patientPickupRequestSchema;
 export const patientCancelHttpBodySchema = patientCancelRequestSchema;
 export const driverLocationHttpBodySchema = driverLocationPayloadSchema;
@@ -109,7 +69,6 @@ export const driverShiftHttpBodySchema = z.object({
   onShift: z.boolean(),
 });
 export const emtSubscribeHttpBodySchema = emtSubscribePayloadSchema;
-export const emtAddNoteHttpBodySchema = emtAddNotePayloadSchema;
 
 const locationSchema = z
   .object({
@@ -234,22 +193,5 @@ export const dispatcherBookingPayloadSchema = z
         name: z.string(),
       })
       .nullable(),
-  })
-  .passthrough();
-
-export const bookingEtaUpdatedPayloadSchema = z
-  .object({
-    bookingId: z.string(),
-    etaMinutes: z.number().int().nonnegative(),
-    previousEtaMinutes: z.number().int().nonnegative().nullable(),
-    changedAt: z.string(),
-  })
-  .passthrough();
-
-export const bookingReroutedPayloadSchema = z
-  .object({
-    bookingId: z.string(),
-    reason: z.string(),
-    changedAt: z.string(),
   })
   .passthrough();

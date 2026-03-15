@@ -236,10 +236,6 @@ export const emtListQuerySchema = z.object({
   status: z.enum(["AVAILABLE", "BUSY", "OFFLINE"]).optional(),
 });
 
-export const bookingListQuerySchema = z.object({
-  providerId: z.string().uuid().optional(),
-});
-
 export const bookingDetailsQuerySchema = z.object({
   dispatcherId: z.string().uuid().optional(),
 });
@@ -271,11 +267,6 @@ export const analyticsAiChatSchema = z.object({
   to: z.string().datetime().optional(),
 });
 
-export const bookingAddNoteSchema = z.object({
-  dispatcherId: z.string().uuid(),
-  content: z.string().trim().min(1).max(2000),
-});
-
 export const emtBookingSearchQuerySchema = z.object({
   q: z.string().trim().default(""),
   limit: z.coerce.number().int().min(1).max(500).optional(),
@@ -299,18 +290,6 @@ export const emtAddNoteMediaBodySchema = z.object({
     .positive()
     .max(60 * 60 * 1000)
     .optional(),
-});
-
-export const patientUploadSessionStartSchema = z.object({
-  patientId: z.string().uuid(),
-});
-
-export const patientSessionUploadQuerySchema = z.object({
-  patientId: z.string().uuid(),
-});
-
-export const patientBookingNoteQuerySchema = z.object({
-  patientId: z.string().uuid(),
 });
 
 export const patientBookingNoteBodySchema = z.object({
@@ -365,17 +344,11 @@ export type HospitalNearbyQueryDto = z.infer<typeof hospitalNearbyQuerySchema>;
 export type DriverListQueryDto = z.infer<typeof driverListQuerySchema>;
 export type DispatcherListQueryDto = z.infer<typeof dispatcherListQuerySchema>;
 export type EmtListQueryDto = z.infer<typeof emtListQuerySchema>;
-export type BookingListQueryDto = z.infer<typeof bookingListQuerySchema>;
 export type BookingDetailsQueryDto = z.infer<typeof bookingDetailsQuerySchema>;
 export type AnalyticsQueryDto = z.infer<typeof analyticsQuerySchema>;
 export type AnalyticsAiChatDto = z.infer<typeof analyticsAiChatSchema>;
-export type BookingAddNoteDto = z.infer<typeof bookingAddNoteSchema>;
 export type EmtBookingSearchQueryDto = z.infer<typeof emtBookingSearchQuerySchema>;
 export type EmtSubscribeDto = z.infer<typeof emtSubscribeSchema>;
 export type EmtAddNoteDto = z.infer<typeof emtAddNoteSchema>;
 export type EmtAddNoteMediaBodyDto = z.infer<typeof emtAddNoteMediaBodySchema>;
-export type PatientUploadSessionStartDto = z.infer<typeof patientUploadSessionStartSchema>;
-export type PatientSessionUploadQueryDto = z.infer<typeof patientSessionUploadQuerySchema>;
-export type PatientBookingNoteQueryDto = z.infer<typeof patientBookingNoteQuerySchema>;
 export type PatientBookingNoteBodyDto = z.infer<typeof patientBookingNoteBodySchema>;
-export type BookingAttachmentAccessQueryDto = z.infer<typeof bookingAttachmentAccessQuerySchema>;
