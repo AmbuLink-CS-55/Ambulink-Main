@@ -18,7 +18,7 @@ export default function BookingLogPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Booking Log</h1>
-          <p className="text-sm text-muted-foreground">Completed booking history.</p>
+          <p className="text-sm text-muted-foreground">Active and completed bookings.</p>
         </div>
       </div>
 

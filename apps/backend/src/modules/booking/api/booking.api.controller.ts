@@ -1,12 +1,14 @@
-import { Controller, Get, Param, Query, Res } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Query, Res } from "@nestjs/common";
 import type { Response } from "express";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
 import {
   bookingAttachmentAccessQuerySchema,
   bookingDetailsQuerySchema,
   bookingListQuerySchema,
+  reassignBookingSchema,
   type BookingDetailsQueryDto,
   type BookingListQueryDto,
+  type ReassignBookingDto,
 } from "@/common/validation/schemas";
 import { BookingApiService } from "./booking.api.service";
 
@@ -39,5 +41,13 @@ export class BookingApiController {
     res.setHeader("Content-Type", file.mimeType);
     res.setHeader("Content-Disposition", `inline; filename="${file.filename}"`);
     res.sendFile(file.filePath);
+  }
+
+  @Patch(":id/reassign")
+  reassign(
+    @Param("id") bookingId: string,
+    @Body(Validate(reassignBookingSchema)) payload: ReassignBookingDto
+  ) {
+    return this.bookingService.reassignBooking(bookingId, payload);
   }
 }

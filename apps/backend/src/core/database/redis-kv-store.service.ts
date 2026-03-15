@@ -3,13 +3,16 @@ import { randomUUID } from "node:crypto";
 import env from "env";
 import { and, eq, sql } from "drizzle-orm";
 import { createClient, type RedisClientType } from "redis";
-import { bookings, users, type Booking, type BookingStatus } from "@/core/database/schema";
+import { users, type Booking, type BookingStatus } from "@/core/database/schema";
 import type { BookingNote } from "@ambulink/types";
 import { DbService } from "./db.service";
 import type { BookingState, CreateBookingValues, DriverState, KvStore } from "./kv-store.types";
 
 const ACTIVE_BOOKING_STATUSES: BookingStatus[] = ["REQUESTED", "ASSIGNED", "ARRIVED", "PICKEDUP"];
 const BOOKING_DATE_FIELDS = ["requestedAt", "assignedAt", "arrivedAt", "pickedupAt", "completedAt"] as const;
+const BOOKING_STATE_TTL_SECONDS = 30 * 60;
+const BOOKING_INDEX_TTL_SECONDS = 30 * 60;
+const SUBSCRIPTION_TTL_SECONDS = 10 * 60;
 
 @Injectable()
 export class RedisKvStoreService implements KvStore {
@@ -55,18 +58,10 @@ export class RedisKvStoreService implements KvStore {
     const data: Partial<Booking> & { id: string } = {
       id,
       patientId: values.patientId,
-      pickupAddress: values.pickupAddress,
-      pickupLocation: values.pickupLocation,
       status: "ASSIGNED",
       ongoing: true,
-      providerId: values.providerId,
       driverId: values.driverId,
-      hospitalId: values.hospitalId,
       dispatcherId: values.dispatcherId ?? null,
-      emergencyType: values.emergencyType,
-      patientProfileSnapshot: values.patientProfileSnapshot ?? null,
-      fareEstimate: values.fareEstimate ?? null,
-      emtNotes: [],
       assignedAt: now,
       requestedAt: now,
     } as Partial<Booking> & { id: string };
@@ -79,34 +74,33 @@ export class RedisKvStoreService implements KvStore {
     };
 
     await this.saveBookingState(state, null);
-    await this.markBookingDirty(id);
     return data as Booking;
   }
 
   async updateBooking(bookingId: string, patch: Partial<Booking>) {
     const previous = await this.getBookingState(bookingId);
 
+    const sanitizedPatch = this.sanitizeBookingPatch(patch);
     const next: BookingState = previous
       ? {
           ...previous,
-          dirty: true,
+          dirty: false,
           data: {
             ...previous.data,
-            ...patch,
+            ...sanitizedPatch,
           },
         }
       : {
           id: bookingId,
           isNew: false,
-          dirty: true,
+          dirty: false,
           data: {
             id: bookingId,
-            ...patch,
+            ...sanitizedPatch,
           },
         };
 
     await this.saveBookingState(next, previous ?? null);
-    await this.markBookingDirty(bookingId);
   }
 
   async appendBookingNote(bookingId: string, note: BookingNote) {
@@ -267,12 +261,14 @@ export class RedisKvStoreService implements KvStore {
       await this.redisClient?.sRem(this.bookingSubscribersKey(previous.bookingId), userId);
     }
 
-    const next = { bookingId, dirty: true };
-    await this.redisClient?.set(this.userSubscriptionKey(userId), JSON.stringify(next));
-    await this.redisClient?.sAdd(this.subscriptionDirtySetKey(), userId);
+    const next = { bookingId, dirty: false };
+    await this.redisClient?.set(this.userSubscriptionKey(userId), JSON.stringify(next), {
+      EX: SUBSCRIPTION_TTL_SECONDS,
+    });
 
     if (bookingId) {
       await this.redisClient?.sAdd(this.bookingSubscribersKey(bookingId), userId);
+      await this.redisClient?.expire(this.bookingSubscribersKey(bookingId), SUBSCRIPTION_TTL_SECONDS);
     }
   }
 
@@ -317,30 +313,17 @@ export class RedisKvStoreService implements KvStore {
     this.isFlushing = true;
 
     try {
-      const [dirtyDriverIds, dirtyBookingIds, dirtySubscriptionIds] = await Promise.all([
-        this.redisClient?.sMembers(this.driverDirtySetKey()),
-        this.redisClient?.sMembers(this.bookingDirtySetKey()),
-        this.redisClient?.sMembers(this.subscriptionDirtySetKey()),
-      ]);
+      const [dirtyDriverIds] = await Promise.all([this.redisClient?.sMembers(this.driverDirtySetKey())]);
 
       const driverIds = dirtyDriverIds ?? [];
-      const bookingIds = dirtyBookingIds ?? [];
-      const subscriptionIds = dirtySubscriptionIds ?? [];
 
-      if (driverIds.length === 0 && bookingIds.length === 0 && subscriptionIds.length === 0) {
+      if (driverIds.length === 0) {
         return;
       }
 
       const driverEntries = await Promise.all(
         driverIds.map(async (id) => ({ id, state: await this.getDriverState(id) }))
       );
-      const bookingEntries = await Promise.all(
-        bookingIds.map(async (id) => ({ id, state: await this.getBookingState(id) }))
-      );
-      const subscriptionEntries = await Promise.all(
-        subscriptionIds.map(async (id) => ({ id, state: await this.getSubscriptionRecord(id) }))
-      );
-
       await this.dbService.db.transaction(async (tx) => {
         for (const entry of driverEntries) {
           if (!entry.state?.dirty) continue;
@@ -365,55 +348,6 @@ export class RedisKvStoreService implements KvStore {
             .set(updateData)
             .where(and(eq(users.id, entry.id), eq(users.role, "DRIVER")));
         }
-
-        for (const entry of subscriptionEntries) {
-          if (!entry.state?.dirty) continue;
-
-          await tx
-            .update(users)
-            .set({
-              subscribedBookingId: entry.state.bookingId,
-              updatedAt: new Date(),
-            })
-            .where(eq(users.id, entry.id));
-        }
-
-        for (const entry of bookingEntries) {
-          if (!entry.state?.dirty) continue;
-
-          const { pickupLocation, ...rest } = entry.state.data;
-          const updateData: Record<string, unknown> = {
-            ...rest,
-          };
-          delete updateData.id;
-
-          if (entry.state.isNew) {
-            await tx.insert(bookings).values({
-              ...(updateData as Omit<Booking, "pickupLocation">),
-              ...(pickupLocation
-                ? {
-                    pickupLocation: sql`ST_SetSRID(ST_MakePoint(${pickupLocation.x}, ${pickupLocation.y}), 4326)`,
-                  }
-                : {}),
-            });
-          } else {
-            if (Object.keys(updateData).length > 0) {
-              await tx.update(bookings).set(updateData).where(eq(bookings.id, entry.id));
-            }
-
-            if (pickupLocation !== undefined) {
-              await tx
-                .update(bookings)
-                .set({
-                  pickupLocation:
-                    pickupLocation === null
-                      ? null
-                      : sql`ST_SetSRID(ST_MakePoint(${pickupLocation.x}, ${pickupLocation.y}), 4326)`,
-                })
-                .where(eq(bookings.id, entry.id));
-            }
-          }
-        }
       });
 
       for (const entry of driverEntries) {
@@ -421,29 +355,6 @@ export class RedisKvStoreService implements KvStore {
         entry.state.dirty = false;
         await this.redisClient?.set(this.driverKey(entry.id), JSON.stringify(entry.state));
         await this.redisClient?.sRem(this.driverDirtySetKey(), entry.id);
-      }
-
-      for (const entry of subscriptionEntries) {
-        if (!entry.state?.dirty) continue;
-        entry.state.dirty = false;
-        await this.redisClient?.set(this.userSubscriptionKey(entry.id), JSON.stringify(entry.state));
-        await this.redisClient?.sRem(this.subscriptionDirtySetKey(), entry.id);
-      }
-
-      for (const entry of bookingEntries) {
-        if (!entry.state?.dirty) continue;
-        entry.state.dirty = false;
-        if (entry.state.isNew) {
-          const previousState: BookingState = {
-            ...entry.state,
-            data: { ...entry.state.data },
-          };
-          entry.state.isNew = false;
-          await this.saveBookingState(entry.state, previousState);
-        } else {
-          await this.redisClient?.set(this.bookingKey(entry.id), JSON.stringify(entry.state));
-        }
-        await this.redisClient?.sRem(this.bookingDirtySetKey(), entry.id);
       }
     } catch (error) {
       this.logger.error({
@@ -471,7 +382,9 @@ export class RedisKvStoreService implements KvStore {
       data: this.serializeBookingDates(next.data),
     };
 
-    await this.redisClient?.set(this.bookingKey(next.id), JSON.stringify(nextPayload));
+    await this.redisClient?.set(this.bookingKey(next.id), JSON.stringify(nextPayload), {
+      EX: BOOKING_STATE_TTL_SECONDS,
+    });
 
     await this.updateBookingIndexes(previous, next);
   }
@@ -490,6 +403,7 @@ export class RedisKvStoreService implements KvStore {
 
     for (const key of addTo) {
       await this.redisClient?.sAdd(key, next.id);
+      await this.redisClient?.expire(key, BOOKING_INDEX_TTL_SECONDS);
     }
   }
 
@@ -528,11 +442,6 @@ export class RedisKvStoreService implements KvStore {
     return rows.filter((row): row is Partial<Booking> & { id: string } => Boolean(row));
   }
 
-  private async markBookingDirty(bookingId: string) {
-    await this.ensureRedisClient();
-    await this.redisClient?.sAdd(this.bookingDirtySetKey(), bookingId);
-  }
-
   private async getSubscriptionRecord(userId: string) {
     await this.ensureRedisClient();
     const raw = await this.redisClient?.get(this.userSubscriptionKey(userId));
@@ -560,6 +469,23 @@ export class RedisKvStoreService implements KvStore {
       }
     }
     return clone as Partial<Booking> & { id: string };
+  }
+
+  private sanitizeBookingPatch(patch: Partial<Booking>): Partial<Booking> {
+    const allowed: Partial<Booking> = {};
+    if (patch.id !== undefined) allowed.id = patch.id;
+    if (patch.patientId !== undefined) allowed.patientId = patch.patientId;
+    if (patch.driverId !== undefined) allowed.driverId = patch.driverId;
+    if (patch.dispatcherId !== undefined) allowed.dispatcherId = patch.dispatcherId;
+    if (patch.emtId !== undefined) allowed.emtId = patch.emtId;
+    if (patch.status !== undefined) allowed.status = patch.status;
+    if (patch.ongoing !== undefined) allowed.ongoing = patch.ongoing;
+    if (patch.requestedAt !== undefined) allowed.requestedAt = patch.requestedAt;
+    if (patch.assignedAt !== undefined) allowed.assignedAt = patch.assignedAt;
+    if (patch.arrivedAt !== undefined) allowed.arrivedAt = patch.arrivedAt;
+    if (patch.pickedupAt !== undefined) allowed.pickedupAt = patch.pickedupAt;
+    if (patch.completedAt !== undefined) allowed.completedAt = patch.completedAt;
+    return allowed;
   }
 
   private async ensureRedisClient() {

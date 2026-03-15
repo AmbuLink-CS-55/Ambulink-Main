@@ -668,11 +668,6 @@ export class BookingCoreService {
     }
 
     this.dispatcherService.assertWithinProviderScope(row.providerId, dispatcher.providerId);
-    if (row.status !== "COMPLETED") {
-      throw new BadRequestException(
-        bookingError("BOOKING_NOT_COMPLETED", "Only completed bookings are available")
-      );
-    }
 
     return {
       bookingId: row.bookingId,

@@ -1,12 +1,14 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
-import { bookings, users, type Booking, type BookingStatus } from "@/core/database/schema";
+import { users, type Booking, type BookingStatus } from "@/core/database/schema";
 import type { BookingNote } from "@ambulink/types";
 import { DbService } from "./db.service";
 import type { BookingState, CreateBookingValues, DriverState, KvStore } from "./kv-store.types";
 
 const ACTIVE_BOOKING_STATUSES: BookingStatus[] = ["REQUESTED", "ASSIGNED", "ARRIVED", "PICKEDUP"];
+const BOOKING_STATE_TTL_MS = 30 * 60 * 1000;
+const SUBSCRIPTION_TTL_MS = 10 * 60 * 1000;
 
 @Injectable()
 export class InMemoryKvStoreService implements KvStore {
@@ -17,6 +19,8 @@ export class InMemoryKvStoreService implements KvStore {
   protected readonly drivers = new Map<string, DriverState>();
   protected readonly bookings = new Map<string, BookingState>();
   protected readonly userSubscriptions = new Map<string, { bookingId: string | null; dirty: boolean }>();
+  protected readonly bookingExpiry = new Map<string, number>();
+  protected readonly subscriptionExpiry = new Map<string, number>();
 
   constructor(private dbService: DbService) {}
 
@@ -42,47 +46,43 @@ export class InMemoryKvStoreService implements KvStore {
     const data: Partial<Booking> & { id: string } = {
       id,
       patientId: values.patientId,
-      pickupAddress: values.pickupAddress,
-      pickupLocation: values.pickupLocation,
       status: "ASSIGNED",
       ongoing: true,
-      providerId: values.providerId,
       driverId: values.driverId,
-      hospitalId: values.hospitalId,
       dispatcherId: values.dispatcherId ?? null,
-      emergencyType: values.emergencyType,
-      patientProfileSnapshot: values.patientProfileSnapshot ?? null,
-      fareEstimate: values.fareEstimate ?? null,
-      emtNotes: [],
       assignedAt: now,
       requestedAt: now,
     } as Partial<Booking> & { id: string };
 
-    this.bookings.set(id, { id, isNew: true, dirty: true, data });
+    this.bookings.set(id, { id, isNew: false, dirty: false, data });
+    this.bookingExpiry.set(id, Date.now() + BOOKING_STATE_TTL_MS);
     return data as Booking;
   }
 
   async updateBooking(bookingId: string, patch: Partial<Booking>) {
+    const sanitizedPatch = this.sanitizeBookingPatch(patch);
     const existing = this.bookings.get(bookingId);
 
     if (!existing) {
       this.bookings.set(bookingId, {
         id: bookingId,
         isNew: false,
-        dirty: true,
+        dirty: false,
         data: {
           id: bookingId,
-          ...patch,
+          ...sanitizedPatch,
         },
       });
+      this.bookingExpiry.set(bookingId, Date.now() + BOOKING_STATE_TTL_MS);
       return;
     }
 
     existing.data = {
       ...existing.data,
-      ...patch,
+      ...sanitizedPatch,
     };
-    existing.dirty = true;
+    existing.dirty = false;
+    this.bookingExpiry.set(bookingId, Date.now() + BOOKING_STATE_TTL_MS);
   }
 
   async appendBookingNote(bookingId: string, note: BookingNote) {
@@ -92,14 +92,17 @@ export class InMemoryKvStoreService implements KvStore {
   }
 
   async getBookingState(bookingId: string) {
+    if (this.isBookingExpired(bookingId)) return undefined;
     return this.bookings.get(bookingId);
   }
 
   async getBookingData(bookingId: string) {
+    if (this.isBookingExpired(bookingId)) return undefined;
     return this.bookings.get(bookingId)?.data;
   }
 
   async getActiveBookingByIdFromMemory(bookingId: string) {
+    if (this.isBookingExpired(bookingId)) return null;
     const state = this.bookings.get(bookingId);
     if (!state?.data.status || !ACTIVE_BOOKING_STATUSES.includes(state.data.status)) {
       return null;
@@ -109,6 +112,7 @@ export class InMemoryKvStoreService implements KvStore {
   }
 
   async getNewActiveBookingsByPatient(patientId: string) {
+    this.cleanupExpiredBookings();
     return [...this.bookings.values()]
       .filter(
         (state) =>
@@ -120,6 +124,7 @@ export class InMemoryKvStoreService implements KvStore {
   }
 
   async getNewActiveBookingsByDriver(driverId: string) {
+    this.cleanupExpiredBookings();
     return [...this.bookings.values()]
       .filter(
         (state) =>
@@ -131,6 +136,7 @@ export class InMemoryKvStoreService implements KvStore {
   }
 
   async getNewActiveBookingsByDispatcher(dispatcherId: string) {
+    this.cleanupExpiredBookings();
     return [...this.bookings.values()]
       .filter(
         (state) =>
@@ -142,6 +148,7 @@ export class InMemoryKvStoreService implements KvStore {
   }
 
   async getNewOngoingDispatchBookingByDriver(driverId: string) {
+    this.cleanupExpiredBookings();
     for (const state of this.bookings.values()) {
       if (state.data.driverId !== driverId) continue;
       if (!state.data.ongoing) continue;
@@ -157,6 +164,7 @@ export class InMemoryKvStoreService implements KvStore {
   }
 
   async applyBookingOverlay<T extends Record<string, any>>(rows: T[]): Promise<T[]> {
+    this.cleanupExpiredBookings();
     return rows
       .map((row) => {
         const bookingId = (row.id ?? row.bookingId) as string | undefined;
@@ -214,15 +222,18 @@ export class InMemoryKvStoreService implements KvStore {
   }
 
   async setUserSubscribedBooking(userId: string, bookingId: string | null) {
-    this.userSubscriptions.set(userId, { bookingId, dirty: true });
+    this.userSubscriptions.set(userId, { bookingId, dirty: false });
+    this.subscriptionExpiry.set(userId, Date.now() + SUBSCRIPTION_TTL_MS);
   }
 
   async clearSubscriptionsForBooking(bookingId: string) {
+    this.cleanupExpiredSubscriptions();
     const affectedUserIds: string[] = [];
 
     for (const [userId, state] of this.userSubscriptions.entries()) {
       if (state.bookingId !== bookingId) continue;
-      this.userSubscriptions.set(userId, { bookingId: null, dirty: true });
+      this.userSubscriptions.set(userId, { bookingId: null, dirty: false });
+      this.subscriptionExpiry.set(userId, Date.now() + SUBSCRIPTION_TTL_MS);
       affectedUserIds.push(userId);
     }
 
@@ -230,10 +241,12 @@ export class InMemoryKvStoreService implements KvStore {
   }
 
   async getUserSubscribedBooking(userId: string) {
+    if (this.isSubscriptionExpired(userId)) return undefined;
     return this.userSubscriptions.get(userId)?.bookingId;
   }
 
   async hasUserSubscribedBookingOverride(userId: string) {
+    if (this.isSubscriptionExpired(userId)) return false;
     return this.userSubscriptions.has(userId);
   }
 
@@ -241,16 +254,8 @@ export class InMemoryKvStoreService implements KvStore {
     if (this.isFlushing) return;
 
     const dirtyDriverEntries = [...this.drivers.entries()].filter(([, state]) => state.dirty);
-    const dirtyBookingEntries = [...this.bookings.entries()].filter(([, state]) => state.dirty);
-    const dirtySubscriptionEntries = [...this.userSubscriptions.entries()].filter(
-      ([, state]) => state.dirty
-    );
 
-    if (
-      dirtyDriverEntries.length === 0 &&
-      dirtyBookingEntries.length === 0 &&
-      dirtySubscriptionEntries.length === 0
-    ) {
+    if (dirtyDriverEntries.length === 0) {
       return;
     }
 
@@ -284,51 +289,6 @@ export class InMemoryKvStoreService implements KvStore {
             .where(and(eq(users.id, driverId), eq(users.role, "DRIVER")));
         }
 
-        for (const [userId, state] of dirtySubscriptionEntries) {
-          await tx
-            .update(users)
-            .set({
-              subscribedBookingId: state.bookingId,
-              updatedAt: new Date(),
-            })
-            .where(eq(users.id, userId));
-        }
-
-        for (const [bookingId, state] of dirtyBookingEntries) {
-          const { pickupLocation, ...rest } = state.data;
-          const updateData: Record<string, unknown> = {
-            ...rest,
-          };
-          delete updateData.id;
-
-          if (state.isNew) {
-            await tx.insert(bookings).values({
-              ...(updateData as Omit<Booking, "pickupLocation">),
-              ...(pickupLocation
-                ? {
-                    pickupLocation: sql`ST_SetSRID(ST_MakePoint(${pickupLocation.x}, ${pickupLocation.y}), 4326)`,
-                  }
-                : {}),
-            });
-            state.isNew = false;
-          } else {
-            if (Object.keys(updateData).length > 0) {
-              await tx.update(bookings).set(updateData).where(eq(bookings.id, bookingId));
-            }
-
-            if (pickupLocation !== undefined) {
-              await tx
-                .update(bookings)
-                .set({
-                  pickupLocation:
-                    pickupLocation === null
-                      ? null
-                      : sql`ST_SetSRID(ST_MakePoint(${pickupLocation.x}, ${pickupLocation.y}), 4326)`,
-                })
-                .where(eq(bookings.id, bookingId));
-            }
-          }
-        }
       });
 
       for (const [id] of dirtyDriverEntries) {
@@ -336,19 +296,57 @@ export class InMemoryKvStoreService implements KvStore {
         if (state) state.dirty = false;
       }
 
-      for (const [id] of dirtySubscriptionEntries) {
-        const state = this.userSubscriptions.get(id);
-        if (state) state.dirty = false;
-      }
-
-      for (const [id] of dirtyBookingEntries) {
-        const state = this.bookings.get(id);
-        if (state) state.dirty = false;
-      }
     } catch (error) {
       this.logger.error("Failed to flush in-memory state to Postgres", error as Error);
     } finally {
       this.isFlushing = false;
+    }
+  }
+
+  private sanitizeBookingPatch(patch: Partial<Booking>): Partial<Booking> {
+    const allowed: Partial<Booking> = {};
+    if (patch.id !== undefined) allowed.id = patch.id;
+    if (patch.patientId !== undefined) allowed.patientId = patch.patientId;
+    if (patch.driverId !== undefined) allowed.driverId = patch.driverId;
+    if (patch.dispatcherId !== undefined) allowed.dispatcherId = patch.dispatcherId;
+    if (patch.emtId !== undefined) allowed.emtId = patch.emtId;
+    if (patch.status !== undefined) allowed.status = patch.status;
+    if (patch.ongoing !== undefined) allowed.ongoing = patch.ongoing;
+    if (patch.requestedAt !== undefined) allowed.requestedAt = patch.requestedAt;
+    if (patch.assignedAt !== undefined) allowed.assignedAt = patch.assignedAt;
+    if (patch.arrivedAt !== undefined) allowed.arrivedAt = patch.arrivedAt;
+    if (patch.pickedupAt !== undefined) allowed.pickedupAt = patch.pickedupAt;
+    if (patch.completedAt !== undefined) allowed.completedAt = patch.completedAt;
+    return allowed;
+  }
+
+  private isBookingExpired(bookingId: string) {
+    const expiresAt = this.bookingExpiry.get(bookingId);
+    if (!expiresAt) return false;
+    if (Date.now() <= expiresAt) return false;
+    this.bookingExpiry.delete(bookingId);
+    this.bookings.delete(bookingId);
+    return true;
+  }
+
+  private cleanupExpiredBookings() {
+    for (const bookingId of this.bookingExpiry.keys()) {
+      this.isBookingExpired(bookingId);
+    }
+  }
+
+  private isSubscriptionExpired(userId: string) {
+    const expiresAt = this.subscriptionExpiry.get(userId);
+    if (!expiresAt) return false;
+    if (Date.now() <= expiresAt) return false;
+    this.subscriptionExpiry.delete(userId);
+    this.userSubscriptions.delete(userId);
+    return true;
+  }
+
+  private cleanupExpiredSubscriptions() {
+    for (const userId of this.subscriptionExpiry.keys()) {
+      this.isSubscriptionExpired(userId);
     }
   }
 }
