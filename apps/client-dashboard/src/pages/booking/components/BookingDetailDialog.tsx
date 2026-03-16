@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { getBookingActionErrorMessage } from "@/lib/booking-ui-errors";
 import type { BookingDetailsPayload } from "@/lib/socket-types";
-import { useGetBookingDetails } from "@/services/booking.service";
+import { useAddBookingNote, useGetBookingDetails } from "@/services/booking.service";
 import { getDispatcherAccessToken, getDispatcherId } from "@/lib/identity";
 import env from "../../../../env";
 
@@ -32,13 +32,39 @@ function statusVariant(status: string): BadgeVariant {
 }
 
 export function BookingDetailDialog({ bookingId, open, onOpenChange }: Props) {
+  const [noteContent, setNoteContent] = useState("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const detailsQuery = useGetBookingDetails(open ? bookingId : null);
+  const addNote = useAddBookingNote();
 
   const details = detailsQuery.data;
   const notes = useMemo(
     () => (details?.notes ?? []).slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     [details?.notes]
   );
+
+  const submitNote = async () => {
+    if (!bookingId) return;
+    if (details?.status === "COMPLETED") {
+      setSubmitError("Notes are locked for completed bookings.");
+      return;
+    }
+    if (!noteContent.trim()) {
+      setSubmitError("Type a note before submitting.");
+      return;
+    }
+
+    setSubmitError(null);
+    try {
+      await addNote.mutateAsync({
+        bookingId,
+        content: noteContent.trim(),
+      });
+      setNoteContent("");
+    } catch (error) {
+      setSubmitError(getBookingActionErrorMessage(error));
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -63,6 +89,12 @@ export function BookingDetailDialog({ bookingId, open, onOpenChange }: Props) {
           <BookingContent
             details={details}
             notes={notes}
+            noteContent={noteContent}
+            setNoteContent={setNoteContent}
+            submitNote={submitNote}
+            submitError={submitError}
+            isSubmitting={addNote.isPending}
+            isNotesLocked={details.status === "COMPLETED"}
             onClose={() => onOpenChange(false)}
           />
         ) : (
@@ -76,10 +108,22 @@ export function BookingDetailDialog({ bookingId, open, onOpenChange }: Props) {
 function BookingContent({
   details,
   notes,
+  noteContent,
+  setNoteContent,
+  submitNote,
+  submitError,
+  isSubmitting,
+  isNotesLocked,
   onClose,
 }: {
   details: BookingDetailsPayload;
   notes: BookingDetailsPayload["notes"];
+  noteContent: string;
+  setNoteContent: (value: string) => void;
+  submitNote: () => Promise<void>;
+  submitError: string | null;
+  isSubmitting: boolean;
+  isNotesLocked: boolean;
   onClose: () => void;
 }) {
   const [previewAttachment, setPreviewAttachment] = useState<{
@@ -248,10 +292,32 @@ function BookingContent({
             )}
           </div>
 
-          <div className="flex justify-end">
-            <Button variant="outline" onClick={onClose}>
-              Close
-            </Button>
+          <div className="space-y-2">
+            <textarea
+              className="min-h-20 max-h-[120px] w-full resize-none rounded-md border bg-background p-3 text-sm"
+              placeholder={
+                isNotesLocked
+                  ? "Notes are disabled for completed bookings."
+                  : "Add dispatcher note..."
+              }
+              value={noteContent}
+              onChange={(event) => setNoteContent(event.target.value)}
+              disabled={isNotesLocked}
+            />
+            {isNotesLocked ? (
+              <p className="text-sm text-muted-foreground">
+                This booking is completed. Dispatchers can view notes but cannot add new ones.
+              </p>
+            ) : null}
+            {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <Button onClick={submitNote} disabled={isSubmitting || isNotesLocked}>
+                {isSubmitting ? "Saving..." : "Add Note"}
+              </Button>
+              <Button variant="outline" onClick={onClose}>
+                Close
+              </Button>
+            </div>
           </div>
         </section>
       </div>

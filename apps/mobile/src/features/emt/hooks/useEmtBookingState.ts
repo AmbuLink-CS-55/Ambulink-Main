@@ -15,6 +15,11 @@ const toActiveBooking = (payload: BookingAssignedPayload): EmtActiveBooking => (
   emtNotes: payload.emtNotes ?? [],
 });
 
+const getAuthenticatedEmtId = () => {
+  const user = getAuthUser();
+  return user?.role === "emt" ? user.id : null;
+};
+
 export const useEmtBookingState = create<EmtBookingState>((set, get) => ({
   activeBooking: null,
   bookingStatus: "COMPLETED",
@@ -34,7 +39,7 @@ export const useEmtBookingState = create<EmtBookingState>((set, get) => ({
     set({ isLoadingOptions: !isRefresh, isRefreshingOptions: isRefresh, errorMessage: null });
 
     try {
-      const emtId = getAuthUser()?.id;
+      const emtId = getAuthenticatedEmtId();
       if (!emtId) {
         set({ bookingOptions: [] });
         return;
@@ -53,7 +58,7 @@ export const useEmtBookingState = create<EmtBookingState>((set, get) => ({
 
   hydrateCurrentBooking: async () => {
     try {
-      const emtId = getAuthUser()?.id;
+      const emtId = getAuthenticatedEmtId();
       if (!emtId) {
         set({ activeBooking: null, bookingStatus: "COMPLETED" });
         return;
@@ -80,7 +85,7 @@ export const useEmtBookingState = create<EmtBookingState>((set, get) => ({
   selectAndSubscribe: async (bookingId) => {
     set({ isSubscribing: true, errorMessage: null });
     try {
-      const emtId = getAuthUser()?.id;
+      const emtId = getAuthenticatedEmtId();
       if (!emtId) {
         set({ errorMessage: "EMT session is required." });
         return false;
@@ -116,7 +121,7 @@ export const useEmtBookingState = create<EmtBookingState>((set, get) => ({
     }
 
     try {
-      const emtId = getAuthUser()?.id;
+      const emtId = getAuthenticatedEmtId();
       if (!emtId) {
         set({ errorMessage: "EMT session is required." });
         return false;
@@ -151,7 +156,7 @@ export const useEmtBookingState = create<EmtBookingState>((set, get) => ({
     }
 
     try {
-      const emtId = getAuthUser()?.id;
+      const emtId = getAuthenticatedEmtId();
       if (!emtId) {
         set({ errorMessage: "EMT session is required." });
         return false;

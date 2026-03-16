@@ -1,7 +1,7 @@
 import { api } from "@/lib/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import type { BookingDetailsPayload, BookingLogEntry, Point } from "@ambulink/types";
+import type { BookingDetailsPayload, BookingLogEntry, BookingNote, Point } from "@ambulink/types";
 
 export type { BookingLogEntry };
 
@@ -26,6 +26,23 @@ export const useGetBookingDetails = (bookingId: string | null) => {
       }
       const { data } = await api.get<BookingDetailsPayload>(`/booking/${bookingId}/details`);
       return data;
+    },
+  });
+};
+
+export const useAddBookingNote = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { bookingId: string; content: string }) => {
+      const { data } = await api.post<BookingNote>(`/booking/${payload.bookingId}/notes`, {
+        content: payload.content,
+      });
+      return data;
+    },
+    onSuccess: async (_note, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.bookingDetails(variables.bookingId),
+      });
     },
   });
 };

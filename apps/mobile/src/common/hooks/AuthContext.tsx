@@ -41,8 +41,7 @@ const STORAGE_KEY = "ambulink.mobile.auth.v1";
 function mapServerRole(role: "DRIVER" | "EMT" | "DISPATCHER"): Role {
   if (role === "DRIVER") return "driver";
   if (role === "EMT") return "emt";
-  // Mobile app has no dispatcher UX yet; default to emt to avoid dead-end routes.
-  return "emt";
+  throw new Error("Dispatcher accounts are not supported in the mobile app.");
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({

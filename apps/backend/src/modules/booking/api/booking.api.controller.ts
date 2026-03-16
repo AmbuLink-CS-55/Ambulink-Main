@@ -6,6 +6,7 @@ import {
   Get,
   Param,
   Patch,
+  Post,
   Query,
   Res,
   UseGuards,
@@ -14,8 +15,10 @@ import type { Response } from "express";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
 import {
   bookingAttachmentAccessQuerySchema,
+  dispatcherBookingNoteBodySchema,
   bookingDetailsQuerySchema,
   reassignBookingSchema,
+  type DispatcherBookingNoteBodyDto,
   type BookingDetailsQueryDto,
   type ReassignBookingDto,
 } from "@/common/validation/schemas";
@@ -44,6 +47,16 @@ export class BookingApiController {
     @CurrentUser() user: AuthUser
   ) {
     return this.bookingService.getBookingDetailsForDispatcher(bookingId, user.id);
+  }
+
+  @UseGuards(AuthGuard, DispatcherRoleGuard)
+  @Post(":id/notes")
+  addDispatcherNote(
+    @Param("id") bookingId: string,
+    @Body(Validate(dispatcherBookingNoteBodySchema)) body: DispatcherBookingNoteBodyDto,
+    @CurrentUser() user: AuthUser
+  ) {
+    return this.bookingService.addDispatcherNote(bookingId, user.id, body.content);
   }
 
   @UseGuards(AttachmentAuthGuard)

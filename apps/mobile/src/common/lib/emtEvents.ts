@@ -8,12 +8,18 @@ import {
 import { getAuthUser } from "@/common/hooks/AuthContext";
 
 function resolveEmtId(emtId?: string) {
-  const fromSession = getAuthUser()?.id;
-  const id = emtId ?? fromSession;
-  if (!id) {
+  const sessionUser = getAuthUser();
+  if (!sessionUser || sessionUser.role !== "emt") {
     throw new Error("EMT session is required");
   }
-  return id;
+  const resolvedId = emtId ?? sessionUser.id;
+  if (!resolvedId) {
+    throw new Error("EMT session is required");
+  }
+  if (resolvedId !== sessionUser.id) {
+    throw new Error("EMT identity mismatch");
+  }
+  return resolvedId;
 }
 
 export async function fetchEmtBookingOptions(

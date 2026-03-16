@@ -67,8 +67,10 @@ export default function LoginModern() {
 
       if (session.user.role === "DRIVER") {
         router.replace("/(driver)");
-      } else {
+      } else if (session.user.role === "EMT") {
         router.replace("/(emt)" as never);
+      } else {
+        throw new Error("Only driver and EMT accounts are supported in the mobile app.");
       }
     } catch (loginError) {
       console.error("[mobile-auth] login failed", loginError);

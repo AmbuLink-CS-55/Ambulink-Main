@@ -1,17 +1,20 @@
 import { apiPost, apiPostForm } from "./api";
-import type { PatientCancelCommand, PatientHelpCommand } from "@ambulink/types";
+import type { PatientCancelRequest, PatientPickupRequest } from "@ambulink/types";
 import {
   buildMediaFormData,
   type MediaAttachmentInput,
   type MediaNoteSubmitPayload,
 } from "./mediaNote";
 
-export async function sendPatientHelp(payload: PatientHelpCommand) {
-  return apiPost<{ accepted: boolean }, PatientHelpCommand>("/api/patients/events/help", payload);
+export async function sendPatientHelp(payload: PatientPickupRequest) {
+  return apiPost<{ accepted: boolean }, PatientPickupRequest>("/api/patients/events/help", payload);
 }
 
-export async function sendPatientCancel(payload: PatientCancelCommand) {
-  return apiPost<{ accepted: boolean }, PatientCancelCommand>("/api/patients/events/cancel", payload);
+export async function sendPatientCancel(payload: PatientCancelRequest) {
+  return apiPost<{ accepted: boolean }, PatientCancelRequest>(
+    "/api/patients/events/cancel",
+    payload
+  );
 }
 
 export async function startPatientUploadSession() {

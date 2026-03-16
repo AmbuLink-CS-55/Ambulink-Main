@@ -80,7 +80,11 @@ export default function EmtMapScreen() {
   }
 
   const userLocation = activeBooking?.patient.location ?? location;
-  const driverLocations = activeBooking?.driver.location ? [activeBooking.driver.location] : [];
+  const driverLocation =
+    activeBooking?.driver.location ??
+    ((activeBooking?.driver as { currentLocation?: { x: number; y: number } | null } | undefined)
+      ?.currentLocation ?? null);
+  const driverLocations = driverLocation ? [driverLocation] : [];
   const hospitalLocation = activeBooking?.hospital.location ?? undefined;
 
   return (

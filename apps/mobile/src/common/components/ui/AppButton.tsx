@@ -1,7 +1,7 @@
 import type { ComponentProps } from "react";
 import { ActivityIndicator, Pressable, Text } from "react-native";
 
-type AppButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "success";
+type AppButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "success" | "warning";
 
 type AppButtonProps = Omit<ComponentProps<typeof Pressable>, "children"> & {
   label: string;
@@ -20,6 +20,7 @@ const VARIANT_CLASS: Record<AppButtonVariant, string> = {
   ghost: "bg-transparent border-border",
   danger: "bg-danger border-danger",
   success: "bg-success border-success",
+  warning: "bg-warning border-warning",
 };
 
 const DISABLED_CLASS: Record<AppButtonVariant, string> = {
@@ -28,6 +29,7 @@ const DISABLED_CLASS: Record<AppButtonVariant, string> = {
   ghost: "bg-transparent border-border",
   danger: "bg-muted border-border",
   success: "bg-muted border-border",
+  warning: "bg-muted border-border",
 };
 
 const TEXT_CLASS: Record<AppButtonVariant, string> = {
@@ -36,6 +38,7 @@ const TEXT_CLASS: Record<AppButtonVariant, string> = {
   ghost: "text-foreground",
   danger: "text-danger-foreground",
   success: "text-success-foreground",
+  warning: "text-warning-foreground",
 };
 
 const DISABLED_TEXT_CLASS = "text-muted-foreground";
@@ -45,6 +48,7 @@ const SPINNER_COLOR: Record<AppButtonVariant, string> = {
   ghost: "#111827",
   danger: "#ffffff",
   success: "#ffffff",
+  warning: "#111827",
 };
 
 export function AppButton({

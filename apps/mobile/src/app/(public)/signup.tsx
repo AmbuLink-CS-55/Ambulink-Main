@@ -101,7 +101,13 @@ export default function SignupPage() {
         confirmPassword,
       });
       await signInStaff(session);
-      router.replace("/");
+      if (session.user.role === "DRIVER") {
+        router.replace("/(driver)");
+      } else if (session.user.role === "EMT") {
+        router.replace("/(emt)" as never);
+      } else {
+        throw new Error("Only driver and EMT accounts are supported in the mobile app.");
+      }
     } catch (activateError) {
       console.error("[mobile-auth] invite activate failed", activateError);
       setError(toMobileAuthErrorMessage(activateError, "Invite activation failed."));

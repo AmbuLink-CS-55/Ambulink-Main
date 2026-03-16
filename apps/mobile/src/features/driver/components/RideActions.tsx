@@ -46,7 +46,7 @@ export function RideActions({
         accessibilityLabel="Mark arrived"
         accessibilityState={{ disabled: isArrivedDisabled, busy: isArrivedUpdating }}
         className="mt-3"
-        variant="secondary"
+        variant="warning"
         label="Arrived"
         loading={isArrivedUpdating}
       />

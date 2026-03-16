@@ -14,6 +14,10 @@ export class BookingApiService {
     return this.bookingCoreService.getBookingDetailsForDispatcher(bookingId, dispatcherId);
   }
 
+  addDispatcherNote(bookingId: string, dispatcherId: string, content: string) {
+    return this.bookingCoreService.addDispatcherNote(bookingId, dispatcherId, content);
+  }
+
   searchOngoingBookingsByProvider(providerId: string, query: string, limit?: number) {
     return this.bookingCoreService.searchOngoingBookingsByProvider(providerId, query, limit);
   }

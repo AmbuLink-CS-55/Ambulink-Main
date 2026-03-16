@@ -302,6 +302,10 @@ export const patientBookingNoteBodySchema = z.object({
     .optional(),
 });
 
+export const dispatcherBookingNoteBodySchema = z.object({
+  content: z.string().trim().min(1).max(2000),
+});
+
 export const bookingAttachmentAccessQuerySchema = z
   .object({
     patientId: z.string().uuid().optional(),
@@ -352,3 +356,4 @@ export type EmtSubscribeDto = z.infer<typeof emtSubscribeSchema>;
 export type EmtAddNoteDto = z.infer<typeof emtAddNoteSchema>;
 export type EmtAddNoteMediaBodyDto = z.infer<typeof emtAddNoteMediaBodySchema>;
 export type PatientBookingNoteBodyDto = z.infer<typeof patientBookingNoteBodySchema>;
+export type DispatcherBookingNoteBodyDto = z.infer<typeof dispatcherBookingNoteBodySchema>;

@@ -2,6 +2,13 @@ import { useCallback } from "react";
 import { useState } from "react";
 import { DataTable } from "@/components/VirtualizedTable";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useEntityFormDialog } from "@/hooks/use-entity-form-dialog";
 import { useGetEmts, useUpdateEmt } from "@/services/emt.service";
 import type { User } from "@/lib/types";
@@ -19,7 +26,6 @@ const initialForm: EmtFormState = {
   fullName: "",
   phoneNumber: "",
   email: "",
-  passwordHash: "",
 };
 
 export default function EmtsDashboard() {
@@ -32,6 +38,7 @@ export default function EmtsDashboard() {
     email: string;
     role: "EMT";
   } | null>(null);
+  const inviteModalOpen = Boolean(invitePayload);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,7 +47,6 @@ export default function EmtsDashboard() {
       fullName: emt.fullName ?? "",
       phoneNumber: emt.phoneNumber ?? "",
       email: emt.email ?? "",
-      passwordHash: "",
     }),
     []
   );
@@ -91,7 +97,6 @@ export default function EmtsDashboard() {
       fullName: form.fullName.trim(),
       phoneNumber: form.phoneNumber.trim(),
       email: form.email.trim(),
-      passwordHash: form.passwordHash.trim(),
     } satisfies Partial<User>;
 
     try {
@@ -102,7 +107,6 @@ export default function EmtsDashboard() {
             fullName: payload.fullName,
             phoneNumber: payload.phoneNumber,
             email: payload.email,
-            passwordHash: payload.passwordHash || undefined,
           },
         });
       } else {
@@ -111,6 +115,8 @@ export default function EmtsDashboard() {
         }
         const invite = await createInvite.mutateAsync({
           role: "EMT",
+          fullName: payload.fullName,
+          phoneNumber: payload.phoneNumber,
           email: payload.email,
         });
         setInvitePayload({
@@ -131,7 +137,6 @@ export default function EmtsDashboard() {
     editing,
     form.email,
     form.fullName,
-    form.passwordHash,
     form.phoneNumber,
     isSubmitting,
     reset,
@@ -180,27 +185,33 @@ export default function EmtsDashboard() {
         />
       ) : null}
 
-      {invitePayload ? (
-        <div className="rounded-md border p-4 space-y-2">
-          <h3 className="font-semibold">EMT Onboarding Invite</h3>
-          <p className="text-sm text-muted-foreground">
-            Assigned email: {invitePayload.email}
-          </p>
-          <p className="text-xs break-all">Invite token: {invitePayload.token}</p>
-          <img
-            alt="EMT invite QR"
-            className="h-40 w-40 rounded border"
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
-              JSON.stringify({
-                type: "staff_invite",
-                role: invitePayload.role,
-                inviteToken: invitePayload.token,
-                invitedEmail: invitePayload.email,
-              })
-            )}`}
-          />
-        </div>
-      ) : null}
+      <Dialog open={inviteModalOpen} onOpenChange={(open) => (!open ? setInvitePayload(null) : null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>EMT Onboarding Invite</DialogTitle>
+            <DialogDescription>
+              Assigned email: {invitePayload?.email ?? "N/A"}
+            </DialogDescription>
+          </DialogHeader>
+          {invitePayload ? (
+            <div className="space-y-2 px-6 pb-6">
+              <p className="text-xs break-all text-muted-foreground">Invite token: {invitePayload.token}</p>
+              <img
+                alt="EMT invite QR"
+                className="mx-auto h-56 w-56 rounded border"
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(
+                  JSON.stringify({
+                    type: "staff_invite",
+                    role: invitePayload.role,
+                    inviteToken: invitePayload.token,
+                    invitedEmail: invitePayload.email,
+                  })
+                )}`}
+              />
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

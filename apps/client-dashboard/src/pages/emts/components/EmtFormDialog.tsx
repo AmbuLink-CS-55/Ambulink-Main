@@ -14,20 +14,19 @@ export type EmtFormState = {
   fullName: string;
   phoneNumber: string;
   email: string;
-  passwordHash: string;
 };
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type EmtFormFieldsProps = {
   form: EmtFormState;
   onChange: <K extends keyof EmtFormState>(field: K, value: EmtFormState[K]) => void;
-  showPassword: boolean;
 };
 
-function EmtFormFields({ form, onChange, showPassword }: EmtFormFieldsProps) {
+function EmtFormFields({ form, onChange }: EmtFormFieldsProps) {
   const fullNameId = useId();
   const phoneNumberId = useId();
   const emailId = useId();
-  const passwordId = useId();
 
   return (
     <div className="grid gap-4 px-6">
@@ -69,22 +68,6 @@ function EmtFormFields({ form, onChange, showPassword }: EmtFormFieldsProps) {
           onChange={(e) => onChange("email", e.target.value)}
         />
       </div>
-      {showPassword ? (
-        <div className="grid gap-2">
-          <label className="text-sm font-medium" htmlFor={passwordId}>
-            Password
-          </label>
-          <Input
-            id={passwordId}
-            name="password"
-            autoComplete="new-password"
-            type="password"
-            placeholder="Minimum 8 characters"
-            value={form.passwordHash}
-            onChange={(e) => onChange("passwordHash", e.target.value)}
-          />
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -96,7 +79,6 @@ type BaseEmtDialogProps = {
   onChange: <K extends keyof EmtFormState>(field: K, value: EmtFormState[K]) => void;
   title: string;
   submitLabel: string;
-  showPassword: boolean;
   submitDisabled: boolean;
   validationMessage?: string | null;
   errorMessage?: string | null;
@@ -111,7 +93,6 @@ function BaseEmtFormDialog({
   onChange,
   title,
   submitLabel,
-  showPassword,
   submitDisabled,
   validationMessage,
   errorMessage,
@@ -126,7 +107,7 @@ function BaseEmtFormDialog({
           <DialogDescription>Provider cannot be changed.</DialogDescription>
         </DialogHeader>
 
-        <EmtFormFields form={form} onChange={onChange} showPassword={showPassword} />
+        <EmtFormFields form={form} onChange={onChange} />
 
         <DialogFooter>
           {errorMessage ? (
@@ -171,7 +152,7 @@ export function CreateEmtDialog({
     !form.fullName.trim() ||
     !form.phoneNumber.trim() ||
     !form.email.trim() ||
-    form.passwordHash.trim().length < 8 ||
+    !EMAIL_REGEX.test(form.email.trim()) ||
     !providerAvailable;
   const validationMessage = !form.fullName.trim()
     ? "Full name is required."
@@ -179,8 +160,8 @@ export function CreateEmtDialog({
       ? "Phone number is required."
       : !form.email.trim()
         ? "Email is required."
-        : form.passwordHash.trim().length < 8
-          ? "Password must be at least 8 characters."
+        : !EMAIL_REGEX.test(form.email.trim())
+          ? "Enter a valid email."
           : !providerAvailable
             ? "Provider is not available for this action."
             : null;
@@ -193,7 +174,6 @@ export function CreateEmtDialog({
       onChange={onChange}
       title="Add EMT"
       submitLabel="Create EMT"
-      showPassword={true}
       submitDisabled={submitDisabled}
       validationMessage={validationMessage}
       errorMessage={errorMessage}
@@ -235,7 +215,6 @@ export function EditEmtDialog({
       onChange={onChange}
       title="Edit EMT"
       submitLabel="Save Changes"
-      showPassword={false}
       submitDisabled={submitDisabled}
       validationMessage={validationMessage}
       errorMessage={errorMessage}

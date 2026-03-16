@@ -72,6 +72,34 @@ export default function Map() {
   const cancelTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previousStatusRef = useRef<BookingStatus | null>(null);
 
+  const isRecoverableGuestSessionError = (error: unknown) => {
+    if (!(error instanceof Error)) return false;
+    const message = error.message.toLowerCase();
+    return (
+      message.includes("patient not found") ||
+      message.includes("request failed (401)") ||
+      message.includes("request failed (403)") ||
+      message.includes("invalid token")
+    );
+  };
+
+  const bootstrapGuestBooking = async (patientSettings: PatientSettingsData) => {
+    const location = locationState?.location;
+    if (!location) return false;
+
+    const started = await startGuestBooking({
+      x: location.x,
+      y: location.y,
+      patientSettings,
+    });
+    await signInPatientGuest({
+      patient: started.patient,
+      accessToken: started.accessToken,
+      expiresInSeconds: started.expiresInSeconds,
+    });
+    return true;
+  };
+
   const appendPatientNote = useCallback((bookingId: string, note: BookingNote) => {
     setBooking((prev) => {
       if (!prev || prev.bookingId !== bookingId) return prev;
@@ -214,16 +242,7 @@ export default function Map() {
     const needsGuestBootstrap = !session?.accessToken || !user?.id || user.id === "demo";
     if (needsGuestBootstrap) {
       try {
-        const started = await startGuestBooking({
-          x: locationState.location.x,
-          y: locationState.location.y,
-          patientSettings,
-        });
-        await signInPatientGuest({
-          patient: started.patient,
-          accessToken: started.accessToken,
-          expiresInSeconds: started.expiresInSeconds,
-        });
+        await bootstrapGuestBooking(patientSettings);
       } catch (error) {
         setIsBooking(false);
         if (bookingTimeoutRef.current) {
@@ -245,12 +264,20 @@ export default function Map() {
     }
     try {
       await sendPatientHelp({
-        patientId: user?.id ?? "",
         x: locationState.location.x,
         y: locationState.location.y,
         patientSettings,
       });
     } catch (error) {
+      if (isRecoverableGuestSessionError(error)) {
+        try {
+          await clearPatientSession();
+          await bootstrapGuestBooking(patientSettings);
+          return;
+        } catch {
+          // Fall through to default error state and alert below.
+        }
+      }
       setIsBooking(false);
       if (bookingTimeoutRef.current) {
         clearTimeout(bookingTimeoutRef.current);
@@ -273,7 +300,6 @@ export default function Map() {
           }
           try {
             await sendPatientCancel({
-              patientId: user?.id ?? "",
               reason: "Cancelled by patient",
             });
 
