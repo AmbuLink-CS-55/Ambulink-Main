@@ -4,23 +4,25 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import MediaNoteComposerCard from "@/common/components/MediaNoteComposerCard";
+import { useAuthStore } from "@/common/hooks/AuthContext";
 import EmtNotesTimeline from "@/features/emt/components/EmtNotesTimeline";
 import { useEmtBookingState } from "@/features/emt/hooks/useEmtBookingState";
 import { useMediaNoteComposer } from "@/common/hooks/useMediaNoteComposer";
 import { createEmtMediaSubmitAdapter } from "@/common/lib/emtEvents";
-import { env } from "../../../env";
 
 export default function EmtNotesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const user = useAuthStore((state) => state.user);
   const booking = useEmtBookingState((state) => state.activeBooking);
   const submit = useMemo(() => {
     if (!booking?.bookingId) return null;
+    if (!user || user.role !== "emt") return null;
     return createEmtMediaSubmitAdapter({
       bookingId: booking.bookingId,
-      emtId: env.EXPO_PUBLIC_EMT_ID,
+      emtId: user.id,
     });
-  }, [booking?.bookingId]);
+  }, [booking?.bookingId, user]);
 
   const { state, actions } = useMediaNoteComposer({
     submit: async (payload) => {
@@ -73,7 +75,7 @@ export default function EmtNotesScreen() {
               <View style={styles.timelineContainer}>
                 <EmtNotesTimeline
                   notes={booking.emtNotes ?? []}
-                  currentEmtId={env.EXPO_PUBLIC_EMT_ID}
+                  currentEmtId={user?.id ?? ""}
                 />
               </View>
 
@@ -85,6 +87,7 @@ export default function EmtNotesScreen() {
                 onToggleAudio={() => void actions.toggleRecording()}
                 onRemoveAttachment={actions.removeFile}
                 files={state.files}
+                isMediaProcessing={state.isMediaProcessing}
                 isRecordingAudio={state.isRecordingAudio}
                 recordingStatusText={`Recording audio... ${formatMs(state.recordingElapsedMs)}`}
                 loading={state.isSubmitting}
@@ -95,6 +98,7 @@ export default function EmtNotesScreen() {
                   audioStartLabel: "Audio",
                   audioStopLabel: "Stop Audio",
                   sendLabel: "Send",
+                  mediaProcessingLabel: "Processing photo...",
                 }}
               />
             </View>

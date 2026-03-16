@@ -17,9 +17,9 @@ export async function seedTestDatabase(databaseUrl: string) {
   try {
     await reset(db, schema);
 
-    await seedAmbulanceProviders(db);
-    await seedUsers(db);
-    await seedAmbulances(db);
+    const providerId = await seedAmbulanceProviders(db);
+    await seedUsers(db, providerId);
+    await seedAmbulances(db, providerId);
     await seedHospitals(db);
     await seedHelplines(db);
 

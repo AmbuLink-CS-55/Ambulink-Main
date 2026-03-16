@@ -28,16 +28,26 @@ const FALLBACK_COLORS = {
   surface: "#ffffff",
 } as const;
 
+function toMapLibreColor(color: string, fallback: string) {
+  if (typeof document === "undefined") return fallback;
+  const probe = document.createElement("span");
+  probe.style.color = color;
+  document.body.appendChild(probe);
+  const resolved = getComputedStyle(probe).color;
+  probe.remove();
+  return resolved || fallback;
+}
+
 function resolveThemeColor(color: string, fallback: string) {
   const trimmed = color.trim();
   const match = trimmed.match(CSS_COLOR_VAR_PATTERN);
-  if (!match) return trimmed || fallback;
+  if (!match) return toMapLibreColor(trimmed || fallback, fallback);
   if (typeof window === "undefined") return fallback;
 
   const [, varName, inlineFallback] = match;
   const resolved = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-  if (resolved) return resolved;
-  return inlineFallback?.trim() || fallback;
+  if (resolved) return toMapLibreColor(resolved, fallback);
+  return toMapLibreColor(inlineFallback?.trim() || fallback, fallback);
 }
 
 // Check document class for theme (works with next-themes, etc.)
@@ -1087,10 +1097,7 @@ function MapClusterLayer<P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonPr
     () => resolveThemeColor(pointColor, FALLBACK_COLORS.brand),
     [pointColor]
   );
-  const resolvedClusterTextColor = useMemo(
-    () => resolveThemeColor("var(--card)", FALLBACK_COLORS.surface),
-    []
-  );
+  const resolvedClusterTextColor = "#ffffff";
 
   const stylePropsRef = useRef({
     clusterColors: resolvedClusterColors,
@@ -1147,10 +1154,15 @@ function MapClusterLayer<P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonPr
       filter: ["has", "point_count"],
       layout: {
         "text-field": "{point_count_abbreviated}",
-        "text-size": 12,
+        "text-size": 13,
+        "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+        "text-allow-overlap": true,
+        "text-ignore-placement": true,
       },
       paint: {
         "text-color": resolvedClusterTextColor,
+        "text-halo-color": "#000000",
+        "text-halo-width": 1.1,
       },
     });
 

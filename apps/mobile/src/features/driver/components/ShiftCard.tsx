@@ -15,7 +15,7 @@ export function ShiftCard({ isOnShift, isShiftUpdating, onToggleShift }: ShiftCa
       </Text>
       <Text className="mt-1 text-xs text-muted-foreground">
         {isOnShift
-          ? "Location sharing is active for dispatch."
+          ? "Location is being shared with dispatch."
           : "Clock in to receive bookings and share location."}
       </Text>
       <Pressable

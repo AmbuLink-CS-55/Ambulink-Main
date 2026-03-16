@@ -28,9 +28,9 @@ export default function AppSettingsSection() {
             <Text className="text-sm font-medium text-muted-foreground mb-1.5">
               {i18n.t("settings.appSettings.language")}
             </Text>
-            <Text className="text-base text-teal-500 font-medium mt-1">{getLanguageLabel()}</Text>
+            <Text className="text-base text-foreground font-medium mt-1">{getLanguageLabel()}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#26A69A" />
+          <Ionicons name="chevron-forward" size={20} color="#111827" />
         </Pressable>
 
         <View className="h-px bg-muted" />
@@ -45,9 +45,9 @@ export default function AppSettingsSection() {
             </Text>
           </View>
           <Pressable
-            className={`w-12 h-7 rounded-full justify-center p-0.5 ${
-              settings.notifications ? "bg-teal-500" : "bg-muted"
-            }`}
+              className={`w-12 h-7 rounded-full justify-center p-0.5 ${
+                settings.notifications ? "bg-brand" : "bg-muted"
+              }`}
             onPress={() => updateSetting("notifications", !settings.notifications)}
           >
             <View
@@ -70,9 +70,9 @@ export default function AppSettingsSection() {
             </Text>
           </View>
           <Pressable
-            className={`w-12 h-7 rounded-full justify-center p-0.5 ${
-              settings.darkMode ? "bg-teal-500" : "bg-muted"
-            }`}
+              className={`w-12 h-7 rounded-full justify-center p-0.5 ${
+                settings.darkMode ? "bg-brand" : "bg-muted"
+              }`}
             onPress={() => updateSetting("darkMode", !settings.darkMode)}
           >
             <View

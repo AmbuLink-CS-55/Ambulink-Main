@@ -86,6 +86,17 @@ export type BookingCancelledPayload = {
   bookingId: string;
   reason: string;
 };
+export type BookingEtaUpdatedPayload = {
+  bookingId: string;
+  etaMinutes: number;
+  previousEtaMinutes: number | null;
+  changedAt: string;
+};
+export type BookingReroutedPayload = {
+  bookingId: string;
+  reason: string;
+  changedAt: string;
+};
 /**
  * Patient cancellation request
  */
@@ -299,6 +310,8 @@ export interface PatientToServerEvents {
 export interface ServerToPatientEvents {
   "booking:failed": (data: BookingFailedPayload) => void;
   "booking:assigned": (data: BookingAssignedPayload) => void;
+  "booking:eta-updated": (data: BookingEtaUpdatedPayload) => void;
+  "booking:rerouted": (data: BookingReroutedPayload) => void;
   "booking:arrived": (data: BookingEventPayload) => void;
   "booking:completed": (data: BookingEventPayload) => void;
   "booking:notes": (data: { bookingId: string; note: BookingNote }) => void;
@@ -319,7 +332,10 @@ export interface DriverToServerEvents {
  */
 export interface ServerToDriverEvents {
   "booking:assigned": (data: BookingAssignedPayload) => void;
+  "booking:eta-updated": (data: BookingEtaUpdatedPayload) => void;
+  "booking:rerouted": (data: BookingReroutedPayload) => void;
   "booking:cancelled": (data: BookingCancelledPayload) => void;
+  "booking:completed": (data: BookingEventPayload) => void;
   "socket:error": (data: SocketErrorPayload) => void;
 }
 /**
@@ -340,6 +356,12 @@ export interface ServerToDispatcherEvents {
   "booking:assigned": (data: DispatcherBookingPayload) => void;
   "booking:sync": (data: { bookings: DispatcherBookingPayload[] }) => void;
   "booking:update": (data: DispatcherBookingUpdatePayload) => void;
+  "booking:eta-updated": (
+    data: BookingEtaUpdatedPayload & { providerId?: string | null }
+  ) => void;
+  "booking:rerouted": (
+    data: BookingReroutedPayload & { providerId?: string | null }
+  ) => void;
   "booking:decision": (data: BookingDecisionPayload) => void;
   "booking:log": (data: DispatcherBookingLogPayload) => void;
   "driver:update": (data: DriverLocationUpdate) => void;
@@ -355,6 +377,8 @@ export interface EmtToServerEvents {
 
 export interface ServerToEmtEvents {
   "booking:assigned": (data: BookingAssignedPayload) => void;
+  "booking:eta-updated": (data: BookingEtaUpdatedPayload) => void;
+  "booking:rerouted": (data: BookingReroutedPayload) => void;
   "booking:arrived": (data: BookingEventPayload) => void;
   "booking:completed": (data: BookingEventPayload) => void;
   "booking:cancelled": (data: BookingCancelledPayload) => void;

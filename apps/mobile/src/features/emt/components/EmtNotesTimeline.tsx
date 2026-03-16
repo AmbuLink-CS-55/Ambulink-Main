@@ -3,7 +3,8 @@ import type { EmtNote } from "@ambulink/types";
 import { FlatList, Linking, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { env } from "../../../../env";
 import { AppImage } from "@/common/components/AppImage";
-import { Audio } from "expo-av";
+import { Audio, type AVPlaybackStatus } from "expo-av";
+import { getAuthAccessToken } from "@/common/hooks/AuthContext";
 
 type Props = {
   notes: EmtNote[];
@@ -44,7 +45,15 @@ export default function EmtNotesTimeline({ notes, currentEmtId }: Props) {
   const toAttachmentUrl = (rawUrl: string) => {
     const absolute = rawUrl.startsWith("http://") || rawUrl.startsWith("https://");
     const base = absolute ? rawUrl : `${apiOrigin}${rawUrl}`;
-    return `${base}?emtId=${env.EXPO_PUBLIC_EMT_ID}`;
+    const accessToken = getAuthAccessToken();
+    const params = [
+      currentEmtId ? `emtId=${encodeURIComponent(currentEmtId)}` : null,
+      accessToken ? `accessToken=${encodeURIComponent(accessToken)}` : null,
+    ]
+      .filter(Boolean)
+      .join("&");
+    if (!params) return base;
+    return `${base}${base.includes("?") ? "&" : "?"}${params}`;
   };
   const formatter = useMemo(
     () =>
@@ -105,7 +114,7 @@ export default function EmtNotesTimeline({ notes, currentEmtId }: Props) {
     };
   }, [releaseSound]);
 
-  const onAudioStatus = (status: Audio.AVPlaybackStatus) => {
+  const onAudioStatus = (status: AVPlaybackStatus) => {
     if (!status.isLoaded) return;
     setAudioPlaying(status.isPlaying);
     setAudioPositionMs(status.positionMillis ?? 0);

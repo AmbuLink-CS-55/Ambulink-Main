@@ -2,7 +2,6 @@ import * as Location from "expo-location";
 import { useEffect } from "react";
 import { LOCATION_TASK_NAME } from "@/common/tasks/locationTasks";
 import { postDriverLocation } from "@/common/lib/driverEvents";
-import { env } from "../../../../env";
 
 const isMissingTaskError = (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
@@ -13,13 +12,14 @@ const isMissingTaskError = (error: unknown) => {
   );
 };
 
-export const useDriverTracking = (isDriver: boolean) => {
+export const useDriverTracking = (isDriver: boolean, driverId?: string) => {
   useEffect(() => {
     let foregroundSubscription: Location.LocationSubscription | null = null;
 
     const postLocation = async (latitude: number, longitude: number) => {
+      if (!driverId) return;
       await postDriverLocation({
-        driverId: env.EXPO_PUBLIC_DRIVER_ID,
+        driverId,
         y: latitude,
         x: longitude,
       });
@@ -45,6 +45,10 @@ export const useDriverTracking = (isDriver: boolean) => {
 
     const startTracking = async () => {
       if (!isDriver) {
+        await stopTracking();
+        return;
+      }
+      if (!driverId) {
         await stopTracking();
         return;
       }
@@ -105,5 +109,5 @@ export const useDriverTracking = (isDriver: boolean) => {
         console.warn("[driver] failed during tracking cleanup", error);
       });
     };
-  }, [isDriver]);
+  }, [driverId, isDriver]);
 };
