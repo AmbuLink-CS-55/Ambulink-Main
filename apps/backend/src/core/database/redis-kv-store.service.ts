@@ -6,7 +6,7 @@ import { createClient, type RedisClientType } from "redis";
 import { users, type Booking, type BookingStatus } from "@/core/database/schema";
 import type { BookingNote } from "@ambulink/types";
 import { DbService } from "./db.service";
-import type { BookingState, CreateBookingValues, DriverState, KvStore } from "./kv-store.types";
+import { sanitizeBookingPatch, type BookingState, type CreateBookingValues, type DriverState, type KvStore } from "./kv-store.types";
 
 const ACTIVE_BOOKING_STATUSES: BookingStatus[] = ["REQUESTED", "ASSIGNED", "ARRIVED", "PICKEDUP"];
 const BOOKING_DATE_FIELDS = ["requestedAt", "assignedAt", "arrivedAt", "pickedupAt", "completedAt"] as const;
@@ -80,7 +80,7 @@ export class RedisKvStoreService implements KvStore {
   async updateBooking(bookingId: string, patch: Partial<Booking>) {
     const previous = await this.getBookingState(bookingId);
 
-    const sanitizedPatch = this.sanitizeBookingPatch(patch);
+    const sanitizedPatch = sanitizeBookingPatch(patch);
     const next: BookingState = previous
       ? {
           ...previous,
@@ -469,23 +469,6 @@ export class RedisKvStoreService implements KvStore {
       }
     }
     return clone as Partial<Booking> & { id: string };
-  }
-
-  private sanitizeBookingPatch(patch: Partial<Booking>): Partial<Booking> {
-    const allowed: Partial<Booking> = {};
-    if (patch.id !== undefined) allowed.id = patch.id;
-    if (patch.patientId !== undefined) allowed.patientId = patch.patientId;
-    if (patch.driverId !== undefined) allowed.driverId = patch.driverId;
-    if (patch.dispatcherId !== undefined) allowed.dispatcherId = patch.dispatcherId;
-    if (patch.emtId !== undefined) allowed.emtId = patch.emtId;
-    if (patch.status !== undefined) allowed.status = patch.status;
-    if (patch.ongoing !== undefined) allowed.ongoing = patch.ongoing;
-    if (patch.requestedAt !== undefined) allowed.requestedAt = patch.requestedAt;
-    if (patch.assignedAt !== undefined) allowed.assignedAt = patch.assignedAt;
-    if (patch.arrivedAt !== undefined) allowed.arrivedAt = patch.arrivedAt;
-    if (patch.pickedupAt !== undefined) allowed.pickedupAt = patch.pickedupAt;
-    if (patch.completedAt !== undefined) allowed.completedAt = patch.completedAt;
-    return allowed;
   }
 
   private async ensureRedisClient() {

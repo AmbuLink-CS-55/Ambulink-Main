@@ -31,6 +31,27 @@ export type BookingState = {
   data: Partial<Booking> & { id: string };
 };
 
+/**
+ * Strips unknown/unsafe fields from a booking patch, keeping only
+ * the fields that the KV layer is allowed to cache.
+ */
+export function sanitizeBookingPatch(patch: Partial<Booking>): Partial<Booking> {
+  const allowed: Partial<Booking> = {};
+  if (patch.id !== undefined) allowed.id = patch.id;
+  if (patch.patientId !== undefined) allowed.patientId = patch.patientId;
+  if (patch.driverId !== undefined) allowed.driverId = patch.driverId;
+  if (patch.dispatcherId !== undefined) allowed.dispatcherId = patch.dispatcherId;
+  if (patch.emtId !== undefined) allowed.emtId = patch.emtId;
+  if (patch.status !== undefined) allowed.status = patch.status;
+  if (patch.ongoing !== undefined) allowed.ongoing = patch.ongoing;
+  if (patch.requestedAt !== undefined) allowed.requestedAt = patch.requestedAt;
+  if (patch.assignedAt !== undefined) allowed.assignedAt = patch.assignedAt;
+  if (patch.arrivedAt !== undefined) allowed.arrivedAt = patch.arrivedAt;
+  if (patch.pickedupAt !== undefined) allowed.pickedupAt = patch.pickedupAt;
+  if (patch.completedAt !== undefined) allowed.completedAt = patch.completedAt;
+  return allowed;
+}
+
 export interface KvStore {
   initialize(): Promise<void>;
   shutdown(): Promise<void>;

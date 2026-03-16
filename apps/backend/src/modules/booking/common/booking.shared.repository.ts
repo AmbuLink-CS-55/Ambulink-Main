@@ -239,33 +239,13 @@ export class BookingSharedRepository {
   async getAssignedBookingPayloadRow(bookingId: string) {
     const rows = await this.dbService.db
       .select({
-        bookingId: bookings.id,
-        status: bookings.status,
+        ...this.dispatcherBookingColumns(),
         requestedAt: bookings.requestedAt,
         assignedAt: bookings.assignedAt,
         arrivedAt: bookings.arrivedAt,
         pickedupAt: bookings.pickedupAt,
         completedAt: bookings.completedAt,
-        pickupLocationX: sql<number | null>`ST_X(${bookings.pickupLocation})`,
-        pickupLocationY: sql<number | null>`ST_Y(${bookings.pickupLocation})`,
-        patientId: users.id,
-        patientName: users.fullName,
-        patientPhone: users.phoneNumber,
-        patientLocationX: sql<number | null>`ST_X(${users.currentLocation})`,
-        patientLocationY: sql<number | null>`ST_Y(${users.currentLocation})`,
-        driverId: sql<string | null>`${bookings.driverId}`,
-        driverName: sql<string | null>`driver_user.full_name`,
-        driverPhone: sql<string | null>`driver_user.phone_number`,
-        driverLocationX: sql<number | null>`ST_X(driver_user.current_location)`,
-        driverLocationY: sql<number | null>`ST_Y(driver_user.current_location)`,
-        providerId: sql<string | null>`${bookings.providerId}`,
-        providerName: sql<string | null>`${ambulanceProviders.name}`,
         providerHotline: sql<string | null>`${ambulanceProviders.hotlineNumber}`,
-        hospitalId: hospitals.id,
-        hospitalName: hospitals.name,
-        hospitalPhone: hospitals.phoneNumber,
-        hospitalLocationX: sql<number | null>`ST_X(${hospitals.location})`,
-        hospitalLocationY: sql<number | null>`ST_Y(${hospitals.location})`,
         patientProfileSnapshot: bookings.patientProfileSnapshot,
         emtNotes: bookings.emtNotes,
       })
@@ -284,35 +264,7 @@ export class BookingSharedRepository {
   }
 
   async getDispatcherBookingPayloadRow(bookingId: string) {
-    const rows = await this.dbService.db
-      .select({
-        bookingId: bookings.id,
-        status: bookings.status,
-        pickupLocationX: sql<number | null>`ST_X(${bookings.pickupLocation})`,
-        pickupLocationY: sql<number | null>`ST_Y(${bookings.pickupLocation})`,
-        patientId: users.id,
-        patientName: users.fullName,
-        patientPhone: users.phoneNumber,
-        patientLocationX: sql<number | null>`ST_X(${users.currentLocation})`,
-        patientLocationY: sql<number | null>`ST_Y(${users.currentLocation})`,
-        driverId: sql<string | null>`${bookings.driverId}`,
-        driverName: sql<string | null>`driver_user.full_name`,
-        driverPhone: sql<string | null>`driver_user.phone_number`,
-        driverLocationX: sql<number | null>`ST_X(driver_user.current_location)`,
-        driverLocationY: sql<number | null>`ST_Y(driver_user.current_location)`,
-        providerId: sql<string | null>`${bookings.providerId}`,
-        providerName: sql<string | null>`${ambulanceProviders.name}`,
-        hospitalId: hospitals.id,
-        hospitalName: hospitals.name,
-        hospitalPhone: hospitals.phoneNumber,
-        hospitalLocationX: sql<number | null>`ST_X(${hospitals.location})`,
-        hospitalLocationY: sql<number | null>`ST_Y(${hospitals.location})`,
-      })
-      .from(bookings)
-      .innerJoin(users, eq(users.id, bookings.patientId))
-      .leftJoin(sql`users as driver_user`, sql`driver_user.id = ${bookings.driverId}`)
-      .leftJoin(ambulanceProviders, eq(ambulanceProviders.id, bookings.providerId))
-      .leftJoin(hospitals, eq(hospitals.id, bookings.hospitalId))
+    const rows = await this.dispatcherBookingQuery()
       .where(eq(bookings.id, bookingId));
 
     if (rows[0]) {
@@ -323,35 +275,7 @@ export class BookingSharedRepository {
   }
 
   async getDispatcherActiveBookingRows(dispatcherId: string) {
-    const rows = await this.dbService.db
-      .select({
-        bookingId: bookings.id,
-        status: bookings.status,
-        pickupLocationX: sql<number | null>`ST_X(${bookings.pickupLocation})`,
-        pickupLocationY: sql<number | null>`ST_Y(${bookings.pickupLocation})`,
-        patientId: users.id,
-        patientName: users.fullName,
-        patientPhone: users.phoneNumber,
-        patientLocationX: sql<number | null>`ST_X(${users.currentLocation})`,
-        patientLocationY: sql<number | null>`ST_Y(${users.currentLocation})`,
-        driverId: sql<string | null>`${bookings.driverId}`,
-        driverName: sql<string | null>`driver_user.full_name`,
-        driverPhone: sql<string | null>`driver_user.phone_number`,
-        driverLocationX: sql<number | null>`ST_X(driver_user.current_location)`,
-        driverLocationY: sql<number | null>`ST_Y(driver_user.current_location)`,
-        providerId: sql<string | null>`${bookings.providerId}`,
-        providerName: sql<string | null>`${ambulanceProviders.name}`,
-        hospitalId: hospitals.id,
-        hospitalName: hospitals.name,
-        hospitalPhone: hospitals.phoneNumber,
-        hospitalLocationX: sql<number | null>`ST_X(${hospitals.location})`,
-        hospitalLocationY: sql<number | null>`ST_Y(${hospitals.location})`,
-      })
-      .from(bookings)
-      .innerJoin(users, eq(users.id, bookings.patientId))
-      .leftJoin(sql`users as driver_user`, sql`driver_user.id = ${bookings.driverId}`)
-      .leftJoin(ambulanceProviders, eq(ambulanceProviders.id, bookings.providerId))
-      .leftJoin(hospitals, eq(hospitals.id, bookings.hospitalId))
+    const rows = await this.dispatcherBookingQuery()
       .where(
         and(
           eq(bookings.dispatcherId, dispatcherId),
@@ -363,35 +287,7 @@ export class BookingSharedRepository {
   }
 
   async getProviderActiveBookingRows(providerId: string) {
-    const rows = await this.dbService.db
-      .select({
-        bookingId: bookings.id,
-        status: bookings.status,
-        pickupLocationX: sql<number | null>`ST_X(${bookings.pickupLocation})`,
-        pickupLocationY: sql<number | null>`ST_Y(${bookings.pickupLocation})`,
-        patientId: users.id,
-        patientName: users.fullName,
-        patientPhone: users.phoneNumber,
-        patientLocationX: sql<number | null>`ST_X(${users.currentLocation})`,
-        patientLocationY: sql<number | null>`ST_Y(${users.currentLocation})`,
-        driverId: sql<string | null>`${bookings.driverId}`,
-        driverName: sql<string | null>`driver_user.full_name`,
-        driverPhone: sql<string | null>`driver_user.phone_number`,
-        driverLocationX: sql<number | null>`ST_X(driver_user.current_location)`,
-        driverLocationY: sql<number | null>`ST_Y(driver_user.current_location)`,
-        providerId: sql<string | null>`${bookings.providerId}`,
-        providerName: sql<string | null>`${ambulanceProviders.name}`,
-        hospitalId: hospitals.id,
-        hospitalName: hospitals.name,
-        hospitalPhone: hospitals.phoneNumber,
-        hospitalLocationX: sql<number | null>`ST_X(${hospitals.location})`,
-        hospitalLocationY: sql<number | null>`ST_Y(${hospitals.location})`,
-      })
-      .from(bookings)
-      .innerJoin(users, eq(users.id, bookings.patientId))
-      .leftJoin(sql`users as driver_user`, sql`driver_user.id = ${bookings.driverId}`)
-      .leftJoin(ambulanceProviders, eq(ambulanceProviders.id, bookings.providerId))
-      .leftJoin(hospitals, eq(hospitals.id, bookings.hospitalId))
+    const rows = await this.dispatcherBookingQuery()
       .where(
         and(
           eq(bookings.providerId, providerId),
@@ -500,6 +396,42 @@ export class BookingSharedRepository {
     }
 
     return baseQuery;
+  }
+
+  private dispatcherBookingColumns() {
+    return {
+      bookingId: bookings.id,
+      status: bookings.status,
+      pickupLocationX: sql<number | null>`ST_X(${bookings.pickupLocation})`,
+      pickupLocationY: sql<number | null>`ST_Y(${bookings.pickupLocation})`,
+      patientId: users.id,
+      patientName: users.fullName,
+      patientPhone: users.phoneNumber,
+      patientLocationX: sql<number | null>`ST_X(${users.currentLocation})`,
+      patientLocationY: sql<number | null>`ST_Y(${users.currentLocation})`,
+      driverId: sql<string | null>`${bookings.driverId}`,
+      driverName: sql<string | null>`driver_user.full_name`,
+      driverPhone: sql<string | null>`driver_user.phone_number`,
+      driverLocationX: sql<number | null>`ST_X(driver_user.current_location)`,
+      driverLocationY: sql<number | null>`ST_Y(driver_user.current_location)`,
+      providerId: sql<string | null>`${bookings.providerId}`,
+      providerName: sql<string | null>`${ambulanceProviders.name}`,
+      hospitalId: hospitals.id,
+      hospitalName: hospitals.name,
+      hospitalPhone: hospitals.phoneNumber,
+      hospitalLocationX: sql<number | null>`ST_X(${hospitals.location})`,
+      hospitalLocationY: sql<number | null>`ST_Y(${hospitals.location})`,
+    };
+  }
+
+  private dispatcherBookingQuery() {
+    return this.dbService.db
+      .select(this.dispatcherBookingColumns())
+      .from(bookings)
+      .innerJoin(users, eq(users.id, bookings.patientId))
+      .leftJoin(sql`users as driver_user`, sql`driver_user.id = ${bookings.driverId}`)
+      .leftJoin(ambulanceProviders, eq(ambulanceProviders.id, bookings.providerId))
+      .leftJoin(hospitals, eq(hospitals.id, bookings.hospitalId));
   }
 
   private async applyDriverLocationOverlay(row: Record<string, unknown>) {

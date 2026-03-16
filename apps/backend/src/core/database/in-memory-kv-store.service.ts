@@ -4,7 +4,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { users, type Booking, type BookingStatus } from "@/core/database/schema";
 import type { BookingNote } from "@ambulink/types";
 import { DbService } from "./db.service";
-import type { BookingState, CreateBookingValues, DriverState, KvStore } from "./kv-store.types";
+import { sanitizeBookingPatch, type BookingState, type CreateBookingValues, type DriverState, type KvStore } from "./kv-store.types";
 
 const ACTIVE_BOOKING_STATUSES: BookingStatus[] = ["REQUESTED", "ASSIGNED", "ARRIVED", "PICKEDUP"];
 const BOOKING_STATE_TTL_MS = 30 * 60 * 1000;
@@ -60,7 +60,7 @@ export class InMemoryKvStoreService implements KvStore {
   }
 
   async updateBooking(bookingId: string, patch: Partial<Booking>) {
-    const sanitizedPatch = this.sanitizeBookingPatch(patch);
+    const sanitizedPatch = sanitizeBookingPatch(patch);
     const existing = this.bookings.get(bookingId);
 
     if (!existing) {
@@ -301,23 +301,6 @@ export class InMemoryKvStoreService implements KvStore {
     } finally {
       this.isFlushing = false;
     }
-  }
-
-  private sanitizeBookingPatch(patch: Partial<Booking>): Partial<Booking> {
-    const allowed: Partial<Booking> = {};
-    if (patch.id !== undefined) allowed.id = patch.id;
-    if (patch.patientId !== undefined) allowed.patientId = patch.patientId;
-    if (patch.driverId !== undefined) allowed.driverId = patch.driverId;
-    if (patch.dispatcherId !== undefined) allowed.dispatcherId = patch.dispatcherId;
-    if (patch.emtId !== undefined) allowed.emtId = patch.emtId;
-    if (patch.status !== undefined) allowed.status = patch.status;
-    if (patch.ongoing !== undefined) allowed.ongoing = patch.ongoing;
-    if (patch.requestedAt !== undefined) allowed.requestedAt = patch.requestedAt;
-    if (patch.assignedAt !== undefined) allowed.assignedAt = patch.assignedAt;
-    if (patch.arrivedAt !== undefined) allowed.arrivedAt = patch.arrivedAt;
-    if (patch.pickedupAt !== undefined) allowed.pickedupAt = patch.pickedupAt;
-    if (patch.completedAt !== undefined) allowed.completedAt = patch.completedAt;
-    return allowed;
   }
 
   private isBookingExpired(bookingId: string) {
