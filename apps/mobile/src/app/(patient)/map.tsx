@@ -29,8 +29,14 @@ import {
   startPatientUploadSession,
   submitPatientMediaNote,
 } from "@/common/lib/patientEvents";
-import { env } from "../../../env";
 import { useSocket } from "@/common/hooks/SocketContext";
+import { startGuestBooking } from "@/common/lib/staffAuth";
+import { useAuthStore } from "@/common/hooks/AuthContext";
+import {
+  clearActivePatientBookingId,
+  loadActivePatientBookingId,
+  saveActivePatientBookingId,
+} from "@/common/utils/patientBookingStorage";
 const PATIENT_BOOKING_TIMEOUT_MS = 40000;
 
 export default function Map() {
@@ -50,6 +56,10 @@ export default function Map() {
       .catch((err) => console.log(err));
   };
   const socket = useSocket();
+  const user = useAuthStore((state) => state.user);
+  const session = useAuthStore((state) => state.session);
+  const signInPatientGuest = useAuthStore((state) => state.signInPatientGuest);
+  const clearPatientSession = useAuthStore((state) => state.clearPatientSession);
   const locationState = useLocation();
   const { hospitals: nearbyHospitals } = useNearbyHospitals({
     x: locationState.location?.x,
@@ -71,6 +81,7 @@ export default function Map() {
   const [uploadSessionId, setUploadSessionId] = useState<string | null>(null);
   const [isChatOpen, setChatOpen] = useState(false);
   const [isChatSending, setChatSending] = useState(false);
+  const [cachedBookingId, setCachedBookingId] = useState<string | null>(null);
   const [booking, setBooking] = useState<{
     bookingId?: string | null;
     patient: User;
@@ -83,6 +94,35 @@ export default function Map() {
 
   const bookingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const previousStatusRef = useRef<BookingStatus | null>(null);
+
+  const isRecoverableGuestSessionError = (error: unknown) => {
+    if (!(error instanceof Error)) return false;
+    const message = error.message.toLowerCase();
+    return (
+      message.includes("patient not found") ||
+      message.includes("request failed (401)") ||
+      message.includes("request failed (403)") ||
+      message.includes("invalid token")
+    );
+  };
+
+  const bootstrapGuestBooking = async (patientSettings: PatientSettingsData) => {
+    const location = locationState?.location;
+    if (!location) return false;
+
+    const started = await startGuestBooking({
+      x: location.x,
+      y: location.y,
+      patientSettings,
+    });
+    await signInPatientGuest({
+      patient: started.patient,
+      accessToken: started.accessToken,
+      expiresInSeconds: started.expiresInSeconds,
+    });
+    return true;
+  };
 
   const appendPatientNote = useCallback((bookingId: string, note: BookingNote) => {
     setBooking((prev) => {
@@ -105,6 +145,60 @@ export default function Map() {
     setCompletedAt,
     appendPatientNote
   );
+
+  useEffect(() => {
+    const patientId = user?.role === "patient" ? user.id : null;
+    if (!patientId) {
+      setCachedBookingId(null);
+      return;
+    }
+
+    let active = true;
+    void loadActivePatientBookingId(patientId).then((bookingId) => {
+      if (!active) return;
+      setCachedBookingId(bookingId);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [user?.id, user?.role]);
+
+  useEffect(() => {
+    const patientId = user?.role === "patient" ? user.id : null;
+    if (!patientId) return;
+
+    if (status === "COMPLETED" || status === "CANCELLED") {
+      void clearActivePatientBookingId(patientId);
+      setCachedBookingId(null);
+      return;
+    }
+
+    const activeBookingId = booking?.bookingId ?? null;
+    if (!activeBookingId) return;
+
+    setCachedBookingId(activeBookingId);
+    void saveActivePatientBookingId(patientId, activeBookingId);
+  }, [booking?.bookingId, status, user?.id, user?.role]);
+
+  useEffect(() => {
+    if (!socket || !cachedBookingId) return;
+    const patientId = user?.role === "patient" ? user.id : null;
+    if (!patientId) return;
+
+    const requestSync = () => {
+      socket.emit("booking:sync:request");
+    };
+
+    if (socket.connected) {
+      requestSync();
+    }
+    socket.on("connect", requestSync);
+
+    return () => {
+      socket.off("connect", requestSync);
+    };
+  }, [cachedBookingId, socket, user?.id, user?.role]);
 
   useEffect(() => {
     return () => {
@@ -154,33 +248,60 @@ export default function Map() {
     const patientSettings = (await loadSettings()) as unknown as PatientSettingsData;
     if (!locationState?.location) return;
 
+    const armBookingTimeout = () => {
+      if (bookingTimeoutRef.current) {
+        clearTimeout(bookingTimeoutRef.current);
+      }
+      bookingTimeoutRef.current = setTimeout(() => {
+        setIsBooking(false);
+        Alert.alert(
+          "Request Taking Longer",
+          "No ambulance is available right now. Please try again shortly."
+        );
+      }, PATIENT_BOOKING_TIMEOUT_MS);
+    };
+
     setIsBooking(true);
+    armBookingTimeout();
+    const needsGuestBootstrap = !session?.accessToken || !user?.id || user.id === "demo";
+    if (needsGuestBootstrap) {
+      try {
+        await bootstrapGuestBooking(patientSettings);
+      } catch (error) {
+        setIsBooking(false);
+        if (bookingTimeoutRef.current) {
+          clearTimeout(bookingTimeoutRef.current);
+          bookingTimeoutRef.current = null;
+        }
+        Alert.alert("Request Failed", error instanceof Error ? error.message : "Please try again.");
+      }
+      return;
+    }
+
     if (!uploadSessionId) {
       try {
-        const session = await startPatientUploadSession(env.EXPO_PUBLIC_PATIENT_ID);
-        setUploadSessionId(session.uploadSessionId);
+        const uploadSession = await startPatientUploadSession();
+        setUploadSessionId(uploadSession.uploadSessionId);
       } catch {
         // Session creation is best-effort; uploads can still start later from composer.
       }
     }
-    if (bookingTimeoutRef.current) {
-      clearTimeout(bookingTimeoutRef.current);
-    }
-    bookingTimeoutRef.current = setTimeout(() => {
-      setIsBooking(false);
-      Alert.alert(
-        "Request Taking Longer",
-        "Your request is taking longer than expected. Please check your connection and try again."
-      );
-    }, PATIENT_BOOKING_TIMEOUT_MS);
     try {
       await sendPatientHelp({
-        patientId: env.EXPO_PUBLIC_PATIENT_ID,
         x: locationState.location.x,
         y: locationState.location.y,
         patientSettings,
       });
     } catch (error) {
+      if (isRecoverableGuestSessionError(error)) {
+        try {
+          await clearPatientSession();
+          await bootstrapGuestBooking(patientSettings);
+          return;
+        } catch {
+          // Fall through to default error state and alert below.
+        }
+      }
       setIsBooking(false);
       if (bookingTimeoutRef.current) {
         clearTimeout(bookingTimeoutRef.current);
@@ -203,7 +324,6 @@ export default function Map() {
           }
           try {
             await sendPatientCancel({
-              patientId: env.EXPO_PUBLIC_PATIENT_ID,
               reason: "Cancelled by patient",
             });
 
@@ -228,11 +348,19 @@ export default function Map() {
   };
 
   useEffect(() => {
-    if (status === "COMPLETED" || status === "CANCELLED") {
+    const previousStatus = previousStatusRef.current;
+    const isTerminal = status === "COMPLETED" || status === "CANCELLED";
+    const movedToTerminalFromActive =
+      previousStatus !== null && previousStatus !== "COMPLETED" && previousStatus !== "CANCELLED";
+
+    if (isTerminal && movedToTerminalFromActive) {
       setChatOpen(false);
       setUploadSessionId(null);
+      void clearPatientSession();
     }
-  }, [status]);
+
+    previousStatusRef.current = status;
+  }, [clearPatientSession, status]);
 
   const handleChatSend = async (params: {
     content?: string;
@@ -243,7 +371,7 @@ export default function Map() {
     try {
       let sessionId = uploadSessionId;
       if (!booking?.bookingId && !sessionId) {
-        const created = await startPatientUploadSession(env.EXPO_PUBLIC_PATIENT_ID);
+        const created = await startPatientUploadSession();
         sessionId = created.uploadSessionId;
         setUploadSessionId(sessionId);
       }
@@ -262,8 +390,8 @@ export default function Map() {
 
   if (locationState?.loading) {
     return (
-      <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color="#ef4444" />
+        <View className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" color="#111827" />
         <Text className="mt-4 text-muted-foreground">Getting your location...</Text>
       </View>
     );
@@ -272,7 +400,7 @@ export default function Map() {
   if (locationState?.error || !locationState?.location) {
     return (
       <View className="flex-1 items-center justify-center px-6">
-        <Text className="text-center text-red-500 font-semibold">Location Unavailable</Text>
+        <Text className="text-center text-danger font-semibold">Location Unavailable</Text>
         <Text className="mt-2 text-center text-muted-foreground">{locationState.error}</Text>
       </View>
     );

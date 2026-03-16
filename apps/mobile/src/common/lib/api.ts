@@ -1,4 +1,5 @@
 import { env } from "../../../env";
+import { getAuthAccessToken } from "@/common/hooks/AuthContext";
 
 type QueryValue = string | number | boolean | null | undefined;
 
@@ -17,6 +18,7 @@ export async function apiGet<T>(path: string, query?: Record<string, QueryValue>
     method: "GET",
     headers: {
       Accept: "application/json",
+      ...(getAuthAccessToken() ? { Authorization: `Bearer ${getAuthAccessToken()}` } : {}),
     },
   });
 
@@ -47,6 +49,7 @@ export async function apiPost<TResponse, TBody = unknown>(
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
+      ...(getAuthAccessToken() ? { Authorization: `Bearer ${getAuthAccessToken()}` } : {}),
     },
     body: JSON.stringify(body),
   });
@@ -81,6 +84,7 @@ export async function apiPostForm<TResponse>(
     method: "POST",
     headers: {
       Accept: "application/json",
+      ...(getAuthAccessToken() ? { Authorization: `Bearer ${getAuthAccessToken()}` } : {}),
     },
     body: formData,
   });

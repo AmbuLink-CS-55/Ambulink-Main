@@ -1,5 +1,5 @@
 import { ForbiddenException } from "@nestjs/common";
-import { EmtService } from "./emt.service";
+import { EmtEventsService } from "./events/emt.events.service";
 
 describe("EmtService", () => {
   const buildService = () => {
@@ -17,19 +17,18 @@ describe("EmtService", () => {
     const dispatcherService = {
       findAllLiveDispatchersByProvider: jest.fn(),
     };
-    const notificationService = {
-      notifyEmt: jest.fn(),
-      notifyDispatcher: jest.fn(),
+    const eventBus = {
+      publish: jest.fn(),
     };
 
-    const service = new EmtService(
+    const service = new EmtEventsService(
       emtRepository as never,
       bookingService as never,
       dispatcherService as never,
-      notificationService as never
+      eventBus as never
     );
 
-    return { service, emtRepository, bookingService, dispatcherService, notificationService };
+    return { service, emtRepository, bookingService, dispatcherService, eventBus };
   };
 
   it("rejects subscription outside provider scope", async () => {
@@ -73,9 +72,8 @@ describe("EmtService", () => {
     );
   });
 
-  it("sends note notifications to dispatchers and emt subscribers", async () => {
-    const { service, emtRepository, bookingService, dispatcherService, notificationService } =
-      buildService();
+  it("publishes note events to dispatchers and emt subscribers", async () => {
+    const { service, emtRepository, bookingService, dispatcherService, eventBus } = buildService();
 
     emtRepository.findEmtById.mockResolvedValue([
       {
@@ -111,7 +109,6 @@ describe("EmtService", () => {
         authorRole: "EMT",
       })
     );
-    expect(notificationService.notifyEmt).toHaveBeenCalledTimes(2);
-    expect(notificationService.notifyDispatcher).toHaveBeenCalledTimes(2);
+    expect(eventBus.publish).toHaveBeenCalledTimes(4);
   });
 });

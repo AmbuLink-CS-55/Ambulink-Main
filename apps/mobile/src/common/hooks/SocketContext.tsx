@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { env } from "../../../env";
+import { useAuthStore } from "./AuthContext";
 
 const SocketContext = createContext<Socket | null>(null);
 
@@ -9,16 +10,15 @@ export class SocketClientCreator {
   static driverSocketUrl = `${env.EXPO_PUBLIC_WS_SERVER_URL}/driver`;
   static emtSocketUrl = `${env.EXPO_PUBLIC_WS_SERVER_URL}/emt`;
 
-  private static instances: Partial<Record<"PATIENT" | "DRIVER" | "EMT", Socket>> = {};
+  private static instances: Record<string, Socket> = {};
 
-  static async getSocket(type: "PATIENT" | "DRIVER" | "EMT"): Promise<Socket> {
-    const existing = this.instances[type];
-    if (existing) {
-      if (!existing.connected) {
-        existing.connect();
-      }
-      return existing;
-    }
+  static async getSocket(params: {
+    type: "PATIENT" | "DRIVER" | "EMT";
+    actorId?: string;
+    accessToken?: string | null;
+  }): Promise<Socket> {
+    const { type, actorId, accessToken } = params;
+    const cacheKey = `${type}:${actorId ?? "default"}`;
 
     let url: string;
     let authPayload: Record<string, string> = {};
@@ -26,19 +26,43 @@ export class SocketClientCreator {
 
     switch (type) {
       case "PATIENT":
+        if (!accessToken) {
+          throw new Error("Missing authenticated patient token");
+        }
         url = this.patientSocketUrl;
-        authPayload = { patientId: env.EXPO_PUBLIC_PATIENT_ID };
+        authPayload = { accessToken };
         break;
       case "DRIVER":
+        if (!actorId) {
+          throw new Error("Missing authenticated driver id");
+        }
+        if (!accessToken) {
+          throw new Error("Missing authenticated driver token");
+        }
         url = this.driverSocketUrl;
-        authPayload = { driverId: env.EXPO_PUBLIC_DRIVER_ID };
+        authPayload = { driverId: actorId, accessToken };
         break;
       case "EMT":
+        if (!actorId) {
+          throw new Error("Missing authenticated EMT id");
+        }
+        if (!accessToken) {
+          throw new Error("Missing authenticated EMT token");
+        }
         url = this.emtSocketUrl;
-        authPayload = { emtId: env.EXPO_PUBLIC_EMT_ID };
+        authPayload = { emtId: actorId, accessToken };
         break;
       default:
         throw Error("Socket type not defined");
+    }
+
+    const existing = this.instances[cacheKey];
+    if (existing) {
+      existing.auth = authPayload;
+      if (!existing.connected) {
+        existing.connect();
+      }
+      return existing;
     }
 
     const instance = io(url, {
@@ -88,15 +112,16 @@ export class SocketClientCreator {
       });
     });
 
-    this.instances[type] = instance;
+    this.instances[cacheKey] = instance;
     return instance;
   }
 
-  static disconnect(type: "PATIENT" | "DRIVER" | "EMT") {
-    const instance = this.instances[type];
-    if (instance) {
+  static disconnectType(type: "PATIENT" | "DRIVER" | "EMT") {
+    Object.entries(this.instances).forEach(([key, instance]) => {
+      if (!key.startsWith(`${type}:`)) return;
       instance.disconnect();
-    }
+      delete this.instances[key];
+    });
   }
 }
 
@@ -110,31 +135,42 @@ export const SocketProvider = ({
   children: React.ReactNode;
 }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
+  const user = useAuthStore((state) => state.user);
+  const accessToken = useAuthStore((state) => state.session?.accessToken ?? null);
 
   useEffect(() => {
     if (!enabled) {
-      SocketClientCreator.disconnect(type);
+      SocketClientCreator.disconnectType(type);
       setSocket(null);
       return;
     }
 
     let isMounted = true;
+    const actorId =
+      type === "DRIVER" || type === "EMT"
+        ? user?.id
+        : undefined;
 
     const init = async () => {
-      const instance = await SocketClientCreator.getSocket(type);
+      const instance = await SocketClientCreator.getSocket({ type, actorId, accessToken });
       console.info("[socket] Initializing connection:", { type });
       if (isMounted) {
         setSocket(instance);
       }
     };
 
-    init();
+    init().catch((error) => {
+      console.warn("[socket] failed to initialize", { type, error });
+      if (isMounted) {
+        setSocket(null);
+      }
+    });
 
     return () => {
       isMounted = false;
       // socket.disconnect(); kill when leaving the group
     };
-  }, [enabled, type]);
+  }, [accessToken, enabled, type, user?.id]);
 
   return <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>;
 };

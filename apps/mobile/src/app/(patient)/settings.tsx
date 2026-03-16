@@ -1,6 +1,7 @@
-import { View, ScrollView, Text } from "react-native";
+import { View, ScrollView, Text, Pressable } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useRouter } from "expo-router";
 import i18n from "@/common/i18n/i18n";
 import { SettingsProvider, useSettings } from "@/common/hooks/SettingsContext";
 
@@ -27,6 +28,7 @@ export default function Settings() {
 }
 
 function SettingsContent() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const {
@@ -77,6 +79,14 @@ function SettingsContent() {
         <MedicalSection />
         <EmergencyContactsSection />
         <AppSettingsSection />
+        <Pressable
+          className="mt-4 rounded-xl border border-slate-300 bg-white px-4 py-3"
+          onPress={() => {
+            router.push("/(public)/login_modern");
+          }}
+        >
+          <Text className="text-center text-slate-900 font-semibold">Staff Login</Text>
+        </Pressable>
         {activeModal === "bloodType" && (
           <BloodTypeModal
             visible
