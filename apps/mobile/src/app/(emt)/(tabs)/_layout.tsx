@@ -9,7 +9,17 @@ export default function EmtTabsLayout() {
         lazy: true,
         freezeOnBlur: true,
         tabBarHideOnKeyboard: true,
-        tabBarStyle: { display: "none" },
+        tabBarActiveTintColor: "#111827",
+        tabBarInactiveTintColor: "#6b7280",
+        tabBarStyle: {
+          backgroundColor: "#ffffff",
+          borderTopColor: "#e5e7eb",
+          borderTopWidth: 1,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: "600",
+        },
       }}
     >
       <Tabs.Screen
@@ -19,6 +29,16 @@ export default function EmtTabsLayout() {
           tabBarAccessibilityLabel: "Open EMT map and booking tools",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="medkit-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "Settings",
+          tabBarAccessibilityLabel: "Open settings",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings-outline" size={size} color={color} />
           ),
         }}
       />

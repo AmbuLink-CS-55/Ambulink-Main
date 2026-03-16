@@ -1,10 +1,13 @@
-import { Pressable, Text, View } from "react-native";
+import { View } from "react-native";
 import type { Ride, RideStatus } from "./types";
+import { AppButton } from "@/common/components/ui/AppButton";
 
 type RideActionsProps = {
   isOnShift: boolean;
   currentRide: Ride | null;
   rideStatus: RideStatus;
+  isArrivedUpdating: boolean;
+  isCompletedUpdating: boolean;
   onCall: (phone?: string) => void;
   onArrived: () => void;
   onCompleted: () => void;
@@ -14,41 +17,51 @@ export function RideActions({
   isOnShift,
   currentRide,
   rideStatus,
+  isArrivedUpdating,
+  isCompletedUpdating,
   onCall,
   onArrived,
   onCompleted,
 }: RideActionsProps) {
+  const isCallDisabled = !currentRide || !isOnShift;
+  const isArrivedDisabled = rideStatus !== "ASSIGNED" || isArrivedUpdating;
+  const isCompletedDisabled = rideStatus !== "ARRIVED" || isCompletedUpdating;
+
   return (
     <View className="mt-3">
-      <Pressable
+      <AppButton
         onPress={() => onCall(currentRide?.patient.phoneNumber ?? undefined)}
-        disabled={!currentRide || !isOnShift}
+        disabled={isCallDisabled}
         accessibilityRole="button"
         accessibilityLabel="Call patient"
-        className={`p-4 mt-3 rounded-xl items-center ${currentRide && isOnShift ? "bg-card" : "bg-muted"}`}
-      >
-        <Text className="text-foreground font-bold">Call Patient</Text>
-      </Pressable>
+        className="mt-3"
+        variant="secondary"
+        label="Call Patient"
+      />
 
-      <Pressable
+      <AppButton
         onPress={onArrived}
-        disabled={rideStatus !== "ASSIGNED"}
+        disabled={isArrivedDisabled}
         accessibilityRole="button"
         accessibilityLabel="Mark arrived"
-        className={`p-4 mt-3 rounded-xl items-center ${rideStatus === "ASSIGNED" ? "bg-yellow-400" : "bg-muted"}`}
-      >
-        <Text className="font-bold">Arrived</Text>
-      </Pressable>
+        accessibilityState={{ disabled: isArrivedDisabled, busy: isArrivedUpdating }}
+        className="mt-3"
+        variant="warning"
+        label="Arrived"
+        loading={isArrivedUpdating}
+      />
 
-      <Pressable
+      <AppButton
         onPress={onCompleted}
-        disabled={rideStatus !== "ARRIVED"}
+        disabled={isCompletedDisabled}
         accessibilityRole="button"
         accessibilityLabel="Complete ride"
-        className={`p-4 mt-3 rounded-xl items-center ${rideStatus === "ARRIVED" ? "bg-green-500" : "bg-muted"}`}
-      >
-        <Text className="text-white font-bold">Complete Ride</Text>
-      </Pressable>
+        accessibilityState={{ disabled: isCompletedDisabled, busy: isCompletedUpdating }}
+        className="mt-3"
+        variant="success"
+        label="Complete Ride"
+        loading={isCompletedUpdating}
+      />
     </View>
   );
 }

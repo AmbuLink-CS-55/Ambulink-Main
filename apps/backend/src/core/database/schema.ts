@@ -5,6 +5,7 @@ import {
   boolean,
   timestamp,
   decimal,
+  integer,
   uniqueIndex,
   index,
   pgEnum,
@@ -36,6 +37,8 @@ export const bookingStatusEnum = pgEnum("booking_status", [
   "CANCELLED",
 ]);
 export type BookingStatus = (typeof bookingStatusEnum.enumValues)[number];
+export const staffInviteRoleEnum = pgEnum("staff_invite_role", ["DISPATCHER", "DRIVER", "EMT"]);
+export type StaffInviteRole = (typeof staffInviteRoleEnum.enumValues)[number];
 
 export const ambulanceProviders = pgTable("ambulance_providers", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -63,6 +66,7 @@ export const users = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     isActive: boolean("is_active").notNull().default(true),
+    isDispatcherAdmin: boolean("is_dispatcher_admin").notNull().default(false),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
     role: userRoleEnum("role").notNull(),
 
@@ -107,6 +111,127 @@ export const users = pgTable(
 );
 export type User = InferSelectModel<typeof users>;
 export type NewUser = InferInsertModel<typeof users>;
+
+export const dispatcherInvites = pgTable(
+  "dispatcher_invites",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    providerId: uuid("provider_id")
+      .notNull()
+      .references(() => ambulanceProviders.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    createdByUserId: uuid("created_by_user_id")
+      .notNull()
+      .references(() => users.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    invitedEmail: varchar("invited_email", { length: 255 }),
+    tokenHash: varchar("token_hash", { length: 128 }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    tokenHashUnique: uniqueIndex("dispatcher_invites_token_hash_unique").on(t.tokenHash),
+    providerIdx: index("dispatcher_invites_provider_idx").on(t.providerId),
+    invitedEmailIdx: index("dispatcher_invites_invited_email_idx").on(t.invitedEmail),
+    expiresAtIdx: index("dispatcher_invites_expires_at_idx").on(t.expiresAt),
+  })
+);
+export type DispatcherInvite = InferSelectModel<typeof dispatcherInvites>;
+export type NewDispatcherInvite = InferInsertModel<typeof dispatcherInvites>;
+
+export const staffInvites = pgTable(
+  "staff_invites",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    codeHash: varchar("code_hash", { length: 255 }).notNull(),
+    providerId: uuid("provider_id")
+      .notNull()
+      .references(() => ambulanceProviders.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    role: staffInviteRoleEnum("role").notNull(),
+    username: varchar("username", { length: 100 }).notNull(),
+    fullName: varchar("full_name", { length: 255 }),
+    email: varchar("email", { length: 255 }),
+    phoneNumber: varchar("phone_number", { length: 50 }),
+    createdByDispatcherId: uuid("created_by_dispatcher_id")
+      .notNull()
+      .references(() => users.id, {
+        onDelete: "restrict",
+        onUpdate: "cascade",
+      }),
+    createdByUserId: uuid("created_by_user_id")
+      .notNull()
+      .references(() => users.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    maxAttempts: integer("max_attempts").notNull().default(10),
+    attemptsUsed: integer("attempts_used").notNull().default(0),
+    invitedEmail: varchar("invited_email", { length: 255 }),
+    tokenHash: varchar("token_hash", { length: 128 }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    tokenHashUnique: uniqueIndex("staff_invites_token_hash_unique").on(t.tokenHash),
+    providerIdx: index("staff_invites_provider_idx").on(t.providerId),
+    roleIdx: index("staff_invites_role_idx").on(t.role),
+    invitedEmailIdx: index("staff_invites_invited_email_idx").on(t.invitedEmail),
+    expiresAtIdx: index("staff_invites_expires_at_idx").on(t.expiresAt),
+  })
+);
+export type StaffInvite = InferSelectModel<typeof staffInvites>;
+export type NewStaffInvite = InferInsertModel<typeof staffInvites>;
+
+export const patientGuestSessionStatusEnum = pgEnum("patient_guest_session_status", [
+  "ACTIVE",
+  "COMPLETED",
+  "CANCELLED",
+  "EXPIRED",
+]);
+export type PatientGuestSessionStatus = (typeof patientGuestSessionStatusEnum.enumValues)[number];
+
+export const patientGuestSessions = pgTable(
+  "patient_guest_sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    patientId: uuid("patient_id")
+      .notNull()
+      .references(() => users.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    bookingId: uuid("booking_id").references(() => bookings.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
+    tokenHash: varchar("token_hash", { length: 128 }).notNull(),
+    status: patientGuestSessionStatusEnum("status").notNull().default("ACTIVE"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    tokenHashUnique: uniqueIndex("patient_guest_sessions_token_hash_unique").on(t.tokenHash),
+    patientIdx: index("patient_guest_sessions_patient_idx").on(t.patientId),
+    statusIdx: index("patient_guest_sessions_status_idx").on(t.status),
+    expiresAtIdx: index("patient_guest_sessions_expires_at_idx").on(t.expiresAt),
+  })
+);
+export type PatientGuestSession = InferSelectModel<typeof patientGuestSessions>;
+export type NewPatientGuestSession = InferInsertModel<typeof patientGuestSessions>;
 
 export const ambulance = pgTable(
   "ambulances",
@@ -250,6 +375,48 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   }),
   patientBookings: many(bookings, { relationName: "patientBookings" }),
   driverBookings: many(bookings, { relationName: "driverBookings" }),
+  createdDispatcherInvites: many(dispatcherInvites),
+  createdStaffInvites: many(staffInvites),
+  createdStaffInvitesLegacy: many(staffInvites, { relationName: "createdStaffInvitesLegacy" }),
+  guestSessions: many(patientGuestSessions),
+}));
+
+export const dispatcherInvitesRelations = relations(dispatcherInvites, ({ one }) => ({
+  provider: one(ambulanceProviders, {
+    fields: [dispatcherInvites.providerId],
+    references: [ambulanceProviders.id],
+  }),
+  createdByUser: one(users, {
+    fields: [dispatcherInvites.createdByUserId],
+    references: [users.id],
+  }),
+}));
+
+export const staffInvitesRelations = relations(staffInvites, ({ one }) => ({
+  provider: one(ambulanceProviders, {
+    fields: [staffInvites.providerId],
+    references: [ambulanceProviders.id],
+  }),
+  createdByDispatcher: one(users, {
+    fields: [staffInvites.createdByDispatcherId],
+    references: [users.id],
+    relationName: "createdStaffInvitesLegacy",
+  }),
+  createdByUser: one(users, {
+    fields: [staffInvites.createdByUserId],
+    references: [users.id],
+  }),
+}));
+
+export const patientGuestSessionsRelations = relations(patientGuestSessions, ({ one }) => ({
+  patient: one(users, {
+    fields: [patientGuestSessions.patientId],
+    references: [users.id],
+  }),
+  booking: one(bookings, {
+    fields: [patientGuestSessions.bookingId],
+    references: [bookings.id],
+  }),
 }));
 
 export const ambulancesRelations = relations(ambulance, ({ one, many }) => ({

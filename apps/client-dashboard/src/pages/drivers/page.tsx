@@ -1,10 +1,19 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { DataTable } from "@/components";
+import { useState } from "react";
+import { DataTable } from "@/components/VirtualizedTable";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useEntityFormDialog } from "@/hooks/use-entity-form-dialog";
 import { queryKeys } from "@/lib/queryKeys";
-import { useCreateDriver, useGetDrivers, useUpdateDriver } from "@/services/driver.service";
+import { useGetDrivers, useUpdateDriver } from "@/services/driver.service";
+import { useCreateStaffInvite } from "@/services/auth.service";
 import type { User } from "@/lib/types";
 import { createDriverColumns } from "@/pages/drivers/components/driver-columns";
 import {
@@ -12,16 +21,17 @@ import {
   EditDriverDialog,
   type DriverFormState,
 } from "@/pages/drivers/components/DriverFormDialog";
-import env from "@/../env";
+import { useAuthStore } from "@/stores/auth.store";
+import { toUiErrorMessage } from "@/lib/ui-error";
 
 const initialForm: DriverFormState = {
   fullName: "",
   phoneNumber: "",
   email: "",
-  passwordHash: "",
 };
 
 export default function DriversDashboard() {
+  const isDispatcherAdmin = useAuthStore((state) => Boolean(state.session?.user.isDispatcherAdmin));
   const driverLocationsQuery = useQuery<Record<string, { x: number; y: number }>>({
     queryKey: queryKeys.driverLocations(),
     queryFn: async () => ({}),
@@ -29,20 +39,24 @@ export default function DriversDashboard() {
     staleTime: Infinity,
     enabled: false,
   });
-  const driverLocations = useMemo(
-    () => driverLocationsQuery.data ?? {},
-    [driverLocationsQuery.data]
-  );
+  const driverLocations = driverLocationsQuery.data ?? {};
 
-  const drivers = useGetDrivers({ providerId: env.VITE_PROVIDER_ID });
-  const createDriver = useCreateDriver();
+  const drivers = useGetDrivers();
+  const createInvite = useCreateStaffInvite();
   const updateDriver = useUpdateDriver();
+  const [invitePayload, setInvitePayload] = useState<{
+    token: string;
+    email: string;
+    role: "DRIVER";
+  } | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const inviteModalOpen = Boolean(invitePayload);
   const mapDriverToForm = useCallback(
     (driver: User) => ({
       fullName: driver.fullName ?? "",
       phoneNumber: driver.phoneNumber ?? "",
       email: driver.email ?? "",
-      passwordHash: "",
     }),
     []
   );
@@ -51,49 +65,91 @@ export default function DriversDashboard() {
       initialForm,
       mapEntityToForm: mapDriverToForm,
     });
-
-  const rows = useMemo(() => drivers.data ?? [], [drivers.data]);
-
-  const columns = useMemo(
-    () =>
-      createDriverColumns({
-        driverLocations,
-      }),
-    [driverLocations]
+  const handleOpenForCreate = useCallback(() => {
+    setFormError(null);
+    openForCreate();
+  }, [openForCreate]);
+  const handleOpenForEdit = useCallback(
+    (driver: User) => {
+      setFormError(null);
+      openForEdit(driver);
+    },
+    [openForEdit]
+  );
+  const handleDialogOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        setFormError(null);
+      }
+      onOpenChange(open);
+    },
+    [onOpenChange]
+  );
+  const handleFormChange = useCallback(
+    <K extends keyof DriverFormState>(field: K, value: DriverFormState[K]) => {
+      if (formError) {
+        setFormError(null);
+      }
+      updateForm(field, value);
+    },
+    [formError, updateForm]
   );
 
+  const rows = drivers.data ?? [];
+  const columns = createDriverColumns({
+    driverLocations,
+  });
+
   const handleSubmit = useCallback(async () => {
+    if (isSubmitting) return;
+    setFormError(null);
+    setIsSubmitting(true);
     const payload = {
       fullName: form.fullName.trim(),
       phoneNumber: form.phoneNumber.trim(),
       email: form.email.trim(),
-      passwordHash: form.passwordHash.trim(),
-      providerId: env.VITE_PROVIDER_ID,
     } satisfies Partial<User>;
 
-    if (editing) {
-      await updateDriver.mutateAsync({
-        id: editing.id,
-        payload: {
+    try {
+      if (editing) {
+        await updateDriver.mutateAsync({
+          id: editing.id,
+          payload: {
+            fullName: payload.fullName,
+            phoneNumber: payload.phoneNumber,
+            email: payload.email,
+          },
+        });
+      } else {
+        if (!payload.email) {
+          throw new Error("Email is required to generate onboarding invite.");
+        }
+        const invite = await createInvite.mutateAsync({
+          role: "DRIVER",
           fullName: payload.fullName,
           phoneNumber: payload.phoneNumber,
           email: payload.email,
-          passwordHash: payload.passwordHash || undefined,
-        },
-      });
-    } else {
-      if (!env.VITE_PROVIDER_ID) return;
-      await createDriver.mutateAsync(payload);
-    }
+        });
+        setInvitePayload({
+          token: invite.inviteToken,
+          email: payload.email,
+          role: "DRIVER",
+        });
+      }
 
-    reset();
+      reset();
+    } catch (error) {
+      setFormError(toUiErrorMessage(error, "Failed to save driver. Please review your inputs."));
+    } finally {
+      setIsSubmitting(false);
+    }
   }, [
-    createDriver,
+    createInvite,
     editing,
     form.email,
     form.fullName,
-    form.passwordHash,
     form.phoneNumber,
+    isSubmitting,
     reset,
     updateDriver,
   ]);
@@ -105,7 +161,7 @@ export default function DriversDashboard() {
           <h1 className="text-2xl font-semibold">Drivers</h1>
           <p className="text-sm text-muted-foreground">Manage your roster.</p>
         </div>
-        <Button onClick={openForCreate}>Add Driver</Button>
+        {isDispatcherAdmin ? <Button onClick={handleOpenForCreate}>Add Driver</Button> : null}
       </div>
 
       <DataTable
@@ -114,27 +170,59 @@ export default function DriversDashboard() {
         height={640}
         rowHeight={56}
         rowKey={(row) => row.id}
-        onRowClick={openForEdit}
+        onRowClick={isDispatcherAdmin ? handleOpenForEdit : undefined}
       />
 
-      {editing ? (
+      {isDispatcherAdmin && editing ? (
         <EditDriverDialog
           open={isOpen}
           form={form}
-          onOpenChange={onOpenChange}
-          onChange={updateForm}
+          onOpenChange={handleDialogOpenChange}
+          onChange={handleFormChange}
           onSubmit={handleSubmit}
+          errorMessage={formError}
+          isSubmitting={isSubmitting}
         />
-      ) : (
+      ) : isDispatcherAdmin ? (
         <CreateDriverDialog
           open={isOpen}
           form={form}
-          providerAvailable={Boolean(env.VITE_PROVIDER_ID)}
-          onOpenChange={onOpenChange}
-          onChange={updateForm}
+          providerAvailable={true}
+          onOpenChange={handleDialogOpenChange}
+          onChange={handleFormChange}
           onSubmit={handleSubmit}
+          errorMessage={formError}
+          isSubmitting={isSubmitting}
         />
-      )}
+      ) : null}
+
+      <Dialog open={inviteModalOpen} onOpenChange={(open) => (!open ? setInvitePayload(null) : null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Driver Onboarding Invite</DialogTitle>
+            <DialogDescription>
+              Assigned email: {invitePayload?.email ?? "N/A"}
+            </DialogDescription>
+          </DialogHeader>
+          {invitePayload ? (
+            <div className="space-y-2 px-6 pb-6">
+              <p className="text-xs break-all text-muted-foreground">Invite token: {invitePayload.token}</p>
+              <img
+                alt="Driver invite QR"
+                className="mx-auto h-56 w-56 rounded border"
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(
+                  JSON.stringify({
+                    type: "staff_invite",
+                    role: invitePayload.role,
+                    inviteToken: invitePayload.token,
+                    invitedEmail: invitePayload.email,
+                  })
+                )}`}
+              />
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

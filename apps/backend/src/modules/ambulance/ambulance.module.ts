@@ -1,10 +1,11 @@
 import { Module } from "@nestjs/common";
-import { AmbulanceController } from "./ambulance.controller";
-import { AmbulanceService } from "./ambulance.service";
-import { AmbulanceRepository } from "./ambulance.repository";
+import { AmbulanceApiController } from "./api/ambulance.api.controller";
+import { AmbulanceApiService } from "./api/ambulance.api.service";
+import { AmbulanceApiRepository } from "./api/ambulance.api.repository";
 
 @Module({
-  controllers: [AmbulanceController],
-  providers: [AmbulanceService, AmbulanceRepository],
+  controllers: [AmbulanceApiController],
+  providers: [AmbulanceApiService, AmbulanceApiRepository],
+  exports: [AmbulanceApiService],
 })
 export class AmbulanceModule {}

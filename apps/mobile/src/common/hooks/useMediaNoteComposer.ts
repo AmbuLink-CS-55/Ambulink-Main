@@ -43,6 +43,7 @@ export function useMediaNoteComposer({ submit, maxFiles = DEFAULT_MAX_FILES }: O
   const [files, setFiles] = useState<MediaAttachmentInput[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setSubmitting] = useState(false);
+  const [mediaProcessingCount, setMediaProcessingCount] = useState(0);
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const [recordingStartedAt, setRecordingStartedAt] = useState<number | null>(null);
   const [recordingElapsedMs, setRecordingElapsedMs] = useState(0);
@@ -68,15 +69,20 @@ export function useMediaNoteComposer({ submit, maxFiles = DEFAULT_MAX_FILES }: O
       return;
     }
 
-    const picked = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsMultipleSelection: true,
-      quality: 0.8,
-      videoMaxDuration: 120,
-    });
+    setMediaProcessingCount((count) => count + 1);
+    try {
+      const picked = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        allowsMultipleSelection: true,
+        quality: 0.8,
+        videoMaxDuration: 120,
+      });
 
-    if (picked.canceled) return;
-    appendFiles(picked.assets.map(mapAssetToFile));
+      if (picked.canceled) return;
+      appendFiles(picked.assets.map(mapAssetToFile));
+    } finally {
+      setMediaProcessingCount((count) => Math.max(0, count - 1));
+    }
   }, [appendFiles]);
 
   const captureMedia = useCallback(async () => {
@@ -85,14 +91,19 @@ export function useMediaNoteComposer({ submit, maxFiles = DEFAULT_MAX_FILES }: O
       return;
     }
 
-    const captured = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      quality: 0.8,
-      videoMaxDuration: 120,
-    });
+    setMediaProcessingCount((count) => count + 1);
+    try {
+      const captured = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        quality: 0.8,
+        videoMaxDuration: 120,
+      });
 
-    if (captured.canceled) return;
-    appendFiles(captured.assets.map(mapAssetToFile));
+      if (captured.canceled) return;
+      appendFiles(captured.assets.map(mapAssetToFile));
+    } finally {
+      setMediaProcessingCount((count) => Math.max(0, count - 1));
+    }
   }, [appendFiles]);
 
   const finalizeRecording = useCallback(async () => {
@@ -215,6 +226,7 @@ export function useMediaNoteComposer({ submit, maxFiles = DEFAULT_MAX_FILES }: O
       files,
       error,
       isSubmitting,
+      isMediaProcessing: mediaProcessingCount > 0,
       isRecordingAudio,
       recordingElapsedMs,
       canSubmit,
