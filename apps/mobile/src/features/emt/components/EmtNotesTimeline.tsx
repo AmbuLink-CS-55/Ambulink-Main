@@ -4,6 +4,7 @@ import { FlatList, Linking, Modal, Pressable, StyleSheet, Text, View } from "rea
 import { env } from "../../../../env";
 import { AppImage } from "@/common/components/AppImage";
 import { Audio, type AVPlaybackStatus } from "expo-av";
+import { getAuthAccessToken } from "@/common/hooks/AuthContext";
 
 type Props = {
   notes: EmtNote[];
@@ -44,7 +45,15 @@ export default function EmtNotesTimeline({ notes, currentEmtId }: Props) {
   const toAttachmentUrl = (rawUrl: string) => {
     const absolute = rawUrl.startsWith("http://") || rawUrl.startsWith("https://");
     const base = absolute ? rawUrl : `${apiOrigin}${rawUrl}`;
-    return `${base}?emtId=${currentEmtId}`;
+    const accessToken = getAuthAccessToken();
+    const params = [
+      currentEmtId ? `emtId=${encodeURIComponent(currentEmtId)}` : null,
+      accessToken ? `accessToken=${encodeURIComponent(accessToken)}` : null,
+    ]
+      .filter(Boolean)
+      .join("&");
+    if (!params) return base;
+    return `${base}${base.includes("?") ? "&" : "?"}${params}`;
   };
   const formatter = useMemo(
     () =>

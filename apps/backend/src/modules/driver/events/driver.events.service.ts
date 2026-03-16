@@ -18,7 +18,6 @@ import { EventBusService } from "@/core/events/event-bus.service";
 import { DbExecutor, DbService } from "@/core/database/db.service";
 import { BookingEventsService } from "@/modules/booking/events/booking.events.service";
 import { BookingSharedRepository } from "@/modules/booking/common/booking.shared.repository";
-import { DispatcherEventsService } from "@/modules/dispatcher/events/dispatcher.events.service";
 import { DriverEventsRepository } from "./driver.events.repository";
 
 @Injectable()
@@ -36,7 +35,6 @@ export class DriverEventsService {
     private bookingRepository: BookingSharedRepository,
     @Inject(forwardRef(() => BookingEventsService))
     private bookingService: BookingEventsService,
-    private dispatcherService: DispatcherEventsService,
     private eventBus: EventBusService
   ) {}
 
@@ -160,14 +158,25 @@ export class DriverEventsService {
     const updated = await this.setDriverLocation(driverId, y, x);
 
     const booking = await this.bookingService.getOngoingBookingDispatchInfoForDriver(driverId);
-    if (booking?.patientId && booking.dispatcherId) {
+    if (booking?.patientId && (booking.providerId || booking.dispatcherId)) {
       const locationUpdate = { id: driverId, x, y };
-      this.eventBus.publish({
-        type: "realtime.dispatcher",
-        dispatcherId: booking.dispatcherId,
-        event: "driver:update",
-        payload: locationUpdate,
-      });
+      if (booking.providerId) {
+        this.eventBus.publish({
+          type: "realtime.dispatchers",
+          event: "driver:update",
+          payload: {
+            providerId: booking.providerId,
+            ...locationUpdate,
+          },
+        });
+      } else if (booking.dispatcherId) {
+        this.eventBus.publish({
+          type: "realtime.dispatcher",
+          dispatcherId: booking.dispatcherId,
+          event: "driver:update",
+          payload: locationUpdate,
+        });
+      }
       this.eventBus.publish({
         type: "realtime.patient",
         patientId: booking.patientId,
@@ -238,7 +247,12 @@ export class DriverEventsService {
   }
 
   private async emitEtaUpdateIfRequired(
-    bookingInfo: { bookingId: string; patientId: string | null; dispatcherId: string | null },
+    bookingInfo: {
+      bookingId: string;
+      patientId: string | null;
+      dispatcherId: string | null;
+      providerId?: string | null;
+    },
     driverPoint: Point
   ) {
     const assigned = await this.bookingService.buildAssignedBookingPayload(bookingInfo.bookingId);
@@ -300,20 +314,23 @@ export class DriverEventsService {
     }
 
     if (assigned.provider?.id) {
-      const dispatcherIds = await this.dispatcherService.findAllLiveDispatchersByProvider(
-        assigned.provider.id
-      );
-      for (const dispatcherId of dispatcherIds) {
-        this.eventBus.publish({
-          type: "realtime.dispatcher",
-          dispatcherId,
-          event: "booking:eta-updated",
-          payload: {
-            ...payload,
-            providerId: assigned.provider.id,
-          },
-        });
-      }
+      this.eventBus.publish({
+        type: "realtime.dispatchers",
+        event: "booking:eta-updated",
+        payload: {
+          ...payload,
+          providerId: assigned.provider.id,
+        },
+      });
+    } else if (bookingInfo.providerId) {
+      this.eventBus.publish({
+        type: "realtime.dispatchers",
+        event: "booking:eta-updated",
+        payload: {
+          ...payload,
+          providerId: bookingInfo.providerId,
+        },
+      });
     } else if (bookingInfo.dispatcherId) {
       this.eventBus.publish({
         type: "realtime.dispatcher",

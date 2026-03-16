@@ -154,7 +154,10 @@ export class BookingCoreService {
       );
     }
 
-    this.emitDispatcher(dispatcherId, "booking:assigned", dispatcherPayload);
+    this.emitAllDispatchers("booking:assigned", {
+      ...dispatcherPayload,
+      providerId: dispatcher.providerId,
+    });
     this.emitDriver(driver.id, "booking:assigned", assignedPayload);
     this.emitPatient(booking.patientId, "booking:assigned", assignedPayload);
 
@@ -275,7 +278,14 @@ export class BookingCoreService {
     for (const subscriber of emtSubscribers) {
       this.emitEmt(subscriber.emtId, "booking:assigned", assignedPayload);
     }
-    this.emitDispatcher(dispatcherId, "booking:assigned", dispatcherPayload);
+    if (dispatcherPayload.provider?.id) {
+      this.emitAllDispatchers("booking:assigned", {
+        ...dispatcherPayload,
+        providerId: dispatcherPayload.provider.id,
+      });
+    } else {
+      this.emitDispatcher(dispatcherId, "booking:assigned", dispatcherPayload);
+    }
 
     const rerouteReasonParts: string[] = [];
     if (payload.driverId && payload.driverId !== previousDriverId) {
@@ -363,12 +373,20 @@ export class BookingCoreService {
       if (updatedBooking.status === "REQUESTED") {
         return updatedBooking;
       }
-      this.emitDispatcher(updatedBooking.dispatcherId, "booking:update", {
+      const updatePayload = {
         bookingId: updatedBooking.id,
         status: updatedBooking.status,
         updatedAt: new Date().toISOString(),
         providerId: updatedBooking.providerId ?? null,
-      } satisfies DispatcherBookingUpdatePayload);
+      } satisfies DispatcherBookingUpdatePayload;
+      if (updatedBooking.providerId) {
+        this.emitAllDispatchers("booking:update", {
+          ...updatePayload,
+          providerId: updatedBooking.providerId,
+        });
+      } else {
+        this.emitDispatcher(updatedBooking.dispatcherId, "booking:update", updatePayload);
+      }
     }
 
     if (updatedBooking?.providerId) {
@@ -488,15 +506,6 @@ export class BookingCoreService {
       return null;
     }
 
-    if (booking.dispatcherId) {
-      this.emitDispatcher(booking.dispatcherId, "booking:update", {
-        bookingId: booking.id,
-        status: "CANCELLED",
-        updatedAt: new Date().toISOString(),
-        providerId: booking.providerId ?? null,
-      } satisfies DispatcherBookingUpdatePayload);
-    }
-
     if (booking.providerId) {
       const providerUpdatePayload = {
         bookingId: booking.id,
@@ -511,6 +520,13 @@ export class BookingCoreService {
         status: booking.status,
         updatedAt: new Date().toISOString(),
       });
+    } else if (booking.dispatcherId) {
+      this.emitDispatcher(booking.dispatcherId, "booking:update", {
+        bookingId: booking.id,
+        status: "CANCELLED",
+        updatedAt: new Date().toISOString(),
+        providerId: null,
+      } satisfies DispatcherBookingUpdatePayload);
     }
 
     for (const emtId of emtSubscriberIds) {
@@ -569,6 +585,16 @@ export class BookingCoreService {
 
   async getDispatcherActiveBookings(dispatcherId: string) {
     const rows = await this.bookingRepository.getDispatcherActiveBookingRows(dispatcherId);
+
+    return rows
+      .map((row) =>
+        mapDispatcherBookingPayload(row as Parameters<typeof mapDispatcherBookingPayload>[0])
+      )
+      .filter((payload): payload is DispatcherBookingPayload => payload !== null);
+  }
+
+  async getProviderActiveBookings(providerId: string) {
+    const rows = await this.bookingRepository.getProviderActiveBookingRows(providerId);
 
     return rows
       .map((row) =>
@@ -729,12 +755,11 @@ export class BookingCoreService {
 
     await this.bookingRepository.appendBookingNote(bookingId, note);
 
-    const dispatcherIds = await this.dispatcherService.findAllLiveDispatchersByProvider(
-      dispatcher.providerId
-    );
-    for (const id of dispatcherIds) {
-      this.emitDispatcher(id, "booking:notes", { bookingId, note });
-    }
+    this.emitAllDispatchers("booking:notes", {
+      providerId: dispatcher.providerId,
+      bookingId,
+      note,
+    });
 
     const emtSubscribers = await this.bookingRepository.getEmtsSubscribedToBooking(bookingId);
     for (const subscriber of emtSubscribers) {
@@ -889,10 +914,11 @@ export class BookingCoreService {
     }
 
     if (!providerId) return;
-    const dispatcherIds = await this.dispatcherService.findAllLiveDispatchersByProvider(providerId);
-    for (const dispatcherId of dispatcherIds) {
-      this.emitDispatcher(dispatcherId, "booking:notes", { bookingId, note });
-    }
+    this.emitAllDispatchers("booking:notes", {
+      providerId,
+      bookingId,
+      note,
+    });
   }
 
   private emitDispatcher(dispatcherId: string, event: string, payload: unknown) {

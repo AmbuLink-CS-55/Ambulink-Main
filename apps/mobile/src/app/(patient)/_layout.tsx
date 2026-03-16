@@ -19,10 +19,19 @@ export default function TabLayout() {
           lazy: true,
           freezeOnBlur: true,
           tabBarHideOnKeyboard: true,
+          tabBarActiveTintColor: "#111827",
+          tabBarInactiveTintColor: "#6b7280",
+          tabBarLabelStyle: {
+            fontSize: 12,
+            fontWeight: "600",
+          },
           tabBarStyle: {
             height: tabBarBaseHeight + tabBarBottomPadding,
             paddingTop: 6,
             paddingBottom: tabBarBottomPadding,
+            backgroundColor: "#ffffff",
+            borderTopColor: "#e5e7eb",
+            borderTopWidth: 1,
           },
         }}
       >

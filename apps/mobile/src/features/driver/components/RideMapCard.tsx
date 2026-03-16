@@ -1,6 +1,8 @@
-import { Pressable, Text, View } from "react-native";
+import { View } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { isValidPoint, type MapPoint, type Ride, type RideMapRegion } from "./types";
+import { AppCard } from "@/common/components/ui/AppCard";
+import { AppButton } from "@/common/components/ui/AppButton";
 
 type RideMapCardProps = {
   currentRide: Ride | null;
@@ -24,7 +26,7 @@ export function RideMapCard({
   const isNavigationDisabled = !currentRide || !isOnShift;
 
   return (
-    <View className="rounded-2xl overflow-hidden shadow-sm bg-card border border-border">
+    <AppCard className="overflow-hidden px-0 py-0" variant="elevated">
       <View style={{ height: 220, width: "100%" }}>
         <MapView
           provider={PROVIDER_GOOGLE}
@@ -52,19 +54,15 @@ export function RideMapCard({
         </MapView>
       </View>
 
-      <Pressable
-        className={`p-4 items-center justify-center border ${isNavigationDisabled ? "bg-secondary border-border" : "bg-green-500 border-green-600"}`}
+      <AppButton
+        className="rounded-none border-x-0 border-b-0"
         onPress={onOpenOnMap}
         disabled={isNavigationDisabled}
         accessibilityRole="button"
         accessibilityLabel="Open navigation"
-      >
-        <Text
-          className={`font-bold text-lg ${isNavigationDisabled ? "text-secondary-foreground" : "text-white"}`}
-        >
-          Open in Navigation
-        </Text>
-      </Pressable>
-    </View>
+        variant="primary"
+        label="Open in Navigation"
+      />
+    </AppCard>
   );
 }

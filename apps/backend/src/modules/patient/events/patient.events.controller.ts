@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Logger,
   Param,
   Post,
   UploadedFiles,
@@ -27,6 +28,8 @@ import type { AuthUser } from "@/common/auth/auth.types";
 
 @Controller("api/patients/events")
 export class PatientEventsController {
+  private readonly logger = new Logger(PatientEventsController.name);
+
   constructor(private readonly patientEventsService: PatientEventsService) {}
 
   @Post("guest-bookings/start")
@@ -49,11 +52,18 @@ export class PatientEventsController {
     if (user.role !== "PATIENT") {
       throw new BadRequestException("PATIENT role is required");
     }
+    this.logger.log(`requestHelp received`, {
+      patientId: user.id,
+      hasSettings: Boolean(body.patientSettings),
+      x: body.x,
+      y: body.y,
+    });
     await this.patientEventsService.requestHelp(user.id, {
       x: body.x,
       y: body.y,
       patientSettings: body.patientSettings as PatientPickupRequest["patientSettings"],
     });
+    this.logger.log(`requestHelp completed`, { patientId: user.id });
     return { accepted: true };
   }
 

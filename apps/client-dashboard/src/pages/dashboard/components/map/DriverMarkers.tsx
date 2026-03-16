@@ -1,15 +1,18 @@
 import { Fragment, useMemo } from "react";
 import { DriverMarker } from "@/pages/dashboard/components/map/DriverMarker";
+import { BookingRequestMarker } from "@/pages/dashboard/components/map/BookingRequestMarker";
 import { OngoingPatientMarker } from "@/pages/dashboard/components/map/OngoingPatientMarker";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import type { DispatcherBookingPayload } from "@/lib/socket-types";
+import { useBookingRequests } from "@/pages/dashboard/hooks/use-booking-requests";
 
 interface DriverMarkersProps {
   ongoingBookings: Record<string, DispatcherBookingPayload>;
 }
 
 export function DriverMarkers({ ongoingBookings }: DriverMarkersProps) {
+  const { bookingRequests } = useBookingRequests();
   const driverLocationsQuery = useQuery<Record<string, { x: number; y: number }>>({
     queryKey: queryKeys.driverLocations(),
     queryFn: async () => ({}),
@@ -34,6 +37,19 @@ export function DriverMarkers({ ongoingBookings }: DriverMarkersProps) {
 
   return (
     <>
+      {/* Pending booking requests (booking:new) */}
+      {bookingRequests.map((request) => {
+        const patientLocation = request.data.patient.currentLocation;
+        if (!patientLocation) return null;
+        return (
+          <BookingRequestMarker
+            key={`request-${request.requestId}`}
+            longitude={patientLocation.x}
+            latitude={patientLocation.y}
+          />
+        );
+      })}
+
       {/* Available drivers */}
       {availableDrivers.map(([id, location]) => (
         <DriverMarker

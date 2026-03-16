@@ -88,6 +88,10 @@ export class BookingEventsService {
     return this.bookingCoreService.getDispatcherActiveBookings(dispatcherId);
   }
 
+  getProviderActiveBookings(providerId: string) {
+    return this.bookingCoreService.getProviderActiveBookings(providerId);
+  }
+
   getActiveBookingById(bookingId: string) {
     return this.bookingCoreService.getActiveBookingById(bookingId);
   }

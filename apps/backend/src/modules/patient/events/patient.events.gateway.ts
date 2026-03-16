@@ -1,5 +1,10 @@
 import { Server, Socket } from "socket.io";
-import { OnGatewayInit, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
+import {
+  OnGatewayInit,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+} from "@nestjs/websockets";
 import { OnModuleDestroy } from "@nestjs/common";
 
 import { BookingEventsService } from "@/modules/booking/events/booking.events.service";
@@ -52,35 +57,45 @@ export class PatientEventsGateway implements OnGatewayInit, OnModuleDestroy {
     this.clearPendingOffline(patientId);
     client.join(`patient:${patientId}`);
     await this.patientEventsService.updateStatus(patientId, "AVAILABLE");
-
-    const activeBooking = await this.bookingService.getActiveBookingForPatient(patientId);
-    if (activeBooking) {
-      const bookingPayload = await this.bookingService.buildAssignedBookingPayload(activeBooking.id);
-      if (bookingPayload) {
-        this.eventBus.publish({
-          type: "realtime.patient",
-          patientId,
-          event: "booking:assigned",
-          payload: bookingPayload,
-        });
-      }
-      if (activeBooking.status === "ARRIVED") {
-        this.eventBus.publish({
-          type: "realtime.patient",
-          patientId,
-          event: "booking:arrived",
-          payload: {
-            bookingId: activeBooking.id,
-          },
-        });
-      }
-    }
+    await this.emitActiveBookingSync(patientId);
 
     console.log("[socket] connected", {
       namespace: "/patient",
       clientId: client.id,
       patientId,
     });
+  }
+
+  @SubscribeMessage("booking:sync:request")
+  async handleBookingSyncRequest(client: Socket) {
+    const patientId = client.data.patientId as string | undefined;
+    if (!patientId) return;
+    await this.emitActiveBookingSync(patientId);
+  }
+
+  private async emitActiveBookingSync(patientId: string) {
+    const activeBooking = await this.bookingService.getActiveBookingForPatient(patientId);
+    if (!activeBooking) return;
+
+    const bookingPayload = await this.bookingService.buildAssignedBookingPayload(activeBooking.id);
+    if (bookingPayload) {
+      this.eventBus.publish({
+        type: "realtime.patient",
+        patientId,
+        event: "booking:assigned",
+        payload: bookingPayload,
+      });
+    }
+    if (activeBooking.status === "ARRIVED") {
+      this.eventBus.publish({
+        type: "realtime.patient",
+        patientId,
+        event: "booking:arrived",
+        payload: {
+          bookingId: activeBooking.id,
+        },
+      });
+    }
   }
 
   private extractSocketActorId(client: Socket, key: "patientId") {

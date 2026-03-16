@@ -16,7 +16,7 @@ export default function PersonalSection() {
         {/* Profile Picture Container */}
         <View className="self-center mb-5 relative">
           <View className="w-[100px] h-[100px] rounded-full bg-muted justify-center items-center">
-            <MaterialCommunityIcons name="account-circle" size={60} color="#26A69A" />
+            <MaterialCommunityIcons name="account-circle" size={60} color="#111827" />
           </View>
         </View>
 

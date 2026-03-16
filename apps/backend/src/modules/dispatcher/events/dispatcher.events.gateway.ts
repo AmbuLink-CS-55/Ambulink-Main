@@ -60,11 +60,12 @@ export class DispatcherEventsGateway implements OnGatewayInit, OnModuleDestroy {
     }
     const { dispatcherId, providerId } = identity;
     client.data.dispatcherId = dispatcherId;
+    client.data.providerId = providerId;
     this.clearPendingOffline(dispatcherId);
     await this.dispatcherServise.setStatus(dispatcherId, "AVAILABLE");
     client.join(`dispatcher:${dispatcherId}`);
     client.join(`dispatcher-provider:${providerId}`);
-    this.emitActiveBookingSync(dispatcherId);
+    this.emitActiveBookingSync(dispatcherId, providerId);
     this.emitPendingSync(dispatcherId);
     console.log("[socket] connected", {
       namespace: "/dispatcher",
@@ -210,19 +211,20 @@ export class DispatcherEventsGateway implements OnGatewayInit, OnModuleDestroy {
   @SubscribeMessage("booking:sync:request")
   handleActiveBookingSyncRequest(client: Socket) {
     const dispatcherId = client.data.dispatcherId as string | undefined;
-    if (!dispatcherId) {
+    const providerId = client.data.providerId as string | undefined;
+    if (!dispatcherId || !providerId) {
       client.emit("socket:error", {
         code: "UNAUTHORIZED",
         message: "Dispatcher identity missing on socket",
       } satisfies SocketErrorPayload);
       return;
     }
-    this.emitActiveBookingSync(dispatcherId);
+    this.emitActiveBookingSync(dispatcherId, providerId);
   }
 
-  private emitActiveBookingSync(dispatcherId: string) {
+  private emitActiveBookingSync(dispatcherId: string, providerId: string) {
     this.bookingService
-      .getDispatcherActiveBookings(dispatcherId)
+      .getProviderActiveBookings(providerId)
       .then((bookings) => {
         this.eventBus.publish({
           type: "realtime.dispatcher",
@@ -234,6 +236,7 @@ export class DispatcherEventsGateway implements OnGatewayInit, OnModuleDestroy {
         });
         console.info("[dispatcher] active_booking_sync", {
           dispatcherId,
+          providerId,
           bookingCount: bookings.length,
         });
       })

@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppImage } from "@/common/components/AppImage";
 import MediaNoteComposerCard from "@/common/components/MediaNoteComposerCard";
 import { useMediaNoteComposer } from "@/common/hooks/useMediaNoteComposer";
+import { getAuthAccessToken, getAuthUser } from "@/common/hooks/AuthContext";
 import { env } from "../../../../env";
 import type { BookingNote } from "@ambulink/types";
 
@@ -117,7 +118,17 @@ export default function PatientChatModal({
   const apiOrigin = env.EXPO_PUBLIC_API_SERVER_URL.replace(/\/api\/?$/, "");
   const toAttachmentUrl = (url: string) => {
     const absolute = url.startsWith("http://") || url.startsWith("https://");
-    return `${absolute ? url : `${apiOrigin}${url}`}`;
+    const base = absolute ? url : `${apiOrigin}${url}`;
+    const patientId = getAuthUser()?.id;
+    const accessToken = getAuthAccessToken();
+    const params = [
+      patientId ? `patientId=${encodeURIComponent(patientId)}` : null,
+      accessToken ? `accessToken=${encodeURIComponent(accessToken)}` : null,
+    ]
+      .filter(Boolean)
+      .join("&");
+    if (!params) return base;
+    return `${base}${base.includes("?") ? "&" : "?"}${params}`;
   };
   const onAudioStatus = (status: AVPlaybackStatus) => {
     if (!status.isLoaded) return;

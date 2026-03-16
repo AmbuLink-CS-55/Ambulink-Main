@@ -48,7 +48,22 @@ export default function TabLayout() {
   return (
     <SocketProvider type="DRIVER" enabled={isOnShift}>
       <DriverHistoryListener />
-      <Tabs screenOptions={{ headerShown: false }}>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: "#111827",
+          tabBarInactiveTintColor: "#6b7280",
+          tabBarStyle: {
+            backgroundColor: "#ffffff",
+            borderTopColor: "#e5e7eb",
+            borderTopWidth: 1,
+          },
+          tabBarLabelStyle: {
+            fontSize: 12,
+            fontWeight: "600",
+          },
+        }}
+      >
         <Tabs.Screen
           name="index"
           options={{

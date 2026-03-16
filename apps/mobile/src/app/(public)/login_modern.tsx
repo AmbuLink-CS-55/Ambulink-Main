@@ -1,25 +1,32 @@
 import { useMemo, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Redirect, useRouter } from "expo-router";
 import { useAuthStore } from "@/common/hooks/AuthContext";
-import { loginStaff, toMobileAuthErrorMessage, type MobileStaffRole } from "@/common/lib/staffAuth";
+import {
+  loginStaff,
+  toMobileAuthErrorMessage,
+  type MobileStaffRole,
+} from "@/common/lib/staffAuth";
+import { AppButton } from "@/common/components/ui/AppButton";
 
-type RoleOption = {
-  role: MobileStaffRole;
-  label: string;
-};
-
-const ROLE_OPTIONS: RoleOption[] = [
-  { role: "DRIVER", label: "Driver" },
-  { role: "EMT", label: "EMT" },
+const ROLE_OPTIONS = [
+  { role: "DRIVER" as MobileStaffRole, label: "Driver" },
+  { role: "EMT" as MobileStaffRole, label: "EMT" },
 ];
 
 export default function LoginModern() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const signInStaff = useAuthStore((state) => state.signInStaff);
-  const hydrated = useAuthStore((state) => state.hydrated);
 
   const [role, setRole] = useState<MobileStaffRole>("DRIVER");
   const [email, setEmail] = useState("");
@@ -37,10 +44,6 @@ export default function LoginModern() {
     return next;
   }, [email, password]);
 
-  if (!hydrated) {
-    return null;
-  }
-
   if (user?.role === "driver") return <Redirect href="/(driver)" />;
   if (user?.role === "emt") return <Redirect href={"/(emt)" as never} />;
 
@@ -52,17 +55,29 @@ export default function LoginModern() {
 
     setSubmitting(true);
     setError(null);
+
     try {
       const session = await loginStaff({
         role,
         email: email.trim().toLowerCase(),
         password,
       });
+
       await signInStaff(session);
-      router.replace("/");
+
+      if (session.user.role === "DRIVER") {
+        router.replace("/(driver)");
+      } else {
+        router.replace("/(emt)" as never);
+      }
     } catch (loginError) {
       console.error("[mobile-auth] login failed", loginError);
-      setError(toMobileAuthErrorMessage(loginError, "Login failed. Check credentials and try again."));
+      setError(
+        toMobileAuthErrorMessage(
+          loginError,
+          "Login failed. Check credentials and try again."
+        )
+      );
     } finally {
       setSubmitting(false);
     }
@@ -74,9 +89,15 @@ export default function LoginModern() {
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 20, justifyContent: "center" }}>
-          <Text style={{ fontSize: 32, fontWeight: "700", color: "#0f172a" }}>AmbuLink Staff</Text>
-          <Text style={{ marginTop: 8, fontSize: 15, color: "#475569" }}>
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            padding: 20,
+            justifyContent: "center",
+          }}
+        >
+          <Text style={{ fontSize: 28, fontWeight: "700" }}>Staff Login</Text>
+          <Text style={{ marginTop: 8, fontSize: 14, color: "#6b7280" }}>
             Login for driver and EMT mobile access.
           </Text>
 
@@ -89,16 +110,21 @@ export default function LoginModern() {
                   onPress={() => setRole(option.role)}
                   style={{
                     flex: 1,
-                    borderWidth: 1,
-                    borderColor: active ? "#0f172a" : "#cbd5e1",
-                    backgroundColor: active ? "#0f172a" : "#fff",
-                    borderRadius: 12,
-                    minHeight: 46,
+                    minHeight: 48,
                     alignItems: "center",
                     justifyContent: "center",
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: active ? "#2563eb" : "#d1d5db",
+                    backgroundColor: active ? "#2563eb" : "#fff",
                   }}
                 >
-                  <Text style={{ color: active ? "#fff" : "#0f172a", fontWeight: "700" }}>
+                  <Text
+                    style={{
+                      fontWeight: "700",
+                      color: active ? "#fff" : "#111827",
+                    }}
+                  >
                     {option.label}
                   </Text>
                 </Pressable>
@@ -106,36 +132,34 @@ export default function LoginModern() {
             })}
           </View>
 
-          <View style={{ marginTop: 18, gap: 10 }}>
+          <View style={{ marginTop: 20, gap: 10 }}>
             <TextInput
               placeholder="Enter your email"
-              placeholderTextColor="#64748b"
+              placeholderTextColor="#6b7280"
               autoCapitalize="none"
               keyboardType="email-address"
               value={email}
               onChangeText={setEmail}
               style={{
-                borderWidth: 1,
-                borderColor: "#cbd5e1",
+                minHeight: 48,
                 borderRadius: 12,
-                minHeight: 52,
-                paddingHorizontal: 14,
-                color: "#0f172a",
+                borderWidth: 1,
+                borderColor: "#d1d5db",
+                paddingHorizontal: 16,
               }}
             />
             <TextInput
               placeholder="Enter your password"
-              placeholderTextColor="#64748b"
+              placeholderTextColor="#6b7280"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
               style={{
-                borderWidth: 1,
-                borderColor: "#cbd5e1",
+                minHeight: 48,
                 borderRadius: 12,
-                minHeight: 52,
-                paddingHorizontal: 14,
-                color: "#0f172a",
+                borderWidth: 1,
+                borderColor: "#d1d5db",
+                paddingHorizontal: 16,
               }}
             />
           </View>
@@ -144,54 +168,44 @@ export default function LoginModern() {
             <View
               style={{
                 marginTop: 12,
-                borderRadius: 10,
+                borderRadius: 12,
                 borderWidth: 1,
-                borderColor: "#fecaca",
-                backgroundColor: "#fef2f2",
+                borderColor: "#dc2626",
                 padding: 10,
-                gap: 2,
               }}
             >
               {issues.map((issue) => (
-                <Text key={issue} style={{ color: "#991b1b", fontSize: 12 }}>
+                <Text key={issue} style={{ fontSize: 12, color: "#dc2626" }}>
                   • {issue}
                 </Text>
               ))}
             </View>
           ) : null}
 
-          {error ? <Text style={{ marginTop: 12, color: "#b91c1c", fontWeight: "600" }}>{error}</Text> : null}
-
-          <Pressable
-            onPress={() => void onLogin()}
-            disabled={isSubmitting}
-            style={{
-              marginTop: 16,
-              borderRadius: 12,
-              minHeight: 52,
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: isSubmitting ? "#94a3b8" : "#0f172a",
-            }}
-          >
-            <Text style={{ color: "#fff", fontSize: 16, fontWeight: "700" }}>
-              {isSubmitting ? "Signing in..." : "Sign In"}
+          {error ? (
+            <Text style={{ marginTop: 12, fontWeight: "600", color: "#dc2626" }}>
+              {error}
             </Text>
-          </Pressable>
+          ) : null}
 
-          <View style={{ marginTop: 14, flexDirection: "row", justifyContent: "center" }}>
-            <Text style={{ color: "#475569" }}>Need an account? </Text>
-            <Pressable onPress={() => router.push("/(public)/signup")}>
-              <Text style={{ color: "#0f172a", fontWeight: "700" }}>Sign up</Text>
-            </Pressable>
+          <View style={{ marginTop: 16 }}>
+            <AppButton
+              onPress={() => void onLogin()}
+              loading={isSubmitting}
+              label={isSubmitting ? "Signing in..." : "Sign In"}
+            />
           </View>
 
-          <Pressable
-            onPress={() => router.push("/(public)/scan-invite" as never)}
-            style={{ marginTop: 12, alignItems: "center" }}
-          >
-            <Text style={{ color: "#334155", fontWeight: "600" }}>Scan Staff Invite QR</Text>
-          </Pressable>
+          <View style={{ marginTop: 12 }}>
+            <AppButton onPress={() => router.push("/scan-invite")} variant="secondary" label="Scan QR" />
+          </View>
+
+          <View style={{ marginTop: 16, flexDirection: "row", justifyContent: "center" }}>
+            <Text style={{ color: "#6b7280" }}>Need an account? </Text>
+            <Pressable onPress={() => router.push("/signup")}>
+              <Text style={{ fontWeight: "700" }}>Sign up</Text>
+            </Pressable>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

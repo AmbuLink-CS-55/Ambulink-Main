@@ -16,6 +16,8 @@ export type DriverFormState = {
   email: string;
 };
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 type DriverFormFieldsProps = {
   form: DriverFormState;
   onChange: <K extends keyof DriverFormState>(field: K, value: DriverFormState[K]) => void;
@@ -146,10 +148,12 @@ export function CreateDriverDialog({
   onChange: <K extends keyof DriverFormState>(field: K, value: DriverFormState[K]) => void;
   onSubmit: () => void;
 }) {
+  const hasValidEmailFormat = EMAIL_REGEX.test(form.email.trim());
   const submitDisabled =
     !form.fullName.trim() ||
     !form.phoneNumber.trim() ||
     !form.email.trim() ||
+    !hasValidEmailFormat ||
     !providerAvailable;
   const validationMessage = !form.fullName.trim()
     ? "Full name is required."
@@ -157,6 +161,8 @@ export function CreateDriverDialog({
       ? "Phone number is required."
       : !form.email.trim()
         ? "Email is required."
+        : !hasValidEmailFormat
+          ? "Enter a valid email."
         : !providerAvailable
           ? "Provider is not available for this action."
           : null;

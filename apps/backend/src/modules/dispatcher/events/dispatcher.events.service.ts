@@ -37,6 +37,12 @@ export class DispatcherEventsService {
     return dispatchers.map((dispatcher) => dispatcher.dispatcherId);
   }
 
+  async findAllActiveDispatchersByProvider(providerId: string) {
+    const dispatchers =
+      await this.dispatcherRepository.findAllActiveDispatchersByProvider(providerId);
+    return dispatchers.map((dispatcher) => dispatcher.dispatcherId);
+  }
+
   async getDispatcherContextOrThrow(dispatcherId: string, db?: DbExecutor) {
     const [dispatcher] = await this.dispatcherRepository.findDispatcherById(dispatcherId, db);
     if (!dispatcher) {

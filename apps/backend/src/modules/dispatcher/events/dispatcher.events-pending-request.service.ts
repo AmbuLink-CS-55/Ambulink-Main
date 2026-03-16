@@ -4,10 +4,11 @@ import type { User } from "@/core/database/schema";
 
 type PendingRequestEntry = {
   payload: BookingNewPayload;
-  dispatcherId: string;
+  dispatcherIds: Set<string>;
+  providerId: string;
   expiresAtMs: number;
   timer: ReturnType<typeof setTimeout>;
-  resolveDecision: (approved: boolean) => void;
+  resolveDecision: (decision: { approved: boolean; dispatcherId: string | null }) => void;
   resolved: boolean;
 };
 
@@ -21,7 +22,8 @@ export class DispatcherEventsPendingRequestService {
   private readonly expiredTombstones = new Map<string, number>();
 
   createPendingRequest(
-    dispatcherId: string,
+    providerId: string,
+    dispatcherIds: string[],
     requestId: string,
     driver: Pick<User, "id" | "providerId" | "currentLocation">,
     patient: Pick<User, "id" | "fullName" | "phoneNumber" | "email" | "currentLocation">
@@ -29,10 +31,13 @@ export class DispatcherEventsPendingRequestService {
     const createdAtMs = Date.now();
     const expiresAtMs = createdAtMs + DispatcherEventsPendingRequestService.REQUEST_TIMEOUT_MS;
 
-    let resolveDecision: (approved: boolean) => void = () => undefined;
-    const decisionPromise = new Promise<boolean>((resolve) => {
+    let resolveDecision: (decision: { approved: boolean; dispatcherId: string | null }) => void =
+      () => undefined;
+    const decisionPromise = new Promise<{ approved: boolean; dispatcherId: string | null }>(
+      (resolve) => {
       resolveDecision = resolve;
-    });
+      }
+    );
 
     const payload: BookingNewPayload = {
       requestId,
@@ -59,7 +64,8 @@ export class DispatcherEventsPendingRequestService {
 
     const entry: PendingRequestEntry = {
       payload,
-      dispatcherId,
+      providerId,
+      dispatcherIds: new Set(dispatcherIds),
       expiresAtMs,
       timer,
       resolveDecision,
@@ -68,12 +74,19 @@ export class DispatcherEventsPendingRequestService {
 
     this.byRequestId.set(requestId, entry);
     this.expiredTombstones.delete(requestId);
-    if (!this.byDispatcherId.has(dispatcherId)) {
-      this.byDispatcherId.set(dispatcherId, new Set());
+    for (const dispatcherId of dispatcherIds) {
+      if (!this.byDispatcherId.has(dispatcherId)) {
+        this.byDispatcherId.set(dispatcherId, new Set());
+      }
+      this.byDispatcherId.get(dispatcherId)?.add(requestId);
     }
-    this.byDispatcherId.get(dispatcherId)?.add(requestId);
 
-    console.info("[dispatcher-pending] created", { dispatcherId, requestId, expiresAtMs });
+    console.info("[dispatcher-pending] created", {
+      providerId,
+      dispatcherCount: dispatcherIds.length,
+      requestId,
+      expiresAtMs,
+    });
     return { payload, decisionPromise };
   }
 
@@ -117,7 +130,7 @@ export class DispatcherEventsPendingRequestService {
       return { requestId, approved, accepted: false, reason: "not_found" };
     }
 
-    if (entry.dispatcherId !== dispatcherId) {
+    if (!entry.dispatcherIds.has(dispatcherId)) {
       return { requestId, approved, accepted: false, reason: "forbidden" };
     }
 
@@ -126,11 +139,11 @@ export class DispatcherEventsPendingRequestService {
     }
 
     if (entry.expiresAtMs <= Date.now()) {
-      this.resolveAndCleanup(requestId, false);
+      this.resolveAndCleanup(requestId, false, null);
       return { requestId, approved, accepted: false, reason: "expired" };
     }
 
-    this.resolveAndCleanup(requestId, approved);
+    this.resolveAndCleanup(requestId, approved, dispatcherId);
     console.info("[dispatcher-pending] resolved", { dispatcherId, requestId, approved });
     return { requestId, approved, accepted: true };
   }
@@ -139,31 +152,37 @@ export class DispatcherEventsPendingRequestService {
     const entry = this.byRequestId.get(requestId);
     if (!entry || entry.resolved) return;
 
-    this.resolveAndCleanup(requestId, false);
+    this.resolveAndCleanup(requestId, false, null);
     this.expiredTombstones.set(
       requestId,
       Date.now() + DispatcherEventsPendingRequestService.EXPIRED_TOMBSTONE_TTL_MS
     );
     console.info("[dispatcher-pending] expired", {
-      dispatcherId: entry.dispatcherId,
+      providerId: entry.providerId,
       requestId,
     });
   }
 
-  private resolveAndCleanup(requestId: string, approved: boolean) {
+  private resolveAndCleanup(
+    requestId: string,
+    approved: boolean,
+    dispatcherId: string | null
+  ) {
     const entry = this.byRequestId.get(requestId);
     if (!entry) return;
     if (entry.resolved) return;
 
     entry.resolved = true;
     clearTimeout(entry.timer);
-    entry.resolveDecision(approved);
+    entry.resolveDecision({ approved, dispatcherId });
 
     this.byRequestId.delete(requestId);
-    const requestIds = this.byDispatcherId.get(entry.dispatcherId);
-    requestIds?.delete(requestId);
-    if (requestIds && requestIds.size === 0) {
-      this.byDispatcherId.delete(entry.dispatcherId);
+    for (const dispatcherId of entry.dispatcherIds) {
+      const requestIds = this.byDispatcherId.get(dispatcherId);
+      requestIds?.delete(requestId);
+      if (requestIds && requestIds.size === 0) {
+        this.byDispatcherId.delete(dispatcherId);
+      }
     }
   }
 }

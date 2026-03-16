@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
   forwardRef,
 } from "@nestjs/common";
@@ -23,6 +24,8 @@ import { PatientEventsRepository } from "./patient.events.repository";
 
 @Injectable()
 export class PatientEventsService {
+  private readonly logger = new Logger(PatientEventsService.name);
+
   constructor(
     private patientRepository: PatientEventsRepository,
     private driverEventsService: DriverEventsService,
@@ -115,14 +118,20 @@ export class PatientEventsService {
   }
 
   async requestHelp(patientId: string, data: PatientPickupRequest) {
+    this.logger.log(`requestHelp:start`, { patientId, x: data.x, y: data.y });
     const { x, y, patientSettings } = data;
     const activeBooking = await this.bookingService.getActiveBookingForPatient(patientId);
     if (activeBooking) {
+      this.logger.warn(`requestHelp:active_booking_exists`, {
+        patientId,
+        bookingId: activeBooking.id,
+      });
       throw new ConflictException("Patient already has an active booking");
     }
 
     const patient = await this.findOne(patientId);
     if (!patient) {
+      this.logger.warn(`requestHelp:patient_not_found`, { patientId });
       throw new ConflictException("Patient not found");
     }
 
@@ -131,6 +140,7 @@ export class PatientEventsService {
 
     const nearestDrivers = await this.driverEventsService.findDriverByLocation(y, x);
     if (nearestDrivers.length === 0) {
+      this.logger.warn(`requestHelp:no_drivers`, { patientId });
       this.eventBus.publish({
         type: "realtime.patient",
         patientId,
@@ -156,6 +166,13 @@ export class PatientEventsService {
         currentLocation: { x: number; y: number } | null;
       }
     );
+    this.logger.log(`requestHelp:dispatcher_result`, {
+      patientId,
+      status: result.status,
+      reason: result.status === "failed" ? result.reason : null,
+      dispatcherId: result.status === "approved" ? result.dispatcherId : null,
+      driverId: result.status === "approved" ? result.pickedDriver.id : null,
+    });
     if (result.status === "failed") {
       this.eventBus.publish({
         type: "realtime.patient",
@@ -171,6 +188,10 @@ export class PatientEventsService {
     const { dispatcherId, pickedDriver, requestId } = result;
     const isDriverAvailable = await this.driverEventsService.isAvailable(pickedDriver.id);
     if (!isDriverAvailable) {
+      this.logger.warn(`requestHelp:driver_became_unavailable`, {
+        patientId,
+        driverId: pickedDriver.id,
+      });
       this.eventBus.publish({
         type: "realtime.patient",
         patientId,
@@ -193,6 +214,13 @@ export class PatientEventsService {
     if (booking.bookingId) {
       await this.bookingService.bindPatientDraftUploads(patientId, booking.bookingId);
     }
+    this.logger.log(`requestHelp:booking_created`, {
+      patientId,
+      bookingId: booking.bookingId,
+      dispatcherId,
+      driverId: pickedDriver.id,
+      requestId,
+    });
 
     const assignedPayload = booking.bookingId
       ? await this.bookingService.buildAssignedBookingPayload(booking.bookingId)
@@ -201,7 +229,16 @@ export class PatientEventsService {
       ? await this.bookingService.buildDispatcherBookingPayload(booking.bookingId, requestId)
       : null;
 
-    if (dispatcherPayload) {
+    if (dispatcherPayload?.provider?.id) {
+      this.eventBus.publish({
+        type: "realtime.dispatchers",
+        event: "booking:assigned",
+        payload: {
+          ...dispatcherPayload,
+          providerId: dispatcherPayload.provider.id,
+        },
+      });
+    } else if (dispatcherPayload) {
       this.eventBus.publish({
         type: "realtime.dispatcher",
         dispatcherId,

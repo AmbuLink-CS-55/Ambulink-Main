@@ -22,9 +22,6 @@ describe("DriverEventsService eta notifications", () => {
       updateBooking: jest.fn(),
       getActiveBookingForDriver: jest.fn(),
     };
-    const dispatcherService = {
-      findAllLiveDispatchersByProvider: jest.fn().mockResolvedValue(["dispatcher-1"]),
-    };
     const eventBus = {
       publish: jest.fn(),
     };
@@ -34,7 +31,6 @@ describe("DriverEventsService eta notifications", () => {
       driverRepository as never,
       bookingRepository as never,
       bookingService as never,
-      dispatcherService as never,
       eventBus as never
     );
 
@@ -42,7 +38,6 @@ describe("DriverEventsService eta notifications", () => {
       service,
       driverRepository,
       bookingService,
-      dispatcherService,
       eventBus,
     };
   };

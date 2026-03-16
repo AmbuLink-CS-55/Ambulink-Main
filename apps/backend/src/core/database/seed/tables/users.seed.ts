@@ -1,38 +1,20 @@
 import * as schema from "@/core/database/schema";
+import { hashPassword } from "@/common/auth/password-hasher";
 
-import { PROVIDER_SEED_IDS, USER_SEED_IDS } from "../seed-ids";
+import { USER_SEED_IDS } from "../seed-ids";
 import type { SeedDb } from "../types";
 
-export async function seedUsers(db: SeedDb) {
+export async function seedUsers(db: SeedDb, providerId: string) {
+  const defaultSeedPasswordHash = hashPassword("pw123456");
   await db.insert(schema.users).values([
-    {
-      id: USER_SEED_IDS.patientPrimary,
-      fullName: "Alex Carter",
-      phoneNumber: "+94771234567",
-      email: "alex.carter@example.com",
-      passwordHash: "pw123",
-      role: "PATIENT",
-      isActive: true,
-      status: "OFFLINE",
-    },
-    {
-      id: USER_SEED_IDS.patientGuest,
-      fullName: "Guest",
-      phoneNumber: "+94774567890",
-      email: "guest.patient@example.com",
-      passwordHash: "pw123",
-      role: "PATIENT",
-      isActive: true,
-      status: "OFFLINE",
-    },
     {
       id: USER_SEED_IDS.driverOne,
       fullName: "Morgan Lee",
       phoneNumber: "+94770001122",
       email: "driver.one@example.com",
-      passwordHash: "pw123",
+      passwordHash: defaultSeedPasswordHash,
       role: "DRIVER",
-      providerId: PROVIDER_SEED_IDS.ambulinkPrivate,
+      providerId,
       isActive: true,
       status: "OFFLINE",
     },
@@ -41,9 +23,9 @@ export async function seedUsers(db: SeedDb) {
       fullName: "Taylor Reed",
       phoneNumber: "+94770001133",
       email: "driver.two@example.com",
-      passwordHash: "pw123",
+      passwordHash: defaultSeedPasswordHash,
       role: "DRIVER",
-      providerId: PROVIDER_SEED_IDS.suwaSeriyaColomboCentral,
+      providerId,
       isActive: true,
       status: "OFFLINE",
     },
@@ -52,9 +34,9 @@ export async function seedUsers(db: SeedDb) {
       fullName: "Jordan Blake",
       phoneNumber: "+94770002211",
       email: "emt.one@example.com",
-      passwordHash: "pw123",
+      passwordHash: defaultSeedPasswordHash,
       role: "EMT",
-      providerId: PROVIDER_SEED_IDS.ambulinkPrivate,
+      providerId,
       isActive: true,
       status: "OFFLINE",
     },
@@ -63,9 +45,9 @@ export async function seedUsers(db: SeedDb) {
       fullName: "Riley Quinn",
       phoneNumber: "+94770002244",
       email: "emt.two@example.com",
-      passwordHash: "pw123",
+      passwordHash: defaultSeedPasswordHash,
       role: "EMT",
-      providerId: PROVIDER_SEED_IDS.suwaSeriyaColomboSouth,
+      providerId,
       isActive: true,
       status: "OFFLINE",
     },
@@ -74,22 +56,11 @@ export async function seedUsers(db: SeedDb) {
       fullName: "Sam Parker",
       phoneNumber: "+94770003311",
       email: "dispatcher.one@example.com",
-      passwordHash: "pw123",
+      passwordHash: defaultSeedPasswordHash,
       role: "DISPATCHER",
-      providerId: PROVIDER_SEED_IDS.ambulinkPrivate,
+      providerId,
       isActive: true,
-      status: "AVAILABLE",
-    },
-    {
-      id: USER_SEED_IDS.dispatcherTwo,
-      fullName: "Casey Morgan",
-      phoneNumber: "+94770003344",
-      email: "dispatcher.two@example.com",
-      passwordHash: "pw123",
-      role: "DISPATCHER",
-      providerId: PROVIDER_SEED_IDS.suwaSeriyaColomboCentral,
-      isActive: true,
-      status: "AVAILABLE",
+      status: "OFFLINE",
     },
   ]);
 }

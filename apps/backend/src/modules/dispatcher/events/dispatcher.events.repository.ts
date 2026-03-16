@@ -45,6 +45,19 @@ export class DispatcherEventsRepository {
       );
   }
 
+  findAllActiveDispatchersByProvider(providerId: string) {
+    return this.dbService.db
+      .select({ dispatcherId: users.id })
+      .from(users)
+      .where(
+        and(
+          eq(users.providerId, providerId),
+          eq(users.role, "DISPATCHER"),
+          eq(users.isActive, true)
+        )
+      );
+  }
+
   getDispatcherWinnerInfo(winnerDispatcherId: string) {
     return this.dbService.db
       .select({

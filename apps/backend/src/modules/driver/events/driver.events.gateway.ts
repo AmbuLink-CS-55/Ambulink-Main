@@ -52,33 +52,48 @@ export class DriverEventsGateway implements OnGatewayInit {
     }
     client.data.driverId = driverId;
 
-    client.join(`driver:${driverId}`);
+    try {
+      client.join(`driver:${driverId}`);
 
-    const activeBooking = await this.bookingService.getActiveBookingForDriver(driverId);
+      const activeBooking = await this.bookingService.getActiveBookingForDriver(driverId);
 
-    if (activeBooking) {
-      await this.driverEventsService.setStatus(driverId, "BUSY");
-      if (
-        activeBooking.status === "ASSIGNED" ||
-        activeBooking.status === "ARRIVED" ||
-        activeBooking.status === "PICKEDUP"
-      ) {
-        const bookingPayload = await this.bookingService.buildAssignedBookingPayload(
-          activeBooking.id
-        );
-        if (bookingPayload) {
-          client.emit("booking:assigned", bookingPayload);
+      if (activeBooking) {
+        await this.driverEventsService.setStatus(driverId, "BUSY");
+        if (
+          activeBooking.status === "ASSIGNED" ||
+          activeBooking.status === "ARRIVED" ||
+          activeBooking.status === "PICKEDUP"
+        ) {
+          const bookingPayload = await this.bookingService.buildAssignedBookingPayload(
+            activeBooking.id
+          );
+          if (bookingPayload) {
+            client.emit("booking:assigned", bookingPayload);
+          }
         }
+      } else {
+        await this.driverEventsService.setStatus(driverId, "AVAILABLE");
       }
-    } else {
-      await this.driverEventsService.setStatus(driverId, "AVAILABLE");
-    }
 
-    console.log("[socket] connected", {
-      namespace: "/driver",
-      clientId: client.id,
-      driverId,
-    });
+      console.log("[socket] connected", {
+        namespace: "/driver",
+        clientId: client.id,
+        driverId,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown connection error";
+      console.warn("[socket] connection_rejected", {
+        namespace: "/driver",
+        clientId: client.id,
+        driverId,
+        reason: message,
+      });
+      client.emit("socket:error", {
+        code: "DRIVER_NOT_FOUND",
+        message: "Driver account not found",
+      } satisfies SocketErrorPayload);
+      client.disconnect(true);
+    }
   }
 
   private extractSocketActorId(client: Socket, key: "driverId") {

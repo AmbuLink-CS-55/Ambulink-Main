@@ -9,6 +9,17 @@ export default function EmtTabsLayout() {
         lazy: true,
         freezeOnBlur: true,
         tabBarHideOnKeyboard: true,
+        tabBarActiveTintColor: "#111827",
+        tabBarInactiveTintColor: "#6b7280",
+        tabBarStyle: {
+          backgroundColor: "#ffffff",
+          borderTopColor: "#e5e7eb",
+          borderTopWidth: 1,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: "600",
+        },
       }}
     >
       <Tabs.Screen

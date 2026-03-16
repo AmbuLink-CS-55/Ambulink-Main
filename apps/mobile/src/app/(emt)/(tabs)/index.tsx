@@ -62,7 +62,7 @@ export default function EmtMapScreen() {
   if (loading && !location) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color="#ef4444" />
+        <ActivityIndicator size="large" color="#111827" />
         <Text className="mt-3 text-muted-foreground">Getting EMT location...</Text>
       </SafeAreaView>
     );
@@ -71,7 +71,7 @@ export default function EmtMapScreen() {
   if (error || !location) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center px-6">
-        <Text className="text-red-500 font-semibold">Location Unavailable</Text>
+        <Text className="text-danger font-semibold">Location Unavailable</Text>
         <Text className="mt-2 text-center text-muted-foreground">
           {error ?? "Could not resolve location."}
         </Text>

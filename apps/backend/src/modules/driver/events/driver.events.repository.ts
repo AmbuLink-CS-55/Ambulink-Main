@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { eq, and, sql, isNotNull, asc, or } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
 import { users, bookings } from "@/core/database/schema";
 import { DbExecutor, DbService } from "@/core/database/db.service";
 import { KV_STORE, type KvStore } from "@/core/database/kv-store.types";
@@ -92,26 +92,51 @@ export class DriverEventsRepository {
   }
 
   async findDriversByLocation(lat: number, lng: number) {
-    const distanceExpr = sql<number>`ST_Distance(
-    ${users.currentLocation}::geography,
-    ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography
-  )`;
-
     const rows = await this.dbService.db
       .select()
       .from(users)
-      .where(
-        and(
-          eq(users.role, "DRIVER"),
-          eq(users.isActive, true),
-          eq(users.status, "AVAILABLE"),
-          isNotNull(users.currentLocation)
-        )
-      )
-      .orderBy(asc(distanceExpr))
-      .limit(3);
+      .where(and(eq(users.role, "DRIVER"), eq(users.isActive, true)));
 
-    return this.kvStore.applyDriverOverlay(rows);
+    const overlayedRows = await this.kvStore.applyDriverOverlay(rows);
+
+    return overlayedRows
+      .filter((row) => row.status === "AVAILABLE")
+      .map((row) => {
+        const location =
+          row.currentLocation &&
+          typeof row.currentLocation.x === "number" &&
+          typeof row.currentLocation.y === "number"
+            ? row.currentLocation
+            : null;
+        if (!location) {
+          return null;
+        }
+        return {
+          row,
+          distanceMeters: this.haversineDistanceMeters(lat, lng, location.y, location.x),
+        };
+      })
+      .filter((entry): entry is { row: (typeof overlayedRows)[number]; distanceMeters: number } =>
+        Boolean(entry)
+      )
+      .sort((a, b) => a.distanceMeters - b.distanceMeters)
+      .slice(0, 3)
+      .map((entry) => entry.row);
+  }
+
+  private haversineDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: number) {
+    const earthRadiusMeters = 6_371_000;
+    const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+    const dLat = toRadians(lat2 - lat1);
+    const dLng = toRadians(lng2 - lng1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRadians(lat1)) *
+        Math.cos(toRadians(lat2)) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return earthRadiusMeters * c;
   }
 
   async getDriverBooking(driverId: string) {

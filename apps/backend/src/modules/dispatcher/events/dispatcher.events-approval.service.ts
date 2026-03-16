@@ -28,56 +28,68 @@ export class DispatcherEventsApprovalService {
       currentLocation: User["currentLocation"];
     }
   ) {
-    const requests = await Promise.all(
+    console.info("[dispatcher-approval] start", {
+      nearbyDriverCount: nearByDrivers.length,
+      patientId: patient.id,
+    });
+    const requestGroups = await Promise.all(
       nearByDrivers.map(async (driver) => {
-        const dispatcherId = await this.dispatcherService.findLiveDispatchersByProvider(
-          driver.providerId!
-        );
-        if (!dispatcherId) return null;
-
-        const requestId = `req_${Date.now()}_${driver.id}`;
-        return { dispatcherId, driver, requestId };
+        if (!driver.providerId) return [];
+        const dispatcherIds = await this.getConnectedDispatcherIdsByProvider(driver.providerId);
+        if (dispatcherIds.length === 0) {
+          // Fallback to provider's active dispatchers so pending-sync can deliver
+          // even if no dispatcher socket is currently connected.
+          const activeDispatchers = await this.dispatcherService.findAllActiveDispatchersByProvider(
+            driver.providerId
+          );
+          dispatcherIds.push(...activeDispatchers);
+        }
+        if (dispatcherIds.length === 0) return [];
+        return [
+          {
+            providerId: driver.providerId,
+            dispatcherIds,
+            driver,
+            requestId: `req_${Date.now()}_${driver.id}`,
+          },
+        ];
       })
     );
 
-    const activeRequests = requests.filter(
-      (
-        request
-      ): request is {
-        dispatcherId: string;
-        driver: {
-          id: string;
-          providerId: string | null;
-          currentLocation: User["currentLocation"];
-        };
-        requestId: string;
-      } => Boolean(request)
-    );
+    const activeRequests = requestGroups.flat();
+    console.info("[dispatcher-approval] request_groups_ready", {
+      activeRequestGroups: activeRequests.length,
+    });
 
     if (activeRequests.length === 0) {
       return { status: "failed" as const, reason: "no_dispatchers" as const };
     }
 
-    const approvalPromises = activeRequests.map(({ dispatcherId, driver, requestId }) =>
-      this.requestApproval(dispatcherId, driver, patient, requestId).then((approved) => {
-        if (!approved) {
-          throw new BadRequestException({
-            code: "BOOKING_DISPATCHER_DECLINED",
-            message: "Dispatcher declined or ignored",
-          });
-        }
-        return {
-          dispatcherId,
-          pickedDriver: driver,
-          requestId,
-        };
-      })
+    const approvalPromises = activeRequests.map(
+      ({ providerId, dispatcherIds, driver, requestId }) =>
+        this.requestApproval(providerId, dispatcherIds, driver, patient, requestId).then(
+          (decision) => {
+            if (!decision.approved || !decision.dispatcherId) {
+              throw new BadRequestException({
+                code: "BOOKING_DISPATCHER_DECLINED",
+                message: "Dispatcher declined or ignored",
+              });
+            }
+            return {
+              dispatcherId: decision.dispatcherId,
+              pickedDriver: driver,
+              requestId,
+            };
+          }
+        )
     );
 
     try {
       const winningResponse = await Promise.any(approvalPromises);
       await this.notifyDecision(
-        activeRequests.map(({ dispatcherId, requestId }) => ({ dispatcherId, requestId })),
+        activeRequests.flatMap(({ dispatcherIds, requestId }) =>
+          dispatcherIds.map((dispatcherId) => ({ dispatcherId, requestId }))
+        ),
         winningResponse.dispatcherId
       );
       return { ...winningResponse, status: "approved" as const };
@@ -87,21 +99,44 @@ export class DispatcherEventsApprovalService {
   }
 
   async requestApproval(
-    dispatcherId: string,
+    providerId: string,
+    dispatcherIds: string[],
     driver: Pick<User, "id" | "providerId" | "currentLocation">,
     patient: Pick<User, "id" | "fullName" | "phoneNumber" | "email" | "currentLocation">,
     requestId: string
   ) {
+    console.info("[dispatcher-approval] request_emit", {
+      providerId,
+      dispatcherCount: dispatcherIds.length,
+      requestId,
+      driverId: driver.id,
+    });
     const { payload, decisionPromise } = this.pendingRequestService.createPendingRequest(
-      dispatcherId,
+      providerId,
+      dispatcherIds,
       requestId,
       driver,
       patient
     );
     this.socketService.dispatcherServer
-      ?.to(`dispatcher:${dispatcherId}`)
+      ?.to(`dispatcher-provider:${providerId}`)
       .emit("booking:new", payload);
     return decisionPromise;
+  }
+
+  private async getConnectedDispatcherIdsByProvider(providerId: string) {
+    const server = this.socketService.dispatcherServer;
+    if (!server) return [];
+
+    const sockets = await server.in(`dispatcher-provider:${providerId}`).fetchSockets();
+    const ids = new Set<string>();
+    for (const socket of sockets) {
+      const dispatcherId = socket.data?.dispatcherId;
+      if (typeof dispatcherId === "string" && dispatcherId.length > 0) {
+        ids.add(dispatcherId);
+      }
+    }
+    return [...ids];
   }
 
   async notifyDecision(

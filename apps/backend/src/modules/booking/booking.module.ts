@@ -10,6 +10,7 @@ import { BookingApiService } from "./api/booking.api.service";
 import { BookingEventsService } from "./events/booking.events.service";
 import { BookingCoreService } from "./common/booking.core.service";
 import { BookingSharedRepository } from "./common/booking.shared.repository";
+import { AttachmentAuthGuard } from "@/common/auth/attachment-auth.guard";
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { BookingSharedRepository } from "./common/booking.shared.repository";
     BookingApiService,
     BookingEventsService,
     BookingMediaService,
+    AttachmentAuthGuard,
   ],
   exports: [BookingApiService, BookingEventsService, BookingMediaService, BookingSharedRepository],
 })
