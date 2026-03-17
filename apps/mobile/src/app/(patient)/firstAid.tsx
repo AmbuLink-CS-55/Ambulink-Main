@@ -1,8 +1,9 @@
 /**
  * firstAid.tsx
  *
- * A premium, highly attractive First Aid Guide screen.
- * Blends minimalist "Clean" design with "Rich" vibrant aesthetics.
+ * A premium, clean First Aid Guide screen for AmbuLink.
+ * Features a light, minimalist aesthetic with high-end typography
+ * and subtle shadows for a modern, attractive look.
  */
 
 import React, { useState } from 'react';
@@ -41,7 +42,7 @@ const FIRST_AID_GUIDES: Guide[] = [
     title: 'CPR (Adult)',
     subtitle: 'Cardiac arrest response',
     icon: 'heart-pulse',
-    accent: '#ff4d4d',
+    accent: '#ef4444',
     indicator: 'Critical',
     steps: [
       'Call emergency services immediately.',
@@ -57,7 +58,7 @@ const FIRST_AID_GUIDES: Guide[] = [
     title: 'Choking',
     subtitle: 'Airway obstruction',
     icon: 'weather-windy',
-    accent: '#fbbf24',
+    accent: '#f97316',
     indicator: 'Urgent',
     steps: [
       'Confirm the person is choking and cannot breathe.',
@@ -72,7 +73,7 @@ const FIRST_AID_GUIDES: Guide[] = [
     title: 'Severe Bleeding',
     subtitle: 'Hemorrhage control',
     icon: 'water',
-    accent: '#ef4444',
+    accent: '#dc2626',
     indicator: 'Urgent',
     steps: [
       'Apply direct pressure with a clean cloth.',
@@ -87,7 +88,7 @@ const FIRST_AID_GUIDES: Guide[] = [
     title: 'Stroke (F.A.S.T.)',
     subtitle: 'Brain emergency detection',
     icon: 'brain',
-    accent: '#a855f7',
+    accent: '#8b5cf6',
     indicator: 'Critical',
     steps: [
       'Face: Ask them to smile. Does one side droop?',
@@ -102,8 +103,8 @@ const FIRST_AID_GUIDES: Guide[] = [
     title: 'Burns',
     subtitle: 'Thermal injury treatment',
     icon: 'fire-extinguisher',
-    accent: '#f59e0b',
-    indicator: 'Supportive',
+    accent: '#d97706',
+    indicator: 'Medical',
     steps: [
       'Cool under running water for 10-20 mins.',
       'Remove tight items before swelling starts.',
@@ -131,25 +132,20 @@ export default function FirstAid() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       
-      {/* ── Rich Vibrant Header ── */}
-      <LinearGradient
-        colors={['#1e3a8a', '#2563eb', '#3b82f6']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.header, { paddingTop: insets.top + 10 }]}
-      >
+      {/* ── Clean Minimalist Header ── */}
+      <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
         <View style={styles.headerTop}>
           <View>
-            <Text style={styles.headerLabel}>AMBULINK CARE</Text>
             <Text style={styles.headerTitle}>First Aid Guide</Text>
+            <Text style={styles.headerSubtitle}>Simple steps for any emergency</Text>
           </View>
         </View>
 
-        {/* Search Bar with Glass Effect */}
+        {/* Minimal Search Bar */}
         <View style={styles.searchWrapper}>
-          <MaterialCommunityIcons name="magnify" size={20} color="#cbd5e1" />
+          <MaterialCommunityIcons name="magnify" size={20} color="#94a3b8" />
           <TextInput
             placeholder="Search instructions..."
             placeholderTextColor="#94a3b8"
@@ -158,46 +154,46 @@ export default function FirstAid() {
             onChangeText={setSearchQuery}
           />
         </View>
-      </LinearGradient>
+      </View>
 
       <ScrollView
         style={styles.scrollContent}
-        contentContainerStyle={{ paddingBottom: 120, paddingTop: 20 }}
+        contentContainerStyle={{ paddingBottom: 60, paddingTop: 10 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Premium AI Banner ── */}
+        {/* ── Attractive AI Assistant Section ── */}
         <TouchableOpacity
           onPress={() => setIsChatVisible(true)}
           activeOpacity={0.9}
           style={styles.aiBanner}
         >
           <LinearGradient
-            colors={['#1e3a8a', '#1e40af']}
+            colors={['#1e3a8a', '#2563eb']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.aiBannerGradient}
           >
             <View style={styles.aiBannerLeft}>
                <View style={styles.aiIconBadge}>
-                 <MaterialCommunityIcons name="robot-happy" size={28} color="white" />
+                 <MaterialCommunityIcons name="robot" size={26} color="white" />
                </View>
-               <View style={{ marginLeft: 16 }}>
-                 <Text style={styles.aiBannerTitle}>DeepMind AI Assistant</Text>
-                 <Text style={styles.aiBannerSub}>Ready to guide you step-by-step</Text>
+               <View style={{ marginLeft: 15 }}>
+                 <Text style={styles.aiBannerTitle}>AmbuLink AI Assistant</Text>
+                 <Text style={styles.aiBannerSub}>Ask anything for instant help</Text>
                </View>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={24} color="white" style={{ opacity: 0.6 }} />
+            <MaterialCommunityIcons name="chevron-right" size={20} color="white" style={{ opacity: 0.7 }} />
           </LinearGradient>
         </TouchableOpacity>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Emergency Guides</Text>
-          <View style={styles.counterBadge}>
-            <Text style={styles.counterText}>{filteredGuides.length}</Text>
+          <Text style={styles.sectionTitle}>Essential Guides</Text>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{filteredGuides.length} Items</Text>
           </View>
         </View>
 
-        {/* ── Attractive Guide Cards ── */}
+        {/* ── Modern Guide Cards ── */}
         {filteredGuides.map((guide) => {
           const isExpanded = expandedId === guide.id;
           return (
@@ -211,25 +207,20 @@ export default function FirstAid() {
               <TouchableOpacity
                 style={styles.guideCardHeader}
                 onPress={() => toggleExpand(guide.id)}
-                activeOpacity={0.8}
+                activeOpacity={0.7}
               >
-                <View style={[styles.guideIconContainer, { backgroundColor: guide.accent + '15' }]}>
-                   <LinearGradient
-                     colors={isExpanded ? [guide.accent, guide.accent] : ['transparent', 'transparent']}
-                     style={styles.guideIconGradient}
-                   >
-                     <MaterialCommunityIcons 
-                       name={guide.icon as any} 
-                       size={28} 
-                       color={isExpanded ? 'white' : guide.accent} 
-                     />
-                   </LinearGradient>
+                <View style={[styles.guideIconContainer, { backgroundColor: guide.accent + '10' }]}>
+                   <MaterialCommunityIcons 
+                     name={guide.icon as any} 
+                     size={26} 
+                     color={guide.accent} 
+                   />
                 </View>
                 
                 <View style={styles.guideTextContainer}>
                   <View style={styles.guideTitleRow}>
                     <Text style={styles.guideTitle}>{guide.title}</Text>
-                    <View style={[styles.indicatorBadge, { backgroundColor: guide.accent + '20' }]}>
+                    <View style={[styles.indicatorBadge, { backgroundColor: guide.accent + '15' }]}>
                       <Text style={[styles.indicatorText, { color: guide.accent }]}>{guide.indicator}</Text>
                     </View>
                   </View>
@@ -237,35 +228,30 @@ export default function FirstAid() {
                 </View>
                 
                 <MaterialCommunityIcons 
-                  name={isExpanded ? 'close' : 'chevron-down'} 
+                  name={isExpanded ? 'chevron-up' : 'chevron-down'} 
                   size={20} 
-                  color={isExpanded ? guide.accent : '#94a3b8'} 
+                  color="#94a3b8" 
                 />
               </TouchableOpacity>
 
               {isExpanded && (
                 <View style={styles.guideCardBody}>
-                  <View style={styles.divider} />
                   {guide.steps.map((step, index) => (
-                    <View key={index} style={styles.stepContainer}>
+                    <View key={index} style={styles.stepRow}>
                       <View style={styles.stepIndex}>
-                        <View style={[styles.stepCircle, { backgroundColor: guide.accent }]}>
-                          <Text style={styles.stepCircleText}>{index + 1}</Text>
-                        </View>
-                        {index !== guide.steps.length - 1 && (
-                          <View style={styles.stepConnector} />
-                        )}
+                        <View style={[styles.stepDot, { backgroundColor: guide.accent }]} />
+                        {index !== guide.steps.length - 1 && <View style={styles.stepConnector} />}
                       </View>
-                      <Text style={styles.stepTextContent}>{step}</Text>
+                      <Text style={styles.stepText}>{step}</Text>
                     </View>
                   ))}
                   
                   <TouchableOpacity
                     onPress={() => Linking.openURL(guide.tutorialUrl)}
-                    style={[styles.tutorialButton, { borderColor: guide.accent + '40' }]}
+                    style={styles.videoButton}
                   >
-                    <MaterialCommunityIcons name="play-circle" size={20} color={guide.accent} />
-                    <Text style={[styles.tutorialButtonText, { color: guide.accent }]}>Watch Video Tutorial</Text>
+                    <MaterialCommunityIcons name="play-circle" size={18} color="#1e3a8a" />
+                    <Text style={styles.videoButtonText}>Watch Tutorial</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -274,14 +260,12 @@ export default function FirstAid() {
         })}
 
         {/* ── Footer Tip ── */}
-        <View style={styles.footerTip}>
-           <View style={styles.footerTipIcon}>
-             <MaterialCommunityIcons name="lightbulb-on" size={24} color="#f59e0b" />
-           </View>
+        <View style={styles.tipCard}>
+           <MaterialCommunityIcons name="lightbulb-on" size={24} color="#f59e0b" />
            <View style={{ flex: 1, marginLeft: 15 }}>
-             <Text style={styles.footerTipTitle}>Safety Protocol</Text>
-             <Text style={styles.footerTipText}>
-               In any life-threatening situation, your first action must always be calling 1990.
+             <Text style={styles.tipTitle}>Quick Reminder</Text>
+             <Text style={styles.tipText}>
+               Safety first! Check your surroundings before approaching any casualty.
              </Text>
            </View>
         </View>
@@ -298,88 +282,61 @@ export default function FirstAid() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#ffffff',
   },
   header: {
-    paddingHorizontal: 24,
-    paddingBottom: 30,
-    borderBottomLeftRadius: 40,
-    borderBottomRightRadius: 40,
+    paddingHorizontal: 25,
+    paddingBottom: 25,
+    backgroundColor: '#ffffff',
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 25,
-  },
-  headerLabel: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 2,
-    marginBottom: 4,
+    marginBottom: 20,
   },
   headerTitle: {
-    color: 'white',
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: '900',
-    letterSpacing: -0.5,
+    color: '#0f172a',
+    letterSpacing: -1,
   },
-  aiHeaderButton: {
-    position: 'relative',
-  },
-  aiHeaderIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  onlineDot: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: '#22c55e',
-    borderWidth: 3,
-    borderColor: '#3b82f6',
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    fontWeight: '500',
+    marginTop: 2,
   },
   searchWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: '#f8fafc',
     borderRadius: 18,
     paddingHorizontal: 16,
-    height: 56,
+    height: 52,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: '#f1f5f9',
   },
   searchInput: {
     flex: 1,
     marginLeft: 12,
     fontSize: 16,
-    color: 'white',
+    color: '#0f172a',
     fontWeight: '600',
   },
   scrollContent: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 25,
   },
   aiBanner: {
-    marginTop: -20,
     borderRadius: 24,
     overflow: 'hidden',
-    shadowColor: '#1e3a8a',
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
-    elevation: 10,
     marginBottom: 30,
+    marginTop: 10,
+    elevation: 4,
+    shadowColor: '#1e3a8a',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
   },
   aiBannerGradient: {
     flexDirection: 'row',
@@ -392,93 +349,83 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   aiIconBadge: {
-    width: 54,
-    height: 54,
-    borderRadius: 18,
+    width: 46,
+    height: 46,
+    borderRadius: 15,
     backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.2)',
   },
   aiBannerTitle: {
     color: 'white',
     fontSize: 17,
-    fontWeight: '900',
+    fontWeight: '800',
   },
   aiBannerSub: {
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255,255,255,0.8)',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
     marginTop: 2,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
-    paddingHorizontal: 5,
+    marginBottom: 15,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '900',
+    fontSize: 18,
+    fontWeight: '800',
     color: '#1e293b',
   },
-  counterBadge: {
-    backgroundColor: '#e2e8f0',
-    paddingHorizontal: 12,
+  badge: {
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
   },
-  counterText: {
-    fontSize: 12,
-    fontWeight: '900',
+  badgeText: {
+    fontSize: 10,
     color: '#64748b',
+    fontWeight: '800',
   },
   guideCard: {
-    backgroundColor: 'white',
-    borderRadius: 28,
-    marginBottom: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 24,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#f1f5f9',
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 10,
-    elevation: 2,
   },
   guideCardActive: {
     borderColor: '#e2e8f0',
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 5,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 15,
+    elevation: 2,
   },
   guideCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 18,
+    padding: 16,
   },
   guideIconContainer: {
-    width: 58,
-    height: 58,
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  guideIconGradient: {
-    flex: 1,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   guideTextContainer: {
     flex: 1,
-    marginLeft: 16,
+    marginLeft: 15,
   },
   guideTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   guideTitle: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 17,
+    fontWeight: '700',
     color: '#0f172a',
   },
   indicatorBadge: {
@@ -494,100 +441,75 @@ const styles = StyleSheet.create({
   },
   guideSubtitle: {
     fontSize: 12,
-    color: '#64748b',
-    fontWeight: '500',
-    marginTop: 2,
+    color: '#94a3b8',
+    marginTop: 1,
   },
   guideCardBody: {
-    paddingHorizontal: 22,
+    paddingHorizontal: 20,
     paddingBottom: 22,
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#f1f5f9',
-    marginBottom: 20,
-  },
-  stepContainer: {
+  stepRow: {
     flexDirection: 'row',
-    marginBottom: 4,
   },
   stepIndex: {
-    width: 24,
+    width: 20,
     alignItems: 'center',
-    marginRight: 15,
+    marginRight: 12,
   },
-  stepCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  stepCircleText: {
-    color: 'white',
-    fontSize: 11,
-    fontWeight: '900',
+  stepDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 10,
   },
   stepConnector: {
     width: 2,
     flex: 1,
     backgroundColor: '#f1f5f9',
     marginVertical: 4,
-    minHeight: 25,
+    minHeight: 20,
   },
-  stepTextContent: {
+  stepText: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
     color: '#334155',
-    lineHeight: 24,
+    lineHeight: 22,
+    paddingVertical: 6,
     fontWeight: '500',
   },
-  tutorialButton: {
+  videoButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 15,
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderRadius: 16,
-    borderWidth: 1.5,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f1f5f9',
   },
-  tutorialButtonText: {
-    fontSize: 14,
+  videoButtonText: {
+    fontSize: 13,
     fontWeight: '800',
+    color: '#1e3a8a',
     marginLeft: 8,
   },
-  footerTip: {
+  tipCard: {
     marginTop: 20,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fffbeb',
     padding: 20,
-    borderRadius: 28,
-    borderWidth: 1.5,
+    borderRadius: 24,
+    borderWidth: 1,
     borderColor: '#fef3c7',
   },
-  footerTipIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 16,
-    backgroundColor: 'white',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#f59e0b',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  footerTipTitle: {
-    fontSize: 13,
+  tipTitle: {
+    fontSize: 12,
     fontWeight: '900',
     color: '#92400e',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  footerTipText: {
+  tipText: {
     fontSize: 13,
     color: '#b45309',
     lineHeight: 18,
