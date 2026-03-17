@@ -17,6 +17,7 @@ interface MapOptionsProps {
   } | null;
   onHelpRequest: () => void;
   cancelRequest: () => void;
+  onCancelSearch?: () => void;
   isCancelling?: boolean;
   isBooking?: boolean;
   completedAt?: number | null;
@@ -29,6 +30,7 @@ export default function MapOptions({
   booking,
   onHelpRequest,
   cancelRequest,
+  onCancelSearch,
   isCancelling = false,
   isBooking = false,
   completedAt = null,
@@ -172,9 +174,8 @@ export default function MapOptions({
           accessibilityLabel="Cancel search"
           variant="danger"
           className="w-full"
-          label={isCancelling ? "Cancelling..." : "Cancel Search"}
-          onPress={cancelRequest}
-          disabled={isCancelling}
+          label="Cancel Search"
+          onPress={onCancelSearch}
         />
       )}
 

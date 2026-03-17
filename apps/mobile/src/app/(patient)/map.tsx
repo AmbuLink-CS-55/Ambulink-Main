@@ -313,6 +313,29 @@ export default function Map() {
     }
   };
 
+  const handleCancelSearch = () => {
+    Alert.alert(
+      "Cancel Search",
+      "Stop looking for an ambulance?",
+      [
+        { text: "No", style: "cancel" },
+        {
+          text: "Yes, Stop",
+          style: "destructive",
+          onPress: () => {
+            // Clear the booking timeout so the "taking too long" alert doesn't fire
+            if (bookingTimeoutRef.current) {
+              clearTimeout(bookingTimeoutRef.current);
+              bookingTimeoutRef.current = null;
+            }
+            // Immediately reset the searching state
+            setIsBooking(false);
+          },
+        },
+      ]
+    );
+  };
+
   const handleCancel = () => {
     Alert.alert("Cancel Booking", "Are you sure?", [
       { text: "No", style: "cancel" },
@@ -321,6 +344,11 @@ export default function Map() {
         style: "destructive",
         onPress: async () => {
           setIsCancelling(true);
+          setIsBooking(false);
+          if (bookingTimeoutRef.current) {
+            clearTimeout(bookingTimeoutRef.current);
+            bookingTimeoutRef.current = null;
+          }
           if (cancelTimeoutRef.current) {
             clearTimeout(cancelTimeoutRef.current);
           }
@@ -444,6 +472,7 @@ export default function Map() {
         booking={booking}
         onHelpRequest={handleHelpRequest}
         cancelRequest={handleCancel}
+        onCancelSearch={handleCancelSearch}
         isCancelling={isCancelling}
         isBooking={isBooking}
         completedAt={completedAt}
