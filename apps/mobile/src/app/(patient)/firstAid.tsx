@@ -8,7 +8,6 @@
  * - Accordion-style cards with gradient color banners
  * - Step-by-step instructions with numbered connectors
  * - "Watch Tutorial" button per card that opens a YouTube video
- * - Sticky "Contact EMT Now" button that dials 911
  *
  * Styled with Tailwind CSS (via uniwind).
  */
@@ -20,11 +19,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
-  Platform,
   TextInput,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 
 // ─────────────────────────────────────────────
 // Types
@@ -150,14 +147,7 @@ export default function FirstAid() {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  const handleContactEMT = () => {
-    const phoneNumber = '1990';
-    if (Platform.OS === 'android') {
-      Linking.openURL(`tel:${phoneNumber}`);
-    } else {
-      Linking.openURL(`telprompt:${phoneNumber}`);
-    }
-  };
+
 
   const filteredGuides = FIRST_AID_GUIDES.filter((guide) =>
     guide.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -235,7 +225,7 @@ export default function FirstAid() {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 110, paddingTop: 10 }}
+        contentContainerStyle={{ paddingBottom: 40, paddingTop: 10 }}
         showsVerticalScrollIndicator={false}
       >
 
@@ -419,82 +409,7 @@ export default function FirstAid() {
         </View>
       </ScrollView>
 
-      {/* ── Sticky Contact EMT Button ── */}
-      <View
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          paddingHorizontal: 16,
-          paddingTop: 12,
-          paddingBottom: Platform.OS === 'ios' ? 34 : 16,
-          backgroundColor: 'rgba(255,255,255,0.95)',
-          borderTopWidth: 1,
-          borderTopColor: '#f1f5f9',
-        }}
-      >
-        <TouchableOpacity
-          onPress={handleContactEMT}
-          activeOpacity={0.9}
-        >
-          <LinearGradient
-            colors={['#2563eb', '#1d4ed8']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              borderRadius: 24,
-              paddingHorizontal: 20,
-              paddingVertical: 16,
-              shadowColor: '#2563eb',
-              shadowOpacity: 0.45,
-              shadowRadius: 15,
-              shadowOffset: { width: 0, height: 8 },
-              elevation: 10,
-            }}
-          >
-            <View
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 24,
-                backgroundColor: 'rgba(255,255,255,0.15)',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginRight: 16,
-                borderWidth: 1,
-                borderColor: 'rgba(255,255,255,0.25)',
-              }}
-            >
-              <MaterialCommunityIcons name="phone-plus" size={26} color="#ffffff" />
-            </View>
 
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: '#ffffff', fontWeight: '900', fontSize: 18, letterSpacing: 0.5 }}>
-                CONTACT EMT
-              </Text>
-              <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2, fontWeight: '500' }}>
-                Instant emergency medical support
-              </Text>
-            </View>
-
-            <View
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 16,
-                backgroundColor: 'rgba(255,255,255,0.1)',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#ffffff" />
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
