@@ -167,6 +167,17 @@ export default function MapOptions({
         renderIcon={() => <MaterialCommunityIcons name="ambulance" size={24} color="white" />}
       />
 
+      {isBooking && (
+        <AppButton
+          accessibilityLabel="Cancel search"
+          variant="danger"
+          className="w-full"
+          label={isCancelling ? "Cancelling..." : "Cancel Search"}
+          onPress={cancelRequest}
+          disabled={isCancelling}
+        />
+      )}
+
       {isBooking && onOpenUploads ? (
         <AppButton
           accessibilityLabel="Open booking chat"
