@@ -22,6 +22,8 @@ import {
   TextInput,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import FirstAidChatBot from '@/features/patient/components/FirstAidChatBot';
 
 // ─────────────────────────────────────────────
 // Types
@@ -142,6 +144,7 @@ const FIRST_AID_GUIDES: Guide[] = [
 export default function FirstAid() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isChatVisible, setIsChatVisible] = useState(false);
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
@@ -409,7 +412,45 @@ export default function FirstAid() {
         </View>
       </ScrollView>
 
+      {/* ── AI Chat Floating Button ── */}
+      <TouchableOpacity
+        onPress={() => setIsChatVisible(true)}
+        style={{
+          position: 'absolute',
+          bottom: 30,
+          right: 20,
+          width: 60,
+          height: 60,
+          borderRadius: 30,
+          backgroundColor: '#1e3a8a',
+          alignItems: 'center',
+          justifyContent: 'center',
+          shadowColor: '#1e3a8a',
+          shadowOpacity: 0.4,
+          shadowRadius: 10,
+          shadowOffset: { width: 0, height: 5 },
+          elevation: 8,
+        }}
+        activeOpacity={0.85}
+      >
+        <LinearGradient
+          colors={['#1e3a8a', '#2563eb']}
+          style={{
+            width: 60,
+            height: 60,
+            borderRadius: 30,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <MaterialCommunityIcons name="robot" size={28} color="white" />
+        </LinearGradient>
+      </TouchableOpacity>
 
+      <FirstAidChatBot 
+        visible={isChatVisible} 
+        onClose={() => setIsChatVisible(false)} 
+      />
     </View>
   );
 }
