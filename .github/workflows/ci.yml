@@ -26,7 +26,11 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          corepack enable
+          corepack prepare npm@11.8.0 --activate
+          corepack npm --version
+          corepack npm ci
 
       - name: Cache Turbo artifacts
         uses: actions/cache@v4

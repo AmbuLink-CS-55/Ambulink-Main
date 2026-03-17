@@ -1,11 +1,18 @@
 import { Module } from "@nestjs/common";
-import { HospitalService } from "./hospital.service";
-import { HospitalController } from "./hospital.controller";
-import { HospitalRepository } from "./hospital.repository";
+import { HospitalApiService } from "./api/hospital.api.service";
+import { HospitalApiController } from "./api/hospital.api.controller";
+import { HospitalApiRepository } from "./api/hospital.api.repository";
+import { HospitalEventsService } from "./events/hospital.events.service";
+import { HospitalEventsRepository } from "./events/hospital.events.repository";
 
 @Module({
-  controllers: [HospitalController],
-  providers: [HospitalService, HospitalRepository],
-  exports: [HospitalService],
+  controllers: [HospitalApiController],
+  providers: [
+    HospitalApiService,
+    HospitalApiRepository,
+    HospitalEventsService,
+    HospitalEventsRepository,
+  ],
+  exports: [HospitalApiService, HospitalEventsService],
 })
 export class HospitalModule {}

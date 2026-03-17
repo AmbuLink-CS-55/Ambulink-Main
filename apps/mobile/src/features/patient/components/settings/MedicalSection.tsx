@@ -21,9 +21,9 @@ export default function MedicalSection() {
             <Text className="text-sm font-medium text-muted-foreground mb-1.5">
               {i18n.t("settings.medical.bloodType")}
             </Text>
-            <Text className="text-base text-teal-500 font-medium mt-1">{settings.bloodType}</Text>
+            <Text className="text-base text-foreground font-medium mt-1">{settings.bloodType}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#26A69A" />
+          <Ionicons name="chevron-forward" size={20} color="#111827" />
         </Pressable>
 
         <View className="h-px bg-muted" />
@@ -41,9 +41,9 @@ export default function MedicalSection() {
                 {settings.selectedAllergies.map((allergy) => (
                   <View
                     key={allergy}
-                    className="flex-row items-center bg-teal-50 rounded-full pl-3 pr-1.5 py-1.5 gap-1.5"
+                    className="flex-row items-center bg-surface rounded-full pl-3 pr-1.5 py-1.5 gap-1.5"
                   >
-                    <Text className="text-xs text-teal-500 font-medium">{allergy}</Text>
+                    <Text className="text-xs text-foreground font-medium">{allergy}</Text>
                   </View>
                 ))}
               </View>
@@ -53,7 +53,7 @@ export default function MedicalSection() {
               </Text>
             )}
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#26A69A" />
+          <Ionicons name="chevron-forward" size={20} color="#111827" />
         </Pressable>
 
         <View className="h-px bg-muted" />
@@ -67,7 +67,7 @@ export default function MedicalSection() {
               {i18n.t("settings.medical.uploadDocuments")}
             </Text>
           </View>
-          <Ionicons name="document-attach-outline" size={20} color="#26A69A" />
+          <Ionicons name="document-attach-outline" size={20} color="#111827" />
         </Pressable>
       </View>
     </View>

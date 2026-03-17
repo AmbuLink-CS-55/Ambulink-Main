@@ -29,7 +29,8 @@
         "READ_MEDIA_IMAGES",
         "READ_MEDIA_VIDEO",
         "READ_MEDIA_AUDIO"
-      ]
+      ],
+      "package": "com.anonymous.mobilepatient"
     },
     "web": {
       "output": "static",

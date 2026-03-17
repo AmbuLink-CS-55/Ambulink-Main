@@ -75,6 +75,7 @@ export default function PatientUploadComposer({
             onToggleAudio={() => void actions.toggleRecording()}
             onRemoveAttachment={actions.removeFile}
             files={state.files}
+            isMediaProcessing={state.isMediaProcessing}
             isRecordingAudio={state.isRecordingAudio}
             loading={state.isSubmitting}
             recordingStatusText={`Recording audio... ${formatMs(state.recordingElapsedMs)}`}
@@ -86,6 +87,7 @@ export default function PatientUploadComposer({
               audioStartLabel: "Record Voice",
               audioStopLabel: "Stop Recording",
               sendLabel: "Send Update",
+              mediaProcessingLabel: "Processing photo...",
             }}
           />
         </ScrollView>

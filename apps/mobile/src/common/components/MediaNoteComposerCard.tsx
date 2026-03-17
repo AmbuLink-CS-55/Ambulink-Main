@@ -8,6 +8,7 @@ type Copy = {
   audioStartLabel?: string;
   audioStopLabel?: string;
   sendLabel?: string;
+  mediaProcessingLabel?: string;
 };
 
 type Props = {
@@ -19,6 +20,7 @@ type Props = {
   onToggleAudio?: () => void;
   onRemoveAttachment?: (index: number) => void;
   files: MediaAttachmentInput[];
+  isMediaProcessing?: boolean;
   isRecordingAudio?: boolean;
   recordingStatusText?: string;
   loading?: boolean;
@@ -46,6 +48,7 @@ export default function MediaNoteComposerCard({
   onToggleAudio,
   onRemoveAttachment,
   files,
+  isMediaProcessing = false,
   isRecordingAudio = false,
   recordingStatusText,
   loading = false,
@@ -110,7 +113,7 @@ export default function MediaNoteComposerCard({
         </Pressable>
       </View>
 
-      {files.length > 0 ? (
+      {files.length > 0 || isMediaProcessing ? (
         <View style={styles.pendingList}>
           {files.map((file, index) => (
             <View key={`${file.uri}-${index}`} style={styles.pendingItem}>
@@ -124,6 +127,16 @@ export default function MediaNoteComposerCard({
               ) : null}
             </View>
           ))}
+          {isMediaProcessing ? (
+            <View style={styles.pendingItem}>
+              <View style={styles.processingRow}>
+                <ActivityIndicator size="small" color="#2563EB" />
+                <Text style={styles.pendingText}>
+                  {copy?.mediaProcessingLabel ?? "Processing photo..."}
+                </Text>
+              </View>
+            </View>
+          ) : null}
         </View>
       ) : null}
 
@@ -203,6 +216,12 @@ const styles = StyleSheet.create({
     color: "#0F172A",
     fontSize: 12,
     fontWeight: "600",
+    flex: 1,
+  },
+  processingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
     flex: 1,
   },
   removeText: {

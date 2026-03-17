@@ -1,21 +1,21 @@
 import { Module } from "@nestjs/common";
-import { DispatcherService } from "./dispatcher.service";
-import { DispatcherApprovalService } from "./dispatcher-approval.service";
-import { DispatcherRepository } from "./dispatcher.repository";
-import { DispatcherPendingRequestService } from "./dispatcher-pending-request.service";
+import { DispatcherEventsService } from "./events/dispatcher.events.service";
+import { DispatcherEventsApprovalService } from "./events/dispatcher.events-approval.service";
+import { DispatcherEventsRepository } from "./events/dispatcher.events.repository";
+import { DispatcherEventsPendingRequestService } from "./events/dispatcher.events-pending-request.service";
 
 @Module({
   providers: [
-    DispatcherService,
-    DispatcherApprovalService,
-    DispatcherRepository,
-    DispatcherPendingRequestService,
+    DispatcherEventsService,
+    DispatcherEventsApprovalService,
+    DispatcherEventsRepository,
+    DispatcherEventsPendingRequestService,
   ],
   exports: [
-    DispatcherService,
-    DispatcherApprovalService,
-    DispatcherRepository,
-    DispatcherPendingRequestService,
+    DispatcherEventsService,
+    DispatcherEventsApprovalService,
+    DispatcherEventsRepository,
+    DispatcherEventsPendingRequestService,
   ],
 })
 export class DispatcherCoreModule {}

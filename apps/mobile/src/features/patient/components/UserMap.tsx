@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, Pressable, Text } from "react-native";
+import { View, StyleSheet, Pressable, Text, Image } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE, Region, Polyline } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,7 +8,10 @@ import ambulanceIcon from "../../../../assets/images/ambu.png";
 import { useFetchRoute } from "@/common/hooks/use-fetch-route";
 import type { NearbyHospital } from "@/common/lib/hospitals";
 import type { NearbyDriver } from "@/common/lib/drivers";
-import { AppImage as Image } from "@/common/components/AppImage";
+import { AppCard } from "@/common/components/ui/AppCard";
+
+const DRIVER_MARKER_SIZE = 60;
+const DRIVER_MARKER_ANCHOR = { x: 0.5, y: 0.5 };
 
 type Props = {
   userLocation: Point;
@@ -31,6 +34,8 @@ export default function UserMap({
   topOverlay,
   children,
 }: Props) {
+  const DRIVER_ROUTE_COLOR = "#4f46e5";
+  const HOSPITAL_ROUTE_COLOR = "#ea580c";
   const insets = useSafeAreaInsets();
   const mapRef = React.useRef<MapView>(null);
   const isValidPoint = (point?: Point) =>
@@ -76,26 +81,18 @@ export default function UserMap({
         showsPointsOfInterest={false}
       >
         {driverLocations.filter(isValidPoint).map((d) => (
-          // <Marker
-          //   key={`driver:marker${i}`}
-          //   coordinate={{ latitude: d.y, longitude: d.x }}
-          //   anchor={{ x: 0.5, y: 1 }}
-          //   tracksViewChanges={true}
-          // />
           <Marker
             key={`driver-${d.x}-${d.y}`}
             coordinate={{ latitude: d.y, longitude: d.x }}
-            anchor={{ x: 0.5, y: 0.5 }}
-            tracksViewChanges={false}
+            anchor={DRIVER_MARKER_ANCHOR}
+            tracksViewChanges
           >
-            <View style={{ alignItems: "center", justifyContent: "center" }}>
-              {/*<Svg width="30" height="30" viewBox="0 0 100 100">
-                <Circle cx="50" cy="50" r="45" stroke="blue" strokeWidth="5" fill="skyblue" />
-              </Svg>*/}
+            <View style={styles.driverMarkerContainer} collapsable={false}>
               <Image
                 source={ambulanceIcon}
-                style={{ width: 40, height: 40 }}
-                contentFit="contain"
+                style={styles.driverMarker}
+                resizeMode="contain"
+                fadeDuration={0}
               />
             </View>
           </Marker>
@@ -110,9 +107,10 @@ export default function UserMap({
                 latitude: driver.location!.y,
                 longitude: driver.location!.x,
               }}
-              pinColor="#2563eb"
               title={driver.fullName ?? "Nearby Driver"}
               description={`${driver.distanceKm.toFixed(1)} km away`}
+              anchor={{ x: 0.5, y: 0.5 }}
+              image={ambulanceIcon}
               tracksViewChanges={false}
             />
           ))}
@@ -121,10 +119,18 @@ export default function UserMap({
           showDriverEta &&
           safeDriverLocation &&
           patientDriverCord.length > 0 && (
-            <Polyline coordinates={patientDriverCord} strokeWidth={4} strokeColor="#007AFF" />
+            <Polyline
+              coordinates={patientDriverCord}
+              strokeWidth={4}
+              strokeColor={DRIVER_ROUTE_COLOR}
+            />
           )}
         {safeHospitalLocation && patientHospitalCord.length > 0 && (
-          <Polyline coordinates={patientHospitalCord} strokeWidth={4} strokeColor="#FF3B30" />
+          <Polyline
+            coordinates={patientHospitalCord}
+            strokeWidth={4}
+            strokeColor={HOSPITAL_ROUTE_COLOR}
+          />
         )}
 
         {safeHospitalLocation && (
@@ -166,22 +172,22 @@ export default function UserMap({
         style={{ paddingBottom: Math.max(insets.bottom, 12), paddingTop: 20 }}
       >
         <Pressable
-          className="bg-card p-1 rounded-md self-end mr-0 m-3 shadow-lg"
+          className="self-end m-3 h-11 w-11 items-center justify-center rounded-full border border-border bg-card"
           onPress={handleLocate}
           accessibilityRole="button"
           accessibilityLabel="Center map on your location"
           accessibilityHint="Moves the map camera to your current position."
           hitSlop={10}
         >
-          <Ionicons name="locate" size={24} color="#000000" />
+          <Ionicons name="locate" size={22} color="#111827" />
         </Pressable>
 
         {safeHospitalLocation && safeDriverLocation && (
-          <View className="w-full rounded-xl bg-card px-4 py-3 shadow-lg mb-3">
+          <AppCard className="w-full mb-3" variant="sheet">
             <View className="flex-row items-center justify-between">
               <View>
                 <View className="flex-row items-center">
-                  <View className="h-2 w-2 rounded-full bg-[#007AFF] mr-2" />
+                  <View className="h-2 w-2 rounded-full mr-2 bg-map-driver-route" />
                   <Text className="text-xs text-muted-foreground">Driver ETA</Text>
                 </View>
                 <Text className="text-base font-semibold text-foreground">
@@ -190,7 +196,7 @@ export default function UserMap({
               </View>
               <View>
                 <View className="flex-row items-center">
-                  <View className="h-2 w-2 rounded-full bg-[#FF3B30] mr-2" />
+                  <View className="h-2 w-2 rounded-full mr-2 bg-map-hospital-route" />
                   <Text className="text-xs text-muted-foreground">Hospital ETA</Text>
                 </View>
                 <Text className="text-base font-semibold text-foreground">
@@ -198,7 +204,7 @@ export default function UserMap({
                 </Text>
               </View>
             </View>
-          </View>
+          </AppCard>
         )}
 
         {children}
@@ -217,3 +223,16 @@ const mapStyle = [
     stylers: [{ visibility: "off" }],
   },
 ];
+
+const styles = StyleSheet.create({
+  driverMarkerContainer: {
+    width: DRIVER_MARKER_SIZE,
+    height: DRIVER_MARKER_SIZE,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  driverMarker: {
+    width: DRIVER_MARKER_SIZE,
+    height: DRIVER_MARKER_SIZE,
+  },
+});

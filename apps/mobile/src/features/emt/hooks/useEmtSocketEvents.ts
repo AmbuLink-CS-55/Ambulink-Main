@@ -2,12 +2,15 @@ import { useEffect } from "react";
 import { Alert } from "react-native";
 import type {
   BookingAssignedPayload,
+  BookingEtaUpdatedPayload,
+  BookingReroutedPayload,
   DriverLocationUpdate,
   EmtNote,
   SocketErrorPayload,
 } from "@ambulink/types";
 import type { Socket } from "socket.io-client";
 import { useEmtBookingState } from "./useEmtBookingState";
+import { notifyFromSocket } from "@/common/notifications/service";
 
 export const useEmtSocketEvents = (socket: Socket | null) => {
   const setAssignedBooking = useEmtBookingState((state) => state.setAssignedBooking);
@@ -21,6 +24,12 @@ export const useEmtSocketEvents = (socket: Socket | null) => {
 
     const onAssigned = (payload: BookingAssignedPayload) => {
       setAssignedBooking(payload);
+      if (payload.bookingId) {
+        notifyFromSocket("EMT", {
+          type: "ASSIGNED",
+          bookingId: payload.bookingId,
+        }).catch((error) => console.warn("[notifications] emt ASSIGNED failed", error));
+      }
     };
 
     const onDriverUpdate = (payload: DriverLocationUpdate) => {
@@ -28,6 +37,13 @@ export const useEmtSocketEvents = (socket: Socket | null) => {
     };
 
     const onArrived = () => {
+      const bookingId = useEmtBookingState.getState().activeBooking?.bookingId;
+      if (bookingId) {
+        notifyFromSocket("EMT", {
+          type: "ARRIVED",
+          bookingId,
+        }).catch((error) => console.warn("[notifications] emt ARRIVED failed", error));
+      }
       setStatusOnly("ARRIVED");
     };
 
@@ -37,8 +53,35 @@ export const useEmtSocketEvents = (socket: Socket | null) => {
     };
 
     const onCancelled = (payload: { reason?: string }) => {
+      const bookingId = useEmtBookingState.getState().activeBooking?.bookingId;
+      if (bookingId) {
+        notifyFromSocket("EMT", {
+          type: "CANCELLED",
+          bookingId,
+          reason: payload?.reason,
+        }).catch((error) => console.warn("[notifications] emt CANCELLED failed", error));
+      }
       clearActiveBooking("CANCELLED");
       Alert.alert("Booking Cancelled", payload?.reason ?? "The subscribed booking was cancelled.");
+    };
+
+    const onEtaUpdated = (payload: BookingEtaUpdatedPayload) => {
+      if (!payload.bookingId) return;
+      notifyFromSocket("EMT", {
+        type: "ETA_UPDATED",
+        bookingId: payload.bookingId,
+        etaMinutes: payload.etaMinutes,
+        previousEtaMinutes: payload.previousEtaMinutes,
+      }).catch((error) => console.warn("[notifications] emt ETA_UPDATED failed", error));
+    };
+
+    const onRerouted = (payload: BookingReroutedPayload) => {
+      if (!payload.bookingId) return;
+      notifyFromSocket("EMT", {
+        type: "REROUTED",
+        bookingId: payload.bookingId,
+        reason: payload.reason,
+      }).catch((error) => console.warn("[notifications] emt REROUTED failed", error));
     };
 
     const onNotes = (payload: { bookingId: string; note: EmtNote }) => {
@@ -54,6 +97,8 @@ export const useEmtSocketEvents = (socket: Socket | null) => {
     socket.on("booking:arrived", onArrived);
     socket.on("booking:completed", onCompleted);
     socket.on("booking:cancelled", onCancelled);
+    socket.on("booking:eta-updated", onEtaUpdated);
+    socket.on("booking:rerouted", onRerouted);
     socket.on("booking:notes", onNotes);
     socket.on("socket:error", onSocketError);
 
@@ -63,6 +108,8 @@ export const useEmtSocketEvents = (socket: Socket | null) => {
       socket.off("booking:arrived", onArrived);
       socket.off("booking:completed", onCompleted);
       socket.off("booking:cancelled", onCancelled);
+      socket.off("booking:eta-updated", onEtaUpdated);
+      socket.off("booking:rerouted", onRerouted);
       socket.off("booking:notes", onNotes);
       socket.off("socket:error", onSocketError);
     };

@@ -32,6 +32,9 @@ type BaseAmbulanceDialogProps = {
   title: string;
   submitLabel: string;
   submitDisabled: boolean;
+  validationMessage?: string | null;
+  errorMessage?: string | null;
+  isSubmitting?: boolean;
   onSubmit: () => void;
 };
 
@@ -43,6 +46,9 @@ function BaseAmbulanceFormDialog({
   title,
   submitLabel,
   submitDisabled,
+  validationMessage,
+  errorMessage,
+  isSubmitting = false,
   onSubmit,
 }: BaseAmbulanceDialogProps) {
   const vehicleNumberId = useId();
@@ -95,10 +101,17 @@ function BaseAmbulanceFormDialog({
         </div>
 
         <DialogFooter>
+          {errorMessage ? (
+            <p className="w-full text-xs text-destructive" role="alert">
+              {errorMessage}
+            </p>
+          ) : validationMessage ? (
+            <p className="w-full text-xs text-muted-foreground">{validationMessage}</p>
+          ) : null}
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={onSubmit} disabled={submitDisabled}>
+          <Button onClick={onSubmit} disabled={submitDisabled || isSubmitting}>
             {submitLabel}
           </Button>
         </DialogFooter>
@@ -111,6 +124,8 @@ export function CreateAmbulanceDialog({
   open,
   form,
   providerAvailable,
+  errorMessage,
+  isSubmitting,
   onOpenChange,
   onChange,
   onSubmit,
@@ -118,10 +133,17 @@ export function CreateAmbulanceDialog({
   open: boolean;
   form: AmbulanceFormState;
   providerAvailable: boolean;
+  errorMessage?: string | null;
+  isSubmitting?: boolean;
   onOpenChange: (open: boolean) => void;
   onChange: <K extends keyof AmbulanceFormState>(field: K, value: AmbulanceFormState[K]) => void;
   onSubmit: () => void;
 }) {
+  const validationMessage = !form.vehicleNumber.trim()
+    ? "Vehicle number is required."
+    : !providerAvailable
+      ? "Provider is not available for this action."
+      : null;
   return (
     <BaseAmbulanceFormDialog
       open={open}
@@ -131,6 +153,9 @@ export function CreateAmbulanceDialog({
       title="Add Ambulance"
       submitLabel="Create Ambulance"
       submitDisabled={!form.vehicleNumber.trim() || !providerAvailable}
+      validationMessage={validationMessage}
+      errorMessage={errorMessage}
+      isSubmitting={isSubmitting}
       onSubmit={onSubmit}
     />
   );
@@ -139,16 +164,21 @@ export function CreateAmbulanceDialog({
 export function EditAmbulanceDialog({
   open,
   form,
+  errorMessage,
+  isSubmitting,
   onOpenChange,
   onChange,
   onSubmit,
 }: {
   open: boolean;
   form: AmbulanceFormState;
+  errorMessage?: string | null;
+  isSubmitting?: boolean;
   onOpenChange: (open: boolean) => void;
   onChange: <K extends keyof AmbulanceFormState>(field: K, value: AmbulanceFormState[K]) => void;
   onSubmit: () => void;
 }) {
+  const validationMessage = !form.vehicleNumber.trim() ? "Vehicle number is required." : null;
   return (
     <BaseAmbulanceFormDialog
       open={open}
@@ -158,6 +188,9 @@ export function EditAmbulanceDialog({
       title="Edit Ambulance"
       submitLabel="Save Changes"
       submitDisabled={!form.vehicleNumber.trim()}
+      validationMessage={validationMessage}
+      errorMessage={errorMessage}
+      isSubmitting={isSubmitting}
       onSubmit={onSubmit}
     />
   );

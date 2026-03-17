@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import type { DispatcherBookingPayload } from "@/lib/socket-types";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
@@ -23,7 +22,7 @@ async function fetchRoute(start: [number, number], end: [number, number]): Promi
 }
 
 export function useOngoingBookingRoutes(ongoingBookings: Record<string, DispatcherBookingPayload>) {
-  const ongoingList = useMemo(() => Object.values(ongoingBookings), [ongoingBookings]);
+  const ongoingList = Object.values(ongoingBookings);
 
   const driverLocations = useQuery<Record<string, { x: number; y: number }>>({
     queryKey: queryKeys.driverLocations(),
