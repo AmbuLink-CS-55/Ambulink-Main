@@ -1,5 +1,6 @@
 import type { ComponentProps } from "react";
 import { ActivityIndicator, Pressable, Text } from "react-native";
+import React from "react";
 
 type AppButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "success" | "warning";
 
@@ -9,6 +10,7 @@ type AppButtonProps = Omit<ComponentProps<typeof Pressable>, "children"> & {
   variant?: AppButtonVariant;
   className?: string;
   textClassName?: string;
+  renderIcon?: () => React.ReactNode;
 };
 
 const BASE_CLASS =
@@ -58,6 +60,7 @@ export function AppButton({
   variant = "primary",
   className = "",
   textClassName = "",
+  renderIcon,
   ...pressableProps
 }: AppButtonProps) {
   const isDisabled = Boolean(disabled || loading);
@@ -65,10 +68,17 @@ export function AppButton({
   const resolvedTextClass = `${isDisabled ? DISABLED_TEXT_CLASS : TEXT_CLASS[variant]} font-semibold text-base ${textClassName}`.trim();
 
   return (
-    <Pressable accessibilityRole="button" disabled={isDisabled} className={containerClass} {...pressableProps}>
+    <Pressable 
+      accessibilityRole="button" 
+      disabled={isDisabled} 
+      className={containerClass} 
+      {...pressableProps}
+    >
       {loading ? (
         <ActivityIndicator size="small" color={isDisabled ? "#6b7280" : SPINNER_COLOR[variant]} />
-      ) : null}
+      ) : (
+        renderIcon?.()
+      )}
       <Text className={resolvedTextClass}>{label}</Text>
     </Pressable>
   );

@@ -8,6 +8,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import MapOptions from "@/features/patient/components/MapOptions";
 import PatientChatModal from "@/features/patient/components/PatientChatModal";
 import UserMap from "@/features/patient/components/UserMap";
@@ -37,6 +38,7 @@ import {
   loadActivePatientBookingId,
   saveActivePatientBookingId,
 } from "@/common/utils/patientBookingStorage";
+
 const PATIENT_BOOKING_TIMEOUT_MS = 40000;
 
 export default function Map() {
@@ -423,8 +425,17 @@ export default function Map() {
       }
     >
       {/* SOS button */}
-      <TouchableOpacity style={styles.sosButton} onPress={callEmergency}>
-        <Text style={styles.sosText}>SOS</Text>
+      <TouchableOpacity
+        style={styles.sosContainer}
+        onPress={callEmergency}
+        activeOpacity={0.8}
+      >
+        <LinearGradient
+          colors={["#ef4444", "#b91c1c"]}
+          style={styles.sosButton}
+        >
+          <Text style={styles.sosText}>SOS</Text>
+        </LinearGradient>
       </TouchableOpacity>
 
       <MapOptions
@@ -449,24 +460,30 @@ export default function Map() {
   );
 }
 
-// Sos butoon style
+// Styles
 const styles = StyleSheet.create({
-  sosButton: {
+  sosContainer: {
     position: "absolute",
     top: 50,
     right: 20,
-    width: 55,
-    height: 55,
-    borderRadius: 28,
-    backgroundColor: "red",
+    zIndex: 999,
+  },
+  sosButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 999,
-    elevation: 6,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
   },
   sosText: {
     color: "white",
-    fontWeight: "bold",
-    fontSize: 16,
+    fontWeight: "900",
+    fontSize: 18,
+    letterSpacing: 1,
   },
 });

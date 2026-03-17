@@ -1,6 +1,6 @@
 import { View, Text, Alert, Linking } from "react-native";
 import React from "react";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import type { BookingStatus, User, Hospital } from "@ambulink/types";
 import { AppCard } from "@/common/components/ui/AppCard";
 import { AppButton } from "@/common/components/ui/AppButton";
@@ -154,16 +154,19 @@ export default function MapOptions({
 
   // idle state
   return (
-    <View className="w-full gap-3">
+    <View className="w-full gap-4 items-center">
       <AppButton
         accessibilityLabel="Request ambulance"
         accessibilityHint="Sends a new emergency pickup request."
-        className="w-full"
+        className="w-full h-16 rounded-2xl shadow-md"
+        textClassName="text-lg"
         variant="primary"
-        label={isBooking ? "Requesting ambulance..." : "Request Ambulance"}
+        label={isBooking ? "Requesting..." : "Request Ambulance"}
         onPress={onHelpRequest}
         loading={isBooking}
+        renderIcon={() => <MaterialCommunityIcons name="ambulance" size={24} color="white" />}
       />
+
       {isBooking && onOpenUploads ? (
         <AppButton
           accessibilityLabel="Open booking chat"
