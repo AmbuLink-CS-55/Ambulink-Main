@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Audio } from "expo-av";
+import { Audio, type AVPlaybackStatus } from "expo-av";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppImage } from "@/common/components/AppImage";
 import MediaNoteComposerCard from "@/common/components/MediaNoteComposerCard";
 import { useMediaNoteComposer } from "@/common/hooks/useMediaNoteComposer";
+import { getAuthAccessToken, getAuthUser } from "@/common/hooks/AuthContext";
 import { env } from "../../../../env";
 import type { BookingNote } from "@ambulink/types";
 
@@ -117,9 +118,19 @@ export default function PatientChatModal({
   const apiOrigin = env.EXPO_PUBLIC_API_SERVER_URL.replace(/\/api\/?$/, "");
   const toAttachmentUrl = (url: string) => {
     const absolute = url.startsWith("http://") || url.startsWith("https://");
-    return `${absolute ? url : `${apiOrigin}${url}`}?patientId=${env.EXPO_PUBLIC_PATIENT_ID}`;
+    const base = absolute ? url : `${apiOrigin}${url}`;
+    const patientId = getAuthUser()?.id;
+    const accessToken = getAuthAccessToken();
+    const params = [
+      patientId ? `patientId=${encodeURIComponent(patientId)}` : null,
+      accessToken ? `accessToken=${encodeURIComponent(accessToken)}` : null,
+    ]
+      .filter(Boolean)
+      .join("&");
+    if (!params) return base;
+    return `${base}${base.includes("?") ? "&" : "?"}${params}`;
   };
-  const onAudioStatus = (status: Audio.AVPlaybackStatus) => {
+  const onAudioStatus = (status: AVPlaybackStatus) => {
     if (!status.isLoaded) return;
     setAudioPlaying(status.isPlaying);
     setAudioPositionMs(status.positionMillis ?? 0);
@@ -327,6 +338,7 @@ export default function PatientChatModal({
                 onToggleAudio={() => void actions.toggleRecording()}
                 onRemoveAttachment={actions.removeFile}
                 files={state.files}
+                isMediaProcessing={state.isMediaProcessing}
                 isRecordingAudio={state.isRecordingAudio}
                 loading={sending || state.isSubmitting}
                 recordingStatusText={`Recording audio... ${formatMs(state.recordingElapsedMs)}`}
@@ -337,6 +349,7 @@ export default function PatientChatModal({
                   audioStartLabel: "Audio",
                   audioStopLabel: "Stop Audio",
                   sendLabel: "Send",
+                  mediaProcessingLabel: "Processing photo...",
                 }}
               />
             </View>

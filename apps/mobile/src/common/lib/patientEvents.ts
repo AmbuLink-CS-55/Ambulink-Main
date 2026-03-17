@@ -1,39 +1,31 @@
 import { apiPost, apiPostForm } from "./api";
-import type { PatientCancelCommand, PatientHelpCommand } from "@ambulink/types";
-import { env } from "../../../env";
+import type { PatientCancelRequest, PatientPickupRequest } from "@ambulink/types";
 import {
   buildMediaFormData,
   type MediaAttachmentInput,
   type MediaNoteSubmitPayload,
 } from "./mediaNote";
 
-export async function sendPatientHelp(payload: PatientHelpCommand) {
-  return apiPost<{ accepted: boolean }, PatientHelpCommand>("/api/patients/events/help", payload, {
-    patientId: env.EXPO_PUBLIC_PATIENT_ID,
-  });
+export async function sendPatientHelp(payload: PatientPickupRequest) {
+  return apiPost<{ accepted: boolean }, PatientPickupRequest>("/api/patients/events/help", payload);
 }
 
-export async function sendPatientCancel(payload: PatientCancelCommand) {
-  return apiPost<{ accepted: boolean }, PatientCancelCommand>(
+export async function sendPatientCancel(payload: PatientCancelRequest) {
+  return apiPost<{ accepted: boolean }, PatientCancelRequest>(
     "/api/patients/events/cancel",
-    payload,
-    {
-      patientId: env.EXPO_PUBLIC_PATIENT_ID,
-    }
+    payload
   );
 }
 
-export async function startPatientUploadSession(patientId: string = env.EXPO_PUBLIC_PATIENT_ID) {
+export async function startPatientUploadSession() {
   return apiPost<{ uploadSessionId: string; expiresAt: string }, Record<string, never>>(
     "/api/patients/events/upload-session/start",
-    {},
-    { patientId }
+    {}
   );
 }
 
 export async function uploadPatientSessionFiles(payload: {
   sessionId: string;
-  patientId?: string;
   content?: string;
   durationMs?: number;
   files: MediaAttachmentInput[];
@@ -46,14 +38,12 @@ export async function uploadPatientSessionFiles(payload: {
 
   return apiPostForm<{ noteId: string }>(
     `/api/patients/events/upload-session/${payload.sessionId}/files`,
-    formData,
-    { patientId: payload.patientId ?? env.EXPO_PUBLIC_PATIENT_ID }
+    formData
   );
 }
 
 export async function uploadPatientBookingNote(payload: {
   bookingId: string;
-  patientId?: string;
   content?: string;
   durationMs?: number;
   files: MediaAttachmentInput[];
@@ -66,13 +56,11 @@ export async function uploadPatientBookingNote(payload: {
 
   return apiPostForm<{ note: unknown }>(
     `/api/patients/events/booking/${payload.bookingId}/notes`,
-    formData,
-    { patientId: payload.patientId ?? env.EXPO_PUBLIC_PATIENT_ID }
+    formData
   );
 }
 
 export async function submitPatientMediaNote(payload: {
-  patientId?: string;
   bookingId?: string;
   sessionId?: string;
   content?: string;
@@ -82,7 +70,6 @@ export async function submitPatientMediaNote(payload: {
   if (payload.bookingId) {
     return uploadPatientBookingNote({
       bookingId: payload.bookingId,
-      patientId: payload.patientId,
       content: payload.content,
       durationMs: payload.durationMs,
       files: payload.files,
@@ -95,7 +82,6 @@ export async function submitPatientMediaNote(payload: {
 
   return uploadPatientSessionFiles({
     sessionId: payload.sessionId,
-    patientId: payload.patientId,
     content: payload.content,
     durationMs: payload.durationMs,
     files: payload.files,
@@ -103,10 +89,9 @@ export async function submitPatientMediaNote(payload: {
 }
 
 export const createPatientMediaSubmitAdapter =
-  (params: { bookingId?: string | null; sessionId?: string | null; patientId?: string }) =>
+  (params: { bookingId?: string | null; sessionId?: string | null }) =>
   async (payload: MediaNoteSubmitPayload) => {
     await submitPatientMediaNote({
-      patientId: params.patientId ?? env.EXPO_PUBLIC_PATIENT_ID,
       bookingId: params.bookingId ?? undefined,
       sessionId: params.sessionId ?? undefined,
       ...payload,

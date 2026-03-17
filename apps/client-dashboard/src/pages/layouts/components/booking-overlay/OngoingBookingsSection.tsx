@@ -2,7 +2,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import type { BadgeVariant } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Phone, Truck, User2 } from "lucide-react";
+import { Phone, User2 } from "lucide-react";
 import type { DispatcherBookingPayload } from "@/lib/socket-types";
 
 function formatEta(durationSeconds: number) {
@@ -45,7 +45,7 @@ export function OngoingBookingsSection({
             variant="default"
             className="border-[color:var(--border)] bg-[color:var(--card)]"
           >
-            <Truck className="h-4 w-4" />
+            <img src="/ambulance.svg" alt="" aria-hidden="true" className="h-4 w-4" />
             <AlertTitle>Active Booking</AlertTitle>
             <AlertDescription className="space-y-2">
               <div className="text-xs text-muted-foreground">Booking ID: {booking.bookingId}</div>

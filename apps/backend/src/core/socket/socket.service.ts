@@ -46,4 +46,12 @@ export class SocketService {
     }
     this.dispatcherServer.emit(event, payload);
   }
+
+  emitToProviderDispatchers(providerId: string, event: string, payload: unknown) {
+    if (!this.dispatcherServer) {
+      console.warn(`[SocketService] dispatcherServer not initialized yet! Event ${event} dropped.`);
+      return;
+    }
+    this.dispatcherServer.to(`dispatcher-provider:${providerId}`).emit(event, payload);
+  }
 }

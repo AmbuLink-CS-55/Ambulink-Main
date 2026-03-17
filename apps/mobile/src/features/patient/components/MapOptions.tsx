@@ -1,7 +1,10 @@
-import { View, Pressable, Text, ActivityIndicator, Alert, Linking } from "react-native";
+import { View, Text, Alert, Linking } from "react-native";
 import React from "react";
 import { Ionicons } from "@expo/vector-icons";
 import type { BookingStatus, User, Hospital } from "@ambulink/types";
+import { AppCard } from "@/common/components/ui/AppCard";
+import { AppButton } from "@/common/components/ui/AppButton";
+import { StatusPill } from "@/common/components/ui/StatusPill";
 
 interface MapOptionsProps {
   bookingAssigned: boolean;
@@ -42,50 +45,45 @@ export default function MapOptions({
 
   if (shouldShowCompleted) {
     return (
-      <View
-        accessibilityRole="summary"
-        className="bg-card p-4 w-full rounded-2xl shadow-lg items-center border border-border"
-      >
-        <Ionicons name="checkmark-circle" size={48} color="#22c55e" />
-        <Text className="text-green-600 font-bold text-xl mt-2">Trip Completed</Text>
+      <AppCard accessibilityRole="summary" className="w-full items-center" variant="sheet">
+        <Ionicons name="checkmark-circle" size={42} color="#16a34a" />
+        <Text className="text-success font-bold text-xl mt-2">Trip Completed</Text>
         <Text className="text-muted-foreground mt-1">
           {booking?.hospital?.name
             ? `You have arrived at ${booking.hospital.name}`
             : "You have arrived at your destination"}
         </Text>
-      </View>
+      </AppCard>
     );
   }
 
   if (status === "ARRIVED" && booking) {
     return (
-      <View
-        accessibilityRole="summary"
-        className="bg-card p-4 w-full rounded-2xl shadow-lg border border-border"
-      >
-        <View className="items-center mb-3">
-          <Ionicons name="car" size={32} color="#f59e0b" />
-          <Text className="text-amber-600 font-bold text-lg mt-1">Ambulance Arrived!</Text>
+      <AppCard accessibilityRole="summary" className="w-full" variant="sheet">
+        <View className="items-start gap-2 mb-2">
+          <StatusPill label="Arrived" tone="warning" />
+          <Text className="text-foreground font-bold text-lg">Ambulance has arrived</Text>
         </View>
-        <View className="border-t border-border pt-3">
-          <Text className="text-muted-foreground text-sm">Provider</Text>
-          <Text className="font-semibold">{booking?.pickedDriver.providerId ?? ""}</Text>
-        </View>
-        <View className="mt-2">
-          <Text className="text-muted-foreground text-sm">Destination</Text>
-          <Text className="font-semibold">{booking?.hospital.name}</Text>
+        <View className="border-t border-border pt-3 gap-2">
+          <View>
+            <Text className="text-muted-foreground text-sm">Provider</Text>
+            <Text className="font-semibold text-foreground">{booking.provider?.name ?? "Provider"}</Text>
+          </View>
+          <View>
+            <Text className="text-muted-foreground text-sm">Destination</Text>
+            <Text className="font-semibold text-foreground">{booking.hospital.name}</Text>
+          </View>
         </View>
         {onOpenUploads ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Upload updates"
-            className="mt-4 min-h-11 items-center justify-center rounded-xl border border-blue-200 bg-blue-50"
+          <AppButton
+            accessibilityLabel="Open booking chat"
+            variant="secondary"
+            className="mt-4"
+            label="Open Chat"
             onPress={onOpenUploads}
-          >
-            <Text className="font-semibold text-blue-700">Chat</Text>
-          </Pressable>
+          />
         ) : null}
-      </View>
+      </AppCard>
     );
   }
 
@@ -94,116 +92,85 @@ export default function MapOptions({
     const providerPhone = booking.provider?.hotlineNumber;
     const providerName = booking.provider?.name ?? "Provider";
     return (
-      <View className="bg-card p-5 w-full rounded-2xl shadow-lg border border-border">
-        <View className="flex-row items-center mb-3">
-          <View className="bg-green-100 p-2 rounded-full mr-3">
-            <Ionicons name="car" size={24} color="#22c55e" />
-          </View>
-          <View className="flex-1">
-            <Text className="text-green-600 font-bold">Ambulance Assigned</Text>
-            <Text className="text-muted-foreground text-sm">On the way to you</Text>
+      <AppCard className="w-full" variant="sheet">
+        <View className="flex-row items-start justify-between">
+          <View className="flex-1 gap-1">
+            <StatusPill label="Assigned" tone="success" />
+            <Text className="text-foreground font-bold text-lg">Driver is on the way</Text>
+            <Text className="text-muted-foreground text-sm">Provider: {providerName}</Text>
           </View>
         </View>
 
-        <View className="border-t border-border pt-3">
-          <Text className="text-muted-foreground text-sm">Provider</Text>
-          <Text className="font-semibold">{providerName}</Text>
+        <View className="mt-3 border-t border-border pt-3 gap-2">
+          <View>
+            <Text className="text-muted-foreground text-sm">Destination Hospital</Text>
+            <Text className="font-semibold text-foreground">{booking.hospital.name}</Text>
+          </View>
         </View>
 
-        <View className="mt-2">
-          <Text className="text-muted-foreground text-sm">Destination Hospital</Text>
-          <Text className="font-semibold">{booking.hospital.name}</Text>
-        </View>
-
-        {/* High-stakes actions expose role/label/hint so screen readers can disambiguate who will be called. */}
         <View className="flex-row gap-3 mt-4">
-          <Pressable
-            accessibilityRole="button"
+          <AppButton
             accessibilityLabel="Call assigned driver"
             accessibilityHint="Calls the assigned driver for this booking."
-            className={`flex-1 min-h-12 items-center justify-center p-3 rounded-xl ${driverPhone ? "bg-emerald-500" : "bg-emerald-200"}`}
+            className="flex-1"
+            variant="success"
+            label="Call Driver"
             onPress={() => handleCall(driverPhone)}
             disabled={!driverPhone}
-          >
-            <Text className="text-white font-bold">Call Driver</Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
+          />
+          <AppButton
             accessibilityLabel="Call provider hotline"
             accessibilityHint="Calls the ambulance provider emergency hotline."
-            className={`flex-1 min-h-12 items-center justify-center p-3 rounded-xl ${providerPhone ? "bg-blue-500" : "bg-blue-200"}`}
+            className="flex-1"
+            variant="secondary"
+            label="Call Provider"
             onPress={() => handleCall(providerPhone)}
             disabled={!providerPhone}
-          >
-            <Text className="text-white font-bold">Call Provider</Text>
-          </Pressable>
+          />
         </View>
 
-        <Pressable
-          // Destructive action is explicitly labeled and iconized so users do not rely on red color alone.
-          accessibilityRole="button"
+        <AppButton
           accessibilityLabel="Cancel booking"
           accessibilityHint="Cancels the currently assigned booking."
-          className={`justify-center items-center min-h-12 p-3 mt-5 rounded-xl border ${isCancelling ? "bg-red-300 border-red-300" : "bg-red-500 border-red-600"}`}
+          className="mt-3"
+          variant="danger"
+          label={isCancelling ? "Cancelling..." : "Cancel Booking"}
           onPress={cancelRequest}
           disabled={isCancelling}
-        >
-          {isCancelling ? (
-            <View className="flex-row items-center">
-              <ActivityIndicator color="white" size="small" />
-              <Text className="text-white font-bold uppercase ml-2">Cancelling...</Text>
-            </View>
-          ) : (
-            <View className="flex-row items-center">
-              <Ionicons name="warning-outline" size={16} color="white" />
-              <Text className="text-white font-bold uppercase ml-2">Cancel Booking</Text>
-            </View>
-          )}
-        </Pressable>
+        />
 
         {onOpenUploads ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Upload updates"
-            className="mt-3 min-h-11 items-center justify-center rounded-xl border border-blue-200 bg-blue-50"
+          <AppButton
+            accessibilityLabel="Open booking chat"
+            variant="ghost"
+            className="mt-3"
+            label="Open Chat"
             onPress={onOpenUploads}
-          >
-            <Text className="font-semibold text-blue-700">Chat</Text>
-          </Pressable>
+          />
         ) : null}
-      </View>
+      </AppCard>
     );
   }
 
   // idle state
   return (
     <View className="w-full gap-3">
-      <Pressable
-        accessibilityRole="button"
+      <AppButton
         accessibilityLabel="Request ambulance"
         accessibilityHint="Sends a new emergency pickup request."
-        className={`justify-center items-center min-h-12 p-4 w-full rounded-2xl shadow-lg border border-border ${isBooking ? "bg-muted" : "bg-card"}`}
+        className="w-full"
+        variant="primary"
+        label={isBooking ? "Requesting ambulance..." : "Request Ambulance"}
         onPress={onHelpRequest}
-        disabled={isBooking}
-      >
-        {isBooking ? (
-          <View className="flex-row items-center">
-            <ActivityIndicator size="small" color="#ef4444" />
-            <Text className="text-foreground font-semibold ml-2">Requesting ambulance...</Text>
-          </View>
-        ) : (
-          <Text className="text-foreground font-bold text-xl uppercase">Book</Text>
-        )}
-      </Pressable>
+        loading={isBooking}
+      />
       {isBooking && onOpenUploads ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Upload updates"
-          className="min-h-11 items-center justify-center rounded-xl border border-blue-200 bg-blue-50"
+        <AppButton
+          accessibilityLabel="Open booking chat"
+          variant="ghost"
+          label="Open Chat"
           onPress={onOpenUploads}
-        >
-          <Text className="font-semibold text-blue-700">Chat</Text>
-        </Pressable>
+        />
       ) : null}
     </View>
   );

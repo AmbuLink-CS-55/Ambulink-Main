@@ -1,12 +1,12 @@
 import { create } from "zustand";
 import type { BookingAssignedPayload, BookingStatus, EmtNote } from "@ambulink/types";
-import { env } from "../../../../env";
 import {
   fetchEmtBookingOptions,
   fetchEmtCurrentBooking,
   postEmtNote,
   postEmtSubscribe,
 } from "@/common/lib/emtEvents";
+import { getAuthUser } from "@/common/hooks/AuthContext";
 import type { EmtActiveBooking, EmtBookingState } from "./types";
 
 const toActiveBooking = (payload: BookingAssignedPayload): EmtActiveBooking => ({
@@ -14,6 +14,11 @@ const toActiveBooking = (payload: BookingAssignedPayload): EmtActiveBooking => (
   patientProfileSnapshot: payload.patientProfileSnapshot ?? null,
   emtNotes: payload.emtNotes ?? [],
 });
+
+const getAuthenticatedEmtId = () => {
+  const user = getAuthUser();
+  return user?.role === "emt" ? user.id : null;
+};
 
 export const useEmtBookingState = create<EmtBookingState>((set, get) => ({
   activeBooking: null,
@@ -34,7 +39,12 @@ export const useEmtBookingState = create<EmtBookingState>((set, get) => ({
     set({ isLoadingOptions: !isRefresh, isRefreshingOptions: isRefresh, errorMessage: null });
 
     try {
-      const bookingOptions = await fetchEmtBookingOptions(env.EXPO_PUBLIC_EMT_ID);
+      const emtId = getAuthenticatedEmtId();
+      if (!emtId) {
+        set({ bookingOptions: [] });
+        return;
+      }
+      const bookingOptions = await fetchEmtBookingOptions(emtId);
       set({ bookingOptions });
     } catch (error) {
       set({
@@ -48,7 +58,12 @@ export const useEmtBookingState = create<EmtBookingState>((set, get) => ({
 
   hydrateCurrentBooking: async () => {
     try {
-      const booking = await fetchEmtCurrentBooking(env.EXPO_PUBLIC_EMT_ID);
+      const emtId = getAuthenticatedEmtId();
+      if (!emtId) {
+        set({ activeBooking: null, bookingStatus: "COMPLETED" });
+        return;
+      }
+      const booking = await fetchEmtCurrentBooking(emtId);
       if (!booking) {
         set({ activeBooking: null, bookingStatus: "COMPLETED" });
         return;
@@ -70,7 +85,12 @@ export const useEmtBookingState = create<EmtBookingState>((set, get) => ({
   selectAndSubscribe: async (bookingId) => {
     set({ isSubscribing: true, errorMessage: null });
     try {
-      const assigned = await postEmtSubscribe({ bookingId, emtId: env.EXPO_PUBLIC_EMT_ID });
+      const emtId = getAuthenticatedEmtId();
+      if (!emtId) {
+        set({ errorMessage: "EMT session is required." });
+        return false;
+      }
+      const assigned = await postEmtSubscribe({ bookingId, emtId });
       const activeBooking = toActiveBooking(assigned);
       set({
         activeBooking,
@@ -101,10 +121,15 @@ export const useEmtBookingState = create<EmtBookingState>((set, get) => ({
     }
 
     try {
+      const emtId = getAuthenticatedEmtId();
+      if (!emtId) {
+        set({ errorMessage: "EMT session is required." });
+        return false;
+      }
       const created = await postEmtNote({
         bookingId: booking.bookingId,
         content: trimmed,
-        emtId: env.EXPO_PUBLIC_EMT_ID,
+        emtId,
       });
 
       get().appendNote(booking.bookingId, created);
@@ -131,12 +156,17 @@ export const useEmtBookingState = create<EmtBookingState>((set, get) => ({
     }
 
     try {
+      const emtId = getAuthenticatedEmtId();
+      if (!emtId) {
+        set({ errorMessage: "EMT session is required." });
+        return false;
+      }
       const created = await postEmtNote({
         bookingId: booking.bookingId,
         content: content?.trim(),
         files,
         durationMs,
-        emtId: env.EXPO_PUBLIC_EMT_ID,
+        emtId,
       });
 
       get().appendNote(booking.bookingId, created);

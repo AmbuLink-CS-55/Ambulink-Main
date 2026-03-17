@@ -29,13 +29,13 @@ async function main() {
   await reset(db, schema);
 
   console.log("🚑 Seeding ambulance providers...");
-  await seedAmbulanceProviders(db);
+  const providerId = await seedAmbulanceProviders(db);
 
   console.log("👤 Seeding users...");
-  await seedUsers(db);
+  await seedUsers(db, providerId);
 
   console.log("🚐 Seeding ambulances...");
-  await seedAmbulances(db);
+  await seedAmbulances(db, providerId);
 
   console.log("🏥 Seeding hospitals...");
   await seedHospitals(db);

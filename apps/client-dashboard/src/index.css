@@ -31,6 +31,14 @@
     @apply font-sans;
   }
 
+  html.dark {
+    color-scheme: dark;
+  }
+
+  html:not(.dark) {
+    color-scheme: light;
+  }
+
   .maplibregl-popup-content {
     @apply !bg-transparent !shadow-none !p-0 !rounded-none;
   }

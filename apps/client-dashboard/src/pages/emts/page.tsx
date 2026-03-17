@@ -1,8 +1,16 @@
-import { useCallback, useMemo } from "react";
-import { DataTable } from "@/components";
+import { useCallback } from "react";
+import { useState } from "react";
+import { DataTable } from "@/components/VirtualizedTable";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useEntityFormDialog } from "@/hooks/use-entity-form-dialog";
-import { useCreateEmt, useGetEmts, useUpdateEmt } from "@/services/emt.service";
+import { useGetEmts, useUpdateEmt } from "@/services/emt.service";
 import type { User } from "@/lib/types";
 import { createEmtColumns } from "@/pages/emts/components/emt-columns";
 import {
@@ -10,26 +18,35 @@ import {
   EditEmtDialog,
   type EmtFormState,
 } from "@/pages/emts/components/EmtFormDialog";
-import env from "@/../env";
+import { useAuthStore } from "@/stores/auth.store";
+import { useCreateStaffInvite } from "@/services/auth.service";
+import { toUiErrorMessage } from "@/lib/ui-error";
 
 const initialForm: EmtFormState = {
   fullName: "",
   phoneNumber: "",
   email: "",
-  passwordHash: "",
 };
 
 export default function EmtsDashboard() {
-  const emts = useGetEmts({ providerId: env.VITE_PROVIDER_ID });
-  const createEmt = useCreateEmt();
+  const isDispatcherAdmin = useAuthStore((state) => Boolean(state.session?.user.isDispatcherAdmin));
+  const emts = useGetEmts();
   const updateEmt = useUpdateEmt();
+  const createInvite = useCreateStaffInvite();
+  const [invitePayload, setInvitePayload] = useState<{
+    token: string;
+    email: string;
+    role: "EMT";
+  } | null>(null);
+  const inviteModalOpen = Boolean(invitePayload);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const mapEmtToForm = useCallback(
     (emt: User) => ({
       fullName: emt.fullName ?? "",
       phoneNumber: emt.phoneNumber ?? "",
       email: emt.email ?? "",
-      passwordHash: "",
     }),
     []
   );
@@ -39,42 +56,89 @@ export default function EmtsDashboard() {
       initialForm,
       mapEntityToForm: mapEmtToForm,
     });
+  const handleOpenForCreate = useCallback(() => {
+    setFormError(null);
+    openForCreate();
+  }, [openForCreate]);
+  const handleOpenForEdit = useCallback(
+    (emt: User) => {
+      setFormError(null);
+      openForEdit(emt);
+    },
+    [openForEdit]
+  );
+  const handleDialogOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        setFormError(null);
+      }
+      onOpenChange(open);
+    },
+    [onOpenChange]
+  );
+  const handleFormChange = useCallback(
+    <K extends keyof EmtFormState>(field: K, value: EmtFormState[K]) => {
+      if (formError) {
+        setFormError(null);
+      }
+      updateForm(field, value);
+    },
+    [formError, updateForm]
+  );
 
-  const rows = useMemo(() => emts.data ?? [], [emts.data]);
-  const columns = useMemo(() => createEmtColumns(), []);
+  const rows = emts.data ?? [];
+  const columns = createEmtColumns();
 
   const handleSubmit = useCallback(async () => {
+    if (isSubmitting) return;
+    setFormError(null);
+    setIsSubmitting(true);
     const payload = {
       fullName: form.fullName.trim(),
       phoneNumber: form.phoneNumber.trim(),
       email: form.email.trim(),
-      passwordHash: form.passwordHash.trim(),
-      providerId: env.VITE_PROVIDER_ID,
     } satisfies Partial<User>;
 
-    if (editing) {
-      await updateEmt.mutateAsync({
-        id: editing.id,
-        payload: {
+    try {
+      if (editing) {
+        await updateEmt.mutateAsync({
+          id: editing.id,
+          payload: {
+            fullName: payload.fullName,
+            phoneNumber: payload.phoneNumber,
+            email: payload.email,
+          },
+        });
+      } else {
+        if (!payload.email) {
+          throw new Error("Email is required to generate onboarding invite.");
+        }
+        const invite = await createInvite.mutateAsync({
+          role: "EMT",
           fullName: payload.fullName,
           phoneNumber: payload.phoneNumber,
           email: payload.email,
-          passwordHash: payload.passwordHash || undefined,
-        },
-      });
-    } else {
-      if (!env.VITE_PROVIDER_ID) return;
-      await createEmt.mutateAsync(payload);
-    }
+        });
+        setInvitePayload({
+          token: invite.inviteToken,
+          email: payload.email,
+          role: "EMT",
+        });
+      }
 
-    reset();
+      reset();
+    } catch (error) {
+      setFormError(toUiErrorMessage(error, "Failed to save EMT. Please review your inputs."));
+    } finally {
+      setIsSubmitting(false);
+    }
   }, [
-    createEmt,
+    createInvite,
     editing,
     form.email,
     form.fullName,
-    form.passwordHash,
     form.phoneNumber,
+    isSubmitting,
     reset,
     updateEmt,
   ]);
@@ -86,7 +150,7 @@ export default function EmtsDashboard() {
           <h1 className="text-2xl font-semibold">EMTs</h1>
           <p className="text-sm text-muted-foreground">Manage your EMT roster.</p>
         </div>
-        <Button onClick={openForCreate}>Add EMT</Button>
+        {isDispatcherAdmin ? <Button onClick={handleOpenForCreate}>Add EMT</Button> : null}
       </div>
 
       <DataTable
@@ -95,27 +159,59 @@ export default function EmtsDashboard() {
         height={640}
         rowHeight={56}
         rowKey={(row) => row.id}
-        onRowClick={openForEdit}
+        onRowClick={isDispatcherAdmin ? handleOpenForEdit : undefined}
       />
 
-      {editing ? (
+      {isDispatcherAdmin && editing ? (
         <EditEmtDialog
           open={isOpen}
           form={form}
-          onOpenChange={onOpenChange}
-          onChange={updateForm}
+          onOpenChange={handleDialogOpenChange}
+          onChange={handleFormChange}
           onSubmit={handleSubmit}
+          errorMessage={formError}
+          isSubmitting={isSubmitting}
         />
-      ) : (
+      ) : isDispatcherAdmin ? (
         <CreateEmtDialog
           open={isOpen}
           form={form}
-          providerAvailable={Boolean(env.VITE_PROVIDER_ID)}
-          onOpenChange={onOpenChange}
-          onChange={updateForm}
+          providerAvailable={true}
+          onOpenChange={handleDialogOpenChange}
+          onChange={handleFormChange}
           onSubmit={handleSubmit}
+          errorMessage={formError}
+          isSubmitting={isSubmitting}
         />
-      )}
+      ) : null}
+
+      <Dialog open={inviteModalOpen} onOpenChange={(open) => (!open ? setInvitePayload(null) : null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>EMT Onboarding Invite</DialogTitle>
+            <DialogDescription>
+              Assigned email: {invitePayload?.email ?? "N/A"}
+            </DialogDescription>
+          </DialogHeader>
+          {invitePayload ? (
+            <div className="space-y-2 px-6 pb-6">
+              <p className="text-xs break-all text-muted-foreground">Invite token: {invitePayload.token}</p>
+              <img
+                alt="EMT invite QR"
+                className="mx-auto h-56 w-56 rounded border"
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(
+                  JSON.stringify({
+                    type: "staff_invite",
+                    role: invitePayload.role,
+                    inviteToken: invitePayload.token,
+                    invitedEmail: invitePayload.email,
+                  })
+                )}`}
+              />
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

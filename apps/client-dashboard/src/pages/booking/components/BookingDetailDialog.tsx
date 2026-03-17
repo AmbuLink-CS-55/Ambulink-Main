@@ -13,11 +13,11 @@ import {
 import { getBookingActionErrorMessage } from "@/lib/booking-ui-errors";
 import type { BookingDetailsPayload } from "@/lib/socket-types";
 import { useAddBookingNote, useGetBookingDetails } from "@/services/booking.service";
+import { getDispatcherAccessToken, getDispatcherId } from "@/lib/identity";
 import env from "../../../../env";
 
 type Props = {
   bookingId: string | null;
-  dispatcherId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
@@ -31,11 +31,10 @@ function statusVariant(status: string): BadgeVariant {
   return "info";
 }
 
-export function BookingDetailDialog({ bookingId, dispatcherId, open, onOpenChange }: Props) {
+export function BookingDetailDialog({ bookingId, open, onOpenChange }: Props) {
   const [noteContent, setNoteContent] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
-
-  const detailsQuery = useGetBookingDetails(open ? bookingId : null, dispatcherId);
+  const detailsQuery = useGetBookingDetails(open ? bookingId : null);
   const addNote = useAddBookingNote();
 
   const details = detailsQuery.data;
@@ -59,7 +58,6 @@ export function BookingDetailDialog({ bookingId, dispatcherId, open, onOpenChang
     try {
       await addNote.mutateAsync({
         bookingId,
-        dispatcherId,
         content: noteContent.trim(),
       });
       setNoteContent("");
@@ -90,13 +88,12 @@ export function BookingDetailDialog({ bookingId, dispatcherId, open, onOpenChang
         ) : details ? (
           <BookingContent
             details={details}
-            dispatcherId={dispatcherId}
+            notes={notes}
             noteContent={noteContent}
             setNoteContent={setNoteContent}
             submitNote={submitNote}
             submitError={submitError}
             isSubmitting={addNote.isPending}
-            notes={notes}
             isNotesLocked={details.status === "COMPLETED"}
             onClose={() => onOpenChange(false)}
           />
@@ -110,7 +107,6 @@ export function BookingDetailDialog({ bookingId, dispatcherId, open, onOpenChang
 
 function BookingContent({
   details,
-  dispatcherId,
   notes,
   noteContent,
   setNoteContent,
@@ -121,7 +117,6 @@ function BookingContent({
   onClose,
 }: {
   details: BookingDetailsPayload;
-  dispatcherId: string;
   notes: BookingDetailsPayload["notes"];
   noteContent: string;
   setNoteContent: (value: string) => void;
@@ -140,10 +135,12 @@ function BookingContent({
   } | null>(null);
 
   const apiOrigin = env.VITE_API_SERVER_URL.replace(/\/api\/?$/, "");
+  const dispatcherId = getDispatcherId();
+  const accessToken = getDispatcherAccessToken();
   const toAttachmentUrl = (rawUrl: string) => {
     const absolute = rawUrl.startsWith("http://") || rawUrl.startsWith("https://");
     const url = absolute ? rawUrl : `${apiOrigin}${rawUrl}`;
-    return `${url}?dispatcherId=${dispatcherId}`;
+    return `${url}?dispatcherId=${dispatcherId}&accessToken=${encodeURIComponent(accessToken)}`;
   };
 
   const previewUrl = previewAttachment ? toAttachmentUrl(previewAttachment.url) : null;

@@ -10,16 +10,22 @@ import { DispatcherModule } from "./modules/dispatcher/dispatcher.module";
 import { HealthController } from "./core/health/health.controller";
 import { HospitalModule } from "./modules/hospital/hospital.module";
 import { EmtModule } from "./modules/emt/emt.module";
+import { EventsModule } from "./core/events/events.module";
+import { AnalyticsModule } from "./modules/analytics/analytics.module";
+import { AuthModule } from "./modules/auth/auth.module";
 
 @Module({
   imports: [
     DbModule,
     SocketModule,
+    EventsModule,
     AmbulanceProviderModule,
     PatientModule,
     DriverModule,
     AmbulanceModule,
     BookingModule,
+    AnalyticsModule,
+    AuthModule,
     DispatcherModule,
     HospitalModule,
     EmtModule,
