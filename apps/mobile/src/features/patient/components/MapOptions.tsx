@@ -1,4 +1,4 @@
-import { View, Text, Alert, Linking } from "react-native";
+import { View, Text, Alert, Linking, TouchableOpacity } from "react-native";
 import React from "react";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import type { BookingStatus, User, Hospital } from "@ambulink/types";
@@ -22,6 +22,40 @@ interface MapOptionsProps {
   isBooking?: boolean;
   completedAt?: number | null;
   onOpenUploads?: () => void;
+}
+
+/** Clean, attractive chat button */
+function ChatButton({ onPress }: { onPress: () => void }) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.8}
+      accessibilityRole="button"
+      accessibilityLabel="Open booking chat"
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#18181b",
+        borderRadius: 14,
+        paddingHorizontal: 20,
+        paddingVertical: 14,
+        gap: 10,
+        width: "100%",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.18,
+        shadowRadius: 6,
+        elevation: 4,
+      }}
+    >
+      <Ionicons name="chatbubble-ellipses-outline" size={20} color="#a3e635" />
+      <Text style={{ fontWeight: "700", color: "#ffffff", fontSize: 15, letterSpacing: 0.2 }}>
+        Send a Message
+      </Text>
+      <Ionicons name="chevron-forward" size={16} color="#71717a" style={{ marginLeft: "auto" }} />
+    </TouchableOpacity>
+  );
 }
 
 export default function MapOptions({
@@ -77,13 +111,9 @@ export default function MapOptions({
           </View>
         </View>
         {onOpenUploads ? (
-          <AppButton
-            accessibilityLabel="Open booking chat"
-            variant="secondary"
-            className="mt-4"
-            label="Open Chat"
-            onPress={onOpenUploads}
-          />
+          <View className="mt-4">
+            <ChatButton onPress={onOpenUploads} />
+          </View>
         ) : null}
       </AppCard>
     );
@@ -119,6 +149,7 @@ export default function MapOptions({
             label="Call Driver"
             onPress={() => handleCall(driverPhone)}
             disabled={!driverPhone}
+            renderIcon={() => <Ionicons name="call" size={16} color="white" />}
           />
           <AppButton
             accessibilityLabel="Call provider hotline"
@@ -128,8 +159,15 @@ export default function MapOptions({
             label="Call Provider"
             onPress={() => handleCall(providerPhone)}
             disabled={!providerPhone}
+            renderIcon={() => <Ionicons name="call-outline" size={16} color="#111827" />}
           />
         </View>
+
+        {onOpenUploads ? (
+          <View className="mt-3">
+            <ChatButton onPress={onOpenUploads} />
+          </View>
+        ) : null}
 
         <AppButton
           accessibilityLabel="Cancel booking"
@@ -140,21 +178,11 @@ export default function MapOptions({
           onPress={cancelRequest}
           disabled={isCancelling}
         />
-
-        {onOpenUploads ? (
-          <AppButton
-            accessibilityLabel="Open booking chat"
-            variant="ghost"
-            className="mt-3"
-            label="Open Chat"
-            onPress={onOpenUploads}
-          />
-        ) : null}
       </AppCard>
     );
   }
 
-  // idle state
+  // idle / searching state
   return (
     <View className="w-full gap-4 items-center">
       <AppButton
@@ -180,12 +208,7 @@ export default function MapOptions({
       )}
 
       {isBooking && onOpenUploads ? (
-        <AppButton
-          accessibilityLabel="Open booking chat"
-          variant="ghost"
-          label="Open Chat"
-          onPress={onOpenUploads}
-        />
+        <ChatButton onPress={onOpenUploads} />
       ) : null}
     </View>
   );
