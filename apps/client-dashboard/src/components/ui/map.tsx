@@ -917,7 +917,7 @@ type MapRouteProps = {
   id?: string;
   /** Array of [longitude, latitude] coordinate pairs defining the route */
   coordinates: [number, number][];
-  /** Line color as CSS color value (default: "var(--accent)") */
+  /** Line color as CSS color value (default: "#3b82f6") */
   color?: string;
   /** Line width in pixels (default: 3) */
   width?: number;
@@ -938,7 +938,7 @@ type MapRouteProps = {
 function MapRoute({
   id: propId,
   coordinates,
-  color = "var(--accent)",
+  color = "#3b82f6",
   width = 3,
   opacity = 0.8,
   dashArray,
