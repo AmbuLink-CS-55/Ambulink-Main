@@ -17,6 +17,7 @@ import {
   Dimensions,
   StyleSheet,
   StatusBar,
+  Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -113,46 +114,52 @@ const FIRST_AID_GUIDES: Guide[] = [
     ],
     tutorialUrl: 'https://www.youtube.com/watch?v=WX_mCORhMog',
   },
+  {
+    id: 'snakebite',
+    title: 'Snake Bite',
+    subtitle: 'Venomous bite response',
+    icon: 'snake',
+    accent: '#10b981',
+    indicator: 'Critical',
+    steps: [
+      'Keep the person calm and still.',
+      'Remove jewelry or tight clothing.',
+      'Keep the bite area below heart level.',
+      'Do NOT cut the wound or suck out venom.',
+      'Call emergency services immediately.',
+    ],
+    tutorialUrl: 'https://www.youtube.com/watch?v=H7_4jZpZ-qg',
+  },
 ];
 
 export default function FirstAid() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const [isChatVisible, setIsChatVisible] = useState(false);
   const insets = useSafeAreaInsets();
+
+  React.useEffect(() => {
+    StatusBar.setBarStyle('dark-content');
+    if (Platform.OS === 'android') {
+      StatusBar.setBackgroundColor('#ffffff');
+      StatusBar.setTranslucent(false);
+    }
+  }, []);
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  const filteredGuides = FIRST_AID_GUIDES.filter((guide) =>
-    guide.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    guide.subtitle.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
-      
-      {/* ── Clean Minimalist Header ── */}
-      <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" translucent={false} hidden={false} />
+
+      {/* ── Header ── */}
+      <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? 40 : insets.top + 45 }]}>
         <View style={styles.headerTop}>
           <View>
             <Text style={styles.headerTitle}>First Aid Guide</Text>
             <Text style={styles.headerSubtitle}>Simple steps for any emergency</Text>
           </View>
-        </View>
-
-        {/* Minimal Search Bar */}
-        <View style={styles.searchWrapper}>
-          <MaterialCommunityIcons name="magnify" size={20} color="#94a3b8" />
-          <TextInput
-            placeholder="Search instructions..."
-            placeholderTextColor="#94a3b8"
-            style={styles.searchInput}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
         </View>
       </View>
 
@@ -174,13 +181,13 @@ export default function FirstAid() {
             style={styles.aiBannerGradient}
           >
             <View style={styles.aiBannerLeft}>
-               <View style={styles.aiIconBadge}>
-                 <MaterialCommunityIcons name="robot" size={26} color="white" />
-               </View>
-               <View style={{ marginLeft: 15 }}>
-                 <Text style={styles.aiBannerTitle}>AmbuLink AI Assistant</Text>
-                 <Text style={styles.aiBannerSub}>Ask anything for instant help</Text>
-               </View>
+              <View style={styles.aiIconBadge}>
+                <MaterialCommunityIcons name="robot" size={26} color="white" />
+              </View>
+              <View style={{ marginLeft: 15 }}>
+                <Text style={styles.aiBannerTitle}>AmbuLink AI Assistant</Text>
+                <Text style={styles.aiBannerSub}>Ask anything for instant help</Text>
+              </View>
             </View>
             <MaterialCommunityIcons name="chevron-right" size={20} color="white" style={{ opacity: 0.7 }} />
           </LinearGradient>
@@ -189,16 +196,16 @@ export default function FirstAid() {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Essential Guides</Text>
           <View style={styles.badge}>
-            <Text style={styles.badgeText}>{filteredGuides.length} Items</Text>
+            <Text style={styles.badgeText}>{FIRST_AID_GUIDES.length} Items</Text>
           </View>
         </View>
 
         {/* ── Modern Guide Cards ── */}
-        {filteredGuides.map((guide) => {
+        {FIRST_AID_GUIDES.map((guide) => {
           const isExpanded = expandedId === guide.id;
           return (
-            <View 
-              key={guide.id} 
+            <View
+              key={guide.id}
               style={[
                 styles.guideCard,
                 isExpanded && styles.guideCardActive
@@ -210,13 +217,13 @@ export default function FirstAid() {
                 activeOpacity={0.7}
               >
                 <View style={[styles.guideIconContainer, { backgroundColor: guide.accent + '10' }]}>
-                   <MaterialCommunityIcons 
-                     name={guide.icon as any} 
-                     size={26} 
-                     color={guide.accent} 
-                   />
+                  <MaterialCommunityIcons
+                    name={guide.icon as any}
+                    size={26}
+                    color={guide.accent}
+                  />
                 </View>
-                
+
                 <View style={styles.guideTextContainer}>
                   <View style={styles.guideTitleRow}>
                     <Text style={styles.guideTitle}>{guide.title}</Text>
@@ -226,11 +233,11 @@ export default function FirstAid() {
                   </View>
                   <Text style={styles.guideSubtitle}>{guide.subtitle}</Text>
                 </View>
-                
-                <MaterialCommunityIcons 
-                  name={isExpanded ? 'chevron-up' : 'chevron-down'} 
-                  size={20} 
-                  color="#94a3b8" 
+
+                <MaterialCommunityIcons
+                  name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={20}
+                  color="#94a3b8"
                 />
               </TouchableOpacity>
 
@@ -245,7 +252,7 @@ export default function FirstAid() {
                       <Text style={styles.stepText}>{step}</Text>
                     </View>
                   ))}
-                  
+
                   <TouchableOpacity
                     onPress={() => Linking.openURL(guide.tutorialUrl)}
                     style={styles.videoButton}
@@ -258,22 +265,11 @@ export default function FirstAid() {
             </View>
           );
         })}
-
-        {/* ── Footer Tip ── */}
-        <View style={styles.tipCard}>
-           <MaterialCommunityIcons name="lightbulb-on" size={24} color="#f59e0b" />
-           <View style={{ flex: 1, marginLeft: 15 }}>
-             <Text style={styles.tipTitle}>Quick Reminder</Text>
-             <Text style={styles.tipText}>
-               Safety first! Check your surroundings before approaching any casualty.
-             </Text>
-           </View>
-        </View>
       </ScrollView>
 
-      <FirstAidChatBot 
-        visible={isChatVisible} 
-        onClose={() => setIsChatVisible(false)} 
+      <FirstAidChatBot
+        visible={isChatVisible}
+        onClose={() => setIsChatVisible(false)}
       />
     </View>
   );
@@ -296,33 +292,16 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   headerTitle: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: '900',
     color: '#0f172a',
-    letterSpacing: -1,
+    letterSpacing: -0.5,
   },
   headerSubtitle: {
     fontSize: 14,
     color: '#64748b',
     fontWeight: '500',
     marginTop: 2,
-  },
-  searchWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    height: 52,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 12,
-    fontSize: 16,
-    color: '#0f172a',
-    fontWeight: '600',
   },
   scrollContent: {
     flex: 1,
@@ -391,27 +370,32 @@ const styles = StyleSheet.create({
   },
   guideCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 24,
-    marginBottom: 12,
+    borderRadius: 28,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: '#f1f5f9',
+    shadowColor: '#64748b',
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 4,
   },
   guideCardActive: {
     borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 15,
-    elevation: 2,
+    shadowColor: '#2563eb',
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 8,
   },
   guideCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: 18,
   },
   guideIconContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
+    width: 56,
+    height: 56,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -491,29 +475,5 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#1e3a8a',
     marginLeft: 8,
-  },
-  tipCard: {
-    marginTop: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fffbeb',
-    padding: 20,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#fef3c7',
-  },
-  tipTitle: {
-    fontSize: 12,
-    fontWeight: '900',
-    color: '#92400e',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  tipText: {
-    fontSize: 13,
-    color: '#b45309',
-    lineHeight: 18,
-    fontWeight: '600',
-    marginTop: 2,
   },
 });
