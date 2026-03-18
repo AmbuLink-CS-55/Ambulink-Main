@@ -14,6 +14,10 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { env } from "@/../env";
+
+const GEMINI_API_KEY = env.EXPO_PUBLIC_GEMINI_API_KEY || "AIzaSyDzg2QTPHIcGbN5dhUE9tOWg7la9H5xckM";
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 type Message = {
   id: string;
@@ -41,12 +45,25 @@ export default function FirstAidChatBot({ visible, onClose }: Props) {
   const [isTyping, setIsTyping] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const handleSend = () => {
+  // Manual history management for the REST API
+  const history = useRef<{ role: string; parts: { text: string }[] }[]>([
+    {
+      role: "user",
+      parts: [{ text: "Hello, I might need first aid help." }],
+    },
+    {
+      role: "model",
+      parts: [{ text: INITIAL_MESSAGE.text }],
+    },
+  ]);
+
+  const handleSend = async () => {
     if (inputText.trim() === '') return;
 
+    const userTextInput = inputText.trim();
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: inputText,
+      text: userTextInput,
       sender: 'user',
       timestamp: new Date(),
     };
@@ -55,43 +72,61 @@ export default function FirstAidChatBot({ visible, onClose }: Props) {
     setInputText('');
     setIsTyping(true);
 
-    // Simulate bot response
-    setTimeout(() => {
-      const botResponse = getBotResponse(inputText);
-      const botMessage: Message = {
+    try {
+      // Add user message to history
+      history.current.push({
+        role: "user",
+        parts: [{ text: userTextInput }],
+      });
+
+      const response = await fetch(GEMINI_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: history.current,
+          systemInstruction: {
+            parts: [{
+              text: "You are the AmbuLink First Aid Assistant. Provide clear, concise first aid guidance. If it's an emergency, advise calling 1990 immediately. Keep responses short and use bullet points."
+            }]
+          }
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+        const botResponse = data.candidates[0].content.parts[0].text;
+
+        // Add model message to history
+        history.current.push({
+          role: "model",
+          parts: [{ text: botResponse }],
+        });
+
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: botResponse,
+          sender: 'bot',
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, botMessage]);
+      } else {
+        throw new Error(data.error?.message || "Invalid API response");
+      }
+    } catch (error: any) {
+      console.error("Gemini API Error:", error);
+      const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: botResponse,
+        text: `Error: ${error.message || "I'm having trouble connecting. Please try again or call 1990."}`,
         sender: 'bot',
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, botMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
-  };
-
-  const getBotResponse = (text: string): string => {
-    const query = text.toLowerCase();
-
-    if (query.includes('cpr')) {
-      return "For Adult CPR:\n1. Call emergency services.\n2. Push hard and fast in the center of the chest (100–120 bpm).\n3. Continue until help arrives.";
     }
-    if (query.includes('choking')) {
-      return "For Choking:\n1. Give 5 firm back blows.\n2. Give 5 abdominal thrusts (Heimlich maneuver).\n3. Repeat until the blockage clears.";
-    }
-    if (query.includes('bleed') || query.includes('blood')) {
-      return "For Severe Bleeding:\n1. Apply direct pressure with a clean cloth.\n2. Add more layers if soaked through.\n3. Elevate the wound above the heart.";
-    }
-    if (query.includes('burn')) {
-      return "For Burns:\n1. Cool under running water for 10+ minutes.\n2. Remove tight items before swelling.\n3. Cover loosely with sterile dressing.";
-    }
-    if (query.includes('heart attack')) {
-      return "For Heart Attack:\n1. Call emergency services immediately.\n2. Keep the person calm and seated.\n3. Help with prescribed meds if available.";
-    }
-    if (query.includes('hi') || query.includes('hello') || query.includes('hey')) {
-      return "Hi there! I'm here to help with First Aid information. What's on your mind?";
-    }
-
-    return "I'm specialized in First Aid guidance. Could you please ask about CPR, choking, bleeding, burns, or heart attacks? For other emergencies, please call 1990 immediately.";
   };
 
   useEffect(() => {
@@ -274,7 +309,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#1e3a8a',
+    backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
@@ -291,7 +326,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   userBubble: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#000000',
     borderBottomRightRadius: 4,
   },
   botBubble: {
@@ -347,7 +382,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#2563eb',
+    backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
