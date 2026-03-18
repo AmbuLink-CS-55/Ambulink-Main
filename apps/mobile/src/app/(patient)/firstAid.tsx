@@ -230,11 +230,11 @@ export default function FirstAid() {
       {/* Header */}
       <View 
         className="px-6 pb-5 bg-white" 
-        style={{ paddingTop: Platform.OS === 'android' ? 55 : insets.top + 60 }}
+        style={{ paddingTop: Platform.OS === 'android' ? 45 : insets.top + 40 }}
       >
         <View className="flex-row items-center justify-between">
           <View>
-            <Text className="text-3xl font-black text-slate-900 tracking-tighter" style={{ fontFamily: Platform.OS === 'ios' ? 'Avenir Next' : undefined }}>
+            <Text className="text-2xl font-black text-slate-900 tracking-tighter" style={{ fontFamily: Platform.OS === 'ios' ? 'Avenir Next' : undefined }}>
               First Aid Guide
             </Text>
             <Text className="text-sm text-slate-500 font-medium mt-0.5">
@@ -253,7 +253,7 @@ export default function FirstAid() {
         <TouchableOpacity
           onPress={() => setIsChatVisible(true)}
           activeOpacity={0.9}
-          className="rounded-3xl overflow-hidden mb-8 mt-2 shadow-xl shadow-black/10"
+          className="rounded-3xl overflow-hidden mb-6 mt-0 shadow-xl shadow-black/10"
           style={{
             shadowOffset: { width: 0, height: 10 },
             shadowOpacity: 0.1,
@@ -265,14 +265,14 @@ export default function FirstAid() {
             colors={['#000000', '#000000']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            className="flex-row items-center justify-between p-5"
+            className="flex-row items-center justify-between p-4"
           >
             <View className="flex-row items-center">
-              <View className="w-11 h-11 rounded-2xl bg-white/10 items-center justify-center">
-                <MaterialCommunityIcons name="robot" size={26} color="white" />
+              <View className="w-10 h-10 rounded-2xl bg-white/10 items-center justify-center">
+                <MaterialCommunityIcons name="robot" size={24} color="white" />
               </View>
               <View className="ml-4">
-                <Text className="text-white text-lg font-extrabold">AmbuLink AI Assistant</Text>
+                <Text className="text-white text-base font-extrabold">AmbuLink AI Assistant</Text>
                 <Text className="text-white/80 text-xs font-semibold mt-0.5">Ask anything for instant help</Text>
               </View>
             </View>
@@ -307,17 +307,17 @@ export default function FirstAid() {
               }}
             >
               <TouchableOpacity
-                className="flex-row items-center p-5"
+                className="flex-row items-center p-4"
                 onPress={() => toggleExpand(guide.id)}
                 activeOpacity={0.7}
               >
                 <View 
-                  className="w-16 h-16 rounded-3xl items-center justify-center border border-black/5"
+                  className="w-14 h-14 rounded-2xl items-center justify-center border border-black/5"
                   style={{ backgroundColor: guide.accent + '10' }}
                 >
                   <MaterialCommunityIcons
                     name={guide.icon as any}
-                    size={26}
+                    size={24}
                     color={guide.accent}
                   />
                 </View>
