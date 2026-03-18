@@ -50,7 +50,8 @@ const FIRST_AID_GUIDES: Guide[] = [
       'Place hand heel on the center of the chest.',
       'Push hard and fast (100–120 bpm).',
       'Allow full chest recoil between pushes.',
-      'Continue until professional help arrives.',
+      'Use an AED immediately if one is available.',
+      'Continue compressions until professionals arrive.',
     ],
     tutorialUrl: 'https://www.youtube.com/watch?v=cosVBV96E2g',
   },
@@ -62,12 +63,31 @@ const FIRST_AID_GUIDES: Guide[] = [
     accent: '#f97316',
     indicator: 'Urgent',
     steps: [
-      'Confirm the person is choking and cannot breathe.',
+      'Confirm the person cannot breathe or speak.',
       'Give 5 firm back blows between shoulder blades.',
       'Give 5 abdominal thrusts (Heimlich maneuver).',
-      'Repeat until the object is forced out.',
+      'Repeat the cycle until the object is forced out.',
+      'If they become unconscious, begin CPR.',
+      'Stay with them until medical help arrives.',
     ],
     tutorialUrl: 'https://www.youtube.com/watch?v=7CgtIgSyAiU',
+  },
+  {
+    id: 'heart_attack',
+    title: 'Heart Attack',
+    subtitle: 'Chest pain & discomfort',
+    icon: 'heart-flash',
+    accent: '#e11d48',
+    indicator: 'Critical',
+    steps: [
+      'Call emergency services immediately.',
+      'Have the person sit down and stay calm.',
+      'Loosen any tight clothing around the neck/waist.',
+      'Give 300mg Aspirin to chew (if not allergic).',
+      'Begin CPR if they become unconscious.',
+      'Monitor them closely until help arrives.',
+    ],
+    tutorialUrl: 'https://www.youtube.com/watch?v=gD78rTF0_7Q',
   },
   {
     id: 'bleeding',
@@ -80,7 +100,9 @@ const FIRST_AID_GUIDES: Guide[] = [
       'Apply direct pressure with a clean cloth.',
       'Do not remove blood-soaked layers; add more.',
       'Elevate the wound above heart level.',
-      'Seek emergency help if it doesn\'t stop.',
+      'Apply a tourniquet if bleeding is life-threatening.',
+      'Keep the person warm and treat for shock.',
+      'Monitor until emergency responders take over.',
     ],
     tutorialUrl: 'https://www.youtube.com/watch?v=0VJ18H6VKC0',
   },
@@ -92,12 +114,31 @@ const FIRST_AID_GUIDES: Guide[] = [
     accent: '#8b5cf6',
     indicator: 'Critical',
     steps: [
-      'Face: Ask them to smile. Does one side droop?',
-      'Arms: Can they raise both arms? Does one drift?',
-      'Speech: Is it slurred or strange?',
+      'Face: Ask for a smile. Does one side droop?',
+      'Arms: Raise both arms. Does one drift down?',
+      'Speech: Repeat a simple phrase. Is it slurred?',
       'Time: If any signs are present, call 1990 now.',
+      'Note the exact time when symptoms first began.',
+      'Keep them calm and seated until help arrives.',
     ],
     tutorialUrl: 'https://www.youtube.com/watch?v=9L9I_9m2M7s',
+  },
+  {
+    id: 'allergic',
+    title: 'Allergic Reaction',
+    subtitle: 'Anaphylaxis treatment',
+    icon: 'flower-pollen',
+    accent: '#db2777',
+    indicator: 'Critical',
+    steps: [
+      'Call emergency services immediately.',
+      'Identify the trigger (food, sting, etc.).',
+      'Help them use their adrenaline auto-injector.',
+      'Have them sit up if they have breathing trouble.',
+      'Manage shock by laying them flat with legs raised.',
+      'Monitor for unconsciousness until help arrives.',
+    ],
+    tutorialUrl: 'https://www.youtube.com/watch?v=N6O3f6F2D6Q',
   },
   {
     id: 'burns',
@@ -108,11 +149,47 @@ const FIRST_AID_GUIDES: Guide[] = [
     indicator: 'Medical',
     steps: [
       'Cool under running water for 10-20 mins.',
-      'Remove tight items before swelling starts.',
-      'Cover with sterile film or loose dressing.',
+      'Remove jewelry or tight items before swelling.',
+      'Cover with sterile film or very loose dressing.',
+      'Protect the area from further heat or friction.',
       'Do NOT use ice, butter, or ointments.',
+      'Wait with the casualty until help arrives.',
     ],
     tutorialUrl: 'https://www.youtube.com/watch?v=WX_mCORhMog',
+  },
+  {
+    id: 'poisoning',
+    title: 'Poisoning',
+    subtitle: 'Toxic substance intake',
+    icon: 'skull-crossbones',
+    accent: '#4a044e',
+    indicator: 'Critical',
+    steps: [
+      'Identify the substance (swallowed or inhaled).',
+      'Call emergency services immediately.',
+      'Do NOT induce vomiting unless instructed.',
+      'If on skin, flush with water for 15+ minutes.',
+      'If unconscious, place in the recovery position.',
+      'Stay with them until professional help arrives.',
+    ],
+    tutorialUrl: 'https://www.youtube.com/watch?v=cZpE5X6gZ6M',
+  },
+  {
+    id: 'heatstroke',
+    title: 'Heat Stroke',
+    subtitle: 'Severe hyperthermia',
+    icon: 'thermometer-alert',
+    accent: '#ea580c',
+    indicator: 'Critical',
+    steps: [
+      'Move the person to a cool, shaded area.',
+      'Apply wet cloths or ice packs to neck/armpits.',
+      'Remove as much outer clothing as possible.',
+      'If alert, give small sips of cool water.',
+      'Fan the person to lower their body temperature.',
+      'Remain with them until medical help arrives.',
+    ],
+    tutorialUrl: 'https://www.youtube.com/watch?v=W0S7FvInmxs',
   },
   {
     id: 'snakebite',
@@ -122,11 +199,12 @@ const FIRST_AID_GUIDES: Guide[] = [
     accent: '#10b981',
     indicator: 'Critical',
     steps: [
-      'Keep the person calm and still.',
-      'Remove jewelry or tight clothing.',
-      'Keep the bite area below heart level.',
-      'Do NOT cut the wound or suck out venom.',
-      'Call emergency services immediately.',
+      'Keep the person calm and as still as possible.',
+      'Remove restrictive jewelry or clothing nearby.',
+      'Keep the bite area below the level of the heart.',
+      'Apply a pressure immobilization bandage if available.',
+      'Do NOT cut the wound or try to suck out venom.',
+      'Stay with the person until medical help arrives.',
     ],
     tutorialUrl: 'https://www.youtube.com/watch?v=H7_4jZpZ-qg',
   },
@@ -154,7 +232,7 @@ export default function FirstAid() {
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" translucent={false} hidden={false} />
 
       {/* ── Header ── */}
-      <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? 40 : insets.top + 45 }]}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? 55 : insets.top + 60 }]}>
         <View style={styles.headerTop}>
           <View>
             <Text style={styles.headerTitle}>First Aid Guide</Text>
@@ -165,7 +243,7 @@ export default function FirstAid() {
 
       <ScrollView
         style={styles.scrollContent}
-        contentContainerStyle={{ paddingBottom: 60, paddingTop: 10 }}
+        contentContainerStyle={{ paddingBottom: 60, paddingTop: 0 }}
         showsVerticalScrollIndicator={false}
       >
         {/* ── Attractive AI Assistant Section ── */}
@@ -282,14 +360,14 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 25,
-    paddingBottom: 25,
+    paddingBottom: 20,
     backgroundColor: '#ffffff',
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 0,
   },
   headerTitle: {
     fontSize: 26,
@@ -370,34 +448,38 @@ const styles = StyleSheet.create({
   },
   guideCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 28,
+    borderRadius: 30,
     marginBottom: 16,
     borderWidth: 1,
     borderColor: '#f1f5f9',
-    shadowColor: '#64748b',
-    shadowOpacity: 0.08,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
     shadowRadius: 15,
     shadowOffset: { width: 0, height: 8 },
     elevation: 4,
+    overflow: 'hidden',
   },
   guideCardActive: {
-    borderColor: '#e2e8f0',
-    shadowColor: '#2563eb',
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 8,
+    borderColor: '#3b82f6',
+    borderWidth: 1.5,
+    shadowColor: '#3b82f6',
+    shadowOpacity: 0.1,
+    shadowRadius: 25,
+    elevation: 10,
   },
   guideCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 18,
+    padding: 20,
   },
   guideIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
+    width: 64,
+    height: 64,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.03)',
   },
   guideTextContainer: {
     flex: 1,
@@ -408,25 +490,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   guideTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#0f172a',
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1e293b',
+    letterSpacing: -0.3,
   },
   indicatorBadge: {
-    marginLeft: 8,
+    marginLeft: 10,
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingVertical: 3,
+    borderRadius: 8,
   },
   indicatorText: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: '900',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   guideSubtitle: {
-    fontSize: 12,
-    color: '#94a3b8',
-    marginTop: 1,
+    fontSize: 13,
+    color: '#64748b',
+    marginTop: 2,
+    fontWeight: '500',
   },
   guideCardBody: {
     paddingHorizontal: 20,
@@ -434,6 +519,7 @@ const styles = StyleSheet.create({
   },
   stepRow: {
     flexDirection: 'row',
+    marginBottom: 12,
   },
   stepIndex: {
     width: 20,
@@ -455,10 +541,10 @@ const styles = StyleSheet.create({
   },
   stepText: {
     flex: 1,
-    fontSize: 14,
-    color: '#334155',
-    lineHeight: 22,
-    paddingVertical: 6,
+    fontSize: 15,
+    color: '#475569',
+    lineHeight: 24,
+    paddingVertical: 4,
     fontWeight: '500',
   },
   videoButton: {
