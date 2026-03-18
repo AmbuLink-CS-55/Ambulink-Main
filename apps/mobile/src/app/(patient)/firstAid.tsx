@@ -253,7 +253,7 @@ export default function FirstAid() {
           style={styles.aiBanner}
         >
           <LinearGradient
-            colors={['#1e3a8a', '#2563eb']}
+            colors={['#000000', '#000000']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.aiBannerGradient}
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     marginTop: 10,
     elevation: 4,
-    shadowColor: '#1e3a8a',
+    shadowColor: '#000000',
     shadowOpacity: 0.1,
     shadowRadius: 10,
   },
