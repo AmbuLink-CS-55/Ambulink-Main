@@ -1,9 +1,7 @@
 /**
  * firstAid.tsx
  *
- * A premium, clean First Aid Guide screen for AmbuLink.
- * Features a light, minimalist aesthetic with high-end typography
- * and subtle shadows for a modern, attractive look.
+ * A premium, clean First Aid Guide screen for AmbuLink using Tailwind CSS.
  */
 
 import React, { useState } from 'react';
@@ -13,9 +11,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
-  TextInput,
   Dimensions,
-  StyleSheet,
   StatusBar,
   Platform,
 } from 'react-native';
@@ -228,73 +224,97 @@ export default function FirstAid() {
   };
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" translucent={false} hidden={false} />
 
-      {/* ── Header ── */}
-      <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? 55 : insets.top + 60 }]}>
-        <View style={styles.headerTop}>
+      {/* Header */}
+      <View 
+        className="px-6 pb-5 bg-white" 
+        style={{ paddingTop: Platform.OS === 'android' ? 55 : insets.top + 60 }}
+      >
+        <View className="flex-row items-center justify-between">
           <View>
-            <Text style={styles.headerTitle}>First Aid Guide</Text>
-            <Text style={styles.headerSubtitle}>Simple steps for any emergency</Text>
+            <Text className="text-3xl font-black text-slate-900 tracking-tighter" style={{ fontFamily: Platform.OS === 'ios' ? 'Avenir Next' : undefined }}>
+              First Aid Guide
+            </Text>
+            <Text className="text-sm text-slate-500 font-medium mt-0.5">
+              Simple steps for any emergency
+            </Text>
           </View>
         </View>
       </View>
 
       <ScrollView
-        style={styles.scrollContent}
+        className="flex-1 px-6"
         contentContainerStyle={{ paddingBottom: 60, paddingTop: 0 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Attractive AI Assistant Section ── */}
+        {/* AI Assistant Banner (Black Theme) */}
         <TouchableOpacity
           onPress={() => setIsChatVisible(true)}
           activeOpacity={0.9}
-          style={styles.aiBanner}
+          className="rounded-3xl overflow-hidden mb-8 mt-2 shadow-xl shadow-black/10"
+          style={{
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.1,
+            shadowRadius: 10,
+            elevation: 8,
+          }}
         >
           <LinearGradient
             colors={['#000000', '#000000']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={styles.aiBannerGradient}
+            className="flex-row items-center justify-between p-5"
           >
-            <View style={styles.aiBannerLeft}>
-              <View style={styles.aiIconBadge}>
+            <View className="flex-row items-center">
+              <View className="w-11 h-11 rounded-2xl bg-white/10 items-center justify-center">
                 <MaterialCommunityIcons name="robot" size={26} color="white" />
               </View>
-              <View style={{ marginLeft: 15 }}>
-                <Text style={styles.aiBannerTitle}>AmbuLink AI Assistant</Text>
-                <Text style={styles.aiBannerSub}>Ask anything for instant help</Text>
+              <View className="ml-4">
+                <Text className="text-white text-lg font-extrabold">AmbuLink AI Assistant</Text>
+                <Text className="text-white/80 text-xs font-semibold mt-0.5">Ask anything for instant help</Text>
               </View>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={20} color="white" style={{ opacity: 0.7 }} />
+            <MaterialCommunityIcons name="chevron-right" size={20} color="white" className="opacity-70" />
           </LinearGradient>
         </TouchableOpacity>
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Essential Guides</Text>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{FIRST_AID_GUIDES.length} Items</Text>
+        <View className="flex-row items-center justify-between mb-4">
+          <Text className="text-lg font-black text-slate-800">Essential Guides</Text>
+          <View className="bg-slate-100 px-3 py-1 rounded-xl">
+            <Text className="text-[10px] text-slate-500 font-black uppercase tracking-wider">
+              {FIRST_AID_GUIDES.length} Items
+            </Text>
           </View>
         </View>
 
-        {/* ── Modern Guide Cards ── */}
+        {/* Guide Cards */}
         {FIRST_AID_GUIDES.map((guide) => {
           const isExpanded = expandedId === guide.id;
           return (
             <View
               key={guide.id}
-              style={[
-                styles.guideCard,
-                isExpanded && styles.guideCardActive
-              ]}
+              className={`bg-white rounded-[30px] mb-4 border border-slate-50 overflow-hidden ${
+                isExpanded ? 'border-blue-500 border-[1.5px]' : ''
+              }`}
+              style={{
+                shadowColor: isExpanded ? '#3b82f6' : '#000',
+                shadowOffset: { width: 0, height: isExpanded ? 10 : 4 },
+                shadowOpacity: isExpanded ? 0.15 : 0.05,
+                shadowRadius: isExpanded ? 20 : 10,
+                elevation: isExpanded ? 10 : 4,
+              }}
             >
               <TouchableOpacity
-                style={styles.guideCardHeader}
+                className="flex-row items-center p-5"
                 onPress={() => toggleExpand(guide.id)}
                 activeOpacity={0.7}
               >
-                <View style={[styles.guideIconContainer, { backgroundColor: guide.accent + '10' }]}>
+                <View 
+                  className="w-16 h-16 rounded-3xl items-center justify-center border border-black/5"
+                  style={{ backgroundColor: guide.accent + '10' }}
+                >
                   <MaterialCommunityIcons
                     name={guide.icon as any}
                     size={26}
@@ -302,14 +322,22 @@ export default function FirstAid() {
                   />
                 </View>
 
-                <View style={styles.guideTextContainer}>
-                  <View style={styles.guideTitleRow}>
-                    <Text style={styles.guideTitle}>{guide.title}</Text>
-                    <View style={[styles.indicatorBadge, { backgroundColor: guide.accent + '15' }]}>
-                      <Text style={[styles.indicatorText, { color: guide.accent }]}>{guide.indicator}</Text>
+                <View className="flex-1 ml-4">
+                  <View className="flex-row items-center">
+                    <Text className="text-lg font-black text-slate-800 tracking-tight">{guide.title}</Text>
+                    <View 
+                      className="ml-2 px-2 py-0.5 rounded-lg"
+                      style={{ backgroundColor: guide.accent + '15' }}
+                    >
+                      <Text 
+                        className="text-[10px] font-black uppercase tracking-tight"
+                        style={{ color: guide.accent }}
+                      >
+                        {guide.indicator}
+                      </Text>
                     </View>
                   </View>
-                  <Text style={styles.guideSubtitle}>{guide.subtitle}</Text>
+                  <Text className="text-sm text-slate-500 font-medium mt-0.5">{guide.subtitle}</Text>
                 </View>
 
                 <MaterialCommunityIcons
@@ -320,23 +348,31 @@ export default function FirstAid() {
               </TouchableOpacity>
 
               {isExpanded && (
-                <View style={styles.guideCardBody}>
+                <View className="px-5 pb-6">
                   {guide.steps.map((step, index) => (
-                    <View key={index} style={styles.stepRow}>
-                      <View style={styles.stepIndex}>
-                        <View style={[styles.stepDot, { backgroundColor: guide.accent }]} />
-                        {index !== guide.steps.length - 1 && <View style={styles.stepConnector} />}
+                    <View key={index} className="flex-row mb-3">
+                      <View className="w-5 items-center mr-3">
+                        <View 
+                          className="w-2 h-2 rounded-full mt-2.5" 
+                          style={{ backgroundColor: guide.accent }}
+                        />
+                        {index !== guide.steps.length - 1 && (
+                          <View 
+                            className="w-[1.5px] flex-1 bg-slate-100 my-1" 
+                            style={{ minHeight: 15 }}
+                          />
+                        )}
                       </View>
-                      <Text style={styles.stepText}>{step}</Text>
+                      <Text className="flex-1 text-[15px] text-slate-600 leading-6 py-1 font-medium">{step}</Text>
                     </View>
                   ))}
 
                   <TouchableOpacity
                     onPress={() => Linking.openURL(guide.tutorialUrl)}
-                    style={styles.videoButton}
+                    className="flex-row items-center justify-center mt-4 py-3 rounded-2xl bg-slate-50"
                   >
                     <MaterialCommunityIcons name="play-circle" size={18} color="#1e3a8a" />
-                    <Text style={styles.videoButtonText}>Watch Tutorial</Text>
+                    <Text className="text-sm font-black text-blue-900 ml-2">Watch Tutorial</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -352,214 +388,3 @@ export default function FirstAid() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
-  header: {
-    paddingHorizontal: 25,
-    paddingBottom: 20,
-    backgroundColor: '#ffffff',
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 0,
-  },
-  headerTitle: {
-    fontSize: 26,
-    fontWeight: '900',
-    color: '#0f172a',
-    letterSpacing: -0.5,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#64748b',
-    fontWeight: '500',
-    marginTop: 2,
-  },
-  scrollContent: {
-    flex: 1,
-    paddingHorizontal: 25,
-  },
-  aiBanner: {
-    borderRadius: 24,
-    overflow: 'hidden',
-    marginBottom: 30,
-    marginTop: 10,
-    elevation: 4,
-    shadowColor: '#000000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-  },
-  aiBannerGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-  },
-  aiBannerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  aiIconBadge: {
-    width: 46,
-    height: 46,
-    borderRadius: 15,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  aiBannerTitle: {
-    color: 'white',
-    fontSize: 17,
-    fontWeight: '800',
-  },
-  aiBannerSub: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 12,
-    fontWeight: '500',
-    marginTop: 2,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 15,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#1e293b',
-  },
-  badge: {
-    backgroundColor: '#f1f5f9',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  badgeText: {
-    fontSize: 10,
-    color: '#64748b',
-    fontWeight: '800',
-  },
-  guideCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 30,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
-    overflow: 'hidden',
-  },
-  guideCardActive: {
-    borderColor: '#3b82f6',
-    borderWidth: 1.5,
-    shadowColor: '#3b82f6',
-    shadowOpacity: 0.1,
-    shadowRadius: 25,
-    elevation: 10,
-  },
-  guideCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-  },
-  guideIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.03)',
-  },
-  guideTextContainer: {
-    flex: 1,
-    marginLeft: 15,
-  },
-  guideTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  guideTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#1e293b',
-    letterSpacing: -0.3,
-  },
-  indicatorBadge: {
-    marginLeft: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  indicatorText: {
-    fontSize: 10,
-    fontWeight: '900',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  guideSubtitle: {
-    fontSize: 13,
-    color: '#64748b',
-    marginTop: 2,
-    fontWeight: '500',
-  },
-  guideCardBody: {
-    paddingHorizontal: 20,
-    paddingBottom: 22,
-  },
-  stepRow: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-  stepIndex: {
-    width: 20,
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  stepDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginTop: 10,
-  },
-  stepConnector: {
-    width: 2,
-    flex: 1,
-    backgroundColor: '#f1f5f9',
-    marginVertical: 4,
-    minHeight: 20,
-  },
-  stepText: {
-    flex: 1,
-    fontSize: 15,
-    color: '#475569',
-    lineHeight: 24,
-    paddingVertical: 4,
-    fontWeight: '500',
-  },
-  videoButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 15,
-    paddingVertical: 12,
-    borderRadius: 16,
-    backgroundColor: '#f1f5f9',
-  },
-  videoButtonText: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#1e3a8a',
-    marginLeft: 8,
-  },
-});
