@@ -17,6 +17,7 @@ cp .env_example .env
 ```
 
 2. Fill these required keys in root `.env`:
+
 - `API_SERVER_URL`
 - `WS_SERVER_URL`
 - `PROVIDER_ID`
@@ -27,6 +28,12 @@ cp .env_example .env
 - `APP_STAGE`
 - `DATABASE_URL`
 
+Required for Docker/Dokploy deployment:
+
+- `JWT_SECRET` (minimum 32 characters)
+- `VITE_API_SERVER_URL`
+- `VITE_WS_SERVER_URL`
+
 3. Generate app env files:
 
 ```sh
@@ -34,11 +41,13 @@ npm run env:sync
 ```
 
 Generated files:
+
 - `apps/mobile/.env`
 - `apps/client-dashboard/.env`
 - `apps/backend/.env`
 
 Notes:
+
 - Do not hand-edit generated app `.env` files; update root `.env` and re-run `npm run env:sync`.
 - `npm run dev` runs `env:sync` automatically before starting apps.
 
@@ -60,6 +69,12 @@ Apply schema and seed:
 ```sh
 npm run migrate
 npm run seed
+```
+
+Deployment:
+
+```sh
+npm run deploy:init-db
 ```
 
 ## 4) Run apps
@@ -100,4 +115,23 @@ Single-command local runner (starts DB container, migrates, seeds, then runs int
 
 ```sh
 npm run test:booking-lifecycle
+```
+
+## 6) Dokploy
+
+Use Docker Compose deployment and point to:
+
+`deploy/compose/docker-compose.dokploy.yml`
+
+Required environment variables in Dokploy:
+
+- `DATABASE_URL`
+- `JWT_SECRET` (minimum 32 characters)
+- `VITE_API_SERVER_URL`
+- `VITE_WS_SERVER_URL`
+
+Then initialize the database once after first deploy:
+
+```sh
+npm run deploy:init-db
 ```

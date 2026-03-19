@@ -8,8 +8,8 @@ services:
       NODE_ENV: production
       APP_STAGE: prod
       PORT: 3000
-      DATABASE_URL: ${DATABASE_URL}
-      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-24h}
       AUTH_DISABLED: ${AUTH_DISABLED:-false}
       FRONTEND_URL: ${FRONTEND_URL}
@@ -34,8 +34,8 @@ services:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.dashboard
       args:
-        VITE_API_SERVER_URL: ${VITE_API_SERVER_URL}
-        VITE_WS_SERVER_URL: ${VITE_WS_SERVER_URL}
+        VITE_API_SERVER_URL: ${VITE_API_SERVER_URL:?VITE_API_SERVER_URL is required}
+        VITE_WS_SERVER_URL: ${VITE_WS_SERVER_URL:?VITE_WS_SERVER_URL is required}
         VITE_DISPATCHER_ID: ${VITE_DISPATCHER_ID:-}
         VITE_PROVIDER_ID: ${VITE_PROVIDER_ID:-}
     restart: unless-stopped
