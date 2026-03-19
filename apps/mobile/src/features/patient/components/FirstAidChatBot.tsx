@@ -16,8 +16,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { env } from "@/../env";
 
-const GEMINI_API_KEY = env.EXPO_PUBLIC_GEMINI_API_KEY || "AIzaSyDzg2QTPHIcGbN5dhUE9tOWg7la9H5xckM";
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_API_KEY = env.EXPO_PUBLIC_GEMINI_API_KEY;
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 type Message = {
   id: string;
@@ -59,6 +59,18 @@ export default function FirstAidChatBot({ visible, onClose }: Props) {
 
   const handleSend = async () => {
     if (inputText.trim() === '') return;
+
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'your_gemini_api_key_here') {
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        text: "My API key is missing or expired! Please obtain a new Gemini API Key from Google AI Studio and configure it in the `.env` file as EXPO_PUBLIC_GEMINI_API_KEY.",
+        sender: 'bot',
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      setInputText('');
+      return;
+    }
 
     const userTextInput = inputText.trim();
     const userMessage: Message = {
