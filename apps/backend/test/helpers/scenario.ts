@@ -50,7 +50,12 @@ export class ScenarioTimeline {
 
 type SocketActor = "patient" | "driver" | "dispatcher" | "emt";
 
-export function connectActorSocket(baseUrl: string, actor: SocketActor, actorId: string) {
+export function connectActorSocket(
+  baseUrl: string,
+  actor: SocketActor,
+  actorId: string,
+  accessToken?: string
+) {
   const namespace =
     actor === "patient"
       ? "/patient"
@@ -71,7 +76,7 @@ export function connectActorSocket(baseUrl: string, actor: SocketActor, actorId:
     transports: ["websocket"],
     forceNew: true,
     reconnection: false,
-    auth: { [key]: actorId },
+    auth: accessToken ? { [key]: actorId, accessToken } : { [key]: actorId },
   });
   return socket;
 }

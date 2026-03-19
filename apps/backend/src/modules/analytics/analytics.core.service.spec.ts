@@ -121,6 +121,21 @@ describe("AnalyticsCoreService", () => {
     expect(zones.responseOrigins[0]?.count).toBe(2);
   });
 
+  it("computes insights funnel and cancellation aggregates", async () => {
+    const { service } = setup();
+    const insights = await service.getInsightsAnalytics("dispatcher-1");
+
+    expect(insights.funnel.find((entry) => entry.stage === "REQUESTED")?.count).toBe(2);
+    expect(insights.funnel.find((entry) => entry.stage === "COMPLETED")?.count).toBe(1);
+    expect(insights.funnel.find((entry) => entry.stage === "CANCELLED")?.count).toBe(1);
+    expect(insights.cancellationReasons[0]).toEqual(
+      expect.objectContaining({
+        reason: "Patient unavailable",
+        count: 1,
+      })
+    );
+  });
+
   it("generates booking report PDF with expected section labels", async () => {
     const { service, analyticsRepository } = setup();
     const pdf = await service.createAnalyticsReportPdf(

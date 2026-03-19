@@ -19,7 +19,7 @@
     "test": "NODE_OPTIONS='--localstorage-file=/tmp/ambulink-jest-localstorage' jest",
     "test:unit": "NODE_OPTIONS='--localstorage-file=/tmp/ambulink-jest-localstorage' jest --runInBand",
     "test:watch": "NODE_OPTIONS='--localstorage-file=/tmp/ambulink-jest-localstorage' jest --watch",
-    "test:cov": "NODE_OPTIONS='--localstorage-file=/tmp/ambulink-jest-localstorage' jest --coverage",
+    "test:cov": "NODE_OPTIONS='--localstorage-file=/tmp/ambulink-jest-localstorage' jest",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "NODE_OPTIONS='--experimental-vm-modules --localstorage-file=/tmp/ambulink-jest-localstorage' jest --config ./test/jest-e2e.json",
     "test:integration": "NODE_OPTIONS='--experimental-vm-modules --localstorage-file=/tmp/ambulink-jest-localstorage' jest --config ./test/jest-e2e.json --runInBand --testPathPatterns=booking-details-notes.e2e-spec.ts --testPathPatterns=booking-repository.e2e-spec.ts",

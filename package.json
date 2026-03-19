@@ -21,6 +21,9 @@
     "test:booking-lifecycle": "bash tools/run-booking-scenarios.sh",
     "migrate": "npm run migrate --prefix apps/backend",
     "seed": "npm run seed --prefix apps/backend",
+    "deploy:migrate": "npm run migrate:apply --prefix apps/backend",
+    "deploy:seed": "npm run seed --prefix apps/backend",
+    "deploy:init-db": "npm run deploy:migrate && npm run deploy:seed",
     "studio": "npm run studio --prefix apps/backend",
     "loco": "npm run lint & npm run format & npm run build"
   },

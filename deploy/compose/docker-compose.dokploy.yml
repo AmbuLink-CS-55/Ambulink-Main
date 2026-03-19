@@ -8,8 +8,8 @@ services:
       NODE_ENV: production
       APP_STAGE: prod
       PORT: 3000
-      DATABASE_URL: ${DATABASE_URL}
-      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-24h}
       AUTH_DISABLED: ${AUTH_DISABLED:-false}
       FRONTEND_URL: ${FRONTEND_URL}
@@ -20,28 +20,22 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
     volumes:
       - booking_media_data:/data/booking-media
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 10
-      start_period: 20s
     ports:
-      - "3000:3000"
+      - "${BACKEND_HOST_PORT:-3001}:3000"
 
   dashboard:
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.dashboard
       args:
-        VITE_API_SERVER_URL: ${VITE_API_SERVER_URL}
-        VITE_WS_SERVER_URL: ${VITE_WS_SERVER_URL}
+        VITE_API_SERVER_URL: ${VITE_API_SERVER_URL:?VITE_API_SERVER_URL is required}
+        VITE_WS_SERVER_URL: ${VITE_WS_SERVER_URL:?VITE_WS_SERVER_URL is required}
         VITE_DISPATCHER_ID: ${VITE_DISPATCHER_ID:-}
         VITE_PROVIDER_ID: ${VITE_PROVIDER_ID:-}
     restart: unless-stopped
     depends_on:
       backend:
-        condition: service_healthy
+        condition: service_started
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
       interval: 15s
