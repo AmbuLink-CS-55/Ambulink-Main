@@ -8,6 +8,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import MapOptions from "@/features/patient/components/MapOptions";
 import PatientChatModal from "@/features/patient/components/PatientChatModal";
 import UserMap from "@/features/patient/components/UserMap";
@@ -37,6 +38,7 @@ import {
   loadActivePatientBookingId,
   saveActivePatientBookingId,
 } from "@/common/utils/patientBookingStorage";
+
 const PATIENT_BOOKING_TIMEOUT_MS = 40000;
 
 export default function Map() {
@@ -311,6 +313,50 @@ export default function Map() {
     }
   };
 
+  const handleCancelSearch = () => {
+    Alert.alert(
+      "Cancel Search",
+      "Stop looking for an ambulance?",
+      [
+        { text: "No", style: "cancel" },
+        {
+          text: "Yes, Stop",
+          style: "destructive",
+          onPress: async () => {
+            // Clear the booking timeout so the "taking too long" alert doesn't fire
+            if (bookingTimeoutRef.current) {
+              clearTimeout(bookingTimeoutRef.current);
+              bookingTimeoutRef.current = null;
+            }
+            // Immediately reset the searching state
+            setIsBooking(false);
+            try {
+              await sendPatientCancel({
+                reason: "Cancelled search by patient",
+              });
+            } catch (error) {
+              setIsBooking(true);
+              if (bookingTimeoutRef.current) {
+                clearTimeout(bookingTimeoutRef.current);
+              }
+              bookingTimeoutRef.current = setTimeout(() => {
+                setIsBooking(false);
+                Alert.alert(
+                  "Request Taking Longer",
+                  "No ambulance is available right now. Please try again shortly."
+                );
+              }, PATIENT_BOOKING_TIMEOUT_MS);
+              Alert.alert(
+                "Cancel Failed",
+                error instanceof Error ? error.message : "Please try again."
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleCancel = () => {
     Alert.alert("Cancel Booking", "Are you sure?", [
       { text: "No", style: "cancel" },
@@ -319,6 +365,11 @@ export default function Map() {
         style: "destructive",
         onPress: async () => {
           setIsCancelling(true);
+          setIsBooking(false);
+          if (bookingTimeoutRef.current) {
+            clearTimeout(bookingTimeoutRef.current);
+            bookingTimeoutRef.current = null;
+          }
           if (cancelTimeoutRef.current) {
             clearTimeout(cancelTimeoutRef.current);
           }
@@ -423,8 +474,17 @@ export default function Map() {
       }
     >
       {/* SOS button */}
-      <TouchableOpacity style={styles.sosButton} onPress={callEmergency}>
-        <Text style={styles.sosText}>SOS</Text>
+      <TouchableOpacity
+        style={styles.sosContainer}
+        onPress={callEmergency}
+        activeOpacity={0.8}
+      >
+        <LinearGradient
+          colors={["#ef4444", "#b91c1c"]}
+          style={styles.sosButton}
+        >
+          <Text style={styles.sosText}>SOS</Text>
+        </LinearGradient>
       </TouchableOpacity>
 
       <MapOptions
@@ -433,6 +493,7 @@ export default function Map() {
         booking={booking}
         onHelpRequest={handleHelpRequest}
         cancelRequest={handleCancel}
+        onCancelSearch={handleCancelSearch}
         isCancelling={isCancelling}
         isBooking={isBooking}
         completedAt={completedAt}
@@ -449,24 +510,30 @@ export default function Map() {
   );
 }
 
-// Sos butoon style
+// Styles
 const styles = StyleSheet.create({
-  sosButton: {
+  sosContainer: {
     position: "absolute",
     top: 50,
     right: 20,
-    width: 55,
-    height: 55,
-    borderRadius: 28,
-    backgroundColor: "red",
+    zIndex: 999,
+  },
+  sosButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 999,
-    elevation: 6,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
   },
   sosText: {
     color: "white",
-    fontWeight: "bold",
-    fontSize: 16,
+    fontWeight: "900",
+    fontSize: 18,
+    letterSpacing: 1,
   },
 });
