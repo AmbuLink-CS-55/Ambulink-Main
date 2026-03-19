@@ -2,7 +2,6 @@ import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
-  AnalyticsAiResponse,
   AnalyticsInsights,
   AnalyticsResponse,
   AnalyticsZones,
@@ -45,19 +44,6 @@ export const useAnalyticsInsights = (params: AnalyticsQuery) => {
     staleTime: 1000 * 60,
     queryFn: async () => {
       const { data } = await api.get<AnalyticsInsights>("/analytics/insights", { params });
-      return data;
-    },
-  });
-};
-
-export const useAnalyticsAiChat = () => {
-  return useMutation({
-    mutationFn: async (payload: {
-      question: string;
-      from?: string;
-      to?: string;
-    }) => {
-      const { data } = await api.post<AnalyticsAiResponse>("/analytics/ai-chat", payload);
       return data;
     },
   });
