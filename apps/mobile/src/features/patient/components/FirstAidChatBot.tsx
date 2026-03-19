@@ -9,11 +9,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  StyleSheet,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { env } from "@/../env";
 
 const GEMINI_API_KEY = env.EXPO_PUBLIC_GEMINI_API_KEY;
@@ -149,20 +147,20 @@ export default function FirstAidChatBot({ visible, onClose }: Props) {
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
-      <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View className="flex-1 bg-slate-50" style={{ paddingTop: insets.top }}>
         {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.backButton}>
+        <View className="flex-row items-center justify-between px-4 py-3 border-b border-slate-100 bg-white">
+          <TouchableOpacity onPress={onClose} className="w-10 h-10 items-center justify-center">
             <MaterialCommunityIcons name="chevron-left" size={32} color="#1e3a8a" />
           </TouchableOpacity>
           <View>
-            <Text style={styles.headerTitle}>First Aid Assistant</Text>
-            <View style={styles.statusRow}>
-              <View style={styles.statusDot} />
-              <Text style={styles.statusText}>Always active</Text>
+            <Text className="text-lg font-extrabold text-slate-900 text-center">First Aid Assistant</Text>
+            <View className="flex-row items-center justify-center mt-0.5">
+              <View className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5" />
+              <Text className="text-[11px] font-semibold text-slate-500 uppercase">Always active</Text>
             </View>
           </View>
-          <View style={{ width: 40 }} />
+          <View className="w-10" />
         </View>
 
         {/* Chat Area */}
@@ -175,35 +173,33 @@ export default function FirstAidChatBot({ visible, onClose }: Props) {
           {messages.map((msg) => (
             <View
               key={msg.id}
-              style={[
-                styles.messageWrapper,
-                msg.sender === 'user' ? styles.userWrapper : styles.botWrapper,
-              ]}
+              className={`flex-row mb-4 max-w-[85%] ${
+                msg.sender === 'user' ? 'self-end justify-end' : 'self-start'
+              }`}
             >
               {msg.sender === 'bot' && (
-                <View style={styles.botAvatar}>
+                <View className="w-8 h-8 rounded-full bg-black items-center justify-center mr-2 mt-1">
                   <MaterialCommunityIcons name="robot" size={20} color="white" />
                 </View>
               )}
               <View
-                style={[
-                  styles.messageBubble,
-                  msg.sender === 'user' ? styles.userBubble : styles.botBubble,
-                ]}
+                className={`px-4 py-2.5 rounded-[20px] shadow-sm shadow-black/5 elevation-1 ${
+                  msg.sender === 'user'
+                    ? 'bg-black rounded-br-sm'
+                    : 'bg-white rounded-bl-sm border border-slate-100'
+                }`}
               >
                 <Text
-                  style={[
-                    styles.messageText,
-                    msg.sender === 'user' ? styles.userText : styles.botText,
-                  ]}
+                  className={`text-[15px] leading-[22px] ${
+                    msg.sender === 'user' ? 'text-white' : 'text-slate-700'
+                  }`}
                 >
                   {msg.text}
                 </Text>
                 <Text
-                  style={[
-                    styles.timestamp,
-                    msg.sender === 'user' ? styles.userTimestamp : styles.botTimestamp,
-                  ]}
+                  className={`text-[10px] mt-1 self-end ${
+                    msg.sender === 'user' ? 'text-white/70' : 'text-slate-400'
+                  }`}
                 >
                   {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Text>
@@ -211,11 +207,11 @@ export default function FirstAidChatBot({ visible, onClose }: Props) {
             </View>
           ))}
           {isTyping && (
-            <View style={[styles.messageWrapper, styles.botWrapper]}>
-              <View style={styles.botAvatar}>
+            <View className="flex-row mb-4 max-w-[85%] self-start">
+              <View className="w-8 h-8 rounded-full bg-black items-center justify-center mr-2 mt-1">
                 <MaterialCommunityIcons name="robot" size={20} color="white" />
               </View>
-              <View style={[styles.messageBubble, styles.botBubble, { paddingVertical: 12 }]}>
+              <View className="px-4 py-3 rounded-[20px] shadow-sm shadow-black/5 elevation-1 bg-white rounded-bl-sm border border-slate-100 justify-center">
                 <ActivityIndicator size="small" color="#1e3a8a" />
               </View>
             </View>
@@ -227,10 +223,15 @@ export default function FirstAidChatBot({ visible, onClose }: Props) {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
-          <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-            <View style={styles.inputWrapper}>
+          <View
+            className="px-4 pt-3 bg-white border-t border-slate-100"
+            style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+          >
+            <View className="flex-row items-center bg-slate-100 rounded-full px-4 py-2">
               <TextInput
-                style={styles.input}
+                className={`flex-1 text-[15px] text-slate-900 max-h-[100px] ${
+                  Platform.OS === 'ios' ? 'pt-2' : 'pt-1 pb-1'
+                }`}
                 placeholder="Ask about first aid..."
                 placeholderTextColor="#94a3b8"
                 value={inputText}
@@ -240,10 +241,9 @@ export default function FirstAidChatBot({ visible, onClose }: Props) {
               <TouchableOpacity
                 onPress={handleSend}
                 disabled={inputText.trim() === ''}
-                style={[
-                  styles.sendButton,
-                  inputText.trim() === '' && { backgroundColor: '#e2e8f0' },
-                ]}
+                className={`w-9 h-9 rounded-full items-center justify-center ml-2 ${
+                  inputText.trim() === '' ? 'bg-slate-200' : 'bg-black'
+                }`}
               >
                 <MaterialCommunityIcons
                   name="send"
@@ -258,145 +258,3 @@ export default function FirstAidChatBot({ visible, onClose }: Props) {
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-    backgroundColor: 'white',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0f172a',
-    textAlign: 'center',
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#22c55e',
-    marginRight: 6,
-  },
-  statusText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748b',
-    textTransform: 'uppercase',
-  },
-  messageWrapper: {
-    flexDirection: 'row',
-    marginBottom: 16,
-    maxWidth: '85%',
-  },
-  userWrapper: {
-    alignSelf: 'flex-end',
-    justifyContent: 'flex-end',
-  },
-  botWrapper: {
-    alignSelf: 'flex-start',
-  },
-  botAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#000000',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-    marginTop: 4,
-  },
-  messageBubble: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-  },
-  userBubble: {
-    backgroundColor: '#000000',
-    borderBottomRightRadius: 4,
-  },
-  botBubble: {
-    backgroundColor: 'white',
-    borderBottomLeftRadius: 4,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-  },
-  messageText: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  userText: {
-    color: 'white',
-  },
-  botText: {
-    color: '#334155',
-  },
-  timestamp: {
-    fontSize: 10,
-    marginTop: 4,
-    alignSelf: 'flex-end',
-  },
-  userTimestamp: {
-    color: 'rgba(255,255,255,0.7)',
-  },
-  botTimestamp: {
-    color: '#94a3b8',
-  },
-  inputContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    backgroundColor: 'white',
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: '#0f172a',
-    maxHeight: 100,
-    paddingTop: Platform.OS === 'ios' ? 8 : 4,
-  },
-  sendButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#000000',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 8,
-  },
-});
