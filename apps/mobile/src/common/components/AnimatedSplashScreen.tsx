@@ -498,7 +498,7 @@ export function AnimatedSplashScreen({ onAnimationDone }: { onAnimationDone: () 
             <Animated.Text className="text-[48px] font-black tracking-[1.5px] text-[#1e3a8a]">
               AMBU
             </Animated.Text>
-            <Animated.Text className="text-[48px] font-black tracking-[1.5px] text-[#ef4444]">
+            <Animated.Text className="text-[48px] font-black tracking-[1.5px] text-[#ff2d55]">
               LINK
             </Animated.Text>
           </View>
