@@ -31,4 +31,4 @@ RUN mkdir -p /data/booking-media && chown -R nestjs:nodejs /data/booking-media
 USER nestjs
 EXPOSE 3000
 
-CMD ["node", "apps/backend/dist/main.js"]
+CMD ["node", "apps/backend/dist/src/main.js"]

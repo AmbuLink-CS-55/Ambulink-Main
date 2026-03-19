@@ -86,6 +86,9 @@ describe("DriverEventsService eta notifications", () => {
       ([arg]) => arg.event === "booking:eta-updated"
     );
     expect(firstEtaEvents.length).toBeGreaterThan(0);
+    const firstDriverEtaEvent = firstEtaEvents.find(([arg]) => arg.type === "realtime.driver");
+    expect(firstDriverEtaEvent?.[0].payload.previousEtaMinutes).toBeNull();
+    expect(typeof firstDriverEtaEvent?.[0].payload.etaMinutes).toBe("number");
 
     eventBus.publish.mockClear();
 
@@ -106,5 +109,58 @@ describe("DriverEventsService eta notifications", () => {
       ([arg]) => arg.event === "booking:eta-updated"
     );
     expect(thirdEtaEvents.length).toBeGreaterThan(0);
+    const thirdDriverEtaEvent = thirdEtaEvents.find(([arg]) => arg.type === "realtime.driver");
+    expect(typeof thirdDriverEtaEvent?.[0].payload.previousEtaMinutes).toBe("number");
+  });
+
+  it("switches ETA destination from pickup to hospital based on booking status", async () => {
+    const { service, bookingService, eventBus } = setup();
+
+    bookingService.getOngoingBookingDispatchInfoForDriver.mockResolvedValue({
+      bookingId: "booking-1",
+      patientId: "patient-1",
+      dispatcherId: "dispatcher-1",
+    });
+
+    bookingService.buildAssignedBookingPayload
+      .mockResolvedValueOnce({
+        bookingId: "booking-1",
+        status: "ASSIGNED",
+        driver: { id: "driver-1", location: { x: 80.0, y: 7.0 } },
+        patient: { id: "patient-1", location: { x: 80.5, y: 7.5 } },
+        pickupLocation: { x: 80.5, y: 7.5 },
+        hospital: { id: "hospital-1", location: { x: 80.01, y: 7.01 } },
+        provider: { id: "provider-1", name: "Provider" },
+      })
+      .mockResolvedValueOnce({
+        bookingId: "booking-1",
+        status: "ARRIVED",
+        driver: { id: "driver-1", location: { x: 80.0, y: 7.0 } },
+        patient: { id: "patient-1", location: { x: 80.5, y: 7.5 } },
+        pickupLocation: { x: 80.5, y: 7.5 },
+        hospital: { id: "hospital-1", location: { x: 81.0, y: 8.0 } },
+        provider: { id: "provider-1", name: "Provider" },
+      });
+
+    const nowSpy = jest.spyOn(Date, "now");
+    nowSpy.mockReturnValue(100_000);
+    await service.updateLocation("driver-1", { x: 80.0, y: 7.0 });
+
+    const firstDriverEtaEvent = eventBus.publish.mock.calls
+      .map(([evt]) => evt)
+      .find((evt) => evt.event === "booking:eta-updated" && evt.type === "realtime.driver");
+    expect(firstDriverEtaEvent).toBeDefined();
+    const etaToPickup = firstDriverEtaEvent.payload.etaMinutes;
+
+    eventBus.publish.mockClear();
+
+    nowSpy.mockReturnValue(140_000);
+    await service.updateLocation("driver-1", { x: 80.0, y: 7.0 });
+
+    const secondDriverEtaEvent = eventBus.publish.mock.calls
+      .map(([evt]) => evt)
+      .find((evt) => evt.event === "booking:eta-updated" && evt.type === "realtime.driver");
+    expect(secondDriverEtaEvent).toBeDefined();
+    expect(secondDriverEtaEvent.payload.etaMinutes).toBeGreaterThan(etaToPickup);
   });
 });
