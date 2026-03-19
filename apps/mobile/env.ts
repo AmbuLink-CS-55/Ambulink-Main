@@ -3,6 +3,7 @@ import { z } from "zod";
 const envSchema = z.object({
   EXPO_PUBLIC_API_SERVER_URL: z.string().url("EXPO_PUBLIC_API_SERVER_URL must be a valid URL"),
   EXPO_PUBLIC_WS_SERVER_URL: z.string().url("EXPO_PUBLIC_WS_SERVER_URL must be a valid URL"),
+  EXPO_PUBLIC_GEMINI_API_KEY: z.string().optional(),
   EXPO_PUBLIC_APP_STAGE: z.enum(["dev", "prod", "test"]).default("dev"),
 });
 
