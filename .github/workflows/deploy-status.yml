@@ -1,0 +1,100 @@
+name: Deploy (Dokploy)
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: dokploy-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Trigger and wait for Dokploy deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Trigger Dokploy compose deploy
+        env:
+          DOKPLOY_COMPOSE_WEBHOOK: ${{ secrets.DOKPLOY_COMPOSE_WEBHOOK }}
+        run: |
+          set -euo pipefail
+          test -n "${DOKPLOY_COMPOSE_WEBHOOK:-}" || {
+            echo "Missing secret: DOKPLOY_COMPOSE_WEBHOOK"
+            exit 1
+          }
+
+          # Dokploy deploy webhook for this compose service.
+          curl -fsS -X POST "${DOKPLOY_COMPOSE_WEBHOOK}" >/dev/null
+          echo "Deploy webhook accepted."
+
+      - name: Wait for Dokploy deployment result
+        env:
+          DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+          DOKPLOY_COMPOSE_ID: ${{ secrets.DOKPLOY_COMPOSE_ID }}
+        run: |
+          set -euo pipefail
+
+          test -n "${DOKPLOY_URL:-}" || { echo "Missing secret: DOKPLOY_URL"; exit 1; }
+          test -n "${DOKPLOY_API_KEY:-}" || { echo "Missing secret: DOKPLOY_API_KEY"; exit 1; }
+          test -n "${DOKPLOY_COMPOSE_ID:-}" || { echo "Missing secret: DOKPLOY_COMPOSE_ID"; exit 1; }
+
+          endpoint="${DOKPLOY_URL%/}/api/deployment.allByType?id=${DOKPLOY_COMPOSE_ID}&type=compose"
+          deadline=$((SECONDS + 900))
+          last_status=""
+
+          while [ $SECONDS -lt $deadline ]; do
+            raw="$(curl -fsS -H "x-api-key: ${DOKPLOY_API_KEY}" "${endpoint}")"
+
+            item="$(echo "${raw}" | jq -c '
+              (
+                if type == "array" then .
+                elif (.data? | type) == "array" then .data
+                elif (.result? | type) == "array" then .result
+                elif (.items? | type) == "array" then .items
+                else []
+                end
+              )
+              | sort_by((.createdAt // .created_at // .startedAt // .queuedAt // "")) 
+              | reverse
+              | .[0] // empty
+            ')"
+
+            if [ -z "${item}" ]; then
+              echo "No deployment records yet. Waiting..."
+              sleep 10
+              continue
+            fi
+
+            status="$(echo "${item}" | jq -r '(.status // .state // .deploymentStatus // .phase // "") | tostring | ascii_downcase')"
+            deployment_id="$(echo "${item}" | jq -r '(.deploymentId // .id // ._id // "unknown")')"
+
+            if [ "${status}" != "${last_status}" ]; then
+              echo "Deployment ${deployment_id} status: ${status}"
+              last_status="${status}"
+            fi
+
+            case "${status}" in
+              success|succeeded|completed|done|healthy|finished)
+                echo "Dokploy deployment succeeded."
+                exit 0
+                ;;
+              failed|error|errored|canceled|cancelled|killed|crashed)
+                echo "Dokploy deployment failed."
+                exit 1
+                ;;
+              queued|pending|running|in_progress|building|deploying|"")
+                sleep 10
+                ;;
+              *)
+                echo "Unknown deployment status '${status}', waiting..."
+                sleep 10
+                ;;
+            esac
+          done
+
+          echo "Timed out waiting for Dokploy deployment result."
+          exit 1
