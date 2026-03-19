@@ -322,7 +322,7 @@ export default function Map() {
         {
           text: "Yes, Stop",
           style: "destructive",
-          onPress: () => {
+          onPress: async () => {
             // Clear the booking timeout so the "taking too long" alert doesn't fire
             if (bookingTimeoutRef.current) {
               clearTimeout(bookingTimeoutRef.current);
@@ -330,6 +330,27 @@ export default function Map() {
             }
             // Immediately reset the searching state
             setIsBooking(false);
+            try {
+              await sendPatientCancel({
+                reason: "Cancelled search by patient",
+              });
+            } catch (error) {
+              setIsBooking(true);
+              if (bookingTimeoutRef.current) {
+                clearTimeout(bookingTimeoutRef.current);
+              }
+              bookingTimeoutRef.current = setTimeout(() => {
+                setIsBooking(false);
+                Alert.alert(
+                  "Request Taking Longer",
+                  "No ambulance is available right now. Please try again shortly."
+                );
+              }, PATIENT_BOOKING_TIMEOUT_MS);
+              Alert.alert(
+                "Cancel Failed",
+                error instanceof Error ? error.message : "Please try again."
+              );
+            }
           },
         },
       ]
