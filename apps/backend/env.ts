@@ -41,10 +41,55 @@ const seedSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>;
 
-const parsed = envSchema.safeParse(process.env);
+const envSource: NodeJS.ProcessEnv = { ...process.env };
+
+// Unit tests in CI should not require real database credentials.
+if (envSource.NODE_ENV === "test" && !envSource.DATABASE_URL) {
+  envSource.DATABASE_URL = "postgres://localhost:5432/ambulink_test";
+}
+
+const parsed = envSchema.safeParse(envSource);
 
 if (!parsed.success) {
-  console.error("Invalid environment variables:", JSON.stringify(parsed.error.format(), null, 2));
+  const missingKeys = Array.from(
+    new Set(
+      parsed.error.issues
+        .filter(
+          (issue) =>
+            issue.code === "invalid_type" &&
+            "received" in issue &&
+            issue.received === "undefined"
+        )
+        .map((issue) => issue.path.join("."))
+        .filter(Boolean)
+    )
+  );
+
+  if (missingKeys.length > 0) {
+    console.error(`Missing required environment variables: ${missingKeys.join(", ")}`);
+  }
+
+  const nonMissingIssues = parsed.error.issues.filter(
+    (issue) =>
+      !(
+        issue.code === "invalid_type" &&
+        "received" in issue &&
+        issue.received === "undefined"
+      )
+  );
+
+  if (nonMissingIssues.length > 0) {
+    console.error("Invalid environment variables:");
+    for (const issue of nonMissingIssues) {
+      const key = issue.path.join(".") || "(root)";
+      console.error(`- ${key}: ${issue.message}`);
+    }
+  }
+
+  if (missingKeys.length === 0 && nonMissingIssues.length === 0) {
+    console.error("Invalid environment variables.");
+  }
+
   process.exit(1);
 }
 
