@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import PDFDocument from "pdfkit";
 import type {
-  AnalyticsAiResponse,
   AnalyticsInsights,
   AnalyticsResponse,
   AnalyticsZones,
@@ -98,17 +97,6 @@ function summarizeDurations(values: number[]): DurationMetricSummary {
 function rate(part: number, total: number) {
   if (total === 0) return 0;
   return Number(((part / total) * 100).toFixed(2));
-}
-
-function formatDuration(seconds: number | null) {
-  if (seconds === null) return "N/A";
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remSeconds = seconds % 60;
-  if (minutes < 60) return `${minutes}m ${remSeconds}s`;
-  const hours = Math.floor(minutes / 60);
-  const remMinutes = minutes % 60;
-  return `${hours}h ${remMinutes}m`;
 }
 
 function toCellKey(lat: number, lng: number, cellSize: number) {
@@ -364,78 +352,6 @@ export class AnalyticsCoreService {
       demandByWeekday,
       hospitalChoices,
       etaDeltaQuality: null,
-    };
-  }
-
-  async getAiAnalyticsResponse(
-    dispatcherId: string,
-    question: string,
-    from?: string,
-    to?: string
-  ): Promise<AnalyticsAiResponse> {
-    const [response, insights] = await Promise.all([
-      this.getResponseAnalytics(dispatcherId, from, to),
-      this.getInsightsAnalytics(dispatcherId, from, to),
-    ]);
-
-    const normalized = question.toLowerCase();
-    const highlights: string[] = [];
-    let answer = "";
-
-    const topCancellation = insights.cancellationReasons[0];
-    const topHospital = insights.hospitalChoices[0];
-    const topDriver = response.drivers[0];
-
-    if (normalized.includes("cancel")) {
-      answer = `Cancellation rate is ${response.cancellationRate.toFixed(2)}% (${response.cancelledBookings}/${response.totalBookings}).`;
-      if (topCancellation) {
-        highlights.push(
-          `Top cancellation reason: ${topCancellation.reason} (${topCancellation.percentage.toFixed(1)}%).`
-        );
-      }
-    } else if (normalized.includes("driver") || normalized.includes("performance")) {
-      if (topDriver) {
-        answer = `${topDriver.driverName ?? "Top driver"} handled ${topDriver.totalBookings} bookings with ${topDriver.completionRate.toFixed(1)}% completion and median response ${formatDuration(topDriver.responseTime.medianSeconds)}.`;
-      } else {
-        answer = "No driver performance data is available for this range.";
-      }
-    } else if (normalized.includes("hospital")) {
-      if (topHospital) {
-        answer = `${topHospital.hospitalName} is the most selected destination with ${topHospital.count} bookings (${topHospital.percentage.toFixed(1)}%).`;
-      } else {
-        answer = "No hospital selection data is available for this range.";
-      }
-    } else if (
-      normalized.includes("demand") ||
-      normalized.includes("hour") ||
-      normalized.includes("day")
-    ) {
-      const peakHour = insights.demandByHour.slice().sort((a, b) => b.count - a.count)[0];
-      const peakDay = insights.demandByWeekday.slice().sort((a, b) => b.count - a.count)[0];
-      answer = `Peak demand hour is ${peakHour?.label ?? "-"} with ${peakHour?.count ?? 0} requests; peak weekday is ${peakDay?.label ?? "-"} with ${peakDay?.count ?? 0} requests.`;
-    } else {
-      answer = `In this period, completion is ${response.completionRate.toFixed(2)}% and cancellation is ${response.cancellationRate.toFixed(2)}%. Median dispatch latency is ${formatDuration(response.dispatchLatency.medianSeconds)} and median response time is ${formatDuration(response.responseTime.medianSeconds)}.`;
-      if (topHospital) {
-        highlights.push(`Top hospital: ${topHospital.hospitalName} (${topHospital.count} bookings).`);
-      }
-      if (topDriver) {
-        highlights.push(
-          `Top driver by volume: ${topDriver.driverName ?? "Unassigned"} (${topDriver.totalBookings} bookings).`
-        );
-      }
-    }
-
-    if (highlights.length === 0) {
-      highlights.push(`Total bookings analyzed: ${response.totalBookings}.`);
-      if (topCancellation) {
-        highlights.push(`Top cancellation reason: ${topCancellation.reason}.`);
-      }
-    }
-
-    return {
-      answer,
-      highlights,
-      generatedAt: new Date().toISOString(),
     };
   }
 

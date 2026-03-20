@@ -113,6 +113,7 @@ function main() {
   writeEnvFile("./apps/mobile/.env", [
     ["EXPO_PUBLIC_API_SERVER_URL", rootEnv.API_SERVER_URL],
     ["EXPO_PUBLIC_WS_SERVER_URL", rootEnv.WS_SERVER_URL],
+    ["EXPO_PUBLIC_GEMINI_API_KEY", rootEnv.EXPO_PUBLIC_GEMINI_API_KEY || ""],
     ["EXPO_PUBLIC_PATIENT_ID", rootEnv.PATIENT_ID],
     ["EXPO_PUBLIC_DRIVER_ID", rootEnv.DRIVER_ID],
     ["EXPO_PUBLIC_EMT_ID", rootEnv.EMT_ID],
