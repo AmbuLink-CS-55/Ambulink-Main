@@ -44,4 +44,8 @@ jobs:
         run: npx turbo run lint build
 
       - name: Unit Tests
+        env:
+          NODE_ENV: test
+          APP_STAGE: test
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npx turbo run test
