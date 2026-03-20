@@ -7,6 +7,13 @@ export type EmergencyContact = {
   name: string;
 };
 
+export type MedicalDocument = {
+  uri: string;
+  name: string;
+  mimeType: string | null;
+  size: number | null;
+};
+
 export type SettingsData = {
   profileName: string;
   profileMobile: string;
@@ -14,6 +21,7 @@ export type SettingsData = {
   profileImage: string | null;
   bloodType: BloodType;
   selectedAllergies: Allergie[];
+  medicalDocuments: MedicalDocument[];
   emergencyContacts: EmergencyContact[];
   language: string;
   notifications: boolean;
@@ -27,6 +35,7 @@ export const defaultSettings: SettingsData = {
   profileImage: null,
   bloodType: "",
   selectedAllergies: [],
+  medicalDocuments: [],
   emergencyContacts: [{ id: 1, number: "119", name: "Police" }],
   language: "en",
   notifications: true,

@@ -1,10 +1,52 @@
-import { View, Text, Pressable } from "react-native";
+import { useCallback } from "react";
+import { Alert, Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as DocumentPicker from "expo-document-picker";
 import i18n from "@/common/i18n/i18n";
 import { useSettings } from "@/common/hooks/SettingsContext";
 
+const bytesToLabel = (size: number | null) => {
+  if (!size || size <= 0) return null;
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+};
+
 export default function MedicalSection() {
-  const { settings, setActiveModal } = useSettings();
+  const { settings, setActiveModal, updateSetting } = useSettings();
+
+  const handlePickDocuments = useCallback(async () => {
+    try {
+      const picked = await DocumentPicker.getDocumentAsync({
+        type: "*/*",
+        multiple: true,
+        copyToCacheDirectory: true,
+      });
+
+      if (picked.canceled) return;
+
+      const nextDocuments = [...settings.medicalDocuments];
+      for (const asset of picked.assets) {
+        const existingIndex = nextDocuments.findIndex((doc) => doc.uri === asset.uri);
+        const doc = {
+          uri: asset.uri,
+          name: asset.name,
+          mimeType: asset.mimeType ?? null,
+          size: asset.size ?? null,
+        };
+
+        if (existingIndex >= 0) {
+          nextDocuments[existingIndex] = doc;
+        } else {
+          nextDocuments.push(doc);
+        }
+      }
+
+      updateSetting("medicalDocuments", nextDocuments);
+    } catch {
+      Alert.alert(i18n.t("common.error"), "Failed to pick documents");
+    }
+  }, [settings.medicalDocuments, updateSetting]);
 
   return (
     <View className="mb-6">
@@ -58,14 +100,31 @@ export default function MedicalSection() {
 
         <View className="h-px bg-muted" />
 
-        <Pressable className="flex-row justify-between items-center py-3">
-          <View>
+        <Pressable
+          className="flex-row justify-between items-center py-3"
+          onPress={() => void handlePickDocuments()}
+        >
+          <View className="flex-1">
             <Text className="text-sm font-medium text-muted-foreground mb-1.5">
               {i18n.t("settings.medical.medicalDocuments")}
             </Text>
             <Text className="text-sm text-muted-foreground mt-1">
               {i18n.t("settings.medical.uploadDocuments")}
             </Text>
+            {settings.medicalDocuments.length > 0 ? (
+              <View className="mt-3 gap-2">
+                {settings.medicalDocuments.map((doc) => (
+                  <View key={doc.uri} className="rounded-lg bg-surface px-3 py-2">
+                    <Text className="text-sm font-medium text-foreground" numberOfLines={1}>
+                      {doc.name}
+                    </Text>
+                    <Text className="text-xs text-muted-foreground">
+                      {bytesToLabel(doc.size) ?? doc.mimeType ?? "Document"}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
           </View>
           <Ionicons name="document-attach-outline" size={20} color="#111827" />
         </Pressable>
