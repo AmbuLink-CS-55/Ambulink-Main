@@ -22,6 +22,7 @@ interface MapOptionsProps {
   isBooking?: boolean;
   completedAt?: number | null;
   onOpenUploads?: () => void;
+  onShareLiveLocation?: () => void;
 }
 
 /** Clean, attractive chat button */
@@ -69,6 +70,7 @@ export default function MapOptions({
   isBooking = false,
   completedAt = null,
   onOpenUploads,
+  onShareLiveLocation,
 }: MapOptionsProps) {
   const handleCall = (phone?: string) => {
     if (!phone) return Alert.alert("Error", "No phone number available");
@@ -114,6 +116,15 @@ export default function MapOptions({
           <View className="mt-4">
             <ChatButton onPress={onOpenUploads} />
           </View>
+        ) : null}
+        {onShareLiveLocation ? (
+          <AppButton
+            className="mt-3"
+            variant="secondary"
+            label="Share Live Location"
+            onPress={onShareLiveLocation}
+            renderIcon={() => <Ionicons name="navigate-outline" size={16} color="#111827" />}
+          />
         ) : null}
       </AppCard>
     );
@@ -167,6 +178,16 @@ export default function MapOptions({
           <View className="mt-3">
             <ChatButton onPress={onOpenUploads} />
           </View>
+        ) : null}
+
+        {onShareLiveLocation ? (
+          <AppButton
+            className="mt-3"
+            variant="secondary"
+            label="Share Live Location"
+            onPress={onShareLiveLocation}
+            renderIcon={() => <Ionicons name="navigate-outline" size={16} color="#111827" />}
+          />
         ) : null}
 
         <AppButton

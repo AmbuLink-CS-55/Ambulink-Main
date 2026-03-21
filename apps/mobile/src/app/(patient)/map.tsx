@@ -84,6 +84,7 @@ export default function Map() {
   const [isChatOpen, setChatOpen] = useState(false);
   const [isChatSending, setChatSending] = useState(false);
   const [cachedBookingId, setCachedBookingId] = useState<string | null>(null);
+  const [patientSettings, setPatientSettings] = useState<PatientSettingsData | null>(null);
   const [booking, setBooking] = useState<{
     bookingId?: string | null;
     patient: User;
@@ -138,6 +139,23 @@ export default function Map() {
     });
   }, []);
 
+  // Load patient settings once so we can access emergency contacts later (e.g., booking completed).
+  useEffect(() => {
+    let active = true;
+    void loadSettings()
+      .then((saved) => {
+        if (!active) return;
+        setPatientSettings(saved as unknown as PatientSettingsData);
+      })
+      .catch(() => {
+        // Best-effort: we can still book without saved settings loaded.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   usePatientEvents(
     socket,
     setBooking,
@@ -147,6 +165,56 @@ export default function Map() {
     setCompletedAt,
     appendPatientNote
   );
+
+  const handleShareLiveLocation = useCallback(async () => {
+    if (!booking) {
+      Alert.alert("Error", "No active booking available.");
+      return;
+    }
+
+    const sanitizePhone = (value: string) => value.trim().replace(/[^\d+]/g, "");
+    const recipients =
+      patientSettings?.emergencyContacts
+        ?.map((contact) => ({
+          number: sanitizePhone(contact.number ?? ""),
+          name: contact.name ?? "",
+        }))
+        .filter(({ number, name }) => {
+          if (!number) return false;
+          if (number === "119") return false;
+          if (name.trim().toLowerCase() === "police") return false;
+          return true;
+        })
+        .map(({ number }) => number) ?? [];
+
+    if (recipients.length === 0) {
+      Alert.alert("No contacts", "Add emergency contacts (excluding 119) to share location.");
+      return;
+    }
+
+    const patientPoint = booking.patient.currentLocation ?? locationState.location;
+    if (!patientPoint) {
+      Alert.alert("Error", "Current location is unavailable.");
+      return;
+    }
+
+    const liveLocationUrl = `https://maps.google.com/?q=${patientPoint.y},${patientPoint.x}`;
+    const message = ["Ambulink live location update:", `Patient location: ${liveLocationUrl}`].join(
+      "\n"
+    );
+
+    const smsUri = `sms:${recipients.join(";")}?body=${encodeURIComponent(message)}`;
+    try {
+      const supported = await Linking.canOpenURL(smsUri);
+      if (!supported) {
+        Alert.alert("Error", "SMS app is unavailable on this device.");
+        return;
+      }
+      await Linking.openURL(smsUri);
+    } catch {
+      Alert.alert("Error", "Unable to open SMS composer.");
+    }
+  }, [booking, patientSettings?.emergencyContacts, locationState.location]);
 
   useEffect(() => {
     const patientId = user?.role === "patient" ? user.id : null;
@@ -498,6 +566,7 @@ export default function Map() {
         isBooking={isBooking}
         completedAt={completedAt}
         onOpenUploads={() => setChatOpen(true)}
+        onShareLiveLocation={() => void handleShareLiveLocation()}
       />
       <PatientChatModal
         visible={isChatOpen}
