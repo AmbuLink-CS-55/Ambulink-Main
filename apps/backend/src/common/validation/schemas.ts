@@ -260,13 +260,6 @@ export const analyticsQuerySchema = z
     }
   );
 
-export const analyticsAiChatSchema = z.object({
-  dispatcherId: z.string().uuid().optional(),
-  question: z.string().trim().min(3).max(2000),
-  from: z.string().datetime().optional(),
-  to: z.string().datetime().optional(),
-});
-
 export const emtBookingSearchQuerySchema = z.object({
   q: z.string().trim().default(""),
   limit: z.coerce.number().int().min(1).max(500).optional(),
@@ -350,7 +343,6 @@ export type DispatcherListQueryDto = z.infer<typeof dispatcherListQuerySchema>;
 export type EmtListQueryDto = z.infer<typeof emtListQuerySchema>;
 export type BookingDetailsQueryDto = z.infer<typeof bookingDetailsQuerySchema>;
 export type AnalyticsQueryDto = z.infer<typeof analyticsQuerySchema>;
-export type AnalyticsAiChatDto = z.infer<typeof analyticsAiChatSchema>;
 export type EmtBookingSearchQueryDto = z.infer<typeof emtBookingSearchQuerySchema>;
 export type EmtSubscribeDto = z.infer<typeof emtSubscribeSchema>;
 export type EmtAddNoteDto = z.infer<typeof emtAddNoteSchema>;

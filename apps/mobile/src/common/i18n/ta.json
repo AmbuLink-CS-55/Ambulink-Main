@@ -51,7 +51,11 @@
       "enterName": "பெயரை உள்ளிடவும்",
       "enterMobile": "மொபைல் எண்ணை உள்ளிடவும்",
       "age": "வயது",
-      "enterAge": "வயதை உள்ளிடவும்"
+      "enterAge": "வயதை உள்ளிடவும்",
+      "changeProfilePhoto": "சுயவிவரப் படத்தை மாற்று",
+      "pickProfileImageFailed": "சுயவிவரப் படத்தைத் தேர்ந்தெடுக்க முடியவில்லை",
+      "removeProfilePhoto": "சுயவிவரப் படத்தை நீக்கு",
+      "confirmRemoveProfilePhoto": "உங்கள் சுயவிவரப் படத்தை நீக்குவதற்கு நிச்சயமா?"
     },
     "medical": {
       "title": "மருத்துவ தகவல்",

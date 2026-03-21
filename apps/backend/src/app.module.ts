@@ -33,4 +33,4 @@ import { AuthModule } from "./modules/auth/auth.module";
   controllers: [HealthController],
   providers: [],
 })
-export class AppModule {}
+export class AppModule { }

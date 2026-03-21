@@ -1,0 +1,163 @@
+name: Deploy (Dokploy)
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: dokploy-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Trigger and wait for Dokploy deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Trigger Dokploy compose deploy
+        env:
+          DOKPLOY_COMPOSE_WEBHOOK: ${{ secrets.DOKPLOY_COMPOSE_WEBHOOK }}
+        run: |
+          set -euo pipefail
+          test -n "${DOKPLOY_COMPOSE_WEBHOOK:-}" || {
+            echo "Missing secret: DOKPLOY_COMPOSE_WEBHOOK"
+            exit 1
+          }
+
+          # Dokploy deploy webhook for this compose service.
+          curl -fsS -X POST "${DOKPLOY_COMPOSE_WEBHOOK}" >/dev/null
+          echo "Deploy webhook accepted."
+          echo "DOKPLOY_TRIGGERED_AT=$(date -u +%s)" >> "$GITHUB_ENV"
+
+      - name: Wait for Dokploy deployment result
+        env:
+          DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+          DOKPLOY_COMPOSE_ID: ${{ secrets.DOKPLOY_COMPOSE_ID }}
+          DOKPLOY_TRIGGERED_AT: ${{ env.DOKPLOY_TRIGGERED_AT }}
+        run: |
+          set -euo pipefail
+
+          test -n "${DOKPLOY_URL:-}" || { echo "Missing secret: DOKPLOY_URL"; exit 1; }
+          test -n "${DOKPLOY_API_KEY:-}" || { echo "Missing secret: DOKPLOY_API_KEY"; exit 1; }
+          test -n "${DOKPLOY_TRIGGERED_AT:-}" || { echo "Missing runtime var: DOKPLOY_TRIGGERED_AT"; exit 1; }
+
+          endpoint_centralized="${DOKPLOY_URL%/}/api/deployment.allCentralized"
+          endpoint_by_compose="${DOKPLOY_URL%/}/api/deployment.allByCompose?composeId=${DOKPLOY_COMPOSE_ID}"
+          endpoint_by_type="${DOKPLOY_URL%/}/api/deployment.allByType?id=${DOKPLOY_COMPOSE_ID}&type=compose"
+          deadline=$((SECONDS + 900))
+          last_status=""
+          attempts=0
+
+          extract_items() {
+            jq -c '
+              if type == "array" then .
+              elif (.data? | type) == "array" then .data
+              elif (.result? | type) == "array" then .result
+              elif (.items? | type) == "array" then .items
+              elif (.deployments? | type) == "array" then .deployments
+              elif (.data?.deployments? | type) == "array" then .data.deployments
+              else []
+              end
+            ' 2>/dev/null
+          }
+
+          while [ $SECONDS -lt $deadline ]; do
+            attempts=$((attempts + 1))
+            raw_centralized="$(curl -fsS -H "x-api-key: ${DOKPLOY_API_KEY}" "${endpoint_centralized}" || true)"
+            raw_compose="[]"
+            raw_type="[]"
+            if [ -n "${DOKPLOY_COMPOSE_ID:-}" ]; then
+              raw_compose="$(curl -fsS -H "x-api-key: ${DOKPLOY_API_KEY}" "${endpoint_by_compose}" || true)"
+              raw_type="$(curl -fsS -H "x-api-key: ${DOKPLOY_API_KEY}" "${endpoint_by_type}" || true)"
+            fi
+
+            # Hard fail quickly for auth problems.
+            if echo "${raw_centralized}" | grep -qi 'unauthorized'; then
+              echo "Dokploy API unauthorized. Check DOKPLOY_API_KEY."
+              exit 1
+            fi
+
+            items_centralized="$(echo "${raw_centralized}" | extract_items || echo '[]')"
+            items_compose="$(echo "${raw_compose}" | extract_items || echo '[]')"
+            items_type="$(echo "${raw_type}" | extract_items || echo '[]')"
+
+            item="$(
+              jq -cn \
+                --argjson central "${items_centralized}" \
+                --argjson by_compose "${items_compose}" \
+                --argjson by_type "${items_type}" \
+                --argjson triggered "${DOKPLOY_TRIGGERED_AT}" '
+                  [ $central, $by_compose, $by_type ]
+                  | add
+                  | map(
+                      . + {
+                        __type: ((.type // .deploymentType // .serviceType // "") | tostring | ascii_downcase),
+                        __ts: (
+                          (.createdAt // .created_at // .startedAt // .queuedAt // "") as $d
+                          | (try ($d | fromdateiso8601) catch 0)
+                        )
+                      }
+                    )
+                  | map(select((.__type | test("compose")) or (.composeId? != null)))
+                  | (
+                      map(select(.__ts >= ($triggered - 120)))
+                      | sort_by(.__ts)
+                      | reverse
+                      | .[0]
+                    ) // (
+                      sort_by(.__ts)
+                      | reverse
+                      | .[0]
+                    ) // empty
+                ' 2>/dev/null || true
+            )"
+
+            if [ -z "${item}" ]; then
+              echo "No deployment records yet. Waiting..."
+              if [ $attempts -eq 6 ]; then
+                echo "Debug: centralized endpoint sample:"
+                echo "${raw_centralized}" | head -c 500 || true
+                echo
+                echo "Debug: compose endpoint sample:"
+                echo "${raw_compose}" | head -c 500 || true
+                echo
+                echo "Debug: type endpoint sample:"
+                echo "${raw_type}" | head -c 500 || true
+                echo
+              fi
+              sleep 10
+              continue
+            fi
+
+            status="$(echo "${item}" | jq -r '(.status // .state // .deploymentStatus // .phase // .result // "") | tostring | ascii_downcase')"
+            deployment_id="$(echo "${item}" | jq -r '(.deploymentId // .id // ._id // "unknown")')"
+
+            if [ "${status}" != "${last_status}" ]; then
+              echo "Deployment ${deployment_id} status: ${status}"
+              last_status="${status}"
+            fi
+
+            case "${status}" in
+              success|succeeded|completed|done|healthy|finished)
+                echo "Dokploy deployment succeeded."
+                exit 0
+                ;;
+              failed|error|errored|canceled|cancelled|killed|crashed)
+                echo "Dokploy deployment failed."
+                exit 1
+                ;;
+              queued|pending|running|in_progress|building|deploying|"")
+                sleep 10
+                ;;
+              *)
+                echo "Unknown deployment status '${status}', waiting..."
+                sleep 10
+                ;;
+            esac
+          done
+
+          echo "Timed out waiting for Dokploy deployment result."
+          exit 1

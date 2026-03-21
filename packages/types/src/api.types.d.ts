@@ -230,12 +230,6 @@ export type AnalyticsInsights = {
   } | null;
 };
 
-export type AnalyticsAiResponse = {
-  answer: string;
-  highlights: string[];
-  generatedAt: string;
-};
-
 export type StartUploadSessionResponse = {
   uploadSessionId: string;
   expiresAt: string;

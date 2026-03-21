@@ -51,7 +51,11 @@
       "enterName": "නම ඇතුළත් කරන්න",
       "enterMobile": "ජංගම දුරකථන අංකය ඇතුළත් කරන්න",
       "age": "වයස",
-      "enterAge": "වයස ඇතුළත් කරන්න"
+      "enterAge": "වයස ඇතුළත් කරන්න",
+      "changeProfilePhoto": "පැතිකඩ ඡායාරූපය වෙනස් කරන්න",
+      "pickProfileImageFailed": "පැතිකඩ ඡායාරූපය තේරීමට අසමත් විය",
+      "removeProfilePhoto": "පැතිකඩ ඡායාරූපය ඉවත් කරන්න",
+      "confirmRemoveProfilePhoto": "ඔබගේ පැතිකඩ ඡායාරූපය ඉවත් කිරීමට ඔබට විශ්වාසද?"
     },
     "medical": {
       "title": "වෛද්ය තොරතුරු",

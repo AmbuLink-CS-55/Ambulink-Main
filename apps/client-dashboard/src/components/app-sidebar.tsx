@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Ambulance, Users, Map, ClipboardList, Settings2, ChartColumn, Bot, FileText } from "lucide-react";
+import { Ambulance, Users, Map, ClipboardList, Settings2, ChartColumn, FileText } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import {
@@ -42,7 +42,6 @@ const MENU_ITEMS = [
 
 const ANALYTICS_MENU_ITEMS = [
   { title: "Analytics", path: "/analytics", icon: ChartColumn },
-  { title: "AI", path: "/analytics/ai", icon: Bot },
   { title: "Reports", path: "/analytics/reports", icon: FileText },
 ] as const;
 

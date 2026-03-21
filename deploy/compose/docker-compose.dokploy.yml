@@ -1,0 +1,74 @@
+services:
+  backend:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      APP_STAGE: prod
+      PORT: 3000
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-24h}
+      AUTH_DISABLED: ${AUTH_DISABLED:-false}
+      FRONTEND_URL: ${FRONTEND_URL}
+      FRONTEND_URLS: ${FRONTEND_URLS:-}
+      REDIS_URL: ${REDIS_URL:-}
+      BOOKING_MEDIA_ROOT: /data/booking-media
+      BOOKING_UPLOAD_SESSION_TTL_HOURS: ${BOOKING_UPLOAD_SESSION_TTL_HOURS:-24}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    volumes:
+      - booking_media_data:/data/booking-media
+    ports:
+      - "${BACKEND_HOST_PORT:-3001}:3000"
+
+  dashboard:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.dashboard
+      args:
+        VITE_API_SERVER_URL: ${VITE_API_SERVER_URL:?VITE_API_SERVER_URL is required}
+        VITE_WS_SERVER_URL: ${VITE_WS_SERVER_URL:?VITE_WS_SERVER_URL is required}
+        VITE_DISPATCHER_ID: ${VITE_DISPATCHER_ID:-}
+        VITE_PROVIDER_ID: ${VITE_PROVIDER_ID:-}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    ports:
+      - "8080:80"
+
+  # Optional local DB service. Remove if you use external Postgres/Supabase.
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ambulink}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # Optional Redis for better horizontal scaling/state handling.
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+
+volumes:
+  booking_media_data:
+  db_data:
+  redis_data:

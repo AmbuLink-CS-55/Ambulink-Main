@@ -1,10 +1,8 @@
-import { Body, Controller, Get, Post, Query, Res, UseGuards } from "@nestjs/common";
+import { Controller, Get, Query, Res, UseGuards } from "@nestjs/common";
 import type { Response } from "express";
 import { Validate } from "@/common/pipes/zod-validation.pipe";
 import {
-  analyticsAiChatSchema,
   analyticsQuerySchema,
-  type AnalyticsAiChatDto,
   type AnalyticsQueryDto,
 } from "@/common/validation/schemas";
 import { AnalyticsApiService } from "./analytics.api.service";
@@ -41,14 +39,6 @@ export class AnalyticsApiController {
   ) {
     return this.analyticsService.getInsights({
       ...query,
-      dispatcherId: user.id,
-    });
-  }
-
-  @Post("ai-chat")
-  aiChat(@Body(Validate(analyticsAiChatSchema)) body: AnalyticsAiChatDto, @CurrentUser() user: AuthUser) {
-    return this.analyticsService.aiChat({
-      ...body,
       dispatcherId: user.id,
     });
   }

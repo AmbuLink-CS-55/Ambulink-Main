@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import type {
-  AnalyticsAiChatDto,
   AnalyticsQueryDto,
 } from "@/common/validation/schemas";
 import { AnalyticsCoreService } from "../common/analytics.core.service";
@@ -29,16 +28,6 @@ export class AnalyticsApiService {
   getInsights(query: AnalyticsQueryDto) {
     const dispatcherId = this.ensureDispatcherId(query.dispatcherId);
     return this.analyticsCoreService.getInsightsAnalytics(dispatcherId, query.from, query.to);
-  }
-
-  aiChat(body: AnalyticsAiChatDto) {
-    const dispatcherId = this.ensureDispatcherId(body.dispatcherId);
-    return this.analyticsCoreService.getAiAnalyticsResponse(
-      dispatcherId,
-      body.question,
-      body.from,
-      body.to
-    );
   }
 
   reportPdf(query: AnalyticsQueryDto) {

@@ -2,10 +2,12 @@ import { Fragment, useMemo } from "react";
 import { DriverMarker } from "@/pages/dashboard/components/map/DriverMarker";
 import { BookingRequestMarker } from "@/pages/dashboard/components/map/BookingRequestMarker";
 import { OngoingPatientMarker } from "@/pages/dashboard/components/map/OngoingPatientMarker";
+import { BookingRoutesLayer } from "@/pages/dashboard/components/map/BookingRoutesLayer";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import type { DispatcherBookingPayload } from "@/lib/socket-types";
 import { useBookingRequests } from "@/pages/dashboard/hooks/use-booking-requests";
+import { useOngoingBookingRoutes } from "@/pages/dashboard/hooks/use-ongoing-booking-routes";
 
 interface DriverMarkersProps {
   ongoingBookings: Record<string, DispatcherBookingPayload>;
@@ -13,6 +15,7 @@ interface DriverMarkersProps {
 
 export function DriverMarkers({ ongoingBookings }: DriverMarkersProps) {
   const { bookingRequests } = useBookingRequests();
+  const { routes, ongoingList } = useOngoingBookingRoutes(ongoingBookings);
   const driverLocationsQuery = useQuery<Record<string, { x: number; y: number }>>({
     queryKey: queryKeys.driverLocations(),
     queryFn: async () => ({}),
@@ -24,7 +27,6 @@ export function DriverMarkers({ ongoingBookings }: DriverMarkersProps) {
     () => driverLocationsQuery.data ?? {},
     [driverLocationsQuery.data]
   );
-  const ongoingList = useMemo(() => Object.values(ongoingBookings), [ongoingBookings]);
 
   const activeDriverIds = useMemo(
     () => new Set(ongoingList.map((b) => b.driver.id).filter(Boolean)),
@@ -37,6 +39,8 @@ export function DriverMarkers({ ongoingBookings }: DriverMarkersProps) {
 
   return (
     <>
+      <BookingRoutesLayer ongoingList={ongoingList} routes={routes} />
+
       {/* Pending booking requests (booking:new) */}
       {bookingRequests.map((request) => {
         const patientLocation = request.data.patient.currentLocation;

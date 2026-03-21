@@ -2,6 +2,7 @@ import React, { useEffect, useMemo } from "react";
 import { StyleSheet, Dimensions, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
+import { FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -23,8 +24,8 @@ const DYNAMIC = {
   orb1Size: width * 1.4, // Massive background orbs
   orb2Size: width * 1.2,
   pulseSize: width * 0.6, // Radar rings behind the logo
-  glowSize: width * 0.5, // White glowing circle directly behind logo
-  logoSize: width * 0.65, // Actual Ambulink app logo size
+  glowSize: width * 0.45, // Refined branding badge size
+  logoSize: width * 0.35, // Balanced icon size
 };
 
 // ==============================================================================
@@ -141,7 +142,7 @@ function FloatingOrbs() {
           end={{ x: 1, y: 1 }}
         />
       </Animated.View>
-      
+
       {/* Bottom Right Gradient Orb */}
       <Animated.View
         className="absolute overflow-hidden opacity-80"
@@ -288,7 +289,7 @@ function RadarRing({ delay, sizeObj }: { delay: number; sizeObj: number }) {
   }));
 
   return (
-    <Animated.View 
+    <Animated.View
       className="absolute border-2 border-blue-500/40 bg-blue-500/10"
       style={[
         {
@@ -297,7 +298,7 @@ function RadarRing({ delay, sizeObj }: { delay: number; sizeObj: number }) {
           borderRadius: DYNAMIC.pulseSize / 2,
         },
         style
-      ]} 
+      ]}
     />
   );
 }
@@ -338,28 +339,28 @@ function BouncingDots() {
       <BlurView intensity={30} tint="light" className="px-10 py-5 rounded-full border-[1.5px] border-white/60 overflow-hidden bg-white/30">
         <View className="flex-row items-center justify-center gap-[14px]">
           {/* Dot 1 */}
-          <Animated.View 
+          <Animated.View
             className="w-4 h-4 rounded-full bg-blue-700"
             style={[
               { shadowColor: "#3b82f6", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 4, elevation: 3 },
               { transform: [{ translateY: dot1Y }] }
-            ]} 
+            ]}
           />
           {/* Dot 2 */}
-          <Animated.View 
+          <Animated.View
             className="w-4 h-4 rounded-full bg-blue-700"
             style={[
               { shadowColor: "#3b82f6", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 4, elevation: 3 },
               { transform: [{ translateY: dot2Y }] }
-            ]} 
+            ]}
           />
           {/* Dot 3 */}
-          <Animated.View 
+          <Animated.View
             className="w-4 h-4 rounded-full bg-blue-700"
             style={[
               { shadowColor: "#3b82f6", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 4, elevation: 3 },
               { transform: [{ translateY: dot3Y }] }
-            ]} 
+            ]}
           />
         </View>
       </BlurView>
@@ -390,23 +391,27 @@ export function AnimatedSplashScreen({ onAnimationDone }: { onAnimationDone: () 
      * 2. Slide-up the text block while fading it in.
      * 3. Begin levitating the logo up and down indefinitely.
      */
-    logoScale.value = withSpring(1, { damping: 14, stiffness: 80 }, () => {
-      contentOpacity.value = withTiming(1, { duration: 1000, easing: Easing.out(Easing.exp) });
-      contentTranslateY.value = withSpring(0, { damping: 15 });
-      
-      // Majestic slow zoom on text (makes the text slowly get larger continuously)
-      textScale.value = withTiming(1, { duration: 1800, easing: Easing.out(Easing.ease) });
+    logoScale.value = withSpring(1, { damping: 25, stiffness: 30 });
 
-      // Start Logo Levitation (smooth float up and down)
-      logoLevitateY.value = withRepeat(
-        withSequence(
-          withTiming(-12, { duration: 2500, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0, { duration: 2500, easing: Easing.inOut(Easing.ease) })
-        ),
-        -1,
-        true
-      );
-    });
+    // Start text animations with a slight delay so they feel connected to the logo entrance
+    contentOpacity.value = withDelay(
+      800,
+      withTiming(1, { duration: 1500, easing: Easing.out(Easing.exp) })
+    );
+    contentTranslateY.value = withDelay(1000, withSpring(0, { damping: 20, stiffness: 30 }));
+
+    // Majestic slow zoom on text (much calmer, slower drift)
+    textScale.value = withTiming(1, { duration: 3000, easing: Easing.out(Easing.ease) });
+
+    // Start Logo Levitation (very slow, calm float up and down)
+    logoLevitateY.value = withRepeat(
+      withSequence(
+        withTiming(-12, { duration: 4500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 4500, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
 
     /**
      * UNMOUNT SEQUENCE:
@@ -416,7 +421,7 @@ export function AnimatedSplashScreen({ onAnimationDone }: { onAnimationDone: () 
      * the root layout router to destroy this component permanently.
      */
     opacity.value = withDelay(
-      2000,
+      3200,
       withTiming(0, { duration: 800, easing: Easing.inOut(Easing.ease) }, (isFinished) => {
         if (isFinished) {
           // runOnJS is absolutely REQUIRED here, because reanimated runs callbacks on the UI Thread
@@ -433,7 +438,10 @@ export function AnimatedSplashScreen({ onAnimationDone }: { onAnimationDone: () 
   }));
 
   const logoStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: logoScale.value }, { translateY: logoLevitateY.value }],
+    transform: [
+      { scale: logoScale.value }, 
+      { translateY: logoLevitateY.value },
+    ],
   }));
 
   const textStyle = useAnimatedStyle(() => ({
@@ -442,9 +450,9 @@ export function AnimatedSplashScreen({ onAnimationDone }: { onAnimationDone: () 
   }));
 
   return (
-    <Animated.View 
-      className="absolute inset-0 items-center justify-between overflow-hidden bg-white z-[9999]" 
-      style={[containerStyle, { elevation: 9999 }]} 
+    <Animated.View
+      className="absolute inset-0 items-center justify-between overflow-hidden bg-white z-[9999]"
+      style={[containerStyle, { elevation: 9999 }]}
       pointerEvents="none" // Ensures this screen never intercepts touches, just visually overlays
     >
       {/* 1. Underlying Base Gradient */}
@@ -457,52 +465,45 @@ export function AnimatedSplashScreen({ onAnimationDone }: { onAnimationDone: () 
       <FloatingOrbs />
       <FloatingParticles />
 
-      {/* 3. Main Center Branding Focus */}
-      <View className="flex-1 items-center justify-center w-full">
+      {/* 3. Main Center Branding Focus - nudged down per user request */}
+      <View className="flex-1 items-center justify-center w-full mt-[40px]">
         {/* Render 3 Radar Rings with exactly a 1.2s delay between each spawn */}
         <RadarRing delay={0} sizeObj={2.5} />
         <RadarRing delay={1200} sizeObj={2.5} />
         <RadarRing delay={2400} sizeObj={2.5} />
 
-        {/* Pure white intense drop-shadow 'Glow' placed immediately behind the logo */}
-        <Animated.View 
-          className="absolute bg-white/90 z-5"
+        {/* The new creative glowing Ambulink logo asset */}
+        <Animated.Image
+          source={require("../../../assets/images/ambulink_splash.png")}
+          className="z-10 absolute"
           style={[
             {
               width: DYNAMIC.glowSize,
               height: DYNAMIC.glowSize,
-              borderRadius: DYNAMIC.glowSize / 2,
-              shadowColor: "#2563eb",
-              shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 1,
-              shadowRadius: 60,
-              elevation: 25,
-            },
-            logoStyle
-          ]} 
-        />
-        
-        {/* The actual Ambulink image asset */}
-        <Animated.Image
-          source={require("../../../assets/images/ambulink_splash.png")}
-          className="z-10"
-          style={[
-            {
-              width: DYNAMIC.logoSize,
-              height: DYNAMIC.logoSize,
             },
             logoStyle
           ]}
           resizeMode="contain"
         />
-        
-        {/* Typographies */}
-        <Animated.View className="items-center mt-[25px] z-15" style={textStyle}>
-          <Animated.Text className="text-[48px] font-black tracking-[2.5px] text-slate-900">
-            AMBULINK
-          </Animated.Text>
+
+        {/* Typographies - Absolute positioning at bottom ensures visibility on all screen sizes */}
+        <Animated.View 
+          className="absolute items-center z-20" 
+          style={[
+            textStyle,
+            { bottom: height * 0.22 }
+          ]}
+        >
+          <View className="flex-row items-center">
+            <Animated.Text className="text-[48px] font-black tracking-[1.5px] text-[#1e3a8a]">
+              AMBU
+            </Animated.Text>
+            <Animated.Text className="text-[48px] font-black tracking-[1.5px] text-[#ff2d55]">
+              LINK
+            </Animated.Text>
+          </View>
           <Animated.Text className="text-[15px] font-extrabold tracking-[3px] text-blue-600 uppercase mt-2.5">
-            Emergency Medical Services
+            FAST • SECURE • CARE
           </Animated.Text>
         </Animated.View>
       </View>

@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SocketProvider } from "@/common/hooks/SocketContext";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { useAuthStore } from "@/common/hooks/AuthContext";
+import { StatusBar, Platform } from "react-native";
 
 export default function TabLayout() {
   const hasAccessToken = useAuthStore((state) => Boolean(state.session?.accessToken));
@@ -13,6 +14,7 @@ export default function TabLayout() {
 
   return (
     <SocketProvider type="PATIENT" enabled={hasAccessToken}>
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent hidden={false} />
       <Tabs
         screenOptions={{
           headerShown: false,

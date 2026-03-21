@@ -110,7 +110,7 @@ export default function UserMap({
               title={driver.fullName ?? "Nearby Driver"}
               description={`${driver.distanceKm.toFixed(1)} km away`}
               anchor={{ x: 0.5, y: 0.5 }}
-              image={ambulanceIcon}
+              image={ambulanceIcon as any}
               tracksViewChanges={false}
             />
           ))}
