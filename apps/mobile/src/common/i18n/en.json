@@ -51,7 +51,11 @@
       "enterName": "Enter name",
       "enterMobile": "Enter mobile",
       "age": "Age",
-      "enterAge": "Enter age"
+      "enterAge": "Enter age",
+      "changeProfilePhoto": "Change profile photo",
+      "pickProfileImageFailed": "Failed to pick profile image",
+      "removeProfilePhoto": "Remove profile photo",
+      "confirmRemoveProfilePhoto": "Are you sure you want to remove your profile photo?"
     },
     "medical": {
       "title": "Medical Information",
