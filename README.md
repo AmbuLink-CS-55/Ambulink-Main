@@ -1,4 +1,6 @@
-# Ambulink
+<p align="center">
+  <img src="docs/img/logo.png" alt="Ambulink logo" width="180" />
+</p>
 
 Ambulink is a comprehensive software suit for emergency response, for ambulance dispatch and patient transport coordination.
 
