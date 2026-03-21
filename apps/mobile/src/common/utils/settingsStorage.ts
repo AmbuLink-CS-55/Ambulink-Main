@@ -17,6 +17,7 @@ export type MedicalDocument = {
 export type SettingsData = {
   profileName: string;
   profileMobile: string;
+  email: string;
   age: number | null;
   profileImage: string | null;
   bloodType: BloodType;
@@ -31,6 +32,7 @@ export type SettingsData = {
 export const defaultSettings: SettingsData = {
   profileName: "",
   profileMobile: "",
+  email: "",
   age: null,
   profileImage: null,
   bloodType: "",

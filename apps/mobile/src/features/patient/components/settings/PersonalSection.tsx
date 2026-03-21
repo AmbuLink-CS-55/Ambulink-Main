@@ -68,9 +68,15 @@ export default function PersonalSection() {
           <Text className="text-sm font-medium text-muted-foreground mb-1.5">
             {i18n.t("home.email")}
           </Text>
-          <View className="border border-border rounded-xl p-3 bg-muted">
-            <Text className="text-sm text-muted-foreground"></Text>
-          </View>
+          <TextInput
+            className="border border-border rounded-xl p-3 text-sm text-foreground"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            value={settings.email}
+            onChangeText={(v) => updateSetting("email", v)}
+            placeholder="Enter email"
+          />
         </View>
       </View>
     </View>
