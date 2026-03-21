@@ -84,6 +84,7 @@ export default function Map() {
   const [isChatOpen, setChatOpen] = useState(false);
   const [isChatSending, setChatSending] = useState(false);
   const [cachedBookingId, setCachedBookingId] = useState<string | null>(null);
+  const [patientSettings, setPatientSettings] = useState<PatientSettingsData | null>(null);
   const [booking, setBooking] = useState<{
     bookingId?: string | null;
     patient: User;
@@ -138,6 +139,23 @@ export default function Map() {
     });
   }, []);
 
+  // Load patient settings once so we can access emergency contacts later (e.g., booking completed).
+  useEffect(() => {
+    let active = true;
+    void loadSettings()
+      .then((saved) => {
+        if (!active) return;
+        setPatientSettings(saved as unknown as PatientSettingsData);
+      })
+      .catch(() => {
+        // Best-effort: we can still book without saved settings loaded.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   usePatientEvents(
     socket,
     setBooking,
@@ -145,7 +163,9 @@ export default function Map() {
     setIsCancelling,
     setIsBooking,
     setCompletedAt,
-    appendPatientNote
+    appendPatientNote,
+    locationState.location ? { x: locationState.location.x, y: locationState.location.y } : null,
+    patientSettings?.emergencyContacts ?? []
   );
 
   useEffect(() => {

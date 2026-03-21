@@ -6,10 +6,11 @@ import {
   BookingNote,
   BookingEtaUpdatedPayload,
   BookingReroutedPayload,
+  type PatientSettingsData,
 } from "@ambulink/types";
-import { Alert } from "react-native";
+import { Alert, Linking } from "react-native";
 import { addBookingHistory } from "@/common/utils/bookingHistory";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { Socket } from "socket.io-client";
 import { notifyFromSocket } from "@/common/notifications/service";
 
@@ -20,8 +21,52 @@ export const usePatientEvents = (
   setIsCancelling: React.Dispatch<React.SetStateAction<boolean>>,
   setIsBooking: React.Dispatch<React.SetStateAction<boolean>>,
   setCompletedAt: React.Dispatch<React.SetStateAction<number | null>>,
-  appendNote: (bookingId: string, note: BookingNote) => void
+  appendNote: (bookingId: string, note: BookingNote) => void,
+  patientLocation: Point | null,
+  emergencyContacts: PatientSettingsData["emergencyContacts"]
 ) => {
+  const lastCompletedBookingIdRef = useRef<string | null>(null);
+
+  const sendLocationToEmergencyContacts = useCallback(
+    async (location: Point, contacts: PatientSettingsData["emergencyContacts"]) => {
+      const sanitizePhone = (input: string) => input.trim().replace(/[^\d+]/g, "");
+      const recipients = contacts
+        .map((c) => {
+          const number = sanitizePhone(c.number ?? "");
+          return { number, name: c.name ?? "" };
+        })
+        .filter(({ number, name }) => {
+          if (!number) return false;
+          if (number === "119") return false; // Default Police hotline
+          if (name.trim().toLowerCase() === "police") return false;
+          return true;
+        })
+        .map(({ number }) => number);
+
+      if (recipients.length === 0) return;
+
+      // Note: our app stores `x=longitude` and `y=latitude`.
+      const mapsUrl = `https://maps.google.com/?q=${location.y},${location.x}`;
+      const body = encodeURIComponent(`Ambulink: Booking completed. Location: ${mapsUrl}`);
+      const smsUri = `sms:${recipients.join(";")}?body=${body}`;
+
+      try {
+        const supported = await Linking.canOpenURL(smsUri);
+        if (supported) {
+          await Linking.openURL(smsUri);
+          return;
+        }
+
+        // Fallback: open map link so user can share manually.
+        const mapSupported = await Linking.canOpenURL(mapsUrl);
+        if (mapSupported) await Linking.openURL(mapsUrl);
+      } catch {
+        Alert.alert("Error", "Unable to send location to emergency contacts.");
+      }
+    },
+    []
+  );
+
   const onBookingAssigned = useCallback(
     (data: {
       bookingId: string | null;
@@ -83,6 +128,7 @@ export const usePatientEvents = (
       setIsBooking(false);
       setCompletedAt(null);
       if (data.bookingId) {
+        lastCompletedBookingIdRef.current = null;
         notifyFromSocket("PATIENT", {
           type: "ASSIGNED",
           bookingId: data.bookingId,
@@ -122,9 +168,11 @@ export const usePatientEvents = (
   }, [setStatus, setIsBooking, setCompletedAt, setBooking]);
 
   const onBookingCompleted = useCallback(() => {
+    let completedBookingId: string | null = null;
     setStatus("COMPLETED");
     setBooking((prev) => {
       if (prev) {
+        completedBookingId = prev.bookingId ?? null;
         addBookingHistory("PATIENT", {
           id: `${Date.now()}:${prev.patient?.id ?? "patient"}`,
           bookingId: prev.bookingId ?? null,
@@ -142,7 +190,24 @@ export const usePatientEvents = (
     });
     setCompletedAt(Date.now());
     setIsBooking(false);
-  }, [setStatus, setBooking, setCompletedAt, setIsBooking]);
+
+    if (!completedBookingId) return;
+    if (completedBookingId === lastCompletedBookingIdRef.current) return;
+    lastCompletedBookingIdRef.current = completedBookingId;
+
+    if (!patientLocation) return;
+    if (!emergencyContacts?.length) return;
+
+    void sendLocationToEmergencyContacts(patientLocation, emergencyContacts);
+  }, [
+    setStatus,
+    setBooking,
+    setCompletedAt,
+    setIsBooking,
+    patientLocation,
+    emergencyContacts,
+    sendLocationToEmergencyContacts,
+  ]);
 
   const onBookingCancelled = useCallback(
     (data: { bookingId?: string; message: string }) => {
