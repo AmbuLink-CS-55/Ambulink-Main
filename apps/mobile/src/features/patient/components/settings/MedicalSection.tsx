@@ -13,7 +13,7 @@ const bytesToLabel = (size: number | null) => {
 };
 
 export default function MedicalSection() {
-  const { settings, setActiveModal, updateSetting } = useSettings();
+  const { settings, setActiveModal, updateSetting, handleDeleteMedicalDocument } = useSettings();
 
   const handlePickDocuments = useCallback(async () => {
     try {
@@ -114,13 +114,26 @@ export default function MedicalSection() {
             {settings.medicalDocuments.length > 0 ? (
               <View className="mt-3 gap-2">
                 {settings.medicalDocuments.map((doc) => (
-                  <View key={doc.uri} className="rounded-lg bg-surface px-3 py-2">
-                    <Text className="text-sm font-medium text-foreground" numberOfLines={1}>
-                      {doc.name}
-                    </Text>
-                    <Text className="text-xs text-muted-foreground">
-                      {bytesToLabel(doc.size) ?? doc.mimeType ?? "Document"}
-                    </Text>
+                  <View
+                    key={doc.uri}
+                    className="rounded-lg bg-surface px-3 py-2 flex-row justify-between items-center gap-3"
+                  >
+                    <View className="flex-1">
+                      <Text className="text-sm font-medium text-foreground" numberOfLines={1}>
+                        {doc.name}
+                      </Text>
+                      <Text className="text-xs text-muted-foreground">
+                        {bytesToLabel(doc.size) ?? doc.mimeType ?? "Document"}
+                      </Text>
+                    </View>
+                    <Pressable
+                      onPress={() => handleDeleteMedicalDocument(doc.uri)}
+                      className="p-2"
+                      accessibilityRole="button"
+                      accessibilityLabel={`Remove document ${doc.name}`}
+                    >
+                      <Ionicons name="trash" size={18} color="#E74C3C" />
+                    </Pressable>
                   </View>
                 ))}
               </View>
