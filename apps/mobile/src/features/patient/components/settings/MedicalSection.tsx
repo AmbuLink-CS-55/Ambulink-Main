@@ -100,47 +100,50 @@ export default function MedicalSection() {
 
         <View className="h-px bg-muted" />
 
-        <Pressable
-          className="flex-row justify-between items-center py-3"
-          onPress={() => void handlePickDocuments()}
-        >
-          <View className="flex-1">
-            <Text className="text-sm font-medium text-muted-foreground mb-1.5">
-              {i18n.t("settings.medical.medicalDocuments")}
-            </Text>
-            <Text className="text-sm text-muted-foreground mt-1">
-              {i18n.t("settings.medical.uploadDocuments")}
-            </Text>
-            {settings.medicalDocuments.length > 0 ? (
-              <View className="mt-3 gap-2">
-                {settings.medicalDocuments.map((doc) => (
-                  <View
-                    key={doc.uri}
-                    className="rounded-lg bg-surface px-3 py-2 flex-row justify-between items-center gap-3"
-                  >
-                    <View className="flex-1">
-                      <Text className="text-sm font-medium text-foreground" numberOfLines={1}>
-                        {doc.name}
-                      </Text>
-                      <Text className="text-xs text-muted-foreground">
-                        {bytesToLabel(doc.size) ?? doc.mimeType ?? "Document"}
-                      </Text>
-                    </View>
-                    <Pressable
-                      onPress={() => handleDeleteMedicalDocument(doc.uri)}
-                      className="p-2"
-                      accessibilityRole="button"
-                      accessibilityLabel={`Remove document ${doc.name}`}
-                    >
-                      <Ionicons name="trash" size={18} color="#E74C3C" />
-                    </Pressable>
+        <View>
+          <Pressable
+            className="flex-row justify-between items-center py-3"
+            onPress={() => void handlePickDocuments()}
+          >
+            <View className="flex-1">
+              <Text className="text-sm font-medium text-muted-foreground mb-1.5">
+                {i18n.t("settings.medical.medicalDocuments")}
+              </Text>
+              <Text className="text-sm text-muted-foreground mt-1">
+                {i18n.t("settings.medical.uploadDocuments")}
+              </Text>
+            </View>
+            <Ionicons name="document-attach-outline" size={20} color="#111827" />
+          </Pressable>
+
+          {settings.medicalDocuments.length > 0 ? (
+            <View className="mt-3 gap-2">
+              {settings.medicalDocuments.map((doc) => (
+                <View
+                  key={doc.uri}
+                  className="rounded-lg bg-surface px-3 py-2 flex-row justify-between items-start gap-3"
+                >
+                  <View className="flex-1">
+                    <Text className="text-sm font-medium text-foreground" numberOfLines={1}>
+                      {doc.name}
+                    </Text>
+                    <Text className="text-xs text-muted-foreground">
+                      {bytesToLabel(doc.size) ?? doc.mimeType ?? "Document"}
+                    </Text>
                   </View>
-                ))}
-              </View>
-            ) : null}
-          </View>
-          <Ionicons name="document-attach-outline" size={20} color="#111827" />
-        </Pressable>
+                  <Pressable
+                    onPress={() => handleDeleteMedicalDocument(doc.uri)}
+                    className="p-2"
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove document ${doc.name}`}
+                  >
+                    <Ionicons name="trash" size={18} color="#E74C3C" />
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          ) : null}
+        </View>
       </View>
     </View>
   );
