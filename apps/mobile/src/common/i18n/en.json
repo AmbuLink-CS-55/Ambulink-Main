@@ -50,6 +50,7 @@
       "name": "Name",
       "enterName": "Enter name",
       "enterMobile": "Enter mobile",
+      "enterEmail": "Enter email",
       "age": "Age",
       "enterAge": "Enter age",
       "changeProfilePhoto": "Change profile photo",
