@@ -28,7 +28,7 @@ The repository is a monorepo with:
 
 | Booking | Chat |
 |---|---|
-| ![Patient booking screen](docs/img/patient-booking.jpeg) | ![Patient chat screen](docs/img/patient-chat.jpeg) |
+| <img src="docs/img/patient-booking.jpeg" alt="Patient booking screen" width="220" /> | <img src="docs/img/patient-chat.jpeg" alt="Patient chat screen" width="220" /> |
 
 ### Driver App
 
@@ -36,7 +36,7 @@ The repository is a monorepo with:
 - Pickup/drop-off route and location tracking
 - Shift and trip log visibility
 
-![Driver mobile app](docs/img/driver-mobile.jpeg)
+<img src="docs/img/driver-mobile.jpeg" alt="Driver mobile app" width="260" />
 
 ### EMT App
 
@@ -45,7 +45,7 @@ The repository is a monorepo with:
 - EMT notes and clinical timeline updates
 - EMT settings and role workflow support
 
-![EMT mobile app](docs/img/emt-mobile.jpeg)
+<img src="docs/img/emt-mobile.jpeg" alt="EMT mobile app" width="260" />
 
 ### Dispatcher Dashboard
 
