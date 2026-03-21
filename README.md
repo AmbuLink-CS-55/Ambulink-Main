@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/img/logo.png" alt="Ambulink logo" width="180" />
+  <img src="docs/img/logo.png" alt="Ambulink logo" width="400" />
 </p>
 
 Ambulink is a comprehensive software suit for emergency response, for ambulance dispatch and patient transport coordination.
