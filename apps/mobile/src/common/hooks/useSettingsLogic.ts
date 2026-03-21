@@ -112,6 +112,16 @@ export function useSettingsLogic() {
     [settings.emergencyContacts, updateSetting]
   );
 
+  const handleDeleteMedicalDocument = useCallback(
+    (uri: string) => {
+      updateSetting(
+        "medicalDocuments",
+        settings.medicalDocuments.filter((doc) => doc.uri !== uri)
+      );
+    },
+    [settings.medicalDocuments, updateSetting]
+  );
+
   const handleAddEmergencyContact = useCallback(() => {
     if (!emergencyContactNumber.trim()) {
       Alert.alert(i18n.t("common.error"), i18n.t("common.pleaseEnterContactNumber"));
@@ -177,6 +187,7 @@ export function useSettingsLogic() {
     handleRemoveAllergy,
     handleAddEmergencyContact,
     handleDeleteEmergencyContact,
+    handleDeleteMedicalDocument,
     handleEditEmergencyContact,
     resetEmergencyContactForm,
     handleLanguageChange,
