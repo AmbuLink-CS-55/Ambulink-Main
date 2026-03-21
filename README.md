@@ -1,119 +1,139 @@
-# Ambulink Monorepo
+<p align="center">
+  <img src="docs/img/logo.png" alt="Ambulink logo" width="400" />
+</p>
 
-## 1) Install
+---
 
-```sh
+Ambulink is a comprehensive software suit for emergency response, for ambulance dispatch and patient transport coordination.
+
+The repository is a monorepo with:
+- A dispatcher web dashboard
+- A multi role mobile app (Patient, Driver, EMT)
+- A NestJS backend with REST + real-time socket events
+
+## Core Workflow
+
+1. A patient creates a booking request from the mobile app.
+2. The backend publishes the request to relevant dispatchers in real time.
+3. A dispatcher accepts and assigns the trip.
+4. Driver and EMT receive updates and navigate to the patient/hospital.
+5. Patient and dispatcher track booking progress live.
+6. Booking logs, notes, and analytics are available for operations review.
+
+## Key Features
+
+### Patient App
+
+- One tap emergency booking from map view
+- Live ambulance tracking and booking status
+- In-app chat with responders/operations
+- First-aid support screen
+- Booking history and patient profile/settings
+
+| Booking | Chat |
+|---|---|
+| <img src="docs/img/patient-booking.jpeg" alt="Patient booking screen" width="220" /> | <img src="docs/img/patient-chat.jpeg" alt="Patient chat screen" width="220" /> |
+
+### Driver App
+
+- Real-time assigned ride updates
+- Pickup/drop-off route and location tracking
+- Shift and trip log visibility
+
+<img src="docs/img/driver-mobile.jpeg" alt="Driver mobile app" width="260" />
+
+### EMT App
+
+- Live assigned booking feed
+- Patient information view during active trips
+- EMT notes and clinical timeline updates
+- EMT settings and role workflow support
+
+<img src="docs/img/emt-mobile.jpeg" alt="EMT mobile app" width="260" />
+
+### Dispatcher Dashboard
+
+- Live booking request queue and acceptance flow
+- Ongoing booking tracking with map overlays (patients, drivers, routes, hospitals)
+- Reassignment flow for active bookings
+- Operations management pages for drivers, EMTs, patients, ambulances, and dispatchers
+- Analytics tabs for response and zone-level insights
+
+| Tracking & Bookings | Analytics 1 |
+|---|---|
+| ![Dispatcher tracking and bookings](docs/img/dispatcher-trackingbookings.png) | ![Dispatcher analytics view 1](docs/img/dispatcher-Analytics1.png) |
+
+| Analytics 2 | Analytics 3 |
+|---|---|
+| ![Dispatcher analytics view 2](docs/img/dispatcher-Analytics2.png) | ![Dispatcher analytics view 3](docs/img/dispatcher-Analytics3.png) |
+
+## Tech Stack
+
+- Monorepo: Turbo + npm workspaces
+- Backend: NestJS, Drizzle ORM, PostgreSQL, Socket.IO, Zod
+- Web Dashboard: React 19, Vite, TanStack Query, MapLibre
+- Mobile: Expo + React Native + Expo Router + Socket.IO
+
+## Repository Structure
+
+```text
+apps/
+  backend/            # NestJS API + realtime events
+  client-dashboard/   # Dispatcher dashboard (React + Vite)
+  mobile/             # Patient/Driver/EMT mobile app (Expo)
+packages/
+  types/              # Shared type definitions
+  eslint-config/      # Shared lint config
+  prettier-config/    # Shared prettier config
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 20+
+- npm 10+
+- PostgreSQL
+- (Optional) Redis
+
+### 1) Install dependencies
+
+```bash
 npm install
 ```
 
-## 2) Environment setup (required)
+### 2) Configure environment
 
-The root `.env` is the single source of truth. App-level `.env` files are generated from it.
+Copy `.env_example` to `.env` and update values for your environment.
 
-1. Copy root example:
-
-```sh
+```bash
 cp .env_example .env
 ```
 
-2. Fill these required keys in root `.env`:
+### 3) Sync app-specific env files
 
-- `API_SERVER_URL`
-- `WS_SERVER_URL`
-- `PROVIDER_ID`
-- `DISPATCHER_ID`
-- `PATIENT_ID`
-- `DRIVER_ID`
-- `EMT_ID`
-- `APP_STAGE`
-- `DATABASE_URL`
-
-Required for Docker/Dokploy deployment:
-
-- `JWT_SECRET` (minimum 32 characters)
-- `VITE_API_SERVER_URL`
-- `VITE_WS_SERVER_URL`
-
-3. Generate app env files:
-
-```sh
+```bash
 npm run env:sync
 ```
 
-Generated files:
+### 4) Initialize database
 
-- `apps/mobile/.env`
-- `apps/client-dashboard/.env`
-- `apps/backend/.env`
-
-Notes:
-
-- Do not hand-edit generated app `.env` files; update root `.env` and re-run `npm run env:sync`.
-- `npm run dev` runs `env:sync` automatically before starting apps.
-
-## 3) Database setup
-
-```sh
-docker build -t postgres-postgis .
-docker run --name postgres-db -e POSTGRES_PASSWORD=123 -p 5432:5432 -d postgres-postgis
-```
-
-If container already exists but is stopped:
-
-```sh
-docker start postgres-db
-```
-
-Apply schema and seed:
-
-```sh
+```bash
 npm run migrate
 npm run seed
 ```
 
-Deployment:
+### 5) Run all apps in development
 
-```sh
-npm run deploy:init-db
-```
-
-## 4) Run apps
-
-```sh
+```bash
 npm run dev
 ```
 
-Common tasks:
+## Deployment
 
-```sh
-npm run build
-npm run lint
-npm run test
-```
+Containerized deployment assets are under `deploy/`.
+A Dokploy-compatible compose file is available at:
 
-## 5) Backend testing
+- `deploy/compose/docker-compose.dokploy.yml`
 
-Backend unit tests:
-
-```sh
-npm run test:unit:backend
-```
-
-## 6) Dokploy
-
-Use Docker Compose deployment and point to:
-
-`deploy/compose/docker-compose.dokploy.yml`
-
-Required environment variables in Dokploy:
-
-- `DATABASE_URL`
-- `JWT_SECRET` (minimum 32 characters)
-- `VITE_API_SERVER_URL`
-- `VITE_WS_SERVER_URL`
-
-Then initialize the database once after first deploy:
-
-```sh
-npm run deploy:init-db
-```
+It includes services for backend, dashboard, optional Postgres, and optional Redis.
