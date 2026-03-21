@@ -22,6 +22,12 @@ export default function LanguageModal({
   setLanguage,
   languages,
 }: LanguageModalProps) {
+  const getLanguageLabel = (languageId: string) => {
+    if (languageId === "si") return i18n.t("languages.sinhala");
+    if (languageId === "ta") return i18n.t("languages.tamil");
+    return i18n.t("languages.english");
+  };
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View className="flex-1 bg-black/50 justify-end">
@@ -57,7 +63,7 @@ export default function LanguageModal({
                       language === item.id && "text-teal-500 font-semibold"
                     }`}
                   >
-                    {item.label}
+                    {getLanguageLabel(item.id)}
                   </Text>
                 </View>
                 {language === item.id && <Ionicons name="checkmark" size={20} color="#26A69A" />}

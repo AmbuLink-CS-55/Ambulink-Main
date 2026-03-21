@@ -142,7 +142,7 @@ export default function PersonalSection() {
             autoCorrect={false}
             value={settings.email}
             onChangeText={(v) => updateSetting("email", v)}
-            placeholder="Enter email"
+            placeholder={i18n.t("settings.personal.enterEmail")}
           />
         </View>
       </View>

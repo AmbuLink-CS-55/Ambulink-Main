@@ -1,16 +1,15 @@
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import i18n from "@/common/i18n/i18n";
-import { LANGUAGES } from "@/common/constants/settings";
 import { useSettings } from "@/common/hooks/SettingsContext";
 
 export default function AppSettingsSection() {
   const { settings, setActiveModal, updateSetting } = useSettings();
 
   const getLanguageLabel = () => {
-    return (
-      LANGUAGES.find((lang) => lang.id === settings.language)?.label || i18n.t("languages.english")
-    );
+    if (settings.language === "si") return i18n.t("languages.sinhala");
+    if (settings.language === "ta") return i18n.t("languages.tamil");
+    return i18n.t("languages.english");
   };
 
   return (
