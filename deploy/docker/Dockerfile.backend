@@ -17,7 +17,7 @@ RUN npm run build --workspace=apps/backend
 FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=3001
 
 RUN addgroup -S nodejs && adduser -S nestjs -G nodejs
 
@@ -29,6 +29,6 @@ COPY --from=builder /app/packages/types ./packages/types
 RUN mkdir -p /data/booking-media && chown -R nestjs:nodejs /data/booking-media
 
 USER nestjs
-EXPOSE 3000
+EXPOSE 3001
 
 CMD ["node", "apps/backend/dist/src/main.js"]
