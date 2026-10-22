@@ -25,9 +25,9 @@
     "loco": "npm run lint & npm run format & npm run build"
   },
   "devDependencies": {
-    "turbo": "^2.5.6"
+    "turbo": "^2.11.10"
   },
-  "packageManager": "npm@11.8.0",
+  "packageManager": "npm@12.2.1",
   "overrides": {
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -35,6 +35,6 @@
     "expo": "54.0.33"
   },
   "dependencies": {
-    "expo-linking": "^8.0.11"
+    "expo-linking": "^58.0.14"
   }
 }
