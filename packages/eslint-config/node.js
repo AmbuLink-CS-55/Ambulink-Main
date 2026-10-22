@@ -3,11 +3,10 @@
  * Use this for Node.js applications (e.g., backend, NestJS)
  */
 
-const tseslint = require("typescript-eslint");
 const globals = require("globals");
 const baseConfig = require("./base.js");
 
-module.exports = tseslint.config(
+module.exports = [
   ...baseConfig,
   {
     languageOptions: {
@@ -19,5 +18,5 @@ module.exports = tseslint.config(
     rules: {
       // Node.js-specific rules can be added here if needed
     },
-  }
-);
+  },
+];
