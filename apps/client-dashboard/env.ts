@@ -32,6 +32,4 @@ if (!parsed.success) {
 }
 
 export const env: Env = parsed.data;
-env.VITE_API_SERVER_URL="https://api.ambulink.lk/api"
-env.VITE_WS_SERVER_URL="ws://api.ambulink.lk"
 export default env;
